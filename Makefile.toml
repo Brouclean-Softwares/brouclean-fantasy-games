@@ -1,0 +1,16 @@
+[tasks.format]
+description = "Format all rust files"
+install_crate = "rustfmt"
+command = "cargo"
+args = ["fmt", "--all"]
+
+[tasks.run]
+description = "Run the project"
+command = "cargo"
+args = ["shuttle", "run", "--port", "8000"]
+dependencies = ["format"]
+
+[tasks.deploy]
+description = "Deploy the project"
+command = "cargo"
+args = ["shuttle", "deploy"]

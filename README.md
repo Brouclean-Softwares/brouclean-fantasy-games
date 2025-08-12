@@ -1,0 +1,108 @@
+# Google OAuth in Axum
+
+This template is an example of how you can implement Google OAuth using the Axum web framework in Rust.
+
+## Prerequisites
+
+Make sure you set up your Google OAuth, which you can find a link to set up [here.](https://console.cloud.google.com/apis/dashboard)
+
+# Prepare your dev environment (example for Fedora)
+
+## Install Rust and tools
+
+Install rust : [https://www.rust-lang.org/tools/install]
+
+Install rust formatter
+
+```
+rustup component add rustfmt
+```
+
+Install cargo make
+
+```
+cargo install cargo-make
+```
+
+Install cargo shuttle and login
+
+```
+cargo install cargo-shuttle
+cargo shuttle login
+```
+
+## Install Postgresql locally
+
+Download and install : [https://www.postgresql.org/download/]
+For example on fedora, first clean the pgsql directory in case of former install
+
+```
+sudo rm -r /var/lib/pgsql
+```
+
+and then install and start the server
+
+```
+sudo dnf install postgresql-server
+sudo postgresql-setup --initdb
+sudo systemctl enable postgresql.service
+sudo systemctl start postgresql.service
+```
+
+Create an app user
+
+```
+sudo -u postgres psql
+CREATE ROLE devapp LOGIN PASSWORD '<db user password>';
+\du
+\q
+```
+
+If you want to connect from your own user you will have to change the local config to "trust" in the pg_hba.conf
+
+```
+sudo gnome-text-editor /var/lib/pgsql/data/pg_hba.conf
+```
+
+Create the database
+
+```
+sudo -u postgres psql
+CREATE DATABASE brouclean_fantasy_games;
+ALTER DATABASE brouclean_fantasy_games OWNER TO devapp;
+\l
+\q
+```
+
+## VSCode extensions
+
+- rust-analyzer
+- Even Better TOML
+- Tailwind CSS IntelliSense
+
+## Secrets structure
+
+For the app to run you need to create a Secrets.toml (and a Secrets.dev.toml for local dev) file containing
+
+```
+# Database
+DB_PASSWORD = "Your db user password"
+
+# Google oauth
+GOOGLE_OAUTH_CLIENT_ID = "Your client id"
+GOOGLE_OAUTH_CLIENT_SECRET = "Your client secret"
+```
+
+## To build and run the app
+
+To run the app locally (localhost)
+
+```
+cargo make run
+```
+
+To deploy the app
+
+```
+cargo make deploy
+```
