@@ -1,10 +1,11 @@
-use axum::{extract::FromRef, response::Html, routing::get, Extension, Router};
+use axum::{extract::FromRef, routing::get, Extension, Router};
 use axum_extra::extract::cookie::Key;
-use oauth2::{basic::BasicClient, AuthUrl, ClientId, ClientSecret, RedirectUrl, TokenUrl};
+use oauth2::basic::BasicClient;
 use reqwest::Client;
 use shuttle_runtime::SecretStore;
 use sqlx::PgPool;
 
+pub mod app;
 pub mod errors;
 pub mod oauth;
 
@@ -46,7 +47,7 @@ async fn main(
         key: Key::generate(),
     };
 
-    let oauth_client = build_oauth_client(oauth_id.clone(), oauth_secret);
+    let oauth_client = oauth::build_oauth_client(oauth_id.clone(), oauth_secret);
 
     let router = init_router(state, oauth_client, oauth_id);
 
@@ -59,7 +60,7 @@ fn init_router(state: AppState, oauth_client: BasicClient, oauth_id: String) -> 
     let protected_router = Router::new().route("/", get(oauth::protected));
 
     let homepage_router = Router::new()
-        .route("/", get(homepage))
+        .route("/", get(app::homepage))
         .layer(Extension(oauth_id));
 
     Router::new()
@@ -68,33 +69,4 @@ fn init_router(state: AppState, oauth_client: BasicClient, oauth_id: String) -> 
         .nest("/", homepage_router)
         .layer(Extension(oauth_client))
         .with_state(state)
-}
-
-fn build_oauth_client(client_id: String, client_secret: String) -> BasicClient {
-    let redirect_url = "http://localhost:8000/api/auth/google_callback".to_string();
-
-    let auth_url = AuthUrl::new("https://accounts.google.com/o/oauth2/v2/auth".to_string())
-        .expect("Invalid authorization endpoint URL");
-    let token_url = TokenUrl::new("https://www.googleapis.com/oauth2/v3/token".to_string())
-        .expect("Invalid token endpoint URL");
-
-    BasicClient::new(
-        ClientId::new(client_id),
-        Some(ClientSecret::new(client_secret)),
-        auth_url,
-        Some(token_url),
-    )
-    .set_redirect_uri(RedirectUrl::new(redirect_url).unwrap())
-}
-
-#[axum::debug_handler]
-async fn homepage(Extension(oauth_id): Extension<String>) -> Html<String> {
-    Html(format!(
-        r#"
-        <p>Welcome!</p>
-        <a href="https://accounts.google.com/o/oauth2/v2/auth?scope=openid%20profile%20email&client_id={oauth_id}&response_type=code&redirect_uri=http://localhost:8000/api/auth/google_callback">
-            Click here to sign into Google!
-        </a>
-    "#
-    ))
 }

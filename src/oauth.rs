@@ -6,7 +6,10 @@ use axum::{
 };
 use axum_extra::extract::cookie::{Cookie, PrivateCookieJar, SameSite};
 use chrono::{Duration, Local};
-use oauth2::{basic::BasicClient, reqwest::async_http_client, AuthorizationCode, TokenResponse};
+use oauth2::{
+    basic::BasicClient, reqwest::async_http_client, AuthUrl, AuthorizationCode, ClientId,
+    ClientSecret, RedirectUrl, TokenResponse, TokenUrl,
+};
 use serde::Deserialize;
 use time::Duration as TimeDuration;
 
@@ -133,6 +136,23 @@ impl FromRequest<AppState> for UserProfile {
             picture: res.picture,
         })
     }
+}
+
+pub fn build_oauth_client(client_id: String, client_secret: String) -> BasicClient {
+    let redirect_url = "http://localhost:8000/api/auth/google_callback".to_string();
+
+    let auth_url = AuthUrl::new("https://accounts.google.com/o/oauth2/v2/auth".to_string())
+        .expect("Invalid authorization endpoint URL");
+    let token_url = TokenUrl::new("https://www.googleapis.com/oauth2/v3/token".to_string())
+        .expect("Invalid token endpoint URL");
+
+    BasicClient::new(
+        ClientId::new(client_id),
+        Some(ClientSecret::new(client_secret)),
+        auth_url,
+        Some(token_url),
+    )
+    .set_redirect_uri(RedirectUrl::new(redirect_url).unwrap())
 }
 
 pub async fn protected(profile: UserProfile) -> impl IntoResponse {
