@@ -1,4 +1,4 @@
-use axum::{extract::FromRef, routing::get, Extension, Router};
+use axum::{extract::FromRef, Extension, Router};
 use axum_extra::extract::cookie::Key;
 use oauth2::basic::BasicClient;
 use reqwest::Client;
@@ -54,16 +54,9 @@ async fn main(
 }
 
 fn init_router(state: AppState, oauth_client: BasicClient, oauth_id: String) -> Router {
-    let protected_router = Router::new().route("/", get(app::protected));
-
-    let homepage_router = Router::new()
-        .route("/", get(app::homepage))
-        .layer(Extension(oauth_id));
-
     Router::new()
+        .nest("/", app::init_router(oauth_id))
         .nest("/auth", auth::init_router())
-        .nest("/protected", protected_router)
-        .nest("/", homepage_router)
         .layer(Extension(oauth_client))
         .with_state(state)
 }

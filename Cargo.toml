@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0"
 askama = "0.14"
+askama_web = { version = "0.14.0", features = ["axum-0.7"] }
 axum = { version = "0.7", features = ["multipart", "macros"] }
 axum-extra = { version = "0.9", features = ["cookie-private"] }
 chrono = { version = "0.4", features = ["clock"] }

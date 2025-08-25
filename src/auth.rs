@@ -99,7 +99,7 @@ pub async fn google_callback(
     .execute(&state.db)
     .await?;
 
-    Ok((jar.add(cookie), app::protected(user_profile).await))
+    Ok((jar.add(cookie), app::connected_user(user_profile).await))
 }
 
 #[derive(Debug, Deserialize)]
