@@ -1,4 +1,41 @@
-<p>Welcome!</p>
-<a href="{{ google_connection_url }}">
-    Click here to sign into Google!
-</a>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Hello Bulma!</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
+</head>
+<body>
+<section class="section">
+    <div class="container">
+        <h1 class="title">
+            Welcome !
+        </h1>
+        <p class="subtitle">
+            My first website with <strong>Bulma</strong>!
+        </p>
+        <p>
+            {% if let Some(user_profile) = profile %}
+
+            <p>
+            {{ user_profile.email }}
+            </p>
+            <p>
+                <a href="/auth/sign_out">
+                    Click here to sign out!
+                </a>
+            </p>
+
+            {% else %}
+
+            <a href="{{ google_connection_url }}">
+                Click here to sign into Google!
+            </a>
+
+            {% endif %}
+        </p>
+    </div>
+</section>
+</body>
+</html>

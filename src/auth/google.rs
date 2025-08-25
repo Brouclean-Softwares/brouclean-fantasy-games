@@ -15,17 +15,17 @@ use time::Duration as TimeDuration;
 pub const REDIRECT_URL: &str = "http://localhost:8000/auth/google_callback";
 
 pub async fn callback(
-    State(state): State<AppState>,
+    State(app_state): State<AppState>,
     jar: PrivateCookieJar,
     Query(query): Query<AuthRequest>,
 ) -> Result<impl IntoResponse, ApiError> {
-    let token = state
+    let token = app_state
         .google_oauth_client
         .exchange_code(AuthorizationCode::new(query.code))
         .request_async(async_http_client)
         .await?;
 
-    let profile = state
+    let profile = app_state
         .http_requester
         .get("https://openidconnect.googleapis.com/v1/userinfo")
         .bearer_auth(token.access_token().secret().to_owned())
@@ -65,7 +65,7 @@ pub async fn callback(
     .bind(profile.given_name.clone())
     .bind(profile.family_name.clone())
     .bind(profile.picture.clone())
-    .fetch_one(&state.db)
+    .fetch_one(&app_state.db)
     .await?;
 
     sqlx::query(
@@ -79,10 +79,13 @@ pub async fn callback(
     .bind(profile.email)
     .bind(token.access_token().secret().to_owned())
     .bind(max_age)
-    .execute(&state.db)
+    .execute(&app_state.db)
     .await?;
 
-    Ok((jar.add(cookie), app::connected_user(user_profile).await))
+    Ok((
+        jar.add(cookie),
+        app::HomePage::from(app_state, Some(user_profile)),
+    ))
 }
 
 pub fn build_oauth_client(client_id: String, client_secret: String) -> BasicClient {
