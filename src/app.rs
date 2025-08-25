@@ -15,17 +15,19 @@ pub fn init_router(oauth_id: String) -> Router<AppState> {
         .layer(Extension(oauth_id))
 }
 
-#[derive(Template, WebTemplate)]
-#[template(path = "home_page.html")]
-pub struct HomePage {
-    oauth_id: String,
-}
-
 #[axum::debug_handler]
 pub async fn home_page(Extension(oauth_id): Extension<String>) -> HomePage {
-    HomePage { oauth_id }
+    HomePage {
+        google_connection_url: crate::auth::google::connection_url(oauth_id),
+    }
 }
 
 pub async fn connected_user(profile: UserProfile) -> impl IntoResponse {
     (StatusCode::OK, profile.email)
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "home_page.html")]
+pub struct HomePage {
+    google_connection_url: String,
 }
