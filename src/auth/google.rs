@@ -3,7 +3,6 @@ use crate::errors::ApiError;
 use crate::{app, AppState};
 use axum::extract::{Query, State};
 use axum::response::IntoResponse;
-use axum::Extension;
 use axum_extra::extract::cookie::{Cookie, SameSite};
 use axum_extra::extract::PrivateCookieJar;
 use chrono::{Duration, Local};
@@ -19,15 +18,15 @@ pub async fn callback(
     State(state): State<AppState>,
     jar: PrivateCookieJar,
     Query(query): Query<AuthRequest>,
-    Extension(oauth_client): Extension<BasicClient>,
 ) -> Result<impl IntoResponse, ApiError> {
-    let token = oauth_client
+    let token = state
+        .google_oauth_client
         .exchange_code(AuthorizationCode::new(query.code))
         .request_async(async_http_client)
         .await?;
 
     let profile = state
-        .ctx
+        .http_requester
         .get("https://openidconnect.googleapis.com/v1/userinfo")
         .bearer_auth(token.access_token().secret().to_owned())
         .send()
@@ -102,10 +101,13 @@ pub fn build_oauth_client(client_id: String, client_secret: String) -> BasicClie
     .set_redirect_uri(RedirectUrl::new(REDIRECT_URL.to_string()).unwrap())
 }
 
-pub fn connection_url(oauth_id: String) -> String {
+pub fn connection_url(app_state: AppState) -> String {
+    let oauth_client = app_state.google_oauth_client;
+
     format!(
-        "https://accounts.google.com/o/oauth2/v2/auth?scope=openid%20profile%20email&client_id={}&response_type=code&redirect_uri={}",
-        oauth_id,
-        REDIRECT_URL,
+        "{}?scope=openid%20profile%20email&client_id={}&response_type=code&redirect_uri={}",
+        oauth_client.auth_url().to_string(),
+        oauth_client.client_id().to_string(),
+        oauth_client.redirect_url().unwrap().to_string()
     )
 }

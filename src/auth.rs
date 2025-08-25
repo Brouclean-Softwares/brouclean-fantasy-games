@@ -43,6 +43,7 @@ pub struct UserProfile {
 #[axum::async_trait]
 impl FromRequest<AppState> for UserProfile {
     type Rejection = ApiError;
+
     async fn from_request(req: Request, state: &AppState) -> Result<Self, Self::Rejection> {
         let state = state.to_owned();
         let (mut parts, _body) = req.into_parts();

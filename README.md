@@ -1,6 +1,6 @@
-# Google OAuth in Axum
+# Brouclean Fantasy Games
 
-This template is an example of how you can implement Google OAuth using the Axum web framework in Rust.
+This project is for friends to play fantasy games
 
 ## Prerequisites
 
