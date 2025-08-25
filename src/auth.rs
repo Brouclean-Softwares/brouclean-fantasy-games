@@ -1,8 +1,8 @@
+use axum::routing::get;
 use axum::{
     extract::{FromRequest, FromRequestParts, Query, Request, State},
-    http::StatusCode,
     response::{IntoResponse, Redirect},
-    Extension,
+    Extension, Router,
 };
 use axum_extra::extract::cookie::{Cookie, PrivateCookieJar, SameSite};
 use chrono::{Duration, Local};
@@ -14,11 +14,21 @@ use serde::Deserialize;
 use time::Duration as TimeDuration;
 
 use crate::errors::ApiError;
-use crate::AppState;
+use crate::{app, AppState};
 
-#[derive(Debug, Deserialize)]
-pub struct AuthRequest {
-    code: String,
+const SESSION_ID: &str = "sid";
+
+pub fn init_router() -> Router<AppState> {
+    Router::new()
+        .route("/sign_out", get(sign_out))
+        .route("/google_callback", get(google_callback))
+}
+
+pub async fn sign_out(jar: PrivateCookieJar) -> impl IntoResponse {
+    (
+        jar.clone().remove(Cookie::build(SESSION_ID).path("/")),
+        Redirect::to("/"),
+    )
 }
 
 pub async fn google_callback(
@@ -49,28 +59,30 @@ pub async fn google_callback(
 
     let max_age = Local::now().naive_local() + Duration::try_seconds(secs).unwrap();
 
-    let cookie = Cookie::build(("sid", token.access_token().secret().to_owned()))
+    let cookie = Cookie::build((SESSION_ID, token.access_token().secret().to_owned()))
         .same_site(SameSite::Strict)
         .path("/")
         .secure(true)
         .http_only(true)
         .max_age(TimeDuration::seconds(secs));
 
-    sqlx::query(
+    let user_profile: UserProfile = sqlx::query_as(
         "INSERT INTO users (email, name, given_name, family_name, picture)
         VALUES ($1, $2, $3, $4, $5)
         ON CONFLICT (email) DO UPDATE SET
         name = excluded.name,
         given_name = excluded.given_name,
         family_name = excluded.family_name,
-        picture = excluded.picture",
+        picture = excluded.picture,
+        last_updated = CURRENT_TIMESTAMP
+        RETURNING users.email, users.name, given_name, family_name, users.picture",
     )
     .bind(profile.email.clone())
     .bind(profile.name.clone())
     .bind(profile.given_name.clone())
     .bind(profile.family_name.clone())
     .bind(profile.picture.clone())
-    .execute(&state.db)
+    .fetch_one(&state.db)
     .await?;
 
     sqlx::query(
@@ -87,16 +99,21 @@ pub async fn google_callback(
     .execute(&state.db)
     .await?;
 
-    Ok((jar.add(cookie), Redirect::to("/protected")))
+    Ok((jar.add(cookie), app::protected(user_profile).await))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct AuthRequest {
+    code: String,
 }
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
 pub struct UserProfile {
-    email: String,
-    name: String,
-    given_name: String,
-    family_name: String,
-    picture: String,
+    pub email: String,
+    pub name: String,
+    pub given_name: String,
+    pub family_name: String,
+    pub picture: String,
 }
 
 #[axum::async_trait]
@@ -108,7 +125,10 @@ impl FromRequest<AppState> for UserProfile {
         let cookiejar: PrivateCookieJar =
             PrivateCookieJar::from_request_parts(&mut parts, &state).await?;
 
-        let Some(cookie) = cookiejar.get("sid").map(|cookie| cookie.value().to_owned()) else {
+        let Some(cookie) = cookiejar
+            .get(SESSION_ID)
+            .map(|cookie| cookie.value().to_owned())
+        else {
             return Err(ApiError::Unauthorized);
         };
 
@@ -139,10 +159,11 @@ impl FromRequest<AppState> for UserProfile {
 }
 
 pub fn build_oauth_client(client_id: String, client_secret: String) -> BasicClient {
-    let redirect_url = "http://localhost:8000/api/auth/google_callback".to_string();
+    let redirect_url = "http://localhost:8000/auth/google_callback".to_string();
 
     let auth_url = AuthUrl::new("https://accounts.google.com/o/oauth2/v2/auth".to_string())
         .expect("Invalid authorization endpoint URL");
+
     let token_url = TokenUrl::new("https://www.googleapis.com/oauth2/v3/token".to_string())
         .expect("Invalid token endpoint URL");
 
@@ -153,8 +174,4 @@ pub fn build_oauth_client(client_id: String, client_secret: String) -> BasicClie
         Some(token_url),
     )
     .set_redirect_uri(RedirectUrl::new(redirect_url).unwrap())
-}
-
-pub async fn protected(profile: UserProfile) -> impl IntoResponse {
-    (StatusCode::OK, profile.email)
 }

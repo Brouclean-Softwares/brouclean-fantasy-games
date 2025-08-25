@@ -6,8 +6,8 @@ use shuttle_runtime::SecretStore;
 use sqlx::PgPool;
 
 pub mod app;
+pub mod auth;
 pub mod errors;
-pub mod oauth;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -38,6 +38,7 @@ async fn main(
 
     let oauth_id = secrets.get("GOOGLE_OAUTH_CLIENT_ID").unwrap();
     let oauth_secret = secrets.get("GOOGLE_OAUTH_CLIENT_SECRET").unwrap();
+    let oauth_client = auth::build_oauth_client(oauth_id.clone(), oauth_secret);
 
     let ctx = Client::new();
 
@@ -47,24 +48,20 @@ async fn main(
         key: Key::generate(),
     };
 
-    let oauth_client = oauth::build_oauth_client(oauth_id.clone(), oauth_secret);
-
     let router = init_router(state, oauth_client, oauth_id);
 
     Ok(router.into())
 }
 
 fn init_router(state: AppState, oauth_client: BasicClient, oauth_id: String) -> Router {
-    let auth_router = Router::new().route("/auth/google_callback", get(oauth::google_callback));
-
-    let protected_router = Router::new().route("/", get(oauth::protected));
+    let protected_router = Router::new().route("/", get(app::protected));
 
     let homepage_router = Router::new()
         .route("/", get(app::homepage))
         .layer(Extension(oauth_id));
 
     Router::new()
-        .nest("/api", auth_router)
+        .nest("/auth", auth::init_router())
         .nest("/protected", protected_router)
         .nest("/", homepage_router)
         .layer(Extension(oauth_client))
