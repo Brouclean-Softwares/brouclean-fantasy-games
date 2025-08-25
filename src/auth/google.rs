@@ -10,9 +10,8 @@ use oauth2::{
     basic::BasicClient, reqwest::async_http_client, AuthUrl, AuthorizationCode, ClientId,
     ClientSecret, RedirectUrl, TokenResponse, TokenUrl,
 };
+use shuttle_runtime::SecretStore;
 use time::Duration as TimeDuration;
-
-pub const REDIRECT_URL: &str = "http://localhost:8000/auth/google_callback";
 
 pub async fn callback(
     State(app_state): State<AppState>,
@@ -88,7 +87,13 @@ pub async fn callback(
     ))
 }
 
-pub fn build_oauth_client(client_id: String, client_secret: String) -> BasicClient {
+pub fn build_oauth_client(secrets: &SecretStore) -> BasicClient {
+    let client_id = secrets.get("GOOGLE_OAUTH_CLIENT_ID").unwrap();
+    let client_secret = secrets.get("GOOGLE_OAUTH_CLIENT_SECRET").unwrap();
+    let app_url = secrets.get("APP_URL").unwrap();
+
+    let redirect_url = format!("{}/auth/google_callback", app_url);
+
     let auth_url = AuthUrl::new("https://accounts.google.com/o/oauth2/v2/auth".to_string())
         .expect("Invalid authorization endpoint URL");
 
@@ -101,7 +106,7 @@ pub fn build_oauth_client(client_id: String, client_secret: String) -> BasicClie
         auth_url,
         Some(token_url),
     )
-    .set_redirect_uri(RedirectUrl::new(REDIRECT_URL.to_string()).unwrap())
+    .set_redirect_uri(RedirectUrl::new(redirect_url).unwrap())
 }
 
 pub fn connection_url(app_state: AppState) -> String {

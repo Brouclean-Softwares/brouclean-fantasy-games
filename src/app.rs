@@ -20,6 +20,7 @@ pub async fn home_page(
 #[derive(Template, WebTemplate)]
 #[template(path = "home_page.html")]
 pub struct HomePage {
+    navigation_bar: NavigationBar,
     profile: Option<UserProfile>,
     google_connection_url: String,
 }
@@ -27,8 +28,25 @@ pub struct HomePage {
 impl HomePage {
     pub fn from(app_state: AppState, profile: Option<UserProfile>) -> Self {
         Self {
+            navigation_bar: NavigationBar::from(&app_state, &profile),
             profile,
             google_connection_url: crate::auth::google::connection_url(app_state),
+        }
+    }
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "navigation_bar.html")]
+pub struct NavigationBar {
+    profile: Option<UserProfile>,
+    google_connection_url: String,
+}
+
+impl NavigationBar {
+    pub fn from(app_state: &AppState, profile: &Option<UserProfile>) -> Self {
+        Self {
+            profile: profile.clone(),
+            google_connection_url: crate::auth::google::connection_url(app_state.clone()),
         }
     }
 }

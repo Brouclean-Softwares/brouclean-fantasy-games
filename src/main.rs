@@ -22,16 +22,11 @@ async fn main(
         .await
         .expect("Failed to run migrations");
 
-    let google_oauth_id = secrets.get("GOOGLE_OAUTH_CLIENT_ID").unwrap();
-    let google_oauth_secret = secrets.get("GOOGLE_OAUTH_CLIENT_SECRET").unwrap();
-    let google_oauth_client =
-        auth::google::build_oauth_client(google_oauth_id.clone(), google_oauth_secret);
-
     let state = AppState {
         db,
         http_requester: Client::new(),
         key: Key::generate(),
-        google_oauth_client,
+        google_oauth_client: auth::google::build_oauth_client(&secrets),
     };
 
     let router = init_router(state);

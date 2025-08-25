@@ -1,0 +1,14 @@
+<nav class="uk-navbar-container" uk-navbar>
+    <div class="uk-navbar-left">
+        <a class="uk-navbar-item uk-logo" href="/">Brouclean Fantasy Games</a>
+    </div>
+    <div class="uk-navbar-right">
+    {% if let Some(user_profile) = profile %}
+        <a class="uk-navbar-item" href="#">{{ user_profile.email }}</a>
+    {% else %}
+        <a class="uk-navbar-item" href="{{ google_connection_url }}">
+            Connectez-vous!
+        </a>
+    {% endif %}
+    </div>
+</nav>
