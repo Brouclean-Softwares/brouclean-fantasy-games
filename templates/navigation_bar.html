@@ -1,14 +1,32 @@
-<nav class="uk-navbar-container" uk-navbar>
-    <div class="uk-navbar-left">
-        <a class="uk-navbar-item uk-logo" href="/">Brouclean Fantasy Games</a>
-    </div>
-    <div class="uk-navbar-right">
-    {% if let Some(user_profile) = profile %}
-        <a class="uk-navbar-item" href="#">{{ user_profile.email }}</a>
-    {% else %}
-        <a class="uk-navbar-item" href="{{ google_connection_url }}">
-            Connectez-vous!
-        </a>
-    {% endif %}
+<nav class="uk-navbar-container">
+    <div class="uk-container uk-container-expand">
+        <div uk-navbar>
+            <div class="uk-navbar-left">
+                <a class="uk-navbar-item uk-logo" href="/">Brouclean Fantasy Games</a>
+            </div>
+            <div class="uk-navbar-right">
+            {% if let Some(user_profile) = profile %}
+                <a class="uk-navbar-item" href="#">{{ user_profile.email }}</a>
+                <div class="uk-navbar-dropdown">
+                    <ul class="uk-nav uk-navbar-dropdown-nav">
+                        <li>
+                            <a href="#">
+                                <span uk-icon="icon: user"></span>Profil
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/auth/sign_out">
+                                <span uk-icon="icon: sign-out"></span>Se déconnecter
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            {% else %}
+                <a class="uk-navbar-item" href="{{ google_connection_url }}">
+                    <span  uk-icon="icon: sign-in"></span>Se connecter
+                </a>
+            {% endif %}
+            </div>
+        </div>
     </div>
 </nav>
