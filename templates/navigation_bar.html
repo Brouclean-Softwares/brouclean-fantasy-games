@@ -2,22 +2,23 @@
     <div class="uk-container uk-container-expand">
         <div uk-navbar>
             <div class="uk-navbar-left">
+                <a class="uk-navbar-toggle uk-hidden@m" uk-navbar-toggle-icon href="#"></a>
                 <a class="uk-navbar-item uk-logo" href="/">
-                    <img class="uk-border-rounded" src="/assets/images/logo_horizontal.png" width="175" height="150">
+                    <img src="/assets/images/logo_horizontal.png" width="175" height="150">
                 </a>
-            </div>
-            <div class="uk-navbar-center">
-                <a class="uk-navbar-item" href="#">Jeux</a>
+                <div class="uk-navbar-item uk-visible@m">
+                    <a href="#">Jeux</a>
+                </div>
             </div>
             <div class="uk-navbar-right">
             {% if let Some(user_profile) = profile %}
-                <a class="uk-navbar-item" href="#">
+                <div class="uk-navbar-item">
                     <img class="uk-border-pill" src="{{ user_profile.picture }}" width="50" height="50">
                     <div class="uk-visible@m">
                         <span class="uk-text-emphasis">{{ user_profile.name }}</span>
                         <br>{{ user_profile.email }}
                     </div>
-                </a>
+                </div>
                 <div class="uk-navbar-dropdown">
                     <ul class="uk-nav uk-navbar-dropdown-nav">
                         <li>
