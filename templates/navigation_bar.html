@@ -1,19 +1,41 @@
 <nav class="uk-navbar-container" style="background-color:#f4d494;">
     <div class="uk-container uk-container-expand">
-        <div uk-navbar>
+        <div uk-navbar="mode: click">
+
             <div class="uk-navbar-left">
-                <a class="uk-navbar-toggle uk-hidden@m" uk-navbar-toggle-icon href="#"></a>
+                <a class="uk-navbar-toggle uk-navbar-toggle-animate uk-hidden@m" uk-navbar-toggle-icon href="#"></a>
+                <div class="uk-navbar-dropdown">
+                    <ul class="uk-nav uk-navbar-dropdown-nav">
+                        <li class="uk-nav-header"><a href="#">Blood Bowl</a></li>
+                        <li class="uk-nav-divider"></li>
+                        <li class="uk-nav-header">Jeux de rôles</li>
+                        <li><a href="#">Star Wars</a></li>
+                        <li><a href="#">Warhammer</a></li>
+                    </ul>
+                </div>
+
                 <a class="uk-navbar-item uk-logo" href="/">
                     <img src="/assets/images/logo_horizontal.png" width="175" height="150">
                 </a>
-                <div class="uk-navbar-item uk-visible@m">
-                    <a href="#">Jeux</a>
-                </div>
+
+                <ul class="uk-navbar-nav uk-visible@m">
+                    <li><a href="#">Blood Bowl</a></li>
+                    <li>
+                        <a href="#">Jeux de rôles<span uk-navbar-parent-icon></span></a>
+                        <div class="uk-navbar-dropdown">
+                            <ul class="uk-nav uk-navbar-dropdown-nav">
+                                <li><a href="#">Star Wars</a></li>
+                                <li><a href="#">Warhammer</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                </ul>
             </div>
+
             <div class="uk-navbar-right">
             {% if let Some(user_profile) = profile %}
                 <div class="uk-navbar-item">
-                    <img class="uk-border-pill" src="{{ user_profile.picture }}" width="50" height="50">
+                    <img class="uk-border-pill" src="{{ user_profile.picture }}" width="50" height="50" alt="{{ user_profile.name }}">
                     <div class="uk-visible@m">
                         <span class="uk-text-emphasis">{{ user_profile.name }}</span>
                         <br>{{ user_profile.email }}
@@ -40,6 +62,7 @@
                 </a>
             {% endif %}
             </div>
+
         </div>
     </div>
 </nav>
