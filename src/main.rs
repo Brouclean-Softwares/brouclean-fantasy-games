@@ -4,6 +4,7 @@ use oauth2::basic::BasicClient;
 use reqwest::Client;
 use shuttle_runtime::SecretStore;
 use sqlx::PgPool;
+use tower_http::services::{ServeDir, ServeFile};
 
 pub mod app;
 pub mod auth;
@@ -38,6 +39,8 @@ fn init_router(state: AppState) -> Router {
     Router::new()
         .nest("/", app::init_router())
         .nest("/auth", auth::init_router())
+        .nest_service("/assets", ServeDir::new("assets"))
+        .nest_service("/favicon.ico", ServeFile::new("assets/favicon.ico"))
         .with_state(state)
 }
 
