@@ -1,4 +1,5 @@
 
 /target
 .shuttle*
+.idea*
 Secrets*.toml
