@@ -2,11 +2,23 @@
     <div class="uk-container uk-container-expand">
         <div uk-navbar>
             <div class="uk-navbar-left">
-                <a class="uk-navbar-item uk-logo" href="/">Brouclean Fantasy Games</a>
+                <a class="uk-navbar-item uk-logo" href="/">
+                    <div class="uk-hidden@m">BFG</div>
+                    <div class="uk-visible@m">Brouclean Fantasy Games</div>
+                </a>
+            </div>
+            <div class="uk-navbar-center">
+                <a class="uk-navbar-item" href="#">Jeux</a>
             </div>
             <div class="uk-navbar-right">
             {% if let Some(user_profile) = profile %}
-                <a class="uk-navbar-item" href="#">{{ user_profile.email }}</a>
+                <a class="uk-navbar-item" href="#">
+                    <img class="uk-border-pill" src="{{ user_profile.picture }}" width="50" height="50">
+                    <div class="uk-visible@m">
+                        <span class="uk-text-emphasis">{{ user_profile.name }}</span>
+                        <br>{{ user_profile.email }}
+                    </div>
+                </a>
                 <div class="uk-navbar-dropdown">
                     <ul class="uk-nav uk-navbar-dropdown-nav">
                         <li>
@@ -23,7 +35,8 @@
                 </div>
             {% else %}
                 <a class="uk-navbar-item" href="{{ google_connection_url }}">
-                    <span  uk-icon="icon: sign-in"></span>Se connecter
+                    <span  uk-icon="icon: sign-in"></span>
+                    <div class="uk-visible@m">Se connecter</div>
                 </a>
             {% endif %}
             </div>
