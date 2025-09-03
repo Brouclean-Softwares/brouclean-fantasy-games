@@ -7,6 +7,7 @@
                 <div class="uk-navbar-dropdown">
                     <ul class="uk-nav uk-navbar-dropdown-nav">
                         <li class="uk-nav-header"><a href="#">Blood Bowl</a></li>
+                        <li><a href="/blood_bowl/rosters">Rosters</a></li>
                         <li class="uk-nav-divider"></li>
                         <li class="uk-nav-header">Jeux de rôles</li>
                         <li><a href="#">Star Wars</a></li>
@@ -19,7 +20,13 @@
                 </a>
 
                 <ul class="uk-navbar-nav uk-visible@m">
-                    <li><a href="#">Blood Bowl</a></li>
+                    <li>
+                        <a href="#">Blood Bowl<span uk-navbar-parent-icon></span></a>
+                        <div class="uk-navbar-dropdown">
+                            <ul class="uk-nav uk-navbar-dropdown-nav">
+                                <li><a href="/blood_bowl/rosters">Rosters</a></li>
+                            </ul>
+                        </div>
                     <li>
                         <a href="#">Jeux de rôles<span uk-navbar-parent-icon></span></a>
                         <div class="uk-navbar-dropdown">

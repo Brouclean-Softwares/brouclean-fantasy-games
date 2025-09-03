@@ -1,0 +1,76 @@
+{% extends "page_base.html" %}
+
+{% block navbar %}
+{{ navigation_bar|escape("none") }}
+{% endblock %}
+
+{% block body %}
+<div class="uk-section">
+    <div class="uk-container">
+        <h1>
+            Rosters de Blood Bowl
+        </h1>
+
+        {% for roster in rosters %}
+        <h2>
+            {{ roster.name("fr") }}
+        </h2>
+
+        {% match roster.definition(Version::V5) %}
+        {% when Some(definition) %}
+        <table class="uk-table uk-table-striped">
+            <thead>
+                <tr>
+                    <th>QTE</th>
+                    <th>POSTE</th>
+                    <th>COÛT</th>
+                    <th>M</th>
+                    <th>F</th>
+                    <th>AG</th>
+                    <th>CP</th>
+                    <th>AR</th>
+                    <th>COMPÉTENCES & TRAITS</th>
+                    <th>P</th>
+                    <th>S</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+            {% for position in definition.positions %}
+
+            {% if let Some(position_definition) = position.definition(Version::V5) %}
+                <tr>
+                    <td>0-{{ position_definition.maximum_quantity }}</td>
+                    <td>{{ position.name("fr") }}</td>
+                    <td>{{ position_definition.cost / 1000 }}k</td>
+                    <td>{{ position_definition.movement_allowance() }}</td>
+                    <td>{{ position_definition.strength() }}</td>
+                    <td>{{ position_definition.agility() }}+</td>
+
+                    {% if let Some(passing_ability) = position_definition.passing_ability() %}
+                    <td>{{ passing_ability }}+</td>
+                    {% else %}
+                    <td>-</td>
+                    {% endif %}
+
+                    <td>{{ position_definition.armour_value() }}+</td>
+                    <td>{{ position_definition.skills_names("fr") }}</td>
+                    <td>{{ position_definition.primary_skill_categories_short_names("fr") }}</td>
+                    <td>{{ position_definition.secondary_skill_categories_short_names("fr") }}</td>
+                </tr>
+            {% endif %}
+
+            {% endfor %}
+
+            </tbody>
+        </table>
+
+        {% when None %}
+        <p> Pas de roster défini sur la v5 des règles</p>
+        {% endmatch %}
+
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

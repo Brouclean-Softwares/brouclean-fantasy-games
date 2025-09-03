@@ -6,8 +6,12 @@ use axum::extract::State;
 use axum::routing::get;
 use axum::Router;
 
+pub mod blood_bowl;
+
 pub fn init_router() -> Router<AppState> {
-    Router::new().route("/", get(home_page))
+    Router::new()
+        .nest("/blood_bowl", blood_bowl::init_router())
+        .route("/", get(home_page))
 }
 
 pub async fn home_page(
