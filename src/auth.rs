@@ -2,11 +2,14 @@ use crate::errors::ApiError;
 use crate::AppState;
 use axum::routing::get;
 use axum::{
-    extract::{FromRequest, FromRequestParts, Request},
+    extract::FromRequestParts,
     response::{IntoResponse, Redirect},
     Router,
 };
-use axum_extra::extract::cookie::{Cookie, PrivateCookieJar};
+use axum_extra::extract::cookie::Cookie;
+use axum_extra::extract::PrivateCookieJar;
+use core::fmt::Debug;
+use http::request::Parts;
 use serde::Deserialize;
 
 pub mod google;
@@ -41,16 +44,19 @@ pub struct UserProfile {
 }
 
 #[axum::async_trait]
-impl FromRequest<AppState> for UserProfile {
+impl FromRequestParts<AppState> for UserProfile {
     type Rejection = ApiError;
 
-    async fn from_request(req: Request, state: &AppState) -> Result<Self, Self::Rejection> {
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &AppState,
+    ) -> Result<Self, Self::Rejection> {
         let state = state.to_owned();
-        let (mut parts, _body) = req.into_parts();
-        let cookiejar: PrivateCookieJar =
-            PrivateCookieJar::from_request_parts(&mut parts, &state).await?;
 
-        let Some(cookie) = cookiejar
+        let cookie_jar: PrivateCookieJar =
+            PrivateCookieJar::from_request_parts(&mut parts.clone(), &state).await?;
+
+        let Some(cookie) = cookie_jar
             .get(SESSION_ID)
             .map(|cookie| cookie.value().to_owned())
         else {
