@@ -16,17 +16,21 @@
         {
             "src": "./assets/images/android-chrome-512x512.png",
             "type": "image/png",
-            "sizes": "512x512"
+            "sizes": "512x512",
+            "purpose": "maskable"
+
         },
         {
             "src": "./assets/images/android-chrome-192x192.png",
             "type": "image/png",
-            "sizes": "192x192"
+            "sizes": "192x192",
+            "purpose": "maskable"
         },
         {
             "src": "./assets/images/apple-touch-icon.png",
             "type": "image/png",
-            "sizes": "180x180"
+            "sizes": "180x180",
+            "purpose": "maskable"
         }
     ]
 }
