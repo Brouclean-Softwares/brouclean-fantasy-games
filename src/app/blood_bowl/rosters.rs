@@ -38,7 +38,7 @@ pub struct RostersQueryParams {
 }
 
 #[derive(Template, WebTemplate)]
-#[template(path = "blood_bowl/rosters.html")]
+#[template(path = "blood_bowl/rosters_page.html")]
 pub struct RostersPage {
     navigation_bar: NavigationBar,
     rosters: Vec<Roster>,
@@ -69,7 +69,7 @@ pub struct RosterQueryParams {
 }
 
 #[derive(Template, WebTemplate)]
-#[template(path = "blood_bowl/roster.html")]
+#[template(path = "blood_bowl/roster_page.html")]
 pub struct RosterPage {
     navigation_bar: NavigationBar,
     roster: Roster,

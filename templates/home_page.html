@@ -7,29 +7,18 @@
 {% block body %}
 <div class="uk-section">
     <div class="uk-container">
+        {% if let Some(user_profile) = profile %}
+
         <h2>
-            Welcome !
+            Bienvenue {{ user_profile.given_name }}
         </h2>
         <p>
-            {% if let Some(user_profile) = profile %}
-
-            <p>
-            {{ user_profile.email }}
-            </p>
-            <p>
-                <a href="/auth/sign_out">
-                    Click here to sign out!
-                </a>
-            </p>
-
-            {% else %}
-
-            <a href="{{ google_connection_url }}">
-                Click here to sign into Google!
-            </a>
-
-            {% endif %}
+            ...
         </p>
+
+        {% else %}
+        {% include "welcome.html" %}
+        {% endif %}
     </div>
 </div>
 {% endblock %}

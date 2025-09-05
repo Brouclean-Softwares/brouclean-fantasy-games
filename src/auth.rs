@@ -1,5 +1,7 @@
+use crate::app::users::UserPage;
 use crate::errors::ApiError;
 use crate::AppState;
+use axum::extract::State;
 use axum::routing::get;
 use axum::{
     extract::FromRequestParts,
@@ -18,8 +20,13 @@ const SESSION_ID: &str = "sid";
 
 pub fn init_router() -> Router<AppState> {
     Router::new()
+        .route("/profile", get(profile))
         .route("/sign_out", get(sign_out))
         .route("/google_callback", get(google::callback))
+}
+
+pub async fn profile(profile: Option<UserProfile>, State(app_state): State<AppState>) -> UserPage {
+    UserPage::from(app_state, profile)
 }
 
 pub async fn sign_out(jar: PrivateCookieJar) -> impl IntoResponse {

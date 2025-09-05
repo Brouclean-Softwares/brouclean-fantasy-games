@@ -12,11 +12,15 @@
         {% when Some(roster_definition) %}
         <div class="uk-grid-small uk-flex-middle" uk-grid>
             <div class="uk-width-auto">
-                <img width="75" height="75" src="/assets/images/blood_bowl/{{ roster.name("en") }}Logo.webp" alt="">
+                <img src="/assets/images/blood_bowl/{{ roster.name("en") }}Logo.webp" width="75" height="75" alt="">
             </div>
             <div class="uk-width-expand">
-                <h2 class="uk-margin-remove-bottom">{{ roster.name("fr") }}</h2>
-                <p class="uk-text-meta uk-margin-remove-top">Catégorie {{ roster_definition.tier }}</p>
+                <h2 class="uk-margin-remove-bottom">
+                    {{ roster.name("fr") }}
+                </h2>
+                <p class="uk-margin-remove-top">
+                    Catégorie {{ roster_definition.tier }}
+                </p>
             </div>
         </div>
 

@@ -7,10 +7,12 @@ use axum::routing::get;
 use axum::Router;
 
 pub mod blood_bowl;
+pub mod users;
 
 pub fn init_router() -> Router<AppState> {
     Router::new()
         .nest("/blood_bowl", blood_bowl::init_router())
+        .nest("/users", users::init_router())
         .route("/", get(home_page))
 }
 
