@@ -4,6 +4,8 @@
     "id": "/",
     "scope": "/",
     "start_url": "/",
+    "background_color": "#f4d494",
+    "theme_color": "#f4d494",
     "display": "standalone",
     "icons": [
         {
