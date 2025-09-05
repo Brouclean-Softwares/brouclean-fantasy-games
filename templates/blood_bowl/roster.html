@@ -10,17 +10,17 @@
 
         {% match roster.definition(version.into()) %}
         {% when Some(roster_definition) %}
-        <h1>
-            <img src="/assets/images/blood_bowl/{{ roster.name("en") }}Logo.webp" width="100" height="100" alt="">
+        <h2>
+            <img src="/assets/images/blood_bowl/{{ roster.name("en") }}Logo.webp" width="75" height="75" alt="">
             {{ roster.name("fr") }} (Cat. {{ roster_definition.tier }})
-        </h1>
+        </h2>
         <div>
             <img src="/assets/images/blood_bowl/{{ roster.name("en") }}Team.jpg" alt="">
         </div>
 
-        <h2>
+        <h3>
             Postes
-        </h2>
+        </h3>
         <div class="uk-overflow-auto">
             <table class="uk-table uk-table-striped uk-table-small">
                 <thead>
@@ -69,18 +69,18 @@
             </table>
         </div>
 
-        <h2>
+        <h3>
             Staff
-        </h2>
+        </h3>
         <ul>
             {% for (staff, staff_price) in roster_definition.staff_prices %}
             <li>{{ staff.name("fr") }}: {{ staff_price / 1000 }}k</li>
             {% endfor %}
         </ul>
 
-        <h2>
+        <h3>
             Règles spéciales
-        </h2>
+        </h3>
         <ul>
             {% for special_rule in roster_definition.special_rules %}
             <li>{{ special_rule.name("fr") }}</li>
@@ -88,10 +88,10 @@
         </ul>
 
         {% when None %}
-        <h1>
+        <h2>
             <img src="/assets/images/blood_bowl/{{ roster.name("en") }}Logo.webp" width="100" height="100" alt="">
             {{ roster.name("fr") }}
-        </h1>
+        </h2>
         <p>
             Ce roster n'existe pas sur cette version des règles
         </p>
