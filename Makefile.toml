@@ -4,11 +4,16 @@ install_crate = "rustfmt"
 command = "cargo"
 args = ["fmt", "--all"]
 
+[tasks.clean_blood_bowl_rs]
+description = "Clean the blood-bowl-rs crate"
+command = "cargo"
+args = ["clean", "-p", "blood-bowl-rs"]
+
 [tasks.run]
 description = "Run the project"
 command = "cargo"
 args = ["shuttle", "run", "--port", "8000"]
-dependencies = ["format"]
+dependencies = ["format", "clean_blood_bowl_rs"]
 
 [tasks.deploy]
 description = "Deploy the project"

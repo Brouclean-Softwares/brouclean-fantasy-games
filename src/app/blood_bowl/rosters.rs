@@ -65,14 +65,14 @@ impl RostersPage {
 #[derive(Deserialize)]
 pub struct RosterQueryParams {
     version: Option<Version>,
-    roster: Roster,
+    roster: Option<Roster>,
 }
 
 #[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/roster_page.html")]
 pub struct RosterPage {
     navigation_bar: NavigationBar,
-    roster: Roster,
+    roster: Option<Roster>,
     version: Option<Version>,
 }
 
@@ -81,7 +81,7 @@ impl RosterPage {
         app_state: AppState,
         profile: Option<UserProfile>,
         version: Option<Version>,
-        roster: Roster,
+        roster: Option<Roster>,
     ) -> Self {
         Self {
             navigation_bar: NavigationBar::from(&app_state, &profile),

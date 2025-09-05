@@ -15,14 +15,14 @@
 
             {% for roster in rosters %}
 
-            {% match roster.definition(version.into()) %}
-            {% when Some(roster_definition) %}
+                {% match roster.definition(version.into()) %}
+                {% when Some(roster_definition) %}
 
-            <a href="./rosters/roster?version={{ format!("{:?}", roster_definition.version) }}&roster={{ format!("{:?}", roster) }}">
+            <a href="./rosters/roster?version={{ roster_definition.version.type_name() }}&roster={{ roster.type_name() }}">
                 <div class="uk-card uk-card-hover uk-card-body uk-card-small">
                     <div class="uk-grid-small uk-flex-middle" uk-grid>
                         <div class="uk-width-auto">
-                            <img width="75" height="75" src="/assets/images/blood_bowl/{{ roster.name("en") }}Logo.webp" alt="">
+                            <img width="75" height="75" src="/assets/images/blood_bowl/{{ roster.type_name() }}Logo.webp" alt="">
                         </div>
                         <div class="uk-width-expand">
                             <h3 class="uk-card-title uk-margin-remove-bottom">{{ roster.name("fr") }}</h3>
@@ -32,8 +32,8 @@
                 </div>
             </a>
 
-            {% when None %}
-            {% endmatch %}
+                {% when None %}
+                {% endmatch %}
             {% endfor %}
 
         </div>

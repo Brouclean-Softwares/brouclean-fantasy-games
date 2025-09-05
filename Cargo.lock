@@ -353,7 +353,7 @@ dependencies = [
 [[package]]
 name = "blood-bowl-rs"
 version = "0.1.0"
-source = "git+https://gitlab.com/brouclean-softwares/blood-bowl-rs.git#7fefd9bc5e3c803c1affff41fdd4736ee33b4d64"
+source = "git+https://gitlab.com/brouclean-softwares/blood-bowl-rs.git#f47798884026015a7872fde1fe92028245f1b825"
 dependencies = [
  "fluent-templates",
  "serde",
