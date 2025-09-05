@@ -41,6 +41,10 @@ fn init_router(state: AppState) -> Router {
         .nest("/auth", auth::init_router())
         .nest_service("/assets", ServeDir::new("assets"))
         .nest_service("/favicon.ico", ServeFile::new("assets/favicon.ico"))
+        .nest_service(
+            "/manifest.webmanifest",
+            ServeFile::new("assets/manifest.webmanifest"),
+        )
         .with_state(state)
 }
 
