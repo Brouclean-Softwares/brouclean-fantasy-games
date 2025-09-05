@@ -1,6 +1,7 @@
+use crate::app::templates::HomePage;
 use crate::auth::{AuthRequest, UserProfile, SESSION_ID};
 use crate::errors::ApiError;
-use crate::{app, AppState};
+use crate::AppState;
 use axum::extract::{Query, State};
 use axum::response::IntoResponse;
 use axum_extra::extract::cookie::{Cookie, SameSite};
@@ -83,7 +84,7 @@ pub async fn callback(
 
     Ok((
         jar.add(cookie),
-        app::HomePage::from(app_state, Some(user_profile)),
+        HomePage::from(app_state, Some(user_profile)),
     ))
 }
 

@@ -8,6 +8,7 @@ use tower_http::services::{ServeDir, ServeFile};
 
 pub mod app;
 pub mod auth;
+pub mod data;
 pub mod errors;
 
 #[shuttle_runtime::main]

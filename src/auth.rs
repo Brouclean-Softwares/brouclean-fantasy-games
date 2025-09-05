@@ -1,4 +1,4 @@
-use crate::app::users::UserPage;
+use crate::app::templates::users::user_page::UserPage;
 use crate::errors::ApiError;
 use crate::AppState;
 use axum::extract::State;

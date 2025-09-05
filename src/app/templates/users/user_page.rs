@@ -1,24 +1,9 @@
-use crate::app::NavigationBar;
+use crate::app::templates::NavigationBar;
 use crate::auth::UserProfile;
 use crate::AppState;
 use askama::Template;
 use askama_web::WebTemplate;
-use axum::extract::{Query, State};
-use axum::routing::get;
-use axum::Router;
 use serde::Deserialize;
-
-pub fn init_router() -> Router<AppState> {
-    Router::new().route("/user", get(user))
-}
-
-pub async fn user(
-    profile: Option<UserProfile>,
-    State(app_state): State<AppState>,
-    Query(_params): Query<UserQueryParams>,
-) -> UserPage {
-    UserPage::from(app_state, profile)
-}
 
 #[derive(Deserialize)]
 pub struct UserQueryParams {}
