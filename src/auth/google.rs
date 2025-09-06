@@ -1,6 +1,8 @@
 use crate::app::templates::HomePage;
-use crate::auth::{AuthRequest, UserProfile, SESSION_ID};
-use crate::errors::ApiError;
+use crate::auth::SESSION_ID;
+use crate::data::sessions::Session;
+use crate::data::users::User;
+use crate::errors::AppError;
 use crate::AppState;
 use axum::extract::{Query, State};
 use axum::response::IntoResponse;
@@ -11,14 +13,20 @@ use oauth2::{
     basic::BasicClient, reqwest::async_http_client, AuthUrl, AuthorizationCode, ClientId,
     ClientSecret, RedirectUrl, TokenResponse, TokenUrl,
 };
+use serde::Deserialize;
 use shuttle_runtime::SecretStore;
 use time::Duration as TimeDuration;
+
+#[derive(Debug, Deserialize)]
+pub struct AuthRequest {
+    code: String,
+}
 
 pub async fn callback(
     State(app_state): State<AppState>,
     jar: PrivateCookieJar,
     Query(query): Query<AuthRequest>,
-) -> Result<impl IntoResponse, ApiError> {
+) -> Result<impl IntoResponse, AppError> {
     let token = app_state
         .google_oauth_client
         .exchange_code(AuthorizationCode::new(query.code))
@@ -32,10 +40,10 @@ pub async fn callback(
         .send()
         .await?;
 
-    let profile = profile.json::<UserProfile>().await?;
+    let profile = profile.json::<User>().await?;
 
     let Some(secs) = token.expires_in() else {
-        return Err(ApiError::OptionError);
+        return Err(AppError::OptionError);
     };
 
     let secs: i64 = secs.as_secs().try_into()?;
@@ -49,37 +57,14 @@ pub async fn callback(
         .http_only(true)
         .max_age(TimeDuration::seconds(secs));
 
-    let user_profile: UserProfile = sqlx::query_as(
-        "INSERT INTO users (email, name, given_name, family_name, picture)
-        VALUES ($1, $2, $3, $4, $5)
-        ON CONFLICT (email) DO UPDATE SET
-        name = excluded.name,
-        given_name = excluded.given_name,
-        family_name = excluded.family_name,
-        picture = excluded.picture,
-        last_updated = CURRENT_TIMESTAMP
-        RETURNING users.email, users.name, given_name, family_name, users.picture",
-    )
-    .bind(profile.email.clone())
-    .bind(profile.name.clone())
-    .bind(profile.given_name.clone())
-    .bind(profile.family_name.clone())
-    .bind(profile.picture.clone())
-    .fetch_one(&app_state.db)
-    .await?;
+    let user_profile: User = profile.upsert_and_select(&app_state).await?;
 
-    sqlx::query(
-        "INSERT INTO sessions (user_id, session_id, expires_at) VALUES (
-        (SELECT ID FROM USERS WHERE email = $1 LIMIT 1),
-         $2, $3)
-        ON CONFLICT (user_id) DO UPDATE SET
-        session_id = excluded.session_id,
-        expires_at = excluded.expires_at",
+    Session::upsert(
+        &app_state,
+        profile.email,
+        token.access_token().secret().to_owned(),
+        max_age,
     )
-    .bind(profile.email)
-    .bind(token.access_token().secret().to_owned())
-    .bind(max_age)
-    .execute(&app_state.db)
     .await?;
 
     Ok((

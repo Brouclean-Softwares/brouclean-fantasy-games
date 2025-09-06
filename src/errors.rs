@@ -3,7 +3,7 @@ use axum::response::{IntoResponse, Response};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
-pub enum ApiError {
+pub enum AppError {
     #[error("SQL error: {0}")]
     SQL(#[from] sqlx::Error),
 
@@ -32,7 +32,7 @@ pub enum ApiError {
     FromRequestPartsError(#[from] std::convert::Infallible),
 }
 
-impl IntoResponse for ApiError {
+impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let response = match self {
             Self::SQL(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),

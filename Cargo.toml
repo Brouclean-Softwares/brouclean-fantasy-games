@@ -9,8 +9,8 @@ askama = "0.14"
 askama_web = { version = "0.14.0", features = ["axum-0.7"] }
 axum = { version = "0.7", features = ["multipart", "macros", "query"] }
 axum-extra = { version = "0.9", features = ["cookie-private"] }
-blood-bowl-rs = { git = "https://gitlab.com/brouclean-softwares/blood-bowl-rs.git" }
-#blood-bowl-rs = { path = "../blood-bowl-rs" }
+#blood-bowl-rs = { git = "https://gitlab.com/brouclean-softwares/blood-bowl-rs.git" }
+blood-bowl-rs = { path = "../blood-bowl-rs" }
 chrono = { version = "0.4", features = ["clock"] }
 http = "1.1"
 oauth2 = "4.4.1"

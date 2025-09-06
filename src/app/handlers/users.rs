@@ -1,5 +1,5 @@
 use crate::app::templates::users::user_page::{UserPage, UserQueryParams};
-use crate::auth::UserProfile;
+use crate::data::users::User;
 use crate::AppState;
 use axum::extract::{Query, State};
 use axum::routing::get;
@@ -10,8 +10,8 @@ pub fn init_router() -> Router<AppState> {
 }
 
 pub async fn user(
-    profile: Option<UserProfile>,
     State(app_state): State<AppState>,
+    profile: Option<User>,
     Query(_params): Query<UserQueryParams>,
 ) -> UserPage {
     UserPage::from(app_state, profile)

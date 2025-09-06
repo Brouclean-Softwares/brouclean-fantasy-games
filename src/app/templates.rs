@@ -1,4 +1,4 @@
-use crate::auth::UserProfile;
+use crate::data::users::User;
 use crate::AppState;
 use askama::Template;
 use askama_web::WebTemplate;
@@ -10,12 +10,12 @@ pub mod users;
 #[template(path = "home_page.html")]
 pub struct HomePage {
     navigation_bar: NavigationBar,
-    profile: Option<UserProfile>,
+    profile: Option<User>,
     google_connection_url: String,
 }
 
 impl HomePage {
-    pub fn from(app_state: AppState, profile: Option<UserProfile>) -> Self {
+    pub fn from(app_state: AppState, profile: Option<User>) -> Self {
         Self {
             navigation_bar: NavigationBar::from(&app_state, &profile),
             profile,
@@ -27,12 +27,12 @@ impl HomePage {
 #[derive(Template, WebTemplate)]
 #[template(path = "navigation_bar.html")]
 pub struct NavigationBar {
-    profile: Option<UserProfile>,
+    profile: Option<User>,
     google_connection_url: String,
 }
 
 impl NavigationBar {
-    pub fn from(app_state: &AppState, profile: &Option<UserProfile>) -> Self {
+    pub fn from(app_state: &AppState, profile: &Option<User>) -> Self {
         Self {
             profile: profile.clone(),
             google_connection_url: crate::auth::google::connection_url(app_state.clone()),

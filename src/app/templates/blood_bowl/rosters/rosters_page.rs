@@ -1,9 +1,11 @@
 use crate::app::templates::NavigationBar;
-use crate::auth::UserProfile;
+use crate::data::users::User;
 use crate::AppState;
 use askama::Template;
 use askama_web::WebTemplate;
 use blood_bowl_rs::rosters::Roster;
+use blood_bowl_rs::translation::TranslatedName;
+use blood_bowl_rs::translation::TypeName;
 use blood_bowl_rs::versions::Version;
 use serde::Deserialize;
 
@@ -21,11 +23,7 @@ pub struct RostersPage {
 }
 
 impl RostersPage {
-    pub fn from(
-        app_state: AppState,
-        profile: Option<UserProfile>,
-        version: Option<Version>,
-    ) -> Self {
+    pub fn from(app_state: AppState, profile: Option<User>, version: Option<Version>) -> Self {
         let mut ordered_rosters = Roster::list(version);
         ordered_rosters.sort_by(|a, b| a.name("fr").cmp(&b.name("fr")));
 

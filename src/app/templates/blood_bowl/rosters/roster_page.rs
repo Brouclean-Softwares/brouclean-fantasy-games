@@ -1,9 +1,11 @@
 use crate::app::templates::NavigationBar;
-use crate::auth::UserProfile;
+use crate::data::users::User;
 use crate::AppState;
 use askama::Template;
 use askama_web::WebTemplate;
 use blood_bowl_rs::rosters::Roster;
+use blood_bowl_rs::translation::TranslatedName;
+use blood_bowl_rs::translation::TypeName;
 use blood_bowl_rs::versions::Version;
 use serde::Deserialize;
 
@@ -24,7 +26,7 @@ pub struct RosterPage {
 impl RosterPage {
     pub fn from(
         app_state: AppState,
-        profile: Option<UserProfile>,
+        profile: Option<User>,
         version: Option<Version>,
         roster: Option<Roster>,
     ) -> Self {
