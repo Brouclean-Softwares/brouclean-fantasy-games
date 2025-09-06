@@ -29,6 +29,7 @@ async fn main(
         http_requester: Client::new(),
         key: Key::generate(),
         google_oauth_client: auth::google::build_oauth_client(&secrets),
+        admin_email: secrets.get("ADMIN_EMAIL").unwrap(),
     };
 
     let router = init_router(state);
@@ -55,6 +56,7 @@ pub struct AppState {
     http_requester: Client,
     key: Key,
     google_oauth_client: BasicClient,
+    admin_email: String,
 }
 
 // this impl tells `SignedCookieJar` how to access the key from our state

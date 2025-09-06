@@ -57,7 +57,7 @@ pub async fn callback(
         .http_only(true)
         .max_age(TimeDuration::seconds(secs));
 
-    let user_profile: User = profile.upsert_and_select(&app_state).await?;
+    let user_profile: User = profile.upsert(&app_state).await?;
 
     Session::upsert(
         &app_state,
@@ -69,7 +69,7 @@ pub async fn callback(
 
     Ok((
         jar.add(cookie),
-        HomePage::from(app_state, Some(user_profile)),
+        HomePage::get(app_state, Some(user_profile)),
     ))
 }
 

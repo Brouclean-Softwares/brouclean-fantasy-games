@@ -14,8 +14,13 @@
             </div>
             <div class="uk-width-expand">
                 <h2 class="uk-margin-remove-bottom">
-                    {{ user_profile.name }}
+                    {% if is_admin %}
+                        (Administrateur)
+                    {% else %}
+                        {{ user_profile.name }}
+                    {% endif %}
                 </h2>
+
                 <p class="uk-margin-remove-top">
                     {{ user_profile.email }}
                 </p>

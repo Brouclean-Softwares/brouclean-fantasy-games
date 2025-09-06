@@ -8,6 +8,7 @@ use serde::Deserialize;
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
 pub struct User {
+    pub id: i32,
     pub email: String,
     pub name: String,
     pub given_name: String,
@@ -42,9 +43,14 @@ impl FromRequestParts<AppState> for User {
 }
 
 impl User {
+    pub fn is_admin(&self, state: &AppState) -> bool {
+        state.admin_email.eq(&self.email)
+    }
+
     pub async fn select_connected_user(state: &AppState, cookie: String) -> Result<Self, AppError> {
         let connected_user: User = sqlx::query_as(
             "SELECT
+                    users.id,
                     users.email,
                     users.name,
                     users.given_name,
@@ -62,7 +68,7 @@ impl User {
         Ok(connected_user)
     }
 
-    pub async fn upsert_and_select(&self, state: &AppState) -> Result<Self, AppError> {
+    pub async fn upsert(&self, state: &AppState) -> Result<Self, AppError> {
         let upserted_user: User = sqlx::query_as(
             "INSERT INTO users (email, name, given_name, family_name, picture)
                 VALUES ($1, $2, $3, $4, $5)
@@ -72,7 +78,7 @@ impl User {
                     family_name = excluded.family_name,
                     picture = excluded.picture,
                     last_updated = CURRENT_TIMESTAMP
-                RETURNING users.email, users.name, given_name, family_name, users.picture",
+                RETURNING users.id, users.email, users.name, given_name, family_name, users.picture",
         )
         .bind(self.email.clone())
         .bind(self.name.clone())

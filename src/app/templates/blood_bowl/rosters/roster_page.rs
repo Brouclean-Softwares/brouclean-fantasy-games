@@ -10,7 +10,7 @@ use blood_bowl_rs::versions::Version;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
-pub struct RosterQueryParams {
+pub struct QueryParams {
     pub version: Option<Version>,
     pub roster: Option<Roster>,
 }
@@ -24,14 +24,14 @@ pub struct RosterPage {
 }
 
 impl RosterPage {
-    pub fn from(
+    pub fn get(
         app_state: AppState,
         profile: Option<User>,
         version: Option<Version>,
         roster: Option<Roster>,
     ) -> Self {
         Self {
-            navigation_bar: NavigationBar::from(&app_state, &profile),
+            navigation_bar: NavigationBar::get(&app_state, &profile),
             roster,
             version,
         }

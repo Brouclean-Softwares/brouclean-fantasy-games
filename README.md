@@ -87,6 +87,7 @@ For the app to run you need to create a Secrets.toml (and a Secrets.dev.toml for
 ```
 # General
 APP_URL = "URL of the app, ex: http://localhost:8000"
+ADMIN_EMAIL = "Your admin email"
 
 # Database
 DB_PASSWORD = "Your db user password"

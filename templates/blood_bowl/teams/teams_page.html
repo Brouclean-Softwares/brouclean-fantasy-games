@@ -1,0 +1,37 @@
+{% extends "page_base.html" %}
+
+{% block navbar %}
+{{ navigation_bar|escape("none") }}
+{% endblock %}
+
+{% block body %}
+<div class="uk-section">
+    <div class="uk-container">
+        <h2>
+            Equipes
+        </h2>
+        <div class="uk-overflow-auto">
+            <table class="uk-table uk-table-striped uk-table-small uk-table-hover">
+                <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Roster</th>
+                    <th>Trésorerie</th>
+                </tr>
+                </thead>
+                {% for team in teams %}
+                <tr>
+                    <td>{{ team.name }}</td>
+                    <td>
+                        <img src="/assets/images/blood_bowl/{{ team.roster.type_name() }}Logo.webp" width="25" height="25" alt="">
+                        {{ team.roster.name("fr") }} ({{ team.version.type_name() }})
+                    </td>
+                    <td>{{ team.treasury / 1000 }}k</td>
+                </tr>
+                {% endfor %}
+                <tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

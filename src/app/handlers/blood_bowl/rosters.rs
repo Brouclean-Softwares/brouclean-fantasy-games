@@ -1,5 +1,6 @@
-use crate::app::templates::blood_bowl::rosters::roster_page::{RosterPage, RosterQueryParams};
-use crate::app::templates::blood_bowl::rosters::rosters_page::{RostersPage, RostersQueryParams};
+use crate::app::templates::blood_bowl::rosters::roster_page::RosterPage;
+use crate::app::templates::blood_bowl::rosters::rosters_page::RostersPage;
+use crate::app::templates::blood_bowl::rosters::{roster_page, rosters_page};
 use crate::data::users::User;
 use crate::AppState;
 use axum::extract::{Query, State};
@@ -15,15 +16,15 @@ pub fn init_router() -> Router<AppState> {
 pub async fn rosters(
     State(app_state): State<AppState>,
     profile: Option<User>,
-    Query(params): Query<RostersQueryParams>,
+    Query(params): Query<rosters_page::QueryParams>,
 ) -> RostersPage {
-    RostersPage::from(app_state, profile, params.version)
+    RostersPage::get(app_state, profile, params.version)
 }
 
 pub async fn roster(
     State(app_state): State<AppState>,
     profile: Option<User>,
-    Query(params): Query<RosterQueryParams>,
+    Query(params): Query<roster_page::QueryParams>,
 ) -> RosterPage {
-    RosterPage::from(app_state, profile, params.version, params.roster)
+    RosterPage::get(app_state, profile, params.version, params.roster)
 }
