@@ -1,5 +1,5 @@
 use crate::app::templates::NavigationBar;
-use crate::data::blood_bowl::teams::Team;
+use crate::data::blood_bowl::teams::BBTeam;
 use crate::data::users::User;
 use crate::AppState;
 use askama::Template;
@@ -11,13 +11,15 @@ use blood_bowl_rs::translation::TypeName;
 #[template(path = "blood_bowl/teams/teams_page.html")]
 pub struct TeamsPage {
     navigation_bar: NavigationBar,
-    teams: Vec<Team>,
+    profile: Option<User>,
+    teams: Vec<BBTeam>,
 }
 
 impl TeamsPage {
-    pub fn get(app_state: AppState, profile: Option<User>, teams: Vec<Team>) -> Self {
+    pub fn get(app_state: AppState, profile: Option<User>, teams: Vec<BBTeam>) -> Self {
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
+            profile,
             teams,
         }
     }

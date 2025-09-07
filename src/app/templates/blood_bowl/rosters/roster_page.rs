@@ -7,18 +7,12 @@ use blood_bowl_rs::rosters::Roster;
 use blood_bowl_rs::translation::TranslatedName;
 use blood_bowl_rs::translation::TypeName;
 use blood_bowl_rs::versions::Version;
-use serde::Deserialize;
-
-#[derive(Deserialize)]
-pub struct QueryParams {
-    pub version: Option<Version>,
-    pub roster: Option<Roster>,
-}
 
 #[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/rosters/roster_page.html")]
 pub struct RosterPage {
     navigation_bar: NavigationBar,
+    profile: Option<User>,
     roster: Option<Roster>,
     version: Option<Version>,
 }
@@ -32,6 +26,7 @@ impl RosterPage {
     ) -> Self {
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
+            profile,
             roster,
             version,
         }

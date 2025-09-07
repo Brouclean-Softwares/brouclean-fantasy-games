@@ -8,7 +8,7 @@ use serde::Deserialize;
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
 pub struct User {
-    pub id: i32,
+    pub id: Option<i32>,
     pub email: String,
     pub name: String,
     pub given_name: String,

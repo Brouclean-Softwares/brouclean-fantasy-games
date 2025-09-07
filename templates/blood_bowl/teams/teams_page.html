@@ -16,9 +16,12 @@
                 <tr>
                     <th>Nom</th>
                     <th>Roster</th>
+                    <th>Valeur d'équipe</th>
+                    <th>Valeur d'équipe actuelle</th>
                     <th>Trésorerie</th>
                 </tr>
                 </thead>
+
                 {% for team in teams %}
                 <tr>
                     <td>{{ team.name }}</td>
@@ -26,12 +29,22 @@
                         <img src="/assets/images/blood_bowl/{{ team.roster.type_name() }}Logo.webp" width="25" height="25" alt="">
                         {{ team.roster.name("fr") }} ({{ team.version.type_name() }})
                     </td>
+                    <td>{{ team.value / 1000 }}k</td>
+                    <td>{{ team.current_value / 1000 }}k</td>
                     <td>{{ team.treasury / 1000 }}k</td>
                 </tr>
                 {% endfor %}
                 <tbody>
             </table>
         </div>
+
+        {% if let Some(user_profile) = profile %}
+        <div>
+            <a href="/blood_bowl/rosters" class="uk-button uk-button-primary uk-button-small">
+                Créer une nouvelle équipe
+            </a>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

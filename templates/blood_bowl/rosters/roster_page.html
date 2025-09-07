@@ -25,6 +25,12 @@
             </div>
         </div>
 
+        {% if let Some(user_profile) = profile %}
+        <div uk-sticky>
+            <a href="" class="uk-button uk-button-primary uk-button-small">Créer une nouvelle équipe</a>
+        </div>
+        {% endif %}
+
         <div>
             <img src="/assets/images/blood_bowl/{{ roster.type_name() }}Team.jpg" alt="">
         </div>
