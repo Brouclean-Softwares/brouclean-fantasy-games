@@ -30,6 +30,9 @@ pub enum AppError {
 
     #[error("Encountered an error trying to convert an infallible value: {0}")]
     FromRequestPartsError(#[from] std::convert::Infallible),
+
+    #[error("Blood Bowl error: {0}")]
+    BloodBowlError(#[from] blood_bowl_rs::errors::Error),
 }
 
 impl IntoResponse for AppError {
@@ -45,6 +48,7 @@ impl IntoResponse for AppError {
             ),
             Self::ParseIntError(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
             Self::FromRequestPartsError(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
+            Self::BloodBowlError(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
         };
 
         response.into_response()

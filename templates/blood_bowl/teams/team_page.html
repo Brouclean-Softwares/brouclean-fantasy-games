@@ -1,0 +1,78 @@
+{% extends "page_base.html" %}
+
+{% block navbar %}
+{{ navigation_bar|escape("none") }}
+{% endblock %}
+
+{% block body %}
+<div class="uk-section">
+    <div class="uk-container">
+
+        <div class="uk-grid-small uk-flex-middle uk-margin-bottom" uk-grid>
+            <div class="uk-width-auto">
+                {% if let Some(logo) = team.external_logo_url %}
+                <img src="{{ logo }}" width="75" height="75" alt="">
+                {% else %}
+                <img src="/assets/images/blood_bowl/{{ team.roster.type_name() }}Logo.webp" width="75" height="75" alt="">
+                {% endif %}
+            </div>
+            <div class="uk-width-expand">
+                <h2 class="uk-margin-remove-bottom">
+                    {{ team.name }}
+                </h2>
+                <p class="uk-margin-remove-top">
+                    {{ team.roster.name("fr") }} (Catégorie {{ roster_definition.tier }})
+                </p>
+            </div>
+        </div>
+
+        <h3>
+            Joueurs
+        </h3>
+        <div class="uk-overflow-auto">
+            <table class="uk-table uk-table-striped uk-table-small">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Nom</th>
+                    <th>Poste</th>
+                    <th>M</th>
+                    <th>F</th>
+                    <th>AG</th>
+                    <th>CP</th>
+                    <th>AR</th>
+                    <th>Compétences & Traits</th>
+                    <th>Valeur</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                {% for (number, player) in team.players %}
+
+                <tr>
+                    <td>{{ number }}</td>
+                    <td>{{ player.name }}</td>
+                    <td>{{ player.position.name("fr") }}</td>
+                    <td>{{ player.movement_allowance(team.roster)? }}</td>
+                    <td>{{ player.strength(team.roster)? }}</td>
+                    <td>{{ player.agility(team.roster)? }}</td>
+
+                    {% if let Some(passing_ability) = player.passing_ability(team.roster)? %}
+                    <td>{{ passing_ability }}+</td>
+                    {% else %}
+                    <td>-</td>
+                    {% endif %}
+
+                    <td>{{ player.armour_value(team.roster)? }}</td>
+                    <td>{{ player.skills_names(team.roster, "fr")? }}</td>
+                    <td>{{ player.value(team.roster)? / 1000 }}k</td>
+                </tr>
+
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

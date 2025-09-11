@@ -9,9 +9,9 @@
     <div class="uk-container">
 
         {% if let Some(roster) = roster %}
-            {% if let Some(roster_definition) = roster.definition(version.into()) %}
+        {% if let Some(roster_definition) = roster.definition(version.into()) %}
 
-        <div class="uk-grid-small uk-flex-middle" uk-grid>
+        <div class="uk-grid-small uk-flex-middle uk-margin-bottom" uk-grid>
             <div class="uk-width-auto">
                 <img src="/assets/images/blood_bowl/{{ roster.type_name() }}Logo.webp" width="75" height="75" alt="">
             </div>
@@ -25,12 +25,6 @@
             </div>
         </div>
 
-        {% if let Some(user_profile) = profile %}
-        <div uk-sticky>
-            <a href="" class="uk-button uk-button-primary uk-button-small">Créer une nouvelle équipe</a>
-        </div>
-        {% endif %}
-
         <div>
             <img src="/assets/images/blood_bowl/{{ roster.type_name() }}Team.jpg" alt="">
         </div>
@@ -42,15 +36,15 @@
             <table class="uk-table uk-table-striped uk-table-small">
                 <thead>
                 <tr>
-                    <th>QTE</th>
-                    <th>POSTE</th>
-                    <th>COÛT</th>
+                    <th>Qte</th>
+                    <th>Poste</th>
+                    <th>Coût</th>
                     <th>M</th>
                     <th>F</th>
                     <th>AG</th>
                     <th>CP</th>
                     <th>AR</th>
-                    <th>COMPÉTENCES & TRAITS</th>
+                    <th>Compétences et Traits</th>
                     <th>P</th>
                     <th>S</th>
                 </tr>
@@ -59,7 +53,7 @@
                 <tbody>
                 {% for position in roster_definition.positions %}
 
-                {% if let Some(position_definition) = position.definition(Some(roster_definition.version.into())) %}
+                {% if let Some(position_definition) = position.definition(Some(roster_definition.version.into()), roster.clone()) %}
                 <tr>
                     <td>0-{{ position_definition.maximum_quantity }}</td>
                     <td>{{ position.name("fr") }}</td>
@@ -90,8 +84,8 @@
             Staff
         </h3>
         <ul>
-            {% for (staff, staff_price) in roster_definition.staff_prices %}
-            <li>{{ staff.name("fr") }}: {{ staff_price / 1000 }}k</li>
+            {% for (staff, staff_information) in roster_definition.staff_information %}
+            <li>{{ staff.name("fr") }}: {{ staff_information.price / 1000 }}k</li>
             {% endfor %}
         </ul>
 
@@ -104,7 +98,14 @@
             {% endfor %}
         </ul>
 
-            {% else %}
+        {% if let Some(user_profile) = profile %}
+        <a href="../teams/new?version={{ roster_definition.version.type_name() }}&roster={{ roster.type_name() }}"
+           class="uk-button uk-button-primary">
+            Créer une nouvelle équipe
+        </a>
+        {% endif %}
+
+        {% else %}
 
         <h2>
             <img src="/assets/images/blood_bowl/{{ roster.type_name() }}Logo.webp" width="100" height="100" alt="">
@@ -114,7 +115,7 @@
             Ce roster n'existe pas sur cette version des règles
         </p>
 
-            {% endif %}
+        {% endif %}
 
         {% else %}
 

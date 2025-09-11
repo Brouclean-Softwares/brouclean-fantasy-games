@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS bb_teams (
     roster VARCHAR NOT NULL,
     coach_id INTEGER REFERENCES users ON DELETE SET NULL,
     treasury INTEGER NOT NULL,
+    dedicated_fans INTEGER NOT NULL,
     value INTEGER NOT NULL,
     current_value INTEGER NOT NULL,
     external_logo_url VARCHAR,
@@ -14,10 +15,10 @@ CREATE TABLE IF NOT EXISTS bb_teams (
 );
 
 CREATE TABLE IF NOT EXISTS bb_teams_staff (
-    id SERIAL PRIMARY KEY,
     staff VARCHAR NOT NULL,
     number INTEGER NOT NULL,
-    team_id INTEGER NOT NULL REFERENCES bb_teams ON DELETE CASCADE
+    team_id INTEGER NOT NULL REFERENCES bb_teams ON DELETE CASCADE,
+    CONSTRAINT staff_unique UNIQUE (staff, team_id)
 );
 
 CREATE TABLE IF NOT EXISTS bb_players (
@@ -25,7 +26,6 @@ CREATE TABLE IF NOT EXISTS bb_players (
     version VARCHAR NOT NULL,
     name VARCHAR NOT NULL,
     position VARCHAR NOT NULL,
-    value INTEGER NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     retired_at TIMESTAMP WITH TIME ZONE,
     last_updated TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -34,7 +34,8 @@ CREATE TABLE IF NOT EXISTS bb_players (
 CREATE TABLE IF NOT EXISTS bb_teams_players (
     number INTEGER NOT NULL,
     team_id INTEGER REFERENCES bb_teams ON DELETE SET NULL,
-    player_id INTEGER NOT NULL REFERENCES bb_players ON DELETE SET NULL,
+    player_id INTEGER NOT NULL REFERENCES bb_players ON DELETE CASCADE,
     contract_start TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    contract_end TIMESTAMP WITH TIME ZONE
+    contract_end TIMESTAMP WITH TIME ZONE,
+    CONSTRAINT number_unique UNIQUE (number, team_id, contract_end)
 );

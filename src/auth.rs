@@ -1,4 +1,4 @@
-use crate::app::templates::users::user_page::UserPage;
+use crate::app::templates::users::UserPage;
 use crate::data::users::User;
 use crate::AppState;
 use axum::extract::State;

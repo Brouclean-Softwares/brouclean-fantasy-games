@@ -2,6 +2,8 @@ use crate::data::users::User;
 use crate::AppState;
 use askama::Template;
 use askama_web::WebTemplate;
+use std::fmt;
+use std::fmt::Formatter;
 
 pub mod blood_bowl;
 pub mod users;
@@ -45,4 +47,29 @@ impl NavigationBar {
             is_admin,
         }
     }
+}
+
+pub enum AlertType {
+    Primary,
+    Success,
+    Warning,
+    Danger,
+}
+
+impl fmt::Display for AlertType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            AlertType::Primary => write!(f, "primary"),
+            AlertType::Success => write!(f, "success"),
+            AlertType::Warning => write!(f, "warning"),
+            AlertType::Danger => write!(f, "danger"),
+        }
+    }
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "alert_message.html")]
+pub struct AlertMessage {
+    pub alert_type: AlertType,
+    pub message: String,
 }

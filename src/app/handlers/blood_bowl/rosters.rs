@@ -1,5 +1,4 @@
-use crate::app::templates::blood_bowl::rosters::roster_page::RosterPage;
-use crate::app::templates::blood_bowl::rosters::rosters_page::RostersPage;
+use crate::app::templates::blood_bowl::rosters::{RosterPage, RostersPage};
 use crate::data::users::User;
 use crate::AppState;
 use axum::extract::{Query, State};
