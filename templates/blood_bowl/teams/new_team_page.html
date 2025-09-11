@@ -1,0 +1,199 @@
+{% extends "page_base.html" %}
+
+{% block navbar %}
+{{ navigation_bar|escape("none") }}
+{% endblock %}
+
+{% block messages %}
+{% if let Some(alert_message) = alert_message %}
+    {{ alert_message|escape("none") }}
+{% endif %}
+{% endblock %}
+
+{% block body %}
+<div class="uk-section">
+    <div class="uk-container">
+
+        {% if let Some(roster_definition) = roster.definition(version.into()) %}
+
+        <div class="uk-grid-small uk-flex-middle uk-margin-bottom" uk-grid>
+            <div class="uk-width-auto">
+                <img src="/assets/images/blood_bowl/{{ roster.type_name() }}Logo.webp" width="75" height="75" alt="">
+            </div>
+            <div class="uk-width-expand">
+                <h2 class="uk-margin-remove-bottom">
+                    Nouvelle équipe
+                </h2>
+                <p class="uk-margin-remove-top">
+                    {{ roster.name("fr") }} (Cat. {{ roster_definition.tier }})
+                </p>
+            </div>
+        </div>
+
+        <form method="post" autocomplete="off">
+            <input id="version" name="version" type="hidden" value="{{ version.type_name() }}">
+            <input id="roster" name="roster" type="hidden" value="{{ roster.type_name() }}">
+
+            <div class="uk-background-default" uk-sticky>
+                <h3>
+                    Trésorerie: <span id="treasury_text">1000</span>k
+                </h3>
+                <input id="treasury" name="treasury" type="hidden" value="{{ initial_treasury }}">
+            </div>
+
+            <h3>
+                Joueurs
+            </h3>
+            <div class="uk-overflow-auto">
+                <table class="uk-table uk-table-striped uk-table-small">
+                    <thead>
+                    <tr>
+                        <th>Qte</th>
+                        <th>Poste</th>
+                        <th>Coût</th>
+                        <th>M</th>
+                        <th>F</th>
+                        <th>AG</th>
+                        <th>CP</th>
+                        <th>AR</th>
+                        <th>Compétences et Traits</th>
+                        <th>P</th>
+                        <th>S</th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+                    {% for position in roster_definition.positions %}
+
+                    {% if let Some(position_definition) = position.definition(Some(roster_definition.version.into()), roster.clone()) %}
+                    <tr>
+                        <td>
+                            <input id="{{ position.type_name() }}"
+                                   name="{{ position.type_name() }}"
+                                   class="uk-input"
+                                   style="width: 70px;"
+                                   type="number"
+                                   value="0"
+                                   min="0" max="{{ position_definition.maximum_quantity }}"
+                                   onchange="update_team()"
+                                   aria-label="Input">
+                        </td>
+                        <td>{{ position.name("fr") }}</td>
+                        <td>{{ position_definition.cost / 1000 }}k</td>
+                        <td>{{ position_definition.movement_allowance() }}</td>
+                        <td>{{ position_definition.strength() }}</td>
+                        <td>{{ position_definition.agility() }}+</td>
+
+                        {% if let Some(passing_ability) = position_definition.passing_ability() %}
+                        <td>{{ passing_ability }}+</td>
+                        {% else %}
+                        <td>-</td>
+                        {% endif %}
+
+                        <td>{{ position_definition.armour_value() }}+</td>
+                        <td>{{ position_definition.skills_names("fr") }}</td>
+                        <td>{{ position_definition.primary_skill_categories_first_letter("fr") }}</td>
+                        <td>{{ position_definition.secondary_skill_categories_first_letter("fr") }}</td>
+                    </tr>
+                    {% endif %}
+
+                    {% endfor %}
+                    </tbody>
+
+                    <tfoot>
+                    <tr>
+                        <td colspan="11">
+                            Nombre de joueurs: <span id="players_quantity">0</span>
+                            <input id="players" name="players" type="hidden" value="{}">
+                        </td>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <h3>
+                Staff
+            </h3>
+            <ul>
+                {% for (staff, staff_information) in roster_definition.staff_information %}
+                <li>
+                    <input id="{{ staff.snake_case_type() }}"
+                           name="{{ staff.snake_case_type() }}"
+                           class="uk-input"
+                           style="width: 70px;"
+                           type="number"
+                           value="0"
+                           min="0"
+                           max="{{ staff_information.maximum }}"
+                           onchange="update_team()"
+                           aria-label="Input">
+                    <span>
+                        {{ staff.name("fr") }}: {{ staff_information.price / 1000 }}k
+                    </span>
+                </li>
+                {% endfor %}
+            </ul>
+
+            <h3>
+                Fans dévoués:
+                <input id="dedicated_fans"
+                       name="dedicated_fans"
+                       class="uk-input"
+                       style="width: 70px;"
+                       type="number"
+                       value="1"
+                       min="{{ roster_definition.dedicated_fans_information.initial }}"
+                       max="{{ roster_definition.dedicated_fans_information.maximum }}"
+                       onchange="update_team()"
+                       aria-label="Input">
+            </h3>
+
+            <button class="uk-button uk-button-primary">Créer</button>
+
+            <script>
+                function update_team() {
+                    var dedicated_fans = document.getElementById('dedicated_fans');
+
+                    var treasury = {{ initial_treasury }} - {{ roster_definition.dedicated_fans_information.price }} * (dedicated_fans.value -1);
+                    var players_quantity = 0;
+                    var players = new Map();
+
+                    {% for position in roster_definition.positions %}
+                    {% if let Some(position_definition) = position.definition(Some(roster_definition.version.into()), roster.clone()) %}
+
+                    treasury = treasury - ({{ position_definition.cost }} * document.getElementById('{{ position.type_name() }}').value);
+                    players_quantity = players_quantity + Number(document.getElementById('{{ position.type_name() }}').value);
+                    players.set("{{ position.type_name() }}", Number(document.getElementById('{{ position.type_name() }}').value));
+
+                    {% endif %}
+                    {% endfor %}
+
+                    {% for (staff, staff_information) in roster_definition.staff_information %}
+
+                    treasury = treasury - ({{ staff_information.price }} * document.getElementById('{{ staff.snake_case_type() }}').value);
+
+                    {% endfor %}
+
+                    document.getElementById('treasury').value = treasury;
+                    document.getElementById('treasury_text').textContent = (treasury / 1000).toString();
+                    document.getElementById('players_quantity').textContent = players_quantity.toString();
+                    document.getElementById('players').value = JSON.stringify(Object.fromEntries(players));
+                }
+            </script>
+        </form>
+
+        {% else %}
+
+        <h2>
+            <img src="/assets/images/blood_bowl/{{ roster.type_name() }}Logo.webp" width="100" height="100" alt="">
+            {{ roster.name("fr") }}
+        </h2>
+        <p>
+            Ce roster n'existe pas sur cette version des règles
+        </p>
+
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
