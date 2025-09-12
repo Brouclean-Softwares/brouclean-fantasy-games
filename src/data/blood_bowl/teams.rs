@@ -198,3 +198,33 @@ pub async fn create(state: &AppState, coach: &User, bb_team: &Team) -> Result<i3
 
     Ok(new_team_id.id)
 }
+
+pub async fn update_name(
+    state: &AppState,
+    connected_user: &User,
+    team_id: &i32,
+    name: &String,
+) -> Result<(), AppError> {
+    tracing::debug!(
+        "update_name by user={:?} for team_id={} with name={}",
+        connected_user,
+        team_id,
+        name
+    );
+
+    if let Some(connected_user_id) = connected_user.id {
+        sqlx::query(
+            "UPDATE bb_teams
+        SET name = $1
+        WHERE id = $2
+        AND coach_id = $3",
+        )
+        .bind(name.clone())
+        .bind(team_id.clone())
+        .bind(connected_user_id.clone())
+        .execute(&state.db)
+        .await?;
+    }
+
+    Ok(())
+}

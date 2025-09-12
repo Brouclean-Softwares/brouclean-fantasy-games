@@ -1,6 +1,6 @@
 use crate::app::templates::blood_bowl::teams::{NewTeamPage, TeamPage, TeamsPage};
 use crate::app::templates::{AlertMessage, AlertType};
-use crate::data::blood_bowl::teams;
+use crate::data::blood_bowl::{players, teams};
 use crate::data::users::User;
 use crate::errors::AppError;
 use crate::AppState;
@@ -20,7 +20,7 @@ pub fn init_router() -> Router<AppState> {
     Router::new()
         .route("/", get(teams))
         .route("/new", get(new_team).post(create_team))
-        .route("/team", get(get_team))
+        .route("/team", get(get_team).post(post_team))
 }
 
 pub async fn teams(
@@ -163,5 +163,66 @@ pub async fn get_team(
         .definition(Some(team.version))
         .ok_or(Redirect::to("../teams"))?;
 
-    Ok(TeamPage::get(app_state, profile, team, roster_definition))
+    let edit_mode = match (profile.clone(), team.coach_id) {
+        (Some(user), Some(coach_id)) => {
+            if let Some(user_id) = user.id {
+                user_id.eq(&coach_id)
+            } else {
+                false
+            }
+        }
+        _ => false,
+    };
+
+    Ok(TeamPage::get(
+        app_state,
+        profile,
+        team,
+        roster_definition,
+        edit_mode,
+    ))
+}
+
+#[derive(Deserialize)]
+pub struct TeamForm {
+    pub team_name: Option<String>,
+    pub player_id: Option<i32>,
+    pub player_name: Option<String>,
+    pub player_number: Option<i32>,
+}
+
+pub async fn post_team(
+    State(app_state): State<AppState>,
+    profile: Option<User>,
+    Query(params): Query<TeamQueryParams>,
+    Form(form): Form<TeamForm>,
+) -> Result<Redirect, Redirect> {
+    let redirect = Redirect::to(&format!("./team?id={}", params.id));
+
+    match (
+        profile,
+        form.team_name,
+        form.player_id,
+        form.player_name,
+        form.player_number,
+    ) {
+        (Some(profile), Some(team_name), _, _, _) => {
+            teams::update_name(&app_state, &profile, &params.id, &team_name)
+                .await
+                .or(Err(redirect.clone()))?
+        }
+        (Some(profile), _, Some(player_id), Some(player_name), _) => {
+            players::update_name(&app_state, &profile, &params.id, &player_id, &player_name)
+                .await
+                .or(Err(redirect.clone()))?
+        }
+        (Some(profile), _, Some(player_id), _, Some(player_number)) => {
+            players::update_number(&app_state, &profile, &params.id, &player_id, &player_number)
+                .await
+                .or(Err(redirect.clone()))?
+        }
+        _ => {}
+    };
+
+    Ok(redirect)
 }

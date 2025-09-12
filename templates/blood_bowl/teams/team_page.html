@@ -18,7 +18,24 @@
             </div>
             <div class="uk-width-expand">
                 <h2 class="uk-margin-remove-bottom">
-                    {{ team.name }}
+
+                    {% if edit_mode %}
+                        <form method="post" autocomplete="off">
+                            <div class="uk-inline">
+                                <a class="uk-form-icon uk-form-icon-flip" href="#" uk-icon="icon: pencil"></a>
+                                <input class="uk-input"
+                                       name="team_name"
+                                       type="text"
+                                       value="{{ team.name }}"
+                                       placeholder="Nom de l'équipe..."
+                                       onchange="submit()"
+                                       aria-label="">
+                            </div>
+                        </form>
+                    {% else %}
+                        {{ team.name }}
+                    {% endif %}
+
                 </h2>
                 <p class="uk-margin-remove-top">
                     {{ team.roster.name("fr") }} (Catégorie {{ roster_definition.tier }})
@@ -30,10 +47,31 @@
             Informations générales
         </h3>
         <ul>
-            <li>Coach: {{ team.coach_name }}</li>
-            <li>Valeur d'équipe (VE): {{ team.value()? / 1000 }}k</li>
-            <li>Valeur d'équipe actuelle (VEA): {{ team.current_value()? / 1000 }}k</li>
-            <li>Fans dévoués: {{ team.dedicated_fans }}</li>
+            <li>
+                <span>Roster: </span>
+                <img src="/assets/images/blood_bowl/{{ team.roster.type_name() }}Logo.webp" width="25" height="25" alt="">
+                <span class="uk-text-bold">{{ team.roster.name("fr") }} ({{ team.version.type_name() }})</span>
+            </li>
+            <li>
+                <span>Coach: </span>
+                <span class="uk-text-bold">{{ team.coach_name }}</span>
+            </li>
+            <li>
+                <span>Fans dévoués: </span>
+                <span class="uk-text-bold">{{ team.dedicated_fans }}</span>
+            </li>
+            <li>
+                <span>Trésorerie: </span>
+                <span class="uk-text-bold">{{ team.treasury }}k</span>
+            </li>
+            <li>
+                <span>Valeur d'équipe (VE): </span>
+                <span class="uk-text-bold">{{ team.value()? / 1000 }}k</span>
+            </li>
+            <li>
+                <span>Valeur d'équipe actuelle (VEA): </span>
+                <span class="uk-text-bold">{{ team.current_value()? / 1000 }}k</span>
+            </li>
         </ul>
 
         <h3>
@@ -60,12 +98,53 @@
                 {% for (number, player) in team.players %}
 
                 <tr>
-                    <td>{{ number }}</td>
-                    <td>{{ player.name }}</td>
+                    <td>
+                        {% if edit_mode %}
+                        <form method="post" autocomplete="off">
+                            <input name="player_id" type="hidden" value="{{ player.id.unwrap() }}">
+
+                            <div class="uk-inline">
+                                <a class="uk-form-icon uk-form-icon-flip" href="#" uk-icon="icon: pencil"></a>
+                                <input class="uk-input"
+                                       style="width: 70px;"
+                                       name="player_number"
+                                       type="text"
+                                       value="{{ number }}"
+                                       placeholder="Numéro du joueur..."
+                                       onchange="submit()"
+                                       aria-label="">
+                            </div>
+                        </form>
+                        {% else %}
+                            {{ number }}
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if edit_mode %}
+                        <form method="post" autocomplete="off">
+                            <input name="player_id" type="hidden" value="{{ player.id.unwrap() }}">
+
+                            <div class="uk-inline">
+                                <a class="uk-form-icon uk-form-icon-flip" href="#" uk-icon="icon: pencil"></a>
+                                <input class="uk-input uk-form-width-medium"
+                                       name="player_name"
+                                       type="text"
+                                       value="{{ player.name }}"
+                                       placeholder="Nom du joueur..."
+                                       onchange="submit()"
+                                       aria-label="">
+                            </div>
+                        </form>
+                        {% else %}
+                            {{ player.name }}
+                        {% endif %}
+                    </td>
+
                     <td>{{ player.position.name("fr") }}</td>
                     <td>{{ player.movement_allowance(team.roster)? }}</td>
                     <td>{{ player.strength(team.roster)? }}</td>
-                    <td>{{ player.agility(team.roster)? }}</td>
+                    <td>{{ player.agility(team.roster)? }}+</td>
 
                     {% if let Some(passing_ability) = player.passing_ability(team.roster)? %}
                     <td>{{ passing_ability }}+</td>
@@ -73,7 +152,7 @@
                     <td>-</td>
                     {% endif %}
 
-                    <td>{{ player.armour_value(team.roster)? }}</td>
+                    <td>{{ player.armour_value(team.roster)? }}+</td>
                     <td>{{ player.skills_names(team.roster, "fr")? }}</td>
                     <td>{{ player.value(team.roster)? / 1000 }}k</td>
                 </tr>
@@ -100,9 +179,8 @@
         <ul>
         {% for (staff, staff_information) in roster_definition.staff_information %}
             <li>
-                <span>
-                    {{ staff.name("fr") }} ({{ staff_information.price / 1000 }}k): {{ team.staff_quantity(staff) }}
-                </span>
+                <span>{{ staff.name("fr") }} ({{ staff_information.price / 1000 }}k): </span>
+                <span class="uk-text-bold">{{ team.staff_quantity(staff) }}</span>
             </li>
         {% endfor %}
         </ul>

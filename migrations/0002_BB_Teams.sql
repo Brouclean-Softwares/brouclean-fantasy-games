@@ -36,6 +36,5 @@ CREATE TABLE IF NOT EXISTS bb_teams_players (
     team_id INTEGER REFERENCES bb_teams ON DELETE SET NULL,
     player_id INTEGER NOT NULL REFERENCES bb_players ON DELETE CASCADE,
     contract_start TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    contract_end TIMESTAMP WITH TIME ZONE,
-    CONSTRAINT number_unique UNIQUE (number, team_id, contract_end)
+    contract_end TIMESTAMP WITH TIME ZONE
 );

@@ -80,6 +80,7 @@ pub struct TeamPage {
     navigation_bar: NavigationBar,
     team: Team,
     roster_definition: RosterDefinition,
+    edit_mode: bool,
 }
 
 impl TeamPage {
@@ -88,11 +89,13 @@ impl TeamPage {
         profile: Option<User>,
         team: Team,
         roster_definition: RosterDefinition,
+        edit_mode: bool,
     ) -> Self {
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
             team,
             roster_definition,
+            edit_mode,
         }
     }
 }
