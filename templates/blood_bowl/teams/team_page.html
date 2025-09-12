@@ -27,6 +27,16 @@
         </div>
 
         <h3>
+            Informations générales
+        </h3>
+        <ul>
+            <li>Coach: {{ team.coach_name }}</li>
+            <li>Valeur d'équipe (VE): {{ team.value()? / 1000 }}k</li>
+            <li>Valeur d'équipe actuelle (VEA): {{ team.current_value()? / 1000 }}k</li>
+            <li>Fans dévoués: {{ team.dedicated_fans }}</li>
+        </ul>
+
+        <h3>
             Joueurs
         </h3>
         <div class="uk-overflow-auto">
@@ -70,8 +80,32 @@
 
                 {% endfor %}
                 </tbody>
+
+                <tfoot>
+                <tr>
+                    <td colspan="10">
+                        Nombre de joueurs: {{ team.number_of_players() }}
+                        <br>
+                        ({{ team.number_of_available_players() }} disponibles)
+                    </td>
+                </tr>
+                </tfoot>
             </table>
         </div>
+
+        <h3>
+            Staff
+        </h3>
+
+        <ul>
+        {% for (staff, staff_information) in roster_definition.staff_information %}
+            <li>
+                <span>
+                    {{ staff.name("fr") }} ({{ staff_information.price / 1000 }}k): {{ team.staff_quantity(staff) }}
+                </span>
+            </li>
+        {% endfor %}
+        </ul>
 
     </div>
 </div>

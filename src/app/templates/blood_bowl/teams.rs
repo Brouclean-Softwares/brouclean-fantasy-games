@@ -69,7 +69,7 @@ impl NewTeamPage {
             alert_message: message,
             version,
             roster,
-            initial_treasury: Team::initial_treasury(version),
+            initial_treasury: Team::initial_treasury(&version),
         }
     }
 }

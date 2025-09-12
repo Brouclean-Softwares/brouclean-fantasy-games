@@ -1,5 +1,5 @@
 use crate::app::templates::blood_bowl::teams::TeamListRow;
-use crate::data::blood_bowl::players;
+use crate::data::blood_bowl::{players, staff};
 use crate::data::users::User;
 use crate::errors::AppError;
 use crate::AppState;
@@ -93,7 +93,9 @@ pub async fn select_from_id(state: &AppState, id: i32) -> Result<Team, AppError>
     .fetch_one(&state.db)
     .await?;
 
-    let players = players::select_from_id(state, id).await?;
+    let players = players::select_under_contract_for_team(state, id).await?;
+
+    let staff = staff::select_for_team(state, id).await?;
 
     Ok(Team {
         id: Some(team.id),
@@ -104,7 +106,7 @@ pub async fn select_from_id(state: &AppState, id: i32) -> Result<Team, AppError>
         coach_name: team.coach_name.unwrap_or_default(),
         treasury: team.treasury,
         external_logo_url: team.external_logo_url,
-        staff: Default::default(),
+        staff,
         players,
         dedicated_fans: team.dedicated_fans as u8,
     })

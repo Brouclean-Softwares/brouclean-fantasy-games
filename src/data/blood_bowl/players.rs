@@ -14,11 +14,11 @@ struct PlayerDetail {
     number: i32,
 }
 
-pub async fn select_from_id(
+pub async fn select_under_contract_for_team(
     state: &AppState,
     team_id: i32,
 ) -> Result<Vec<(i32, Player)>, AppError> {
-    tracing::debug!("select_from_id with team_id={}", team_id);
+    tracing::debug!("select_under_contract_for_team with team_id={}", team_id);
 
     let players_detail: Vec<PlayerDetail> = sqlx::query_as(
         "SELECT bb_players.id,
@@ -29,6 +29,7 @@ pub async fn select_from_id(
             FROM bb_players
             LEFT JOIN bb_teams_players ON bb_players.id = bb_teams_players.player_id
             WHERE bb_teams_players.team_id = $1
+            AND bb_teams_players.contract_end IS NULL
             ORDER BY bb_teams_players.number ASC",
     )
     .bind(team_id.clone())
