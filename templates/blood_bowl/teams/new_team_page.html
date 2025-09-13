@@ -115,7 +115,7 @@
                 Staff
             </h3>
             <ul>
-                {% for (staff, staff_information) in roster_definition.staff_information %}
+                {% for (staff, staff_information) in roster_definition.staff_information_sorted_by_name("fr") %}
                 <li>
                     <input id="{{ staff.snake_case_type() }}"
                            name="{{ staff.snake_case_type() }}"

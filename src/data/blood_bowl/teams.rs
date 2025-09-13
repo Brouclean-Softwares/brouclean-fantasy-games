@@ -69,6 +69,7 @@ struct TeamDetail {
     external_logo_url: Option<String>,
     treasury: i32,
     dedicated_fans: i32,
+    under_creation: bool,
 }
 
 pub async fn select_from_id(state: &AppState, id: i32) -> Result<Team, AppError> {
@@ -84,7 +85,8 @@ pub async fn select_from_id(state: &AppState, id: i32) -> Result<Team, AppError>
                     users.picture as coach_picture,
                     bb_teams.external_logo_url,
                     bb_teams.treasury,
-                    bb_teams.dedicated_fans
+                    bb_teams.dedicated_fans,
+                    bb_teams.under_creation
             FROM bb_teams
             LEFT JOIN users ON bb_teams.coach_id = users.id
             WHERE bb_teams.id = $1",
@@ -109,6 +111,7 @@ pub async fn select_from_id(state: &AppState, id: i32) -> Result<Team, AppError>
         staff,
         players,
         dedicated_fans: team.dedicated_fans as u8,
+        under_creation: team.under_creation,
     })
 }
 

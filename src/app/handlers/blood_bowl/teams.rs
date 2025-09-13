@@ -1,6 +1,6 @@
 use crate::app::templates::blood_bowl::teams::{NewTeamPage, TeamPage, TeamsPage};
 use crate::app::templates::{AlertMessage, AlertType};
-use crate::data::blood_bowl::{players, teams};
+use crate::data::blood_bowl::{players, staff, teams};
 use crate::data::users::User;
 use crate::errors::AppError;
 use crate::AppState;
@@ -143,6 +143,7 @@ pub async fn create_team(
 #[derive(Deserialize)]
 pub struct TeamQueryParams {
     pub id: i32,
+    pub alert_message: Option<String>,
 }
 
 pub async fn get_team(
@@ -174,9 +175,17 @@ pub async fn get_team(
         _ => false,
     };
 
+    let alert_message: Option<AlertMessage> = params.alert_message.and_then(|message| {
+        Some(AlertMessage {
+            alert_type: AlertType::Danger,
+            message,
+        })
+    });
+
     Ok(TeamPage::get(
         app_state,
         profile,
+        alert_message,
         team,
         roster_definition,
         edit_mode,
@@ -189,6 +198,7 @@ pub struct TeamForm {
     pub player_id: Option<i32>,
     pub player_name: Option<String>,
     pub player_number: Option<i32>,
+    pub staff_to_buy: Option<Staff>,
 }
 
 pub async fn post_team(
@@ -197,32 +207,60 @@ pub async fn post_team(
     Query(params): Query<TeamQueryParams>,
     Form(form): Form<TeamForm>,
 ) -> Result<Redirect, Redirect> {
-    let redirect = Redirect::to(&format!("./team?id={}", params.id));
-
     match (
         profile,
         form.team_name,
         form.player_id,
         form.player_name,
         form.player_number,
+        form.staff_to_buy,
     ) {
-        (Some(profile), Some(team_name), _, _, _) => {
+        (Some(profile), Some(team_name), _, _, _, _) => {
             teams::update_name(&app_state, &profile, &params.id, &team_name)
                 .await
-                .or(Err(redirect.clone()))?
+                .or_else(|app_error| {
+                    Err(Redirect::to(&format!(
+                        "./team?id={}&message={}",
+                        params.id, app_error
+                    )))
+                })?
         }
-        (Some(profile), _, Some(player_id), Some(player_name), _) => {
+
+        (Some(profile), _, Some(player_id), Some(player_name), _, _) => {
             players::update_name(&app_state, &profile, &params.id, &player_id, &player_name)
                 .await
-                .or(Err(redirect.clone()))?
+                .or_else(|app_error| {
+                    Err(Redirect::to(&format!(
+                        "./team?id={}&message={}",
+                        params.id, app_error
+                    )))
+                })?
         }
-        (Some(profile), _, Some(player_id), _, Some(player_number)) => {
+
+        (Some(profile), _, Some(player_id), _, Some(player_number), _) => {
             players::update_number(&app_state, &profile, &params.id, &player_id, &player_number)
                 .await
-                .or(Err(redirect.clone()))?
+                .or_else(|app_error| {
+                    Err(Redirect::to(&format!(
+                        "./team?id={}&message={}",
+                        params.id, app_error
+                    )))
+                })?
         }
+
+        (Some(profile), _, _, _, _, Some(staff_to_buy)) => {
+            staff::buy_staff_for_team(&app_state, &profile, params.id, staff_to_buy)
+                .await
+                .or_else(|app_error| {
+                    Err(Redirect::to(&format!(
+                        "./team?id={}&message={}",
+                        params.id, app_error
+                    )))
+                })?
+        }
+
         _ => {}
     };
 
-    Ok(redirect)
+    Ok(Redirect::to(&format!("./team?id={}", params.id)))
 }

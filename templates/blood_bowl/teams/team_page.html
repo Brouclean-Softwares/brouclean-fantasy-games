@@ -4,6 +4,12 @@
 {{ navigation_bar|escape("none") }}
 {% endblock %}
 
+{% block messages %}
+{% if let Some(alert_message) = alert_message %}
+{{ alert_message|escape("none") }}
+{% endif %}
+{% endblock %}
+
 {% block body %}
 <div class="uk-section">
     <div class="uk-container">
@@ -62,7 +68,7 @@
             </li>
             <li>
                 <span>Trésorerie: </span>
-                <span class="uk-text-bold">{{ team.treasury }}k</span>
+                <span class="uk-text-bold">{{ team.treasury / 1000 }}k</span>
             </li>
             <li>
                 <span>Valeur d'équipe (VE): </span>
@@ -177,10 +183,33 @@
         </h3>
 
         <ul>
-        {% for (staff, staff_information) in roster_definition.staff_information %}
+        {% for (staff, staff_information) in roster_definition.staff_information_sorted_by_name("fr") %}
             <li>
-                <span>{{ staff.name("fr") }} ({{ staff_information.price / 1000 }}k): </span>
-                <span class="uk-text-bold">{{ team.staff_quantity(staff) }}</span>
+                <form id="buy_{{ staff.type_name() }}_form" method="post" autocomplete="off">
+                    <input name="staff_to_buy" type="hidden" value="{{ staff.type_name() }}">
+
+                    <span>{{ staff.name("fr") }} ({{ staff_information.price / 1000 }}k): </span>
+                    <span class="uk-text-bold">{{ team.staff_quantity(staff) }}</span>
+
+                    {% if edit_mode && team.can_buy_staff(staff)? %}
+                        <button class="uk-button uk-button-link uk-margin-left"
+                                type="button"
+                                uk-toggle="target: #modal-{{ staff.type_name() }}">
+                            <span uk-icon="icon: cart"></span>
+                        </button>
+
+                        <div id="modal-{{ staff.type_name() }}" uk-modal>
+                            <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                                <h2 class="uk-modal-title">Achat de {{ staff.lower_name("fr") }} en cours</h2>
+                                <p>Confirmez-vous l'achat pour {{ staff_information.price / 1000 }}k ?</p>
+                                <p class="uk-text-right">
+                                    <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                                    <button class="uk-button uk-button-primary" onclick="document.getElementById('buy_{{ staff.type_name() }}_form').submit()">Confirmer</button>
+                                </p>
+                            </div>
+                        </div>
+                    {% endif %}
+                </form>
             </li>
         {% endfor %}
         </ul>

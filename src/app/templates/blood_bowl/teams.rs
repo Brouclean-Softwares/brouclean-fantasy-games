@@ -78,6 +78,7 @@ impl NewTeamPage {
 #[template(path = "blood_bowl/teams/team_page.html")]
 pub struct TeamPage {
     navigation_bar: NavigationBar,
+    alert_message: Option<AlertMessage>,
     team: Team,
     roster_definition: RosterDefinition,
     edit_mode: bool,
@@ -87,12 +88,14 @@ impl TeamPage {
     pub fn get(
         app_state: AppState,
         profile: Option<User>,
+        alert_message: Option<AlertMessage>,
         team: Team,
         roster_definition: RosterDefinition,
         edit_mode: bool,
     ) -> Self {
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
+            alert_message,
             team,
             roster_definition,
             edit_mode,
