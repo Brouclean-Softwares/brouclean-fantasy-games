@@ -14,9 +14,7 @@
         <div class="uk-child-width-1-3@m uk-grid-small uk-grid-match" uk-grid>
 
         {% for roster in rosters %}
-
-            {% match roster.definition(version.into()) %}
-            {% when Some(roster_definition) %}
+            {% if let Ok(roster_definition) = roster.definition(version.into()) %}
 
             <div class="uk-card uk-card-default uk-card-hover uk-card-small">
                 <a class="uk-link-reset" href="./rosters/roster?version={{ roster_definition.version.type_name() }}&roster={{ roster.type_name() }}">
@@ -44,8 +42,7 @@
                 </a>
             </div>
 
-            {% when None %}
-            {% endmatch %}
+            {% endif %}
         {% endfor %}
 
         </div>

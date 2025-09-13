@@ -1,5 +1,6 @@
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
+use blood_bowl_rs::translation::TranslatedName;
 use std::fmt::{Display, Formatter};
 use thiserror::Error;
 
@@ -62,7 +63,11 @@ impl Display for AppError {
                 error
             ),
             AppError::BloodBowlError(error) => {
-                write!(f, "Règles de blood bowl : {}", error.translate_to("fr"))
+                write!(
+                    f,
+                    "Règles de blood bowl non respectées : {}",
+                    error.name("fr")
+                )
             }
         }
     }

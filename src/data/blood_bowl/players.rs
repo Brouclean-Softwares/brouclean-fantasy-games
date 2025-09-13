@@ -1,3 +1,4 @@
+use crate::data::blood_bowl::teams;
 use crate::data::users::User;
 use crate::errors::AppError;
 use crate::AppState;
@@ -122,6 +123,81 @@ pub async fn update_number(
         .bind(connected_user_id.clone())
         .execute(&state.db)
         .await?;
+    }
+
+    Ok(())
+}
+
+#[derive(Deserialize, sqlx::FromRow, Clone)]
+struct Id {
+    id: i32,
+}
+
+pub async fn buy_position_for_team(
+    state: &AppState,
+    connected_user: &User,
+    team_id: i32,
+    position: Position,
+) -> Result<(), AppError> {
+    tracing::debug!(
+        "buy_position_for_team by user={:?} for team_id={} with position={:?}",
+        connected_user,
+        team_id,
+        position
+    );
+
+    if let Some(connected_user_id) = connected_user.id {
+        let mut team = teams::select_from_id(state, team_id).await?;
+        let (number, player) = team.buy_position(&position)?;
+        let team_value = team.value()?;
+        let team_current_value = team.current_value()?;
+
+        let mut transaction = state.db.begin().await?;
+
+        let new_player_id: Id = sqlx::query_as(
+            "INSERT INTO bb_players (
+                version,
+                name,
+                position)
+            VALUES ($1, $2, $3)
+            RETURNING id",
+        )
+        .bind(player.version.clone())
+        .bind(player.name.clone())
+        .bind(player.position.clone())
+        .fetch_one(&mut *transaction)
+        .await?;
+
+        sqlx::query(
+            "INSERT INTO bb_teams_players (
+                number,
+                team_id,
+                player_id)
+            VALUES ($1, $2, $3)",
+        )
+        .bind(number.clone())
+        .bind(team_id.clone())
+        .bind(new_player_id.id.clone())
+        .execute(&mut *transaction)
+        .await?;
+
+        sqlx::query(
+            "UPDATE bb_teams
+            SET treasury = $1,
+                value = $2,
+                current_value = $3
+            WHERE id = $4
+            AND coach_id = $5",
+        )
+        .bind(team.treasury.clone())
+        .bind(team_value.clone() as i32)
+        .bind(team_current_value.clone() as i32)
+        .bind(team_id.clone())
+        .bind(connected_user_id.clone())
+        .execute(&mut *transaction)
+        .await?;
+
+        transaction.commit().await?;
     }
 
     Ok(())

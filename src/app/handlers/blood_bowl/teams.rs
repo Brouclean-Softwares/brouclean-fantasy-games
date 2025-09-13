@@ -10,7 +10,7 @@ use axum::{Form, Router};
 use blood_bowl_rs::positions::Position;
 use blood_bowl_rs::rosters::{Roster, Staff};
 use blood_bowl_rs::teams::Team;
-use blood_bowl_rs::translation::TypeName;
+use blood_bowl_rs::translation::{TranslatedName, TypeName};
 use blood_bowl_rs::versions::Version;
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -114,7 +114,7 @@ pub async fn create_team(
             form.roster,
             Some(AlertMessage {
                 alert_type: AlertType::Danger,
-                message: error.translate_to("fr"),
+                message: error.name("fr"),
             }),
         )
     })?;
@@ -159,7 +159,7 @@ pub async fn get_team(
     let roster_definition = team
         .roster
         .definition(Some(team.version))
-        .ok_or(Redirect::to("../teams"))?;
+        .or(Err(Redirect::to("../teams")))?;
 
     let edit_mode = match (profile.clone(), team.coach_id) {
         (Some(user), Some(coach_id)) => {
@@ -179,6 +179,8 @@ pub async fn get_team(
         })
     });
 
+    let positions_buyable = team.positions_buyable().or(Err(Redirect::to("../teams")))?;
+
     Ok(TeamPage::get(
         app_state,
         profile,
@@ -186,6 +188,7 @@ pub async fn get_team(
         team,
         roster_definition,
         edit_mode,
+        positions_buyable,
     ))
 }
 
@@ -196,6 +199,7 @@ pub struct TeamForm {
     pub player_name: Option<String>,
     pub player_number: Option<i32>,
     pub staff_to_buy: Option<Staff>,
+    pub position_to_buy: Option<Position>,
 }
 
 pub async fn post_team(
@@ -211,8 +215,9 @@ pub async fn post_team(
         form.player_name,
         form.player_number,
         form.staff_to_buy,
+        form.position_to_buy,
     ) {
-        (Some(profile), Some(team_name), _, _, _, _) => {
+        (Some(profile), Some(team_name), _, _, _, _, _) => {
             teams::update_name(&app_state, &profile, &params.id, &team_name)
                 .await
                 .or_else(|app_error| {
@@ -223,7 +228,7 @@ pub async fn post_team(
                 })?
         }
 
-        (Some(profile), _, Some(player_id), Some(player_name), _, _) => {
+        (Some(profile), _, Some(player_id), Some(player_name), _, _, _) => {
             players::update_name(&app_state, &profile, &params.id, &player_id, &player_name)
                 .await
                 .or_else(|app_error| {
@@ -234,7 +239,7 @@ pub async fn post_team(
                 })?
         }
 
-        (Some(profile), _, Some(player_id), _, Some(player_number), _) => {
+        (Some(profile), _, Some(player_id), _, Some(player_number), _, _) => {
             players::update_number(&app_state, &profile, &params.id, &player_id, &player_number)
                 .await
                 .or_else(|app_error| {
@@ -245,8 +250,19 @@ pub async fn post_team(
                 })?
         }
 
-        (Some(profile), _, _, _, _, Some(staff_to_buy)) => {
+        (Some(profile), _, _, _, _, Some(staff_to_buy), _) => {
             staff::buy_staff_for_team(&app_state, &profile, params.id, staff_to_buy)
+                .await
+                .or_else(|app_error| {
+                    Err(Redirect::to(&format!(
+                        "./team?id={}&message={}",
+                        params.id, app_error
+                    )))
+                })?
+        }
+
+        (Some(profile), _, _, _, _, _, Some(position_to_buy)) => {
+            players::buy_position_for_team(&app_state, &profile, params.id, position_to_buy)
                 .await
                 .or_else(|app_error| {
                     Err(Redirect::to(&format!(

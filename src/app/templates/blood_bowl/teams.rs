@@ -5,6 +5,7 @@ use crate::errors::AppError;
 use crate::{data, AppState};
 use askama::Template;
 use askama_web::WebTemplate;
+use blood_bowl_rs::positions::Position;
 use blood_bowl_rs::rosters::{Roster, RosterDefinition};
 use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::translation::{TranslatedName, TypeName};
@@ -82,6 +83,7 @@ pub struct TeamPage {
     team: Team,
     roster_definition: RosterDefinition,
     edit_mode: bool,
+    positions_buyable: Vec<(Position, u32, bool)>,
 }
 
 impl TeamPage {
@@ -92,6 +94,7 @@ impl TeamPage {
         team: Team,
         roster_definition: RosterDefinition,
         edit_mode: bool,
+        positions_buyable: Vec<(Position, u32, bool)>,
     ) -> Self {
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
@@ -99,6 +102,7 @@ impl TeamPage {
             team,
             roster_definition,
             edit_mode,
+            positions_buyable,
         }
     }
 }

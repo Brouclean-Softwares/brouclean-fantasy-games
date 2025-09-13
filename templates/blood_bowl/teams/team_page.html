@@ -169,11 +169,55 @@
                 <tfoot>
                 <tr>
                     <td colspan="10">
-                        Nombre de joueurs : {{ team.number_of_players() }}
+                        <span>Nombre de joueurs : </span>
+                        <span class="uk-text-bold">{{ team.number_of_players() }}</span>
                         <br>
-                        ({{ team.number_of_available_players() }} disponibles)
+                        <span>({{ team.number_of_available_players() }} disponibles pour le prochain match)</span>
                     </td>
                 </tr>
+
+                {% if edit_mode %}
+                <tr>
+                    <td colspan="10">
+                        <form id="buy_player_form" method="post" autocomplete="off">
+                            <span>Postes restant à pourvoir : </span>
+                            <select id="position_to_buy" name="position_to_buy" class="uk-select uk-form-width-large" aria-label="Select">
+
+                                {% for (position, price, buyable) in positions_buyable %}
+                                <option value="{{ position.type_name() }}"
+                                        {% if ! buyable %}disabled{% endif %}>
+                                    {{ position.name("fr") }} ({{ price / 1000 }}k)
+                                </option>
+                                {% endfor %}
+
+                            </select>
+
+                            {% if team.can_buy_player()? %}
+                            <button class="uk-button uk-button-link uk-margin-left"
+                                    type="button"
+                                    uk-toggle="target: #modal-buy-player">
+                                <span uk-icon="icon: cart"></span>
+                            </button>
+
+                            <div id="modal-buy-player" uk-modal>
+                                <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                                    <h2 class="uk-modal-title">Achat de joueur en cours</h2>
+                                    <p>Confirmez-vous l'achat pour le poste ?</p>
+                                    <p class="uk-text-right">
+                                        <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                                        <button class="uk-button uk-button-primary"
+                                                onclick="document.getElementById('buy_player_form').submit()">
+                                            Confirmer
+                                        </button>
+                                    </p>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </form>
+                    </td>
+                </tr>
+                {% endif %}
+
                 </tfoot>
             </table>
         </div>
@@ -204,7 +248,10 @@
                                 <p>Confirmez-vous l'achat pour {{ staff_information.price / 1000 }}k ?</p>
                                 <p class="uk-text-right">
                                     <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
-                                    <button class="uk-button uk-button-primary" onclick="document.getElementById('buy_{{ staff.type_name() }}_form').submit()">Confirmer</button>
+                                    <button class="uk-button uk-button-primary"
+                                            onclick="document.getElementById('buy_{{ staff.type_name() }}_form').submit()">
+                                        Confirmer
+                                    </button>
                                 </p>
                             </div>
                         </div>
@@ -228,7 +275,10 @@
                     <p>Confirmez-vous la suppression de l'équipe ?</p>
                     <p class="uk-text-right">
                         <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
-                        <button class="uk-button uk-button-danger" onclick="document.getElementById('delete_form').submit()">Confirmer</button>
+                        <button class="uk-button uk-button-danger"
+                                onclick="document.getElementById('delete_form').submit()">
+                            Confirmer
+                        </button>
                     </p>
                 </div>
             </div>
