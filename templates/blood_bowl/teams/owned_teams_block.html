@@ -1,0 +1,46 @@
+
+<div class="uk-overflow-auto">
+    <table class="uk-table uk-table-striped uk-table-small uk-table-hover">
+        <thead>
+        <tr>
+            <th>Nom</th>
+            <th>Roster</th>
+            <th>Valeur</th>
+            <th>Valeur actuelle</th>
+        </tr>
+        </thead>
+
+        {% for team in owned_teams %}
+        <tr>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ team.id }}">
+                    {{ team.name }}
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ team.id }}">
+                    <img src="/assets/images/blood_bowl/{{ team.roster.type_name() }}Logo.webp" width="25" height="25" alt="">
+                    {{ team.roster.name("fr") }} ({{ team.version.type_name() }})
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ team.id }}">
+                    {{ team.value / 1000 }}k
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ team.id }}">
+                    {{ team.current_value / 1000 }}k
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+        <tbody>
+    </table>
+</div>
+
+<div class="uk-margin-top">
+    <a href="/blood_bowl/rosters" class="uk-button uk-button-primary">
+        Créer une nouvelle équipe
+    </a>
+</div>

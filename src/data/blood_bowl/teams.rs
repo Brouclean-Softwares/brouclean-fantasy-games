@@ -1,4 +1,5 @@
 use crate::app::templates::blood_bowl::teams::TeamListRow;
+use crate::app::templates::blood_bowl::OwnedTeamListRow;
 use crate::data::blood_bowl::{players, staff};
 use crate::data::users::User;
 use crate::errors::AppError;
@@ -18,7 +19,6 @@ pub async fn select_all(state: &AppState) -> Result<Vec<TeamListRow>, AppError> 
                     bb_teams.roster,
                     bb_teams.coach_id,
                     users.name as coach_name,
-                    bb_teams.treasury,
                     bb_teams.external_logo_url,
                     bb_teams.value,
                     bb_teams.current_value
@@ -32,17 +32,17 @@ pub async fn select_all(state: &AppState) -> Result<Vec<TeamListRow>, AppError> 
     Ok(teams)
 }
 
-pub async fn select_owned(state: &AppState, coach: User) -> Result<Vec<TeamListRow>, AppError> {
+pub async fn select_owned(
+    state: &AppState,
+    coach: User,
+) -> Result<Vec<OwnedTeamListRow>, AppError> {
     tracing::debug!("select_owned for coach={:?}", coach);
 
-    let teams: Vec<TeamListRow> = sqlx::query_as(
+    let owned_teams: Vec<OwnedTeamListRow> = sqlx::query_as(
         "SELECT bb_teams.id,
                     bb_teams.version,
                     bb_teams.name,
                     bb_teams.roster,
-                    bb_teams.coach_id,
-                    users.name as coach_name,
-                    users.picture as coach_picture,
                     bb_teams.external_logo_url,
                     bb_teams.value,
                     bb_teams.current_value
@@ -55,7 +55,7 @@ pub async fn select_owned(state: &AppState, coach: User) -> Result<Vec<TeamListR
     .fetch_all(&state.db)
     .await?;
 
-    Ok(teams)
+    Ok(owned_teams)
 }
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
@@ -227,6 +227,77 @@ pub async fn update_name(
         .bind(connected_user_id.clone())
         .execute(&state.db)
         .await?;
+    }
+
+    Ok(())
+}
+
+pub async fn delete(
+    state: &AppState,
+    connected_user: &User,
+    team_id: &i32,
+) -> Result<(), AppError> {
+    tracing::debug!(
+        "delete by user={:?} for team_id={}",
+        connected_user,
+        team_id,
+    );
+
+    if let Some(connected_user_id) = connected_user.id {
+        let mut transaction = state.db.begin().await?;
+
+        sqlx::query(
+            "DELETE
+                FROM bb_players
+                USING bb_teams_players, bb_teams
+                WHERE bb_players.id = bb_teams_players.player_id
+                AND bb_teams.id = bb_teams_players.team_id
+                AND bb_teams.id = $1
+                AND bb_teams.coach_id = $2",
+        )
+        .bind(team_id.clone())
+        .bind(connected_user_id.clone())
+        .execute(&mut *transaction)
+        .await?;
+
+        sqlx::query(
+            "DELETE
+                FROM bb_teams_players
+                USING bb_teams
+                WHERE bb_teams.id = bb_teams_players.team_id
+                AND bb_teams.id = $1
+                AND bb_teams.coach_id = $2",
+        )
+        .bind(team_id.clone())
+        .bind(connected_user_id.clone())
+        .execute(&mut *transaction)
+        .await?;
+
+        sqlx::query(
+            "DELETE
+                FROM bb_teams_staff
+                USING bb_teams
+                WHERE bb_teams.id = bb_teams_staff.team_id
+                AND bb_teams.id = $1
+                AND bb_teams.coach_id = $2",
+        )
+        .bind(team_id.clone())
+        .bind(connected_user_id.clone())
+        .execute(&mut *transaction)
+        .await?;
+
+        sqlx::query(
+            "DELETE
+                FROM bb_teams
+                WHERE id = $1
+                AND coach_id = $2",
+        )
+        .bind(team_id.clone())
+        .bind(connected_user_id.clone())
+        .execute(&mut *transaction)
+        .await?;
+
+        transaction.commit().await?;
     }
 
     Ok(())

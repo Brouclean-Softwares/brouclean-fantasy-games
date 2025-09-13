@@ -1,16 +1,12 @@
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
+use std::fmt::{Display, Formatter};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum AppError {
-    #[error("SQL error: {0}")]
     SQL(#[from] sqlx::Error),
-
-    #[error("HTTP request error: {0}")]
     Request(#[from] reqwest::Error),
-
-    #[error("OAuth token error: {0}")]
     TokenError(
         #[from]
         oauth2::RequestTokenError<
@@ -18,20 +14,10 @@ pub enum AppError {
             oauth2::StandardErrorResponse<oauth2::basic::BasicErrorResponseType>,
         >,
     ),
-
-    #[error("You're not authorized!")]
     Unauthorized,
-
-    #[error("Attempted to get a non-none value but found none")]
     OptionError,
-
-    #[error("Attempted to parse a number to an integer but errored out: {0}")]
     ParseIntError(#[from] std::num::TryFromIntError),
-
-    #[error("Encountered an error trying to convert an infallible value: {0}")]
     FromRequestPartsError(#[from] std::convert::Infallible),
-
-    #[error("Blood Bowl error: {0}")]
     BloodBowlError(#[from] blood_bowl_rs::errors::Error),
 }
 
@@ -52,5 +38,32 @@ impl IntoResponse for AppError {
         };
 
         response.into_response()
+    }
+}
+
+impl Display for AppError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            AppError::SQL(error) => write!(f, "Oups! Souci avec la base de données : {}", error),
+            AppError::Request(error) => {
+                write!(f, "Oups! Souci avec les appels internets : {}", error)
+            }
+            AppError::TokenError(error) => write!(f, "Oups! Souci de connexion : {}", error),
+            AppError::Unauthorized => write!(f, "Pas le droit d'accéder à ce contenu"),
+            AppError::OptionError => write!(f, "Oups! Souci avec une valeur inexistante"),
+            AppError::ParseIntError(error) => write!(
+                f,
+                "Oups! Souci lors d'une conversion de données : {}",
+                error
+            ),
+            AppError::FromRequestPartsError(error) => write!(
+                f,
+                "Oups! Souci lors du déchiffrage de la requète web : {}",
+                error
+            ),
+            AppError::BloodBowlError(error) => {
+                write!(f, "Règles de blood bowl : {}", error.translate_to("fr"))
+            }
+        }
     }
 }

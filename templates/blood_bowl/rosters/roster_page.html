@@ -85,7 +85,7 @@
         </h3>
         <ul>
             {% for (staff, staff_information) in roster_definition.staff_information_sorted_by_name("fr") %}
-            <li>{{ staff.name("fr") }}: {{ staff_information.price / 1000 }}k</li>
+            <li>{{ staff.name("fr") }} : {{ staff_information.price / 1000 }}k</li>
             {% endfor %}
         </ul>
 

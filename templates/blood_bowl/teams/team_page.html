@@ -54,28 +54,28 @@
         </h3>
         <ul>
             <li>
-                <span>Roster: </span>
+                <span>Roster : </span>
                 <img src="/assets/images/blood_bowl/{{ team.roster.type_name() }}Logo.webp" width="25" height="25" alt="">
                 <span class="uk-text-bold">{{ team.roster.name("fr") }} ({{ team.version.type_name() }})</span>
             </li>
             <li>
-                <span>Coach: </span>
+                <span>Coach : </span>
                 <span class="uk-text-bold">{{ team.coach_name }}</span>
             </li>
             <li>
-                <span>Fans dévoués: </span>
+                <span>Fans dévoués : </span>
                 <span class="uk-text-bold">{{ team.dedicated_fans }}</span>
             </li>
             <li>
-                <span>Trésorerie: </span>
+                <span>Trésorerie : </span>
                 <span class="uk-text-bold">{{ team.treasury / 1000 }}k</span>
             </li>
             <li>
-                <span>Valeur d'équipe (VE): </span>
+                <span>Valeur d'équipe (VE) : </span>
                 <span class="uk-text-bold">{{ team.value()? / 1000 }}k</span>
             </li>
             <li>
-                <span>Valeur d'équipe actuelle (VEA): </span>
+                <span>Valeur d'équipe actuelle (VEA) : </span>
                 <span class="uk-text-bold">{{ team.current_value()? / 1000 }}k</span>
             </li>
         </ul>
@@ -169,7 +169,7 @@
                 <tfoot>
                 <tr>
                     <td colspan="10">
-                        Nombre de joueurs: {{ team.number_of_players() }}
+                        Nombre de joueurs : {{ team.number_of_players() }}
                         <br>
                         ({{ team.number_of_available_players() }} disponibles)
                     </td>
@@ -188,7 +188,7 @@
                 <form id="buy_{{ staff.type_name() }}_form" method="post" autocomplete="off">
                     <input name="staff_to_buy" type="hidden" value="{{ staff.type_name() }}">
 
-                    <span>{{ staff.name("fr") }} ({{ staff_information.price / 1000 }}k): </span>
+                    <span>{{ staff.name("fr") }} ({{ staff_information.price / 1000 }}k) : </span>
                     <span class="uk-text-bold">{{ team.staff_quantity(staff) }}</span>
 
                     {% if edit_mode && team.can_buy_staff(staff)? %}
@@ -213,6 +213,27 @@
             </li>
         {% endfor %}
         </ul>
+
+        {% if edit_mode && team.under_creation %}
+        <form id="delete_form" action="./delete" method="post" autocomplete="off">
+            <input id="id" name="id" type="hidden" value="{{ team.id.unwrap() }}">
+
+            <button class="uk-button uk-button-danger"
+                    type="button"
+                    uk-toggle="target: #modal-delete">Supprimer</button>
+
+            <div id="modal-delete" uk-modal>
+                <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                    <h2 class="uk-modal-title">Suppression de l'équipe en cours</h2>
+                    <p>Confirmez-vous la suppression de l'équipe ?</p>
+                    <p class="uk-text-right">
+                        <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                        <button class="uk-button uk-button-danger" onclick="document.getElementById('delete_form').submit()">Confirmer</button>
+                    </p>
+                </div>
+            </div>
+        </form>
+        {% endif %}
 
     </div>
 </div>

@@ -1,12 +1,13 @@
+use crate::app::templates::blood_bowl::OwnedTeamListRow;
 use crate::app::templates::{AlertMessage, NavigationBar};
 use crate::data::users::User;
-use crate::AppState;
+use crate::errors::AppError;
+use crate::{data, AppState};
 use askama::Template;
 use askama_web::WebTemplate;
 use blood_bowl_rs::rosters::{Roster, RosterDefinition};
 use blood_bowl_rs::teams::Team;
-use blood_bowl_rs::translation::TranslatedName;
-use blood_bowl_rs::translation::TypeName;
+use blood_bowl_rs::translation::{TranslatedName, TypeName};
 use blood_bowl_rs::versions::Version;
 use serde::Deserialize;
 
@@ -18,7 +19,6 @@ pub struct TeamListRow {
     pub roster: Roster,
     pub coach_id: Option<i32>,
     pub coach_name: Option<String>,
-    pub treasury: i32,
     pub value: i32,
     pub current_value: i32,
     pub external_logo_url: Option<String>,
@@ -100,5 +100,20 @@ impl TeamPage {
             roster_definition,
             edit_mode,
         }
+    }
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "blood_bowl/teams/owned_teams_block.html")]
+pub struct OwnedTeamsBlock {
+    owned_teams: Vec<OwnedTeamListRow>,
+}
+
+impl OwnedTeamsBlock {
+    pub async fn get(app_state: &AppState, profile: &User) -> Result<Self, AppError> {
+        let owned_teams =
+            data::blood_bowl::teams::select_owned(&app_state, profile.clone()).await?;
+
+        Ok(Self { owned_teams })
     }
 }

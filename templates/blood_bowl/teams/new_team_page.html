@@ -36,7 +36,7 @@
 
             <div class="uk-background-default" uk-sticky>
                 <h3>
-                    Trésorerie: <span id="treasury_text">1000</span>k
+                    Trésorerie : <span id="treasury_text">1000</span>k
                 </h3>
                 <input id="treasury" name="treasury" type="hidden" value="{{ initial_treasury }}">
             </div>
@@ -103,7 +103,7 @@
                     <tfoot>
                     <tr>
                         <td colspan="11">
-                            Nombre de joueurs: <span id="players_quantity">0</span>
+                            Nombre de joueurs : <span id="players_quantity">0</span>
                             <input id="players" name="players" type="hidden" value="{}">
                         </td>
                     </tr>
@@ -128,14 +128,14 @@
                            onchange="update_team()"
                            aria-label="Input">
                     <span>
-                        {{ staff.name("fr") }}: {{ staff_information.price / 1000 }}k
+                        {{ staff.name("fr") }} : {{ staff_information.price / 1000 }}k
                     </span>
                 </li>
                 {% endfor %}
             </ul>
 
             <h3>
-                Fans dévoués:
+                Fans dévoués :
                 <input id="dedicated_fans"
                        name="dedicated_fans"
                        class="uk-input"

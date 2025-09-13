@@ -353,7 +353,7 @@ dependencies = [
 [[package]]
 name = "blood-bowl-rs"
 version = "0.1.0"
-source = "git+https://gitlab.com/brouclean-softwares/blood-bowl-rs.git#e5860505fff6a82f3cd60343eff6badca770b116"
+source = "git+https://gitlab.com/brouclean-softwares/blood-bowl-rs.git#a02c9be9a03842e17eda06a84c5beedc40a540e8"
 dependencies = [
  "convert_case",
  "fluent-templates",

@@ -4,6 +4,7 @@ use askama::Template;
 use askama_web::WebTemplate;
 use std::fmt;
 use std::fmt::Formatter;
+use crate::app::templates::blood_bowl::teams::OwnedTeamsBlock;
 
 pub mod blood_bowl;
 pub mod users;

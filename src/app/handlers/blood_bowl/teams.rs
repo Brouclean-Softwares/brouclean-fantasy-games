@@ -2,11 +2,10 @@ use crate::app::templates::blood_bowl::teams::{NewTeamPage, TeamPage, TeamsPage}
 use crate::app::templates::{AlertMessage, AlertType};
 use crate::data::blood_bowl::{players, staff, teams};
 use crate::data::users::User;
-use crate::errors::AppError;
 use crate::AppState;
 use axum::extract::{Query, State};
 use axum::response::Redirect;
-use axum::routing::get;
+use axum::routing::{get, post};
 use axum::{Form, Router};
 use blood_bowl_rs::positions::Position;
 use blood_bowl_rs::rosters::{Roster, Staff};
@@ -21,13 +20,16 @@ pub fn init_router() -> Router<AppState> {
         .route("/", get(teams))
         .route("/new", get(new_team).post(create_team))
         .route("/team", get(get_team).post(post_team))
+        .route("/delete", post(delete_team))
 }
 
 pub async fn teams(
     State(app_state): State<AppState>,
     profile: Option<User>,
-) -> Result<TeamsPage, AppError> {
-    let teams = teams::select_all(&app_state).await?;
+) -> Result<TeamsPage, Redirect> {
+    let teams = teams::select_all(&app_state)
+        .await
+        .or_else(|_| Err(Redirect::to("/")))?;
 
     Ok(TeamsPage::get(app_state, profile, teams))
 }
@@ -42,13 +44,8 @@ pub async fn new_team(
     State(app_state): State<AppState>,
     profile: User,
     Query(params): Query<NewTeamQueryParams>,
-) -> Result<NewTeamPage, AppError> {
-    Ok(NewTeamPage::get(
-        app_state,
-        profile,
-        params.version,
-        params.roster,
-    ))
+) -> NewTeamPage {
+    NewTeamPage::get(app_state, profile, params.version, params.roster)
 }
 
 #[derive(Deserialize)]
@@ -263,4 +260,26 @@ pub async fn post_team(
     };
 
     Ok(Redirect::to(&format!("./team?id={}", params.id)))
+}
+
+#[derive(Deserialize)]
+pub struct DeleteTeamForm {
+    pub id: i32,
+}
+
+pub async fn delete_team(
+    State(app_state): State<AppState>,
+    profile: User,
+    Form(form): Form<DeleteTeamForm>,
+) -> Result<Redirect, Redirect> {
+    teams::delete(&app_state, &profile, &form.id)
+        .await
+        .or_else(|app_error| {
+            Err(Redirect::to(&format!(
+                "./team?id={}&message={}",
+                form.id, app_error
+            )))
+        })?;
+
+    Ok(Redirect::to("/blood_bowl"))
 }
