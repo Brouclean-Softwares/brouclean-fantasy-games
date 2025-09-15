@@ -82,6 +82,7 @@ pub struct TeamPage {
     alert_message: Option<AlertMessage>,
     team: Team,
     roster_definition: RosterDefinition,
+    editable: bool,
     edit_mode: bool,
     positions_buyable: Vec<(Position, u32, bool)>,
 }
@@ -93,6 +94,7 @@ impl TeamPage {
         alert_message: Option<AlertMessage>,
         team: Team,
         roster_definition: RosterDefinition,
+        editable: bool,
         edit_mode: bool,
         positions_buyable: Vec<(Position, u32, bool)>,
     ) -> Self {
@@ -101,6 +103,7 @@ impl TeamPage {
             alert_message,
             team,
             roster_definition,
+            editable,
             edit_mode,
             positions_buyable,
         }

@@ -16,15 +16,15 @@
         {% for roster in rosters %}
             {% if let Ok(roster_definition) = roster.definition(version.into()) %}
 
-            <div class="uk-card uk-card-default uk-card-hover uk-card-small">
-                <a class="uk-link-reset" href="./rosters/roster?version={{ roster_definition.version.type_name() }}&roster={{ roster.type_name() }}">
-                    <div class="uk-card-body">
+            <div>
+                <div class="uk-background-default uk-padding">
+                    <a class="uk-link-reset" href="./rosters/roster?version={{ roster_definition.version.type_name() }}&roster={{ roster.type_name() }}">
                         <div class="uk-grid-small uk-flex-middle" uk-grid>
                             <div class="uk-width-auto">
                                 <img width="75" height="75" src="/assets/images/blood_bowl/{{ roster.type_name() }}Logo.webp" alt="">
                             </div>
                             <div class="uk-width-expand">
-                                <h3 class="uk-card-title uk-margin-remove-bottom">{{ roster.name("fr") }}</h3>
+                                <h3 class="uk-margin-remove-bottom">{{ roster.name("fr") }}</h3>
                                 <p class="uk-text-meta uk-margin-remove-top">Catégorie {{ roster_definition.tier }}</p>
 
                                 {% if let Some(user_profile) = profile %}
@@ -38,8 +38,8 @@
                                 {% endif %}
                             </div>
                         </div>
-                    </div>
-                </a>
+                    </a>
+                </div>
             </div>
 
             {% endif %}

@@ -122,7 +122,7 @@ pub async fn create_team(
     let created_team_id = teams::create(&app_state, &profile, &team).await;
 
     match created_team_id {
-        Ok(team_id) => Ok(Redirect::to(&format!("team?id={}", team_id))),
+        Ok(team_id) => Ok(Redirect::to(&format!("team?id={}&edit=true", team_id))),
 
         Err(error) => Err(NewTeamPage::get_with_message(
             app_state,
@@ -141,6 +141,7 @@ pub async fn create_team(
 pub struct TeamQueryParams {
     pub id: i32,
     pub alert_message: Option<String>,
+    pub edit: Option<bool>,
 }
 
 pub async fn get_team(
@@ -161,7 +162,7 @@ pub async fn get_team(
         .definition(Some(team.version))
         .or(Err(Redirect::to("../teams")))?;
 
-    let edit_mode = match (profile.clone(), team.coach_id) {
+    let editable = match (profile.clone(), team.coach_id) {
         (Some(user), Some(coach_id)) => {
             if let Some(user_id) = user.id {
                 user_id.eq(&coach_id)
@@ -171,6 +172,8 @@ pub async fn get_team(
         }
         _ => false,
     };
+
+    let edit_mode = editable && params.edit.unwrap_or(false);
 
     let alert_message: Option<AlertMessage> = params.alert_message.and_then(|message| {
         Some(AlertMessage {
@@ -187,6 +190,7 @@ pub async fn get_team(
         alert_message,
         team,
         roster_definition,
+        editable,
         edit_mode,
         positions_buyable,
     ))
