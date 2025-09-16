@@ -226,8 +226,10 @@ pub async fn post_team(
                 .await
                 .or_else(|app_error| {
                     Err(Redirect::to(&format!(
-                        "./team?id={}&message={}",
-                        params.id, app_error
+                        "./team?id={}&message={}&edit={}",
+                        params.id,
+                        app_error,
+                        params.edit.unwrap_or(false)
                     )))
                 })?
         }
@@ -237,8 +239,10 @@ pub async fn post_team(
                 .await
                 .or_else(|app_error| {
                     Err(Redirect::to(&format!(
-                        "./team?id={}&message={}",
-                        params.id, app_error
+                        "./team?id={}&message={}&edit={}",
+                        params.id,
+                        app_error,
+                        params.edit.unwrap_or(false)
                     )))
                 })?
         }
@@ -248,8 +252,10 @@ pub async fn post_team(
                 .await
                 .or_else(|app_error| {
                     Err(Redirect::to(&format!(
-                        "./team?id={}&message={}",
-                        params.id, app_error
+                        "./team?id={}&message={}&edit={}",
+                        params.id,
+                        app_error,
+                        params.edit.unwrap_or(false)
                     )))
                 })?
         }
@@ -259,8 +265,10 @@ pub async fn post_team(
                 .await
                 .or_else(|app_error| {
                     Err(Redirect::to(&format!(
-                        "./team?id={}&message={}",
-                        params.id, app_error
+                        "./team?id={}&message={}&edit={}",
+                        params.id,
+                        app_error,
+                        params.edit.unwrap_or(false)
                     )))
                 })?
         }
@@ -270,8 +278,10 @@ pub async fn post_team(
                 .await
                 .or_else(|app_error| {
                     Err(Redirect::to(&format!(
-                        "./team?id={}&message={}",
-                        params.id, app_error
+                        "./team?id={}&message={}&edit={}",
+                        params.id,
+                        app_error,
+                        params.edit.unwrap_or(false)
                     )))
                 })?
         }
@@ -279,7 +289,11 @@ pub async fn post_team(
         _ => {}
     };
 
-    Ok(Redirect::to(&format!("./team?id={}", params.id)))
+    Ok(Redirect::to(&format!(
+        "./team?id={}&edit={}",
+        params.id,
+        params.edit.unwrap_or(false)
+    )))
 }
 
 #[derive(Deserialize)]

@@ -38,6 +38,10 @@
                                        aria-label="">
                             </div>
                         </form>
+                    {% elif editable %}
+                    <a class="uk-link-reset" href="team?id={{ team.id.unwrap() }}&edit=true">
+                        {{ team.name }}
+                    </a>
                     {% else %}
                         {{ team.name }}
                     {% endif %}
@@ -104,8 +108,8 @@
                 {% for (number, player) in team.players %}
 
                 <tr>
+                    {% if edit_mode %}
                     <td>
-                        {% if edit_mode %}
                         <form method="post" autocomplete="off">
                             <input name="player_id" type="hidden" value="{{ player.id.unwrap() }}">
 
@@ -121,13 +125,21 @@
                                        aria-label="">
                             </div>
                         </form>
-                        {% else %}
-                            {{ number }}
-                        {% endif %}
                     </td>
-
+                    {% elif editable %}
+                    <td class="uk-table-link">
+                        <a class="uk-link-reset" href="team?id={{ team.id.unwrap() }}&edit=true">
+                            {{ number }}
+                        </a>
+                    </td>
+                    {% else %}
                     <td>
-                        {% if edit_mode %}
+                        {{ number }}
+                    </td>
+                    {% endif %}
+
+                    {% if edit_mode %}
+                    <td>
                         <form method="post" autocomplete="off">
                             <input name="player_id" type="hidden" value="{{ player.id.unwrap() }}">
 
@@ -142,10 +154,18 @@
                                        aria-label="">
                             </div>
                         </form>
-                        {% else %}
-                            {{ player.name }}
-                        {% endif %}
                     </td>
+                    {% elif editable %}
+                    <td class="uk-table-link">
+                        <a class="uk-link-reset" href="team?id={{ team.id.unwrap() }}&edit=true">
+                            {{ player.name }}
+                        </a>
+                    </td>
+                    {% else %}
+                    <td>
+                        {{ player.name }}
+                    </td>
+                    {% endif %}
 
                     <td>{{ player.position.name("fr") }}</td>
                     <td>{{ player.movement_allowance(team.roster)? }}</td>
@@ -175,52 +195,57 @@
                         <span>({{ team.number_of_available_players() }} disponibles pour le prochain match)</span>
                     </td>
                 </tr>
-
-                {% if editable %}
-                <tr>
-                    <td colspan="10">
-                        <form id="buy_player_form" method="post" autocomplete="off">
-                            <span>Postes restant à pourvoir : </span>
-                            <select id="position_to_buy" name="position_to_buy" class="uk-select uk-form-width-large" aria-label="Select">
-
-                                {% for (position, price, buyable) in positions_buyable %}
-                                <option value="{{ position.type_name() }}"
-                                        {% if ! buyable %}disabled{% endif %}>
-                                    {{ position.name("fr") }} ({{ price / 1000 }}k)
-                                </option>
-                                {% endfor %}
-
-                            </select>
-
-                            {% if team.can_buy_player()? %}
-                            <button class="uk-button uk-button-link uk-margin-left"
-                                    type="button"
-                                    uk-toggle="target: #modal-buy-player">
-                                <span uk-icon="icon: cart"></span>
-                            </button>
-
-                            <div id="modal-buy-player" uk-modal>
-                                <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
-                                    <h2 class="uk-modal-title">Achat de joueur en cours</h2>
-                                    <p>Confirmez-vous l'achat pour le poste ?</p>
-                                    <p class="uk-text-right">
-                                        <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
-                                        <button class="uk-button uk-button-primary"
-                                                onclick="document.getElementById('buy_player_form').submit()">
-                                            Confirmer
-                                        </button>
-                                    </p>
-                                </div>
-                            </div>
-                            {% endif %}
-                        </form>
-                    </td>
-                </tr>
-                {% endif %}
-
                 </tfoot>
             </table>
         </div>
+
+        <h4>
+            Recrutement
+        </h4>
+
+        {% if editable %}
+        <div>
+            <form id="buy_player_form" method="post" autocomplete="off">
+                <span>Il est encore possible de recruter {{ team.remaining_available_players_number() }} joueurs dont : </span>
+                <br>
+                <select id="position_to_buy"
+                        name="position_to_buy"
+                        class="uk-select uk-form-width-large"
+                        aria-label="Select">
+
+                    {% for (position, price, buyable) in positions_buyable %}
+                    <option value="{{ position.type_name() }}"
+                            {% if ! buyable %}disabled{% endif %}>
+                        {{ position.name("fr") }} ({{ price / 1000 }}k)
+                    </option>
+                    {% endfor %}
+
+                </select>
+
+                {% if team.can_buy_player()? %}
+                <button class="uk-button uk-button-link uk-margin-left"
+                        type="button"
+                        uk-toggle="target: #modal-buy-player">
+                    <span uk-icon="icon: cart"></span>
+                </button>
+
+                <div id="modal-buy-player" uk-modal>
+                    <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                        <h2 class="uk-modal-title">Achat de joueur en cours</h2>
+                        <p>Confirmez-vous l'achat pour le poste ?</p>
+                        <p class="uk-text-right">
+                            <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                            <button class="uk-button uk-button-primary"
+                                    onclick="document.getElementById('buy_player_form').submit()">
+                                Confirmer
+                            </button>
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+            </form>
+        </div>
+        {% endif %}
 
         <h3>
             Staff
@@ -266,7 +291,7 @@
             <div>
                 {% if edit_mode %}
                 <a href="./team?id={{ team.id.unwrap() }}" class="uk-button uk-button-default">
-                    Annuler
+                    Visualiser
                 </a>
                 {% else %}
                 <a href="./team?id={{ team.id.unwrap() }}&edit=true" class="uk-button uk-button-primary">
