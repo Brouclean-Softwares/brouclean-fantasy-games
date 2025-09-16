@@ -24,7 +24,7 @@ pub async fn rosters(
     profile: Option<User>,
     Query(params): Query<RostersQueryParams>,
 ) -> RostersPage {
-    RostersPage::get(app_state, profile, params.version)
+    RostersPage::get(app_state, profile, params.version.unwrap_or(Version::V5))
 }
 
 #[derive(Deserialize)]
@@ -38,5 +38,10 @@ pub async fn roster(
     profile: Option<User>,
     Query(params): Query<RosterQueryParams>,
 ) -> RosterPage {
-    RosterPage::get(app_state, profile, params.version, params.roster)
+    RosterPage::get(
+        app_state,
+        profile,
+        params.version.unwrap_or(Version::V5),
+        params.roster,
+    )
 }

@@ -68,12 +68,7 @@ impl NewTeamForm {
         let position_quantities: HashMap<String, u8> =
             serde_json::from_str(&*self.players).unwrap();
 
-        for position in self
-            .roster
-            .definition(Some(self.version))
-            .unwrap()
-            .positions
-        {
+        for position in self.roster.definition(self.version).unwrap().positions {
             if let Some(position_quantity) = position_quantities.get(&position.type_name()) {
                 positions_quantities.insert(position, *position_quantity);
             }
@@ -159,7 +154,7 @@ pub async fn get_team(
 
     let roster_definition = team
         .roster
-        .definition(Some(team.version))
+        .definition(team.version)
         .or(Err(Redirect::to("../teams")))?;
 
     let editable = match (profile.clone(), team.coach_id) {

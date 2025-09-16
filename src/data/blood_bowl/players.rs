@@ -14,6 +14,7 @@ struct PlayerDetail {
     name: String,
     position: Position,
     number: i32,
+    star_player_points: i32,
 }
 
 pub async fn select_under_contract_for_team(
@@ -27,6 +28,7 @@ pub async fn select_under_contract_for_team(
                     bb_players.version,
                     bb_players.name,
                     bb_players.position,
+                    bb_players.star_player_points,
                     bb_teams_players.number
             FROM bb_players
             INNER JOIN bb_teams_players ON bb_players.id = bb_teams_players.player_id
@@ -48,6 +50,7 @@ pub async fn select_under_contract_for_team(
                 version: player_detail.version,
                 position: player_detail.position,
                 name: player_detail.name,
+                star_player_points: player_detail.star_player_points,
             },
         ));
     }
@@ -73,7 +76,8 @@ pub async fn update_name(
     if let Some(connected_user_id) = connected_user.id {
         sqlx::query(
             "UPDATE bb_players
-                SET name = $1
+                SET name = $1,
+                    last_updated = CURRENT_TIMESTAMP
                 FROM bb_teams_players, bb_teams
                 WHERE bb_players.id = bb_teams_players.player_id
                 AND bb_teams.id = bb_teams_players.team_id
@@ -185,7 +189,8 @@ pub async fn buy_position_for_team(
             "UPDATE bb_teams
             SET treasury = $1,
                 value = $2,
-                current_value = $3
+                current_value = $3,
+                last_updated = CURRENT_TIMESTAMP
             WHERE id = $4
             AND coach_id = $5",
         )

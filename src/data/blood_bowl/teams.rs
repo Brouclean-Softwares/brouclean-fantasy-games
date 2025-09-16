@@ -218,7 +218,8 @@ pub async fn update_name(
     if let Some(connected_user_id) = connected_user.id {
         sqlx::query(
             "UPDATE bb_teams
-        SET name = $1
+        SET name = $1,
+            last_updated = CURRENT_TIMESTAMP
         WHERE id = $2
         AND coach_id = $3",
         )

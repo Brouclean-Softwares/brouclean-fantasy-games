@@ -14,11 +14,11 @@ pub struct RostersPage {
     navigation_bar: NavigationBar,
     profile: Option<User>,
     rosters: Vec<Roster>,
-    version: Option<Version>,
+    version: Version,
 }
 
 impl RostersPage {
-    pub fn get(app_state: AppState, profile: Option<User>, version: Option<Version>) -> Self {
+    pub fn get(app_state: AppState, profile: Option<User>, version: Version) -> Self {
         let mut ordered_rosters = Roster::list(version);
         ordered_rosters.sort_by(|a, b| a.name("fr").cmp(&b.name("fr")));
 
@@ -37,14 +37,14 @@ pub struct RosterPage {
     navigation_bar: NavigationBar,
     profile: Option<User>,
     roster: Option<Roster>,
-    version: Option<Version>,
+    version: Version,
 }
 
 impl RosterPage {
     pub fn get(
         app_state: AppState,
         profile: Option<User>,
-        version: Option<Version>,
+        version: Version,
         roster: Option<Roster>,
     ) -> Self {
         Self {

@@ -65,7 +65,7 @@
                     <tbody>
                     {% for position in roster_definition.positions %}
 
-                    {% if let Ok(position_definition) = position.definition(Some(roster_definition.version.into()), roster.clone()) %}
+                    {% if let Ok(position_definition) = position.definition(roster_definition.version.into(), roster.clone()) %}
                     <tr>
                         <td>
                             <input id="{{ position.type_name() }}"
@@ -159,7 +159,7 @@
                     var players = new Map();
 
                     {% for position in roster_definition.positions %}
-                    {% if let Ok(position_definition) = position.definition(Some(roster_definition.version.into()), roster.clone()) %}
+                    {% if let Ok(position_definition) = position.definition(roster_definition.version.into(), roster.clone()) %}
 
                     treasury = treasury - ({{ position_definition.cost }} * document.getElementById('{{ position.type_name() }}').value);
                     players_quantity = players_quantity + Number(document.getElementById('{{ position.type_name() }}').value);
