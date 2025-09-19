@@ -16,7 +16,8 @@ CREATE TABLE IF NOT EXISTS bb_games_teams (
     team_roster VARCHAR NOT NULL,
     score INTEGER NOT NULL,
     casualties INTEGER NOT NULL,
-    winner BOOLEAN NOT NULL
+    winner BOOLEAN NOT NULL,
+    added_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS bb_games_teams_players (

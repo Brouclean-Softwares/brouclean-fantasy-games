@@ -3,6 +3,7 @@ use crate::errors::AppError;
 use crate::AppState;
 use axum::extract::FromRequestParts;
 use axum_extra::extract::PrivateCookieJar;
+use blood_bowl_rs::coaches::Coach;
 use http::request::Parts;
 use serde::Deserialize;
 
@@ -88,5 +89,14 @@ impl User {
         .await?;
 
         Ok(upserted_user)
+    }
+}
+
+impl Into<Coach> for User {
+    fn into(self) -> Coach {
+        Coach {
+            id: self.id,
+            name: self.name,
+        }
     }
 }

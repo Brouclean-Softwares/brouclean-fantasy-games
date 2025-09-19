@@ -133,15 +133,12 @@ pub struct TeamCard {
 }
 
 impl TeamCard {
-    pub fn get(team: Option<Team>) -> Option<Self> {
+    pub fn get(team: Team) -> Self {
         Self::get_with_details(team, false)
     }
 
-    pub fn get_with_details(team: Option<Team>, with_info: bool) -> Option<Self> {
-        match team {
-            Some(team) => Some(TeamCard { team, with_info }),
-            None => None,
-        }
+    pub fn get_with_details(team: Team, with_info: bool) -> Self {
+        TeamCard { team, with_info }
     }
 }
 

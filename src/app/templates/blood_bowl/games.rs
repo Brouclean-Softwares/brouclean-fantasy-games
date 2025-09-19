@@ -1,6 +1,7 @@
 use crate::app::templates::blood_bowl::teams::{TeamCard, TeamSelector};
 use crate::app::templates::{AlertMessage, NavigationBar};
 use crate::data::users::User;
+use crate::errors::AppError;
 use crate::AppState;
 use askama::Template;
 use askama_web::WebTemplate;
@@ -11,15 +12,33 @@ use blood_bowl_rs::teams::Team;
 #[template(path = "blood_bowl/games/game_page.html")]
 pub struct GamePage {
     navigation_bar: NavigationBar,
+    alert_message: Option<AlertMessage>,
     game: Game,
+    team_a_card: TeamCard,
+    team_b_card: TeamCard,
 }
 
 impl GamePage {
-    pub fn get(app_state: AppState, profile: User, game: Game) -> Self {
-        Self {
-            navigation_bar: NavigationBar::get(&app_state, &Some(profile)),
+    pub fn get(app_state: AppState, profile: Option<User>, game: Game) -> Result<Self, AppError> {
+        Self::get_with_message(app_state, profile, None, game)
+    }
+
+    pub fn get_with_message(
+        app_state: AppState,
+        profile: Option<User>,
+        alert_message: Option<AlertMessage>,
+        game: Game,
+    ) -> Result<Self, AppError> {
+        let team_a = game.get_first_team()?.clone();
+        let team_b = game.get_second_team()?.clone();
+
+        Ok(Self {
+            navigation_bar: NavigationBar::get(&app_state, &profile),
+            alert_message,
             game,
-        }
+            team_a_card: TeamCard::get(team_a),
+            team_b_card: TeamCard::get(team_b),
+        })
     }
 }
 
@@ -30,8 +49,8 @@ pub struct NewGamePage {
     alert_message: Option<AlertMessage>,
     team_a_id: i32,
     team_b_id: i32,
-    team_a: Option<TeamCard>,
-    team_b: Option<TeamCard>,
+    team_a_card: Option<TeamCard>,
+    team_b_card: Option<TeamCard>,
     team_a_selector: TeamSelector,
     team_b_selector: TeamSelector,
 }
@@ -49,22 +68,30 @@ impl NewGamePage {
     pub fn get_with_message(
         app_state: AppState,
         profile: User,
-        message: Option<AlertMessage>,
+        alert_message: Option<AlertMessage>,
         team_a: Option<Team>,
         team_b: Option<Team>,
     ) -> Self {
         let team_a_id = team_a.clone().and_then(|team| team.id).unwrap_or(-1);
         let team_b_id = team_b.clone().and_then(|team| team.id).unwrap_or(-1);
+        let team_a_card = team_a.and_then(|team| Some(TeamCard::get_with_details(team, true)));
+        let team_b_card = team_b.and_then(|team| Some(TeamCard::get_with_details(team, true)));
 
         Self {
             navigation_bar: NavigationBar::get(&app_state, &Some(profile)),
-            alert_message: message,
+            alert_message,
             team_a_id,
             team_b_id,
-            team_a: TeamCard::get_with_details(team_a, true),
-            team_b: TeamCard::get_with_details(team_b, true),
+            team_a_card,
+            team_b_card,
             team_a_selector: TeamSelector::get("team_a_id".to_string()),
             team_b_selector: TeamSelector::get("team_b_id".to_string()),
         }
     }
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "blood_bowl/games/game_card.html")]
+pub struct GameCard {
+    game: Game,
 }

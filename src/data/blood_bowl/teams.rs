@@ -4,6 +4,7 @@ use crate::data::blood_bowl::{games, players, staff};
 use crate::data::users::User;
 use crate::errors::AppError;
 use crate::AppState;
+use blood_bowl_rs::coaches::Coach;
 use blood_bowl_rs::rosters::Roster;
 use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::versions::Version;
@@ -133,19 +134,23 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<Team, AppError> {
         version: team.version,
         roster: team.roster,
         name: team.name,
-        coach_id: team.coach_id,
-        coach_name: team.coach_name.unwrap_or_default(),
+        coach: Coach {
+            id: team.coach_id,
+            name: team.coach_name.unwrap_or_default(),
+        },
         treasury: team.treasury,
         external_logo_url: team.external_logo_url,
         staff,
         players,
         games_played: vec![],
+        game_playing: None,
         dedicated_fans: team.dedicated_fans as u8,
         under_creation: team.under_creation,
     };
 
-    let games_played = games::select_played_by_team(state, &team).await?;
-    team.games_played = games_played;
+    team.games_played = games::select_played_by_team(state, &team).await?;
+
+    team.game_playing = games::select_playing_by_team(state, &team).await?;
 
     Ok(team)
 }

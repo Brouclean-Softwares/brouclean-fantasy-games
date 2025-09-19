@@ -9,6 +9,7 @@ use axum::extract::{Query, State};
 use axum::response::Redirect;
 use axum::routing::{get, post};
 use axum::{Form, Router};
+use blood_bowl_rs::coaches::Coach;
 use blood_bowl_rs::positions::Position;
 use blood_bowl_rs::rosters::{Roster, Staff};
 use blood_bowl_rs::teams::Team;
@@ -122,6 +123,7 @@ pub async fn create_team(
     }
 
     let team = Team::create_new(
+        profile.clone().into(),
         form.version,
         form.roster,
         form.treasury,
@@ -185,15 +187,9 @@ pub async fn get_team(
         .definition(team.version)
         .or(Err(Redirect::to("../teams")))?;
 
-    let editable = match (profile.clone(), team.coach_id) {
-        (Some(user), Some(coach_id)) => {
-            if let Some(user_id) = user.id {
-                user_id.eq(&coach_id)
-            } else {
-                false
-            }
-        }
-        _ => false,
+    let editable = match profile.clone() {
+        Some(user) => team.coach.eq(&user.into()),
+        None => false,
     };
 
     let edit_mode = editable && params.edit.unwrap_or(false);

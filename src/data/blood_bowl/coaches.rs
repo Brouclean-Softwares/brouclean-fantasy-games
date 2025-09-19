@@ -1,11 +1,12 @@
 use crate::data::users::User;
 use crate::errors::AppError;
 use crate::AppState;
+use blood_bowl_rs::coaches::Coach;
 
-pub async fn select_by_id(state: &AppState, id: i32) -> Result<User, AppError> {
+pub async fn select_by_id(state: &AppState, id: i32) -> Result<Option<Coach>, AppError> {
     tracing::debug!("select_by_id with id={:?}", id);
 
-    let coach: User = sqlx::query_as(
+    let coach: Option<User> = sqlx::query_as(
         "SELECT users.id,
                     users.email,
                     users.name,
@@ -19,8 +20,8 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<User, AppError> {
             LIMIT 1",
     )
     .bind(id.clone())
-    .fetch_one(&state.db)
+    .fetch_optional(&state.db)
     .await?;
 
-    Ok(coach)
+    Ok(coach.and_then(|user| Some(user.into())))
 }

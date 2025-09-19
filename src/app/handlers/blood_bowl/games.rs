@@ -25,12 +25,12 @@ pub struct GameQueryParams {
 
 pub async fn game(
     State(app_state): State<AppState>,
-    profile: User,
+    profile: Option<User>,
     Query(params): Query<GameQueryParams>,
 ) -> Result<GamePage, AppError> {
     let game = games::select_by_id(&app_state, params.id).await?;
 
-    Ok(GamePage::get(app_state, profile, game))
+    Ok(GamePage::get(app_state, profile, game)?)
 }
 
 #[derive(Deserialize)]
