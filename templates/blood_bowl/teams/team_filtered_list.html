@@ -1,0 +1,49 @@
+<div class="uk-overflow-auto">
+    <table class="uk-table uk-table-striped uk-table-small uk-table-hover">
+        <thead>
+        <tr>
+            <th>Nom</th>
+            <th>Roster</th>
+            <th uk-tooltip="Valeur d'Equipe">VE</th>
+            <th uk-tooltip="Valeur d'Equipe Actuelle">VEA</th>
+            <th>Coach</th>
+        </tr>
+        </thead>
+
+        {% for team in teams %}
+        <tr onclick="update_input_id({{ team.id }})">
+            <td>
+                {% if let Some(team_logo) = team.external_logo_url %}
+                <img src="{{ team_logo }}" width="25" height="25" alt="">
+                {% endif %}
+
+                {{ team.name }}
+            </td>
+            <td>
+                <img src="/assets/images/blood_bowl/{{ team.roster.type_name() }}Logo.webp" width="25" height="25" alt="">
+                {{ team.roster.name("fr") }} ({{ team.version.type_name() }})
+            </td>
+            <td>
+                {{ team.value / 1000 }}k
+            </td>
+            <td>
+                {{ team.current_value / 1000 }}k
+            </td>
+
+            {% if let Some(coach_name) = team.coach_name %}
+            <td>
+                {{ coach_name }}
+            </td>
+            {% endif %}
+        </tr>
+        {% endfor %}
+        <tbody>
+    </table>
+</div>
+<script>
+    function update_input_id(new_value) {
+        input_element = document.getElementById('{{ input_id_to_change }}');
+        input_element.value = new_value;
+        input_element.dispatchEvent(new Event('change'));
+    }
+</script>

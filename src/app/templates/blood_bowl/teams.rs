@@ -124,3 +124,55 @@ impl OwnedTeamsBlock {
         Ok(Self { owned_teams })
     }
 }
+
+#[derive(Template, WebTemplate)]
+#[template(path = "blood_bowl/teams/team_card.html")]
+pub struct TeamCard {
+    team: Team,
+    with_info: bool,
+}
+
+impl TeamCard {
+    pub fn get(team: Option<Team>) -> Option<Self> {
+        Self::get_with_details(team, false)
+    }
+
+    pub fn get_with_details(team: Option<Team>, with_info: bool) -> Option<Self> {
+        match team {
+            Some(team) => Some(TeamCard { team, with_info }),
+            None => None,
+        }
+    }
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "blood_bowl/teams/team_selector.html")]
+pub struct TeamSelector {
+    team_filtered_list: TeamFilteredList,
+    input_id_to_change: String,
+}
+
+impl TeamSelector {
+    pub fn get(input_id_to_change: String) -> Self {
+        Self {
+            team_filtered_list: TeamFilteredList::get(vec![], input_id_to_change.clone()),
+            input_id_to_change,
+        }
+    }
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "blood_bowl/teams/team_filtered_list.html")]
+pub struct TeamFilteredList {
+    teams: Vec<TeamListRow>,
+    input_id_to_change: String,
+}
+
+impl TeamFilteredList {
+    pub fn get(teams: Vec<TeamListRow>, input_id_to_change: String) -> Self {
+        Self {
+            teams,
+            input_id_to_change,
+        }
+    }
+}

@@ -1,6 +1,6 @@
 use crate::app::templates::blood_bowl::teams::TeamListRow;
 use crate::app::templates::blood_bowl::OwnedTeamListRow;
-use crate::data::blood_bowl::{players, staff};
+use crate::data::blood_bowl::{games, players, staff};
 use crate::data::users::User;
 use crate::errors::AppError;
 use crate::AppState;
@@ -24,8 +24,37 @@ pub async fn select_all(state: &AppState) -> Result<Vec<TeamListRow>, AppError> 
                     bb_teams.current_value
             FROM bb_teams
             LEFT JOIN users ON bb_teams.coach_id = users.id
-            ORDER BY value DESC",
+            ORDER BY bb_teams.name ASC",
     )
+    .fetch_all(&state.db)
+    .await?;
+
+    Ok(teams)
+}
+
+pub async fn select_all_filtered(
+    state: &AppState,
+    filter: String,
+) -> Result<Vec<TeamListRow>, AppError> {
+    tracing::debug!("select_all_filtered with filter={}", filter);
+
+    let teams: Vec<TeamListRow> = sqlx::query_as(
+        "SELECT bb_teams.id,
+                    bb_teams.version,
+                    bb_teams.name,
+                    bb_teams.roster,
+                    bb_teams.coach_id,
+                    users.name as coach_name,
+                    bb_teams.external_logo_url,
+                    bb_teams.value,
+                    bb_teams.current_value
+            FROM bb_teams
+            LEFT JOIN users ON bb_teams.coach_id = users.id
+            WHERE LOWER(bb_teams.name) LIKE $1
+            OR LOWER(users.name) LIKE $1
+            ORDER BY bb_teams.name ASC",
+    )
+    .bind(format!("%{}%", filter.to_lowercase()))
     .fetch_all(&state.db)
     .await?;
 
@@ -72,7 +101,7 @@ struct TeamDetail {
     under_creation: bool,
 }
 
-pub async fn select_from_id(state: &AppState, id: i32) -> Result<Team, AppError> {
+pub async fn select_by_id(state: &AppState, id: i32) -> Result<Team, AppError> {
     tracing::debug!("select_from_id with id={}", id);
 
     let team: TeamDetail = sqlx::query_as(
@@ -99,7 +128,7 @@ pub async fn select_from_id(state: &AppState, id: i32) -> Result<Team, AppError>
 
     let staff = staff::select_for_team(state, id).await?;
 
-    Ok(Team {
+    let mut team = Team {
         id: Some(team.id),
         version: team.version,
         roster: team.roster,
@@ -110,9 +139,15 @@ pub async fn select_from_id(state: &AppState, id: i32) -> Result<Team, AppError>
         external_logo_url: team.external_logo_url,
         staff,
         players,
+        games_played: vec![],
         dedicated_fans: team.dedicated_fans as u8,
         under_creation: team.under_creation,
-    })
+    };
+
+    let games_played = games::select_played_by_team(state, &team).await?;
+    team.games_played = games_played;
+
+    Ok(team)
 }
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]

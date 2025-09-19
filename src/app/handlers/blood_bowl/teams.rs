@@ -1,4 +1,6 @@
-use crate::app::templates::blood_bowl::teams::{NewTeamPage, TeamPage, TeamsPage};
+use crate::app::templates::blood_bowl::teams::{
+    NewTeamPage, TeamFilteredList, TeamPage, TeamsPage,
+};
 use crate::app::templates::{AlertMessage, AlertType};
 use crate::data::blood_bowl::{players, staff, teams};
 use crate::data::users::User;
@@ -18,6 +20,7 @@ use std::collections::HashMap;
 pub fn init_router() -> Router<AppState> {
     Router::new()
         .route("/", get(teams))
+        .route("/filtered_list", post(filtered_list))
         .route("/new", get(new_team).post(create_team))
         .route("/team", get(get_team).post(post_team))
         .route("/delete", post(delete_team))
@@ -32,6 +35,31 @@ pub async fn teams(
         .or_else(|_| Err(Redirect::to("/")))?;
 
     Ok(TeamsPage::get(app_state, profile, teams))
+}
+
+#[derive(Deserialize)]
+pub struct TeamFilteredListForm {
+    pub filter: Option<String>,
+    pub input_id_to_change: String,
+}
+
+pub async fn filtered_list(
+    State(app_state): State<AppState>,
+    Form(form): Form<TeamFilteredListForm>,
+) -> TeamFilteredList {
+    if let Some(filter) = form.filter {
+        TeamFilteredList::get(
+            teams::select_all_filtered(&app_state, filter)
+                .await
+                .unwrap_or_default(),
+            form.input_id_to_change,
+        )
+    } else {
+        TeamFilteredList::get(
+            teams::select_all(&app_state).await.unwrap_or_default(),
+            form.input_id_to_change,
+        )
+    }
 }
 
 #[derive(Deserialize)]
@@ -144,7 +172,7 @@ pub async fn get_team(
     profile: Option<User>,
     Query(params): Query<TeamQueryParams>,
 ) -> Result<TeamPage, Redirect> {
-    let team = teams::select_from_id(&app_state, params.id)
+    let team = teams::select_by_id(&app_state, params.id)
         .await
         .map_err(|error| {
             tracing::debug!("get_team: Error: {}", error);

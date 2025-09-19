@@ -1,0 +1,93 @@
+{% extends "page_base.html" %}
+
+{% block navbar %}
+{{ navigation_bar|escape("none") }}
+{% endblock %}
+
+{% block messages %}
+{% if let Some(alert_message) = alert_message %}
+{{ alert_message|escape("none") }}
+{% endif %}
+{% endblock %}
+
+{% block body %}
+<div class="uk-section">
+    <div class="uk-container">
+        <h2>
+            Nouveau match
+        </h2>
+        <form id="reload_teams_form" method="post" autocomplete="off">
+            <input id="team_a_id"
+                   name="team_a_id"
+                   type="hidden"
+                   value="{{ team_a_id }}"
+                   onchange="document.getElementById('reload_teams_form').submit()">
+
+            <input id="team_b_id"
+                   name="team_b_id"
+                   type="hidden"
+                   value="{{ team_b_id }}"
+                   onchange="document.getElementById('reload_teams_form').submit()">
+        </form>
+
+        <div class="uk-flex-middle" uk-grid>
+            {% if let Some(team) = team_a %}
+            <div class="uk-width-1-3@m">
+                {{ team|escape("none") }}
+            </div>
+            <div class="uk-width-1-3@m uk-text-center">
+                <form id="create_form" action="#" method="post" autocomplete="off">
+                    <input name="team_a_id"
+                           type="hidden"
+                           value="{{ team_a_id }}">
+
+                    {% if team_b.is_some() %}
+                    <input name="team_b_id"
+                           type="hidden"
+                           value="{{ team_b_id }}">
+                    {% endif %}
+
+                    <h3>
+                        rencontre
+
+                        {% if team_b.is_some() %}
+                            <br>
+                            le <input id="played_at" name="played_at" type="datetime-local">
+                        {% endif %}
+                    </h3>
+
+                    {% if team_b.is_some() %}
+                    <button class="uk-button uk-button-primary"
+                            type="button"
+                            uk-toggle="target: #modal-create">Créer</button>
+
+                    <div id="modal-create" uk-modal>
+                        <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                            <h2 class="uk-modal-title">Création de match en cours</h2>
+                            <p>Confirmez-vous la création du match ?</p>
+                            <p class="uk-text-right">
+                                <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                                <button class="uk-button uk-button-primary"
+                                        onclick="document.getElementById('create_form').submit()">
+                                    Confirmer
+                                </button>
+                            </p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </form>
+            </div>
+            <div class="uk-width-1-3@m">
+                {% if let Some(team) = team_b %}
+                    {{ team|escape("none") }}
+                {% else %}
+                    {{ team_b_selector|escape("none") }}
+                {% endif %}
+            </div>
+            {% else %}
+                {{ team_a_selector|escape("none") }}
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -59,8 +59,10 @@
         <ul>
             <li>
                 <span>Roster : </span>
-                <img src="/assets/images/blood_bowl/{{ team.roster.type_name() }}Logo.webp" width="25" height="25" alt="">
-                <span class="uk-text-bold">{{ team.roster.name("fr") }} ({{ team.version.type_name() }})</span>
+                <a class="uk-link-reset" href="../rosters/roster?version={{ team.version.type_name() }}&roster={{ team.roster.type_name() }}">
+                    <img src="/assets/images/blood_bowl/{{ team.roster.type_name() }}Logo.webp" width="25" height="25" alt="">
+                    <span class="uk-text-bold">{{ team.roster.name("fr") }} ({{ team.version.type_name() }})</span>
+                </a>
             </li>
             <li>
                 <span>Coach : </span>

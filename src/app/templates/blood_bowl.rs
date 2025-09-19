@@ -9,6 +9,7 @@ use blood_bowl_rs::rosters::Roster;
 use blood_bowl_rs::versions::Version;
 use serde::Deserialize;
 
+pub mod games;
 pub mod rosters;
 pub mod teams;
 

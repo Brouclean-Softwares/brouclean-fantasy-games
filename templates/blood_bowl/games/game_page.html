@@ -1,0 +1,15 @@
+{% extends "page_base.html" %}
+
+{% block navbar %}
+{{ navigation_bar|escape("none") }}
+{% endblock %}
+
+{% block body %}
+<div class="uk-section">
+    <div class="uk-container">
+        <h2>
+            Match id={{ game.id.unwrap_or_default() }}
+        </h2>
+    </div>
+</div>
+{% endblock %}

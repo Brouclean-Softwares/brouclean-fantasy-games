@@ -17,6 +17,32 @@ struct PlayerDetail {
     star_player_points: i32,
 }
 
+pub async fn select_by_id(state: &AppState, id: i32) -> Result<Player, AppError> {
+    tracing::debug!("select_by_id with id={}", id);
+
+    let player_detail: PlayerDetail = sqlx::query_as(
+        "SELECT id,
+                    version,
+                    name,
+                    position,
+                    star_player_points,
+                    0 AS number
+            FROM bb_players
+            WHERE id = $1",
+    )
+    .bind(id.clone())
+    .fetch_one(&state.db)
+    .await?;
+
+    Ok(Player {
+        id: Some(player_detail.id),
+        version: player_detail.version,
+        position: player_detail.position,
+        name: player_detail.name,
+        star_player_points: player_detail.star_player_points,
+    })
+}
+
 pub async fn select_under_contract_for_team(
     state: &AppState,
     team_id: i32,
@@ -151,7 +177,7 @@ pub async fn buy_position_for_team(
     );
 
     if let Some(connected_user_id) = connected_user.id {
-        let mut team = teams::select_from_id(state, team_id).await?;
+        let mut team = teams::select_by_id(state, team_id).await?;
         let (number, player) = team.buy_position(&position)?;
         let team_value = team.value()?;
         let team_current_value = team.current_value()?;

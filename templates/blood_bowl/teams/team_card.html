@@ -1,0 +1,39 @@
+<div class="uk-card uk-card-default uk-width-expand">
+    <div class="uk-card-header">
+        <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ team.id.unwrap() }}">
+            <div class="uk-grid-small uk-flex-middle" uk-grid>
+                <div class="uk-width-auto">
+                    {% if let Some(logo) = team.external_logo_url %}
+                    <img src="{{ logo }}" width="75" height="75" alt="">
+                    {% else %}
+                    <img src="/assets/images/blood_bowl/{{ team.roster.type_name() }}Logo.webp" width="75" height="75" alt="">
+                    {% endif %}
+                </div>
+                <div class="uk-width-expand">
+                    <h3 class="uk-card-title uk-margin-remove-bottom">{{ team.name }}</h3>
+                    <p class="uk-text-meta uk-margin-remove-top">{{ team.roster.name("fr") }} ({{ team.version.type_name() }})</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    {% if with_info %}
+    <div class="uk-card-body">
+        <dl class="uk-description-list">
+            <dt>Coach</dt>
+            <dd>{{ team.coach_name }}</dd>
+
+            <dt>Valeur d'équipe (VE)</dt>
+            <dd>{{ team.value()? / 1000 }}k</dd>
+
+            <dt>Valeur d'équipe actuelle (VEA)</dt>
+            <dd>{{ team.current_value()? / 1000 }}k</dd>
+
+            <dt>Nombre de joueurs</dt>
+            <dd>{{ team.number_of_players() }}</dd>
+
+            <dt>Nombre de joueurs disponibles</dt>
+            <dd>{{ team.number_of_available_players() }}</dd>
+        </dl>
+    </div>
+    {% endif %}
+</div>

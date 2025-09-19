@@ -1,0 +1,33 @@
+CREATE TABLE IF NOT EXISTS bb_games (
+    id SERIAL PRIMARY KEY,
+    version VARCHAR NOT NULL,
+    played_at TIMESTAMP NOT NULL,
+    created_by INTEGER REFERENCES users ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    closed_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE TABLE IF NOT EXISTS bb_games_teams (
+    game_id INTEGER REFERENCES bb_games ON DELETE CASCADE,
+    coach_id INTEGER REFERENCES users ON DELETE SET NULL,
+    team_id INTEGER REFERENCES bb_teams ON DELETE SET NULL,
+    coach_name VARCHAR NOT NULL,
+    team_name VARCHAR NOT NULL,
+    team_roster VARCHAR NOT NULL,
+    score INTEGER NOT NULL,
+    casualties INTEGER NOT NULL,
+    winner BOOLEAN NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS bb_games_teams_players (
+    game_id INTEGER REFERENCES bb_games ON DELETE CASCADE,
+    team_id INTEGER REFERENCES bb_teams ON DELETE SET NULL,
+    player_id INTEGER REFERENCES bb_players ON DELETE SET NULL,
+    number INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS bb_games_events (
+    game_id INTEGER REFERENCES bb_games ON DELETE CASCADE,
+    event JSONB NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);

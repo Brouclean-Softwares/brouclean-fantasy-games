@@ -49,13 +49,12 @@ impl User {
 
     pub async fn select_connected_user(state: &AppState, cookie: String) -> Result<Self, AppError> {
         let connected_user: User = sqlx::query_as(
-            "SELECT
-                    users.id,
-                    users.email,
-                    users.name,
-                    users.given_name,
-                    users.family_name,
-                    users.picture
+            "SELECT users.id,
+                        users.email,
+                        users.name,
+                        users.given_name,
+                        users.family_name,
+                        users.picture
                 FROM sessions
                 LEFT JOIN USERS ON sessions.user_id = users.id
                 WHERE sessions.session_id = $1
