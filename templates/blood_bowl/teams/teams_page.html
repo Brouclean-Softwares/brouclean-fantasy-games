@@ -46,11 +46,9 @@
                         </a>
                     </td>
 
-                    {% if let Some(coach_name) = team.coach_name %}
                     <td>
-                        {{ coach_name }}
+                        {{ team.coach.name }}
                     </td>
-                    {% endif %}
                 </tr>
                 {% endfor %}
                 <tbody>

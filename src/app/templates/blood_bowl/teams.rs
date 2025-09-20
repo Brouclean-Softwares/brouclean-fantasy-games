@@ -7,34 +7,20 @@ use askama::Template;
 use askama_web::WebTemplate;
 use blood_bowl_rs::positions::Position;
 use blood_bowl_rs::rosters::{Roster, RosterDefinition};
-use blood_bowl_rs::teams::Team;
+use blood_bowl_rs::teams::{Team, TeamSummary};
 use blood_bowl_rs::translation::{TranslatedName, TypeName};
 use blood_bowl_rs::versions::Version;
-use serde::Deserialize;
-
-#[derive(Deserialize, sqlx::FromRow, Clone)]
-pub struct TeamListRow {
-    pub id: i32,
-    pub version: Version,
-    pub name: String,
-    pub roster: Roster,
-    pub coach_id: Option<i32>,
-    pub coach_name: Option<String>,
-    pub value: i32,
-    pub current_value: i32,
-    pub external_logo_url: Option<String>,
-}
 
 #[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/teams/teams_page.html")]
 pub struct TeamsPage {
     navigation_bar: NavigationBar,
     profile: Option<User>,
-    teams: Vec<TeamListRow>,
+    teams: Vec<TeamSummary>,
 }
 
 impl TeamsPage {
-    pub fn get(app_state: AppState, profile: Option<User>, teams: Vec<TeamListRow>) -> Self {
+    pub fn get(app_state: AppState, profile: Option<User>, teams: Vec<TeamSummary>) -> Self {
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
             profile,
@@ -161,12 +147,12 @@ impl TeamSelector {
 #[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/teams/team_filtered_list.html")]
 pub struct TeamFilteredList {
-    teams: Vec<TeamListRow>,
+    teams: Vec<TeamSummary>,
     input_id_to_change: String,
 }
 
 impl TeamFilteredList {
-    pub fn get(teams: Vec<TeamListRow>, input_id_to_change: String) -> Self {
+    pub fn get(teams: Vec<TeamSummary>, input_id_to_change: String) -> Self {
         Self {
             teams,
             input_id_to_change,

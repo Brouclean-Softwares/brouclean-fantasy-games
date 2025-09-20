@@ -4,20 +4,19 @@ CREATE TABLE IF NOT EXISTS bb_games (
     played_at TIMESTAMP NOT NULL,
     created_by INTEGER REFERENCES users ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    closed_at TIMESTAMP WITH TIME ZONE
-);
-
-CREATE TABLE IF NOT EXISTS bb_games_teams (
-    game_id INTEGER REFERENCES bb_games ON DELETE CASCADE,
-    coach_id INTEGER REFERENCES users ON DELETE SET NULL,
-    team_id INTEGER REFERENCES bb_teams ON DELETE SET NULL,
-    coach_name VARCHAR NOT NULL,
-    team_name VARCHAR NOT NULL,
-    team_roster VARCHAR NOT NULL,
-    score INTEGER NOT NULL,
-    casualties INTEGER NOT NULL,
-    winner BOOLEAN NOT NULL,
-    added_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    closed_at TIMESTAMP WITH TIME ZONE,
+    first_coach_id INTEGER REFERENCES users ON DELETE SET NULL,
+    first_team_id INTEGER REFERENCES bb_teams ON DELETE SET NULL,
+    first_team_json_summary TEXT NOT NULL,
+    first_team_score INTEGER NOT NULL DEFAULT 0,
+    first_team_casualties INTEGER NOT NULL DEFAULT 0,
+    first_team_is_winner BOOLEAN NOT NULL DEFAULT FALSE,
+    second_coach_id INTEGER REFERENCES users ON DELETE SET NULL,
+    second_team_id INTEGER REFERENCES bb_teams ON DELETE SET NULL,
+    second_team_json_summary TEXT NOT NULL,
+    second_team_score INTEGER NOT NULL DEFAULT 0,
+    second_team_casualties INTEGER NOT NULL DEFAULT 0,
+    second_team_is_winner BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS bb_games_teams_players (

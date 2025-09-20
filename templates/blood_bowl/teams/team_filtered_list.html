@@ -30,11 +30,9 @@
                 {{ team.current_value / 1000 }}k
             </td>
 
-            {% if let Some(coach_name) = team.coach_name %}
             <td>
-                {{ coach_name }}
+                {{ team.coach.name }}
             </td>
-            {% endif %}
         </tr>
         {% endfor %}
         <tbody>
