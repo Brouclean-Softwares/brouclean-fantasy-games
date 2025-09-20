@@ -1,4 +1,3 @@
-use crate::app::templates::blood_bowl::OwnedTeamListRow;
 use crate::data::blood_bowl::{coaches, games, players, staff};
 use crate::data::users::User;
 use crate::errors::AppError;
@@ -118,20 +117,22 @@ pub async fn select_all_filtered(
     Ok(teams_summaries)
 }
 
-pub async fn select_owned(
-    state: &AppState,
-    coach: User,
-) -> Result<Vec<OwnedTeamListRow>, AppError> {
+pub async fn select_owned(state: &AppState, coach: User) -> Result<Vec<TeamSummary>, AppError> {
     tracing::debug!("select_owned for coach={:?}", coach);
 
-    let owned_teams: Vec<OwnedTeamListRow> = sqlx::query_as(
+    let teams: Vec<TeamRow> = sqlx::query_as(
         "SELECT bb_teams.id,
                     bb_teams.version,
                     bb_teams.name,
                     bb_teams.roster,
+                    bb_teams.coach_id,
+                    users.name as coach_name,
                     bb_teams.external_logo_url,
                     bb_teams.value,
-                    bb_teams.current_value
+                    bb_teams.current_value,
+                    bb_teams.treasury,
+                    bb_teams.dedicated_fans,
+                    bb_teams.under_creation
             FROM bb_teams
             LEFT JOIN users ON bb_teams.coach_id = users.id
             WHERE coach_id = $1
@@ -141,7 +142,13 @@ pub async fn select_owned(
     .fetch_all(&state.db)
     .await?;
 
-    Ok(owned_teams)
+    let mut teams_summaries: Vec<TeamSummary> = Vec::with_capacity(teams.len());
+
+    for team in teams {
+        teams_summaries.push(team.into_team_summary(state).await?);
+    }
+
+    Ok(teams_summaries)
 }
 
 pub async fn select_by_id(state: &AppState, id: i32) -> Result<Team, AppError> {

@@ -1,4 +1,3 @@
-use crate::app::templates::blood_bowl::OwnedTeamListRow;
 use crate::app::templates::{AlertMessage, NavigationBar};
 use crate::data::users::User;
 use crate::errors::AppError;
@@ -99,7 +98,7 @@ impl TeamPage {
 #[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/teams/owned_teams_block.html")]
 pub struct OwnedTeamsBlock {
-    owned_teams: Vec<OwnedTeamListRow>,
+    owned_teams: Vec<TeamSummary>,
 }
 
 impl OwnedTeamsBlock {

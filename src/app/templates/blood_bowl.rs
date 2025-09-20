@@ -13,17 +13,6 @@ pub mod games;
 pub mod rosters;
 pub mod teams;
 
-#[derive(Deserialize, sqlx::FromRow, Clone)]
-pub struct OwnedTeamListRow {
-    pub id: i32,
-    pub version: Version,
-    pub name: String,
-    pub roster: Roster,
-    pub value: i32,
-    pub current_value: i32,
-    pub external_logo_url: Option<String>,
-}
-
 #[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/home_page.html")]
 pub struct HomePage {
