@@ -35,7 +35,7 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<Player, AppError>
     .await?;
 
     Ok(Player {
-        id: Some(player_detail.id),
+        id: player_detail.id,
         version: player_detail.version,
         position: player_detail.position,
         name: player_detail.name,
@@ -72,7 +72,7 @@ pub async fn select_under_contract_for_team(
         players.push((
             player_detail.number,
             Player {
-                id: Some(player_detail.id),
+                id: player_detail.id,
                 version: player_detail.version,
                 position: player_detail.position,
                 name: player_detail.name,
