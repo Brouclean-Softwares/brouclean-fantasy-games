@@ -29,8 +29,8 @@ impl GamePage {
         alert_message: Option<AlertMessage>,
         game: Game,
     ) -> Result<Self, AppError> {
-        let team_a = game.get_first_team()?.clone();
-        let team_b = game.get_second_team()?.clone();
+        let team_a = game.first_team.clone();
+        let team_b = game.second_team.clone();
 
         Ok(Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
@@ -72,8 +72,8 @@ impl NewGamePage {
         team_a: Option<Team>,
         team_b: Option<Team>,
     ) -> Self {
-        let team_a_id = team_a.clone().and_then(|team| team.id).unwrap_or(-1);
-        let team_b_id = team_b.clone().and_then(|team| team.id).unwrap_or(-1);
+        let team_a_id = team_a.clone().and_then(|team| Some(team.id)).unwrap_or(-1);
+        let team_b_id = team_b.clone().and_then(|team| Some(team.id)).unwrap_or(-1);
         let team_a_card = team_a.and_then(|team| Some(TeamCard::get_with_details(team, true)));
         let team_b_card = team_b.and_then(|team| Some(TeamCard::get_with_details(team, true)));
 

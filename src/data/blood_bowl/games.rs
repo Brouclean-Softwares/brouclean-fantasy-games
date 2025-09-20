@@ -4,10 +4,10 @@ use crate::data::users::User;
 use crate::errors::AppError;
 use crate::AppState;
 use blood_bowl_rs::coaches::Coach;
-use blood_bowl_rs::games::Game;
+use blood_bowl_rs::games::{Game, GameSummary};
 use blood_bowl_rs::players::Player;
 use blood_bowl_rs::rosters::Roster;
-use blood_bowl_rs::teams::Team;
+use blood_bowl_rs::teams::{Team, TeamSummary};
 use blood_bowl_rs::versions::Version;
 use chrono::NaiveDateTime;
 use serde::Deserialize;
@@ -28,8 +28,8 @@ pub async fn create(
         "create by coach={:?} to play at {} for the following teams: team_a_id={} and team_b_id={}",
         coach,
         played_at,
-        team_a.id.unwrap_or_default(),
-        team_b.id.unwrap_or_default(),
+        team_a.id,
+        team_b.id,
     );
 
     let game = Game::create(
@@ -83,7 +83,7 @@ pub async fn create(
             WHERE bb_teams.id = $2",
     )
     .bind(new_game_id.id.clone())
-    .bind(team_a.id.unwrap().clone())
+    .bind(team_a.id.clone())
     .execute(&mut *transaction)
     .await?;
 
@@ -113,7 +113,7 @@ pub async fn create(
             WHERE bb_teams.id = $2",
     )
     .bind(new_game_id.id.clone())
-    .bind(team_b.id.unwrap().clone())
+    .bind(team_b.id.clone())
     .execute(&mut *transaction)
     .await?;
 
@@ -134,7 +134,7 @@ struct GameRow {
 #[derive(Deserialize, sqlx::FromRow, Clone)]
 struct GameTeamRow {
     coach_id: Option<i32>,
-    team_id: Option<i32>,
+    team_id: i32,
     coach_name: String,
     team_name: String,
     team_roster: Roster,
@@ -198,14 +198,26 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<Game, AppError> {
             under_creation: false,
         };
 
-        if let Some(team_id) = game_team_row.team_id {
-            if let Ok(team_by_id) = teams::select_by_id(&state, team_id).await {
-                team = team_by_id;
-            }
+        if let Ok(team_by_id) = teams::select_by_id(&state, team.id).await {
+            team = team_by_id;
         }
 
         teams.push(team)
     }
+
+    let first_team = teams
+        .get(0)
+        .ok_or(AppError::from(
+            blood_bowl_rs::errors::Error::GameShouldHaveTwoTeams,
+        ))?
+        .clone();
+
+    let second_team = teams
+        .get(1)
+        .ok_or(AppError::from(
+            blood_bowl_rs::errors::Error::GameShouldHaveTwoTeams,
+        ))?
+        .clone();
 
     let mut created_by = None;
 
@@ -219,8 +231,10 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<Game, AppError> {
         created_by,
         played_at: game_row.played_at,
         closed_at: game_row.closed_at,
-        teams,
-        playing_players: Default::default(),
+        first_team,
+        second_team,
+        first_team_playing_players: vec![],
+        second_team_playing_players: vec![],
         events: vec![],
     };
 
@@ -282,14 +296,13 @@ struct TeamGameRow {
     opponent_name: String,
 }
 
-pub async fn select_played_by_team(state: &AppState, team: &Team) -> Result<Vec<Game>, AppError> {
+pub async fn select_played_by_team(
+    state: &AppState,
+    team: &Team,
+) -> Result<Vec<GameSummary>, AppError> {
     tracing::debug!("select_played_by_team for team_id={:?}", team.id);
 
-    let mut game_list: Vec<Game> = Vec::new();
-
-    if team.id.is_none() {
-        return Ok(game_list);
-    }
+    let mut game_list: Vec<GameSummary> = Vec::new();
 
     let game_opponent_rows: Vec<TeamGameRow> = sqlx::query_as(
         "SELECT bb_games.id,
@@ -312,7 +325,7 @@ pub async fn select_played_by_team(state: &AppState, team: &Team) -> Result<Vec<
             WHERE bb_games.closed_at IS NOT NULL
             ORDER BY bb_games.closed_at",
     )
-    .bind(team.id.unwrap().clone())
+    .bind(team.id.clone())
     .fetch_all(&state.db)
     .await?;
 
@@ -323,35 +336,33 @@ pub async fn select_played_by_team(state: &AppState, team: &Team) -> Result<Vec<
             created_by = coaches::select_by_id(state, coach_id).await?;
         }
 
-        game_list.push(Game {
-            id: Some(game_opponent_row.id),
+        game_list.push(GameSummary {
+            id: game_opponent_row.id,
             version: game_opponent_row.version,
-            created_by,
             played_at: game_opponent_row.played_at,
             closed_at: game_opponent_row.closed_at,
-            teams: vec![
-                team.clone(),
-                Team {
-                    id: Some(game_opponent_row.opponent_team_id),
-                    version: game_opponent_row.version,
-                    roster: game_opponent_row.opponent_team_roster,
-                    name: game_opponent_row.opponent_team_name,
-                    coach: Coach {
-                        id: game_opponent_row.opponent_id,
-                        name: game_opponent_row.opponent_name,
-                    },
-                    treasury: 0,
-                    external_logo_url: None,
-                    staff: Default::default(),
-                    players: vec![],
-                    games_played: vec![],
-                    game_playing: None,
-                    dedicated_fans: 0,
-                    under_creation: false,
+            first_team: TeamSummary::from(team.clone()),
+            second_team: TeamSummary {
+                id: game_opponent_row.opponent_team_id,
+                version: game_opponent_row.version,
+                roster: game_opponent_row.opponent_team_roster,
+                name: game_opponent_row.opponent_team_name,
+                coach: Coach {
+                    id: game_opponent_row.opponent_id,
+                    name: game_opponent_row.opponent_name,
                 },
-            ],
-            playing_players: Default::default(),
-            events: vec![],
+                external_logo_url: None,
+                value: 0,
+                current_value: 0,
+                treasury: 0,
+                last_game_played_date_time: None,
+                is_playing_a_game: false,
+            },
+            first_team_score: 0,
+            second_team_score: 0,
+            first_team_casualties: 0,
+            created_by,
+            second_team_casualties: 0,
         })
     }
 
@@ -361,12 +372,8 @@ pub async fn select_played_by_team(state: &AppState, team: &Team) -> Result<Vec<
 pub async fn select_playing_by_team(
     state: &AppState,
     team: &Team,
-) -> Result<Option<Game>, AppError> {
+) -> Result<Option<GameSummary>, AppError> {
     tracing::debug!("select_playing_by_team for team_id={:?}", team.id);
-
-    if team.id.is_none() {
-        return Ok(None);
-    }
 
     let game_opponent_row: Option<TeamGameRow> = sqlx::query_as(
         "SELECT bb_games.id,
@@ -391,7 +398,7 @@ pub async fn select_playing_by_team(
             WHERE bb_games.closed_at IS NULL
             LIMIT 1",
     )
-    .bind(team.id.unwrap().clone())
+    .bind(team.id.clone())
     .fetch_optional(&state.db)
     .await?;
 
@@ -402,38 +409,36 @@ pub async fn select_playing_by_team(
             created_by = coaches::select_by_id(state, coach_id).await?;
         }
 
-        let game = Game {
-            id: Some(game_opponent_row.id),
+        let game_summary = GameSummary {
+            id: game_opponent_row.id,
             version: game_opponent_row.version,
             played_at: game_opponent_row.played_at,
             closed_at: game_opponent_row.closed_at,
-            created_by,
-            teams: vec![
-                team.clone(),
-                Team {
-                    id: Some(game_opponent_row.opponent_team_id),
-                    version: game_opponent_row.version,
-                    roster: game_opponent_row.opponent_team_roster,
-                    name: game_opponent_row.opponent_team_name,
-                    coach: Coach {
-                        id: game_opponent_row.opponent_id,
-                        name: game_opponent_row.opponent_name,
-                    },
-                    treasury: 0,
-                    external_logo_url: None,
-                    staff: Default::default(),
-                    players: vec![],
-                    games_played: vec![],
-                    game_playing: None,
-                    dedicated_fans: 0,
-                    under_creation: false,
+            first_team: TeamSummary::from(team.clone()),
+            second_team: TeamSummary {
+                id: game_opponent_row.opponent_team_id,
+                version: game_opponent_row.version,
+                roster: game_opponent_row.opponent_team_roster,
+                name: game_opponent_row.opponent_team_name,
+                coach: Coach {
+                    id: game_opponent_row.opponent_id,
+                    name: game_opponent_row.opponent_name,
                 },
-            ],
-            playing_players: Default::default(),
-            events: vec![],
+                external_logo_url: None,
+                value: 0,
+                current_value: 0,
+                treasury: 0,
+                last_game_played_date_time: None,
+                is_playing_a_game: false,
+            },
+            first_team_score: 0,
+            second_team_score: 0,
+            first_team_casualties: 0,
+            created_by,
+            second_team_casualties: 0,
         };
 
-        Ok(Some(game))
+        Ok(Some(game_summary))
     } else {
         Ok(None)
     }

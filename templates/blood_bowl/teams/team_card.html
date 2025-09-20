@@ -1,6 +1,6 @@
 <div class="uk-card uk-card-default uk-width-expand">
     <div class="uk-card-header">
-        <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ team.id.unwrap() }}">
+        <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ team.id }}">
             <div class="uk-grid-small uk-flex-middle" uk-grid>
                 <div class="uk-width-auto">
                     {% if let Some(logo) = team.external_logo_url %}

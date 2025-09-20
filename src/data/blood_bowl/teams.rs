@@ -130,7 +130,7 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<Team, AppError> {
     let staff = staff::select_for_team(state, id).await?;
 
     let mut team = Team {
-        id: Some(team.id),
+        id: team.id,
         version: team.version,
         roster: team.roster,
         name: team.name,
