@@ -194,6 +194,7 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<Team, AppError> {
         players,
         games_played: vec![],
         game_playing: None,
+        games_scheduled: vec![],
         dedicated_fans: team.dedicated_fans as u8,
         under_creation: team.under_creation,
     };
@@ -201,6 +202,8 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<Team, AppError> {
     team.games_played = games::select_played_by_team(state, &team).await?;
 
     team.game_playing = games::select_playing_by_team(state, &team).await?;
+
+    team.games_scheduled = games::select_scheduled_for_team(state, &team).await?;
 
     Ok(team)
 }
@@ -357,12 +360,19 @@ pub async fn delete(
     state: &AppState,
     connected_user: &User,
     team_id: &i32,
-) -> Result<(), AppError> {
+) -> Result<bool, AppError> {
     tracing::debug!(
         "delete by user={:?} for team_id={}",
         connected_user,
         team_id,
     );
+
+    let team = select_by_id(state, team_id.clone()).await?;
+
+    if team.games_played.len() > 0 || team.games_scheduled.len() > 0 || team.game_playing.is_some()
+    {
+        return Ok(false);
+    }
 
     if let Some(connected_user_id) = connected_user.id {
         let mut transaction = state.db.begin().await?;
@@ -421,5 +431,5 @@ pub async fn delete(
         transaction.commit().await?;
     }
 
-    Ok(())
+    Ok(true)
 }

@@ -288,7 +288,7 @@
         {% endfor %}
         </ul>
 
-        {% if editable && team.under_creation %}
+        {% if editable %}
         <div class="uk-flex">
             <div>
                 {% if edit_mode %}
@@ -302,6 +302,7 @@
                 {% endif %}
             </div>
 
+            {% if edit_mode && deletable %}
             <div class="uk-margin-left">
                 <form id="delete_form" action="./delete" method="post" autocomplete="off">
                     <input id="id" name="id" type="hidden" value="{{ team.id }}">
@@ -325,6 +326,7 @@
                     </div>
                 </form>
             </div>
+            {% endif %}
         </div>
         {% endif %}
 

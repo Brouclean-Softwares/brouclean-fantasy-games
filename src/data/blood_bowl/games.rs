@@ -238,6 +238,51 @@ pub async fn select_played_by_team(
     Ok(game_list)
 }
 
+pub async fn select_scheduled_for_team(
+    state: &AppState,
+    team: &Team,
+) -> Result<Vec<GameSummary>, AppError> {
+    tracing::debug!("select_played_by_team for team_id={:?}", team.id);
+
+    let mut game_list: Vec<GameSummary> = Vec::new();
+
+    let game_rows: Vec<GameRow> = sqlx::query_as(
+        "SELECT bb_games.id,
+                    bb_games.version,
+                    bb_games.played_at,
+                    bb_games.created_by,
+                    bb_games.closed_at,
+                    bb_games.first_coach_id,
+                    bb_games.first_team_id,
+                    bb_games.first_team_json_summary,
+                    bb_games.first_team_score,
+                    bb_games.first_team_casualties,
+                    bb_games.first_team_is_winner,
+                    bb_games.second_coach_id,
+                    bb_games.second_team_id,
+                    bb_games.second_team_json_summary,
+                    bb_games.second_team_score,
+                    bb_games.second_team_casualties,
+                    bb_games.second_team_is_winner
+            FROM bb_games
+            LEFT JOIN bb_games_events
+            ON bb_games_events.game_id = bb_games.id
+            WHERE bb_games.closed_at IS NULL
+            AND (bb_games.first_team_id = $1 OR bb_games.second_team_id = $1)
+            AND bb_games_events.event IS NULL
+            ORDER BY played_at ASC",
+    )
+    .bind(team.id.clone())
+    .fetch_all(&state.db)
+    .await?;
+
+    for game_row in game_rows {
+        game_list.push(game_row.into_game_summary(state).await?)
+    }
+
+    Ok(game_list)
+}
+
 pub async fn select_playing_by_team(
     state: &AppState,
     team: &Team,

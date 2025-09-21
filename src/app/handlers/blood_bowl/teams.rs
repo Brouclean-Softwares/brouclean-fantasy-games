@@ -187,12 +187,7 @@ pub async fn get_team(
         .definition(team.version)
         .or(Err(Redirect::to("../teams")))?;
 
-    let editable = match profile.clone() {
-        Some(user) => team.coach.eq(&user.into()),
-        None => false,
-    };
-
-    let edit_mode = editable && params.edit.unwrap_or(false);
+    let edit_mode = params.edit.unwrap_or(false);
 
     let alert_message: Option<AlertMessage> = params.alert_message.and_then(|message| {
         Some(AlertMessage {
@@ -209,7 +204,6 @@ pub async fn get_team(
         alert_message,
         team,
         roster_definition,
-        editable,
         edit_mode,
         positions_buyable,
     ))

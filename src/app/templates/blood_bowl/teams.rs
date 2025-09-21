@@ -67,6 +67,7 @@ pub struct TeamPage {
     alert_message: Option<AlertMessage>,
     team: Team,
     roster_definition: RosterDefinition,
+    deletable: bool,
     editable: bool,
     edit_mode: bool,
     positions_buyable: Vec<(Position, u32, bool)>,
@@ -79,15 +80,27 @@ impl TeamPage {
         alert_message: Option<AlertMessage>,
         team: Team,
         roster_definition: RosterDefinition,
-        editable: bool,
         edit_mode: bool,
         positions_buyable: Vec<(Position, u32, bool)>,
     ) -> Self {
+        let editable = match profile.clone() {
+            Some(user) => team.coach.eq(&user.into()),
+            None => false,
+        };
+
+        let edit_mode = edit_mode && editable;
+
+        let deletable = editable
+            && team.games_played.len() == 0
+            && team.games_scheduled.len() == 0
+            && team.game_playing.is_none();
+
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
             alert_message,
             team,
             roster_definition,
+            deletable,
             editable,
             edit_mode,
             positions_buyable,
