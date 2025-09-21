@@ -11,7 +11,7 @@
 {% endblock %}
 
 {% block body %}
-<div class="uk-section">
+<div class="uk-section" x-data="{ tab: 'sheet' }">
     <div class="uk-container">
 
         <div class="uk-grid-small uk-flex-middle uk-margin-bottom" uk-grid>
@@ -53,282 +53,329 @@
             </div>
         </div>
 
-        <h3>
-            Informations générales
-        </h3>
-        <ul>
-            <li>
-                <span>Roster : </span>
-                <a class="uk-link-reset" href="../rosters/roster?version={{ team.version.type_name() }}&roster={{ team.roster.type_name() }}">
-                    <img src="/assets/images/blood_bowl/{{ team.roster.type_name() }}Logo.webp" width="25" height="25" alt="">
-                    <span class="uk-text-bold">{{ team.roster.name("fr") }} ({{ team.version.type_name() }})</span>
-                </a>
-            </li>
-            <li>
-                <span>Coach : </span>
-                <span class="uk-text-bold">{{ team.coach.name }}</span>
-            </li>
-            <li>
-                <span>Fans dévoués : </span>
-                <span class="uk-text-bold">{{ team.dedicated_fans }}</span>
-            </li>
-            <li>
-                <span>Trésorerie : </span>
-                <span class="uk-text-bold">{{ team.treasury / 1000 }}k</span>
-            </li>
-            <li>
-                <span>Valeur d'équipe (VE) : </span>
-                <span class="uk-text-bold">{{ team.value()? / 1000 }}k</span>
-            </li>
-            <li>
-                <span>Valeur d'équipe actuelle (VEA) : </span>
-                <span class="uk-text-bold">{{ team.current_value()? / 1000 }}k</span>
-            </li>
-        </ul>
-
-        <h3>
-            Joueurs
-        </h3>
-        <div class="uk-overflow-auto">
-            <table class="uk-table uk-table-striped uk-table-small">
-                <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Nom</th>
-                    <th>Poste</th>
-                    <th>M</th>
-                    <th>F</th>
-                    <th>AG</th>
-                    <th>CP</th>
-                    <th>AR</th>
-                    <th>Compétences & Traits</th>
-                    <th>Valeur</th>
-                </tr>
-                </thead>
-
-                <tbody>
-                {% for (number, player) in team.players %}
-
-                <tr>
+        <div class="uk-margin">
+            {% if editable %}
+            <div class="uk-flex">
+                <div>
                     {% if edit_mode %}
-                    <td>
-                        <form method="post" autocomplete="off">
-                            <input name="player_id" type="hidden" value="{{ player.id }}">
-
-                            <div class="uk-inline">
-                                <a class="uk-form-icon uk-form-icon-flip" href="#" uk-icon="icon: pencil"></a>
-                                <input class="uk-input"
-                                       style="width: 70px;"
-                                       name="player_number"
-                                       type="text"
-                                       value="{{ number }}"
-                                       placeholder="Numéro du joueur..."
-                                       onchange="submit()"
-                                       aria-label="">
-                            </div>
-                        </form>
-                    </td>
-                    {% elif editable %}
-                    <td class="uk-table-link">
-                        <a class="uk-link-reset" href="team?id={{ team.id }}&edit=true">
-                            {{ number }}
-                        </a>
-                    </td>
+                    <a href="./team?id={{ team.id }}" class="uk-button uk-button-default">
+                        Visualiser
+                    </a>
                     {% else %}
-                    <td>
-                        {{ number }}
-                    </td>
+                    <a href="./team?id={{ team.id }}&edit=true" class="uk-button uk-button-primary">
+                        Modifier
+                    </a>
                     {% endif %}
-
-                    {% if edit_mode %}
-                    <td>
-                        <form method="post" autocomplete="off">
-                            <input name="player_id" type="hidden" value="{{ player.id }}">
-
-                            <div class="uk-inline">
-                                <a class="uk-form-icon uk-form-icon-flip" href="#" uk-icon="icon: pencil"></a>
-                                <input class="uk-input uk-form-width-medium"
-                                       name="player_name"
-                                       type="text"
-                                       value="{{ player.name }}"
-                                       placeholder="Nom du joueur..."
-                                       onchange="submit()"
-                                       aria-label="">
-                            </div>
-                        </form>
-                    </td>
-                    {% elif editable %}
-                    <td class="uk-table-link">
-                        <a class="uk-link-reset" href="team?id={{ team.id }}&edit=true">
-                            {{ player.name }}
-                        </a>
-                    </td>
-                    {% else %}
-                    <td>
-                        {{ player.name }}
-                    </td>
-                    {% endif %}
-
-                    <td>{{ player.position.name("fr") }}</td>
-                    <td>{{ player.movement_allowance(team.roster)? }}</td>
-                    <td>{{ player.strength(team.roster)? }}</td>
-                    <td>{{ player.agility(team.roster)? }}+</td>
-
-                    {% if let Some(passing_ability) = player.passing_ability(team.roster)? %}
-                    <td>{{ passing_ability }}+</td>
-                    {% else %}
-                    <td>-</td>
-                    {% endif %}
-
-                    <td>{{ player.armour_value(team.roster)? }}+</td>
-                    <td>{{ player.skills_names(team.roster, "fr")? }}</td>
-                    <td>{{ player.value(team.roster)? / 1000 }}k</td>
-                </tr>
-
-                {% endfor %}
-                </tbody>
-
-                <tfoot>
-                <tr>
-                    <td colspan="10">
-                        <span>Nombre de joueurs : </span>
-                        <span class="uk-text-bold">{{ team.number_of_players() }}</span>
-                        <br>
-                        <span>({{ team.number_of_available_players() }} disponibles pour le prochain match)</span>
-                    </td>
-                </tr>
-                </tfoot>
-            </table>
-        </div>
-
-        <h4>
-            Recrutement
-        </h4>
-
-        {% if editable %}
-        <div>
-            <form id="buy_player_form" method="post" autocomplete="off">
-                <span>Il est encore possible de recruter {{ team.remaining_available_players_number() }} joueurs dont : </span>
-                <br>
-                <select id="position_to_buy"
-                        name="position_to_buy"
-                        class="uk-select uk-form-width-large"
-                        aria-label="Select">
-
-                    {% for (position, price, buyable) in positions_buyable %}
-                    <option value="{{ position.type_name() }}"
-                            {% if ! buyable %}disabled{% endif %}>
-                        {{ position.name("fr") }} ({{ price / 1000 }}k)
-                    </option>
-                    {% endfor %}
-
-                </select>
-
-                {% if team.can_buy_player()? %}
-                <button class="uk-button uk-button-link uk-margin-left"
-                        type="button"
-                        uk-toggle="target: #modal-buy-player">
-                    <span uk-icon="icon: cart"></span>
-                </button>
-
-                <div id="modal-buy-player" uk-modal>
-                    <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
-                        <h2 class="uk-modal-title">Achat de joueur en cours</h2>
-                        <p>Confirmez-vous l'achat pour le poste ?</p>
-                        <p class="uk-text-right">
-                            <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
-                            <button class="uk-button uk-button-primary"
-                                    onclick="document.getElementById('buy_player_form').submit()">
-                                Confirmer
-                            </button>
-                        </p>
-                    </div>
                 </div>
-                {% endif %}
-            </form>
-        </div>
-        {% endif %}
 
-        <h3>
-            Staff
-        </h3>
+                {% if edit_mode && deletable %}
+                <div class="uk-margin-left">
+                    <form id="delete_form" action="./delete" method="post" autocomplete="off">
+                        <input id="id" name="id" type="hidden" value="{{ team.id }}">
 
-        <ul>
-        {% for (staff, staff_information) in roster_definition.staff_information_sorted_by_name("fr") %}
-            <li>
-                <form id="buy_{{ staff.type_name() }}_form" method="post" autocomplete="off">
-                    <input name="staff_to_buy" type="hidden" value="{{ staff.type_name() }}">
-
-                    <span>{{ staff.name("fr") }} ({{ staff_information.price / 1000 }}k) : </span>
-                    <span class="uk-text-bold">{{ team.staff_quantity(staff) }}</span>
-
-                    {% if editable && team.can_buy_staff(staff)? %}
-                        <button class="uk-button uk-button-link uk-margin-left"
+                        <button class="uk-button uk-button-danger"
                                 type="button"
-                                uk-toggle="target: #modal-{{ staff.type_name() }}">
-                            <span uk-icon="icon: cart"></span>
-                        </button>
+                                uk-toggle="target: #modal-delete">Supprimer</button>
 
-                        <div id="modal-{{ staff.type_name() }}" uk-modal>
+                        <div id="modal-delete" uk-modal>
                             <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
-                                <h2 class="uk-modal-title">Achat de {{ staff.lower_name("fr") }} en cours</h2>
-                                <p>Confirmez-vous l'achat pour {{ staff_information.price / 1000 }}k ?</p>
+                                <h2 class="uk-modal-title">Suppression de l'équipe en cours</h2>
+                                <p>Confirmez-vous la suppression de l'équipe ?</p>
                                 <p class="uk-text-right">
                                     <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
-                                    <button class="uk-button uk-button-primary"
-                                            onclick="document.getElementById('buy_{{ staff.type_name() }}_form').submit()">
+                                    <button class="uk-button uk-button-danger"
+                                            onclick="document.getElementById('delete_form').submit()">
                                         Confirmer
                                     </button>
                                 </p>
                             </div>
                         </div>
-                    {% endif %}
-                </form>
-            </li>
-        {% endfor %}
-        </ul>
-
-        {% if editable %}
-        <div class="uk-flex">
-            <div>
-                {% if edit_mode %}
-                <a href="./team?id={{ team.id }}" class="uk-button uk-button-default">
-                    Visualiser
-                </a>
-                {% else %}
-                <a href="./team?id={{ team.id }}&edit=true" class="uk-button uk-button-primary">
-                    Modifier
-                </a>
+                    </form>
+                </div>
                 {% endif %}
-            </div>
-
-            {% if edit_mode && deletable %}
-            <div class="uk-margin-left">
-                <form id="delete_form" action="./delete" method="post" autocomplete="off">
-                    <input id="id" name="id" type="hidden" value="{{ team.id }}">
-
-                    <button class="uk-button uk-button-danger"
-                            type="button"
-                            uk-toggle="target: #modal-delete">Supprimer</button>
-
-                    <div id="modal-delete" uk-modal>
-                        <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
-                            <h2 class="uk-modal-title">Suppression de l'équipe en cours</h2>
-                            <p>Confirmez-vous la suppression de l'équipe ?</p>
-                            <p class="uk-text-right">
-                                <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
-                                <button class="uk-button uk-button-danger"
-                                        onclick="document.getElementById('delete_form').submit()">
-                                    Confirmer
-                                </button>
-                            </p>
-                        </div>
-                    </div>
-                </form>
             </div>
             {% endif %}
         </div>
-        {% endif %}
+
+        <div>
+            <ul class="uk-child-width-expand" uk-tab>
+                <li class="uk-active">
+                    <a href="#" uk-icon="icon: file-text" x-on:click="tab='sheet'">
+                        <span class="uk-visible@m">Feuille d'équipe</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" uk-icon="icon: calendar" x-on:click="tab='results'">
+                        <span class="uk-visible@m">Résultats</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" uk-icon="icon: info" x-on:click="tab='stats'">
+                        <span class="uk-visible@m">Statistiques</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" uk-icon="icon: users" x-on:click="tab='old_players'">
+                        <span class="uk-visible@m">Anciens joueurs</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div x-show="tab==='sheet'" uk-grid>
+            <div class="uk-width-1-2@m">
+                <h3>
+                    Informations générales
+                </h3>
+                <ul>
+                    <li>
+                        <span>Roster : </span>
+                        <a class="uk-link-reset" href="../rosters/roster?version={{ team.version.type_name() }}&roster={{ team.roster.type_name() }}">
+                            <img src="/assets/images/blood_bowl/{{ team.roster.type_name() }}Logo.webp" width="25" height="25" alt="">
+                            <span class="uk-text-bold">{{ team.roster.name("fr") }} ({{ team.version.type_name() }})</span>
+                        </a>
+                    </li>
+                    <li>
+                        <span>Coach : </span>
+                        <span class="uk-text-bold">{{ team.coach.name }}</span>
+                    </li>
+                    <li>
+                        <span>Fans dévoués : </span>
+                        <span class="uk-text-bold">{{ team.dedicated_fans }}</span>
+                    </li>
+                    <li>
+                        <span>Trésorerie : </span>
+                        <span class="uk-text-bold">{{ team.treasury / 1000 }}k</span>
+                    </li>
+                    <li>
+                        <span>Valeur d'équipe (VE) : </span>
+                        <span class="uk-text-bold">{{ team.value()? / 1000 }}k</span>
+                    </li>
+                    <li>
+                        <span>Valeur d'équipe actuelle (VEA) : </span>
+                        <span class="uk-text-bold">{{ team.current_value()? / 1000 }}k</span>
+                    </li>
+                </ul>
+            </div>
+
+
+            <div class="uk-width-1-2@m">
+                <h3>
+                    Staff
+                </h3>
+
+                <ul>
+                    {% for (staff, staff_information) in roster_definition.staff_information_sorted_by_name("fr") %}
+                    <li>
+                        <form id="buy_{{ staff.type_name() }}_form" method="post" autocomplete="off">
+                            <input name="staff_to_buy" type="hidden" value="{{ staff.type_name() }}">
+
+                            <span>{{ staff.name("fr") }} ({{ staff_information.price / 1000 }}k) : </span>
+                            <span class="uk-text-bold">{{ team.staff_quantity(staff) }}</span>
+
+                            {% if editable && team.can_buy_staff(staff)? %}
+                            <button class="uk-button uk-button-link uk-margin-left"
+                                    type="button"
+                                    uk-toggle="target: #modal-{{ staff.type_name() }}">
+                                <span uk-icon="icon: cart"></span>
+                            </button>
+
+                            <div id="modal-{{ staff.type_name() }}" uk-modal>
+                                <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                                    <h2 class="uk-modal-title">Achat de {{ staff.lower_name("fr") }} en cours</h2>
+                                    <p>Confirmez-vous l'achat pour {{ staff_information.price / 1000 }}k ?</p>
+                                    <p class="uk-text-right">
+                                        <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                                        <button class="uk-button uk-button-primary"
+                                                onclick="document.getElementById('buy_{{ staff.type_name() }}_form').submit()">
+                                            Confirmer
+                                        </button>
+                                    </p>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </form>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="uk-width-expand@m">
+                <h3>
+                    Joueurs
+                </h3>
+                <div class="uk-overflow-auto">
+                    <table class="uk-table uk-table-striped uk-table-small">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Nom</th>
+                            <th>Poste</th>
+                            <th>M</th>
+                            <th>F</th>
+                            <th>AG</th>
+                            <th>CP</th>
+                            <th>AR</th>
+                            <th>Compétences & Traits</th>
+                            <th>Valeur</th>
+                        </tr>
+                        </thead>
+
+                        <tbody>
+                        {% for (number, player) in team.players %}
+
+                        <tr>
+                            {% if edit_mode %}
+                            <td>
+                                <form method="post" autocomplete="off">
+                                    <input name="player_id" type="hidden" value="{{ player.id }}">
+
+                                    <div class="uk-inline">
+                                        <a class="uk-form-icon uk-form-icon-flip" href="#" uk-icon="icon: pencil"></a>
+                                        <input class="uk-input"
+                                               style="width: 70px;"
+                                               name="player_number"
+                                               type="text"
+                                               value="{{ number }}"
+                                               placeholder="Numéro du joueur..."
+                                               onchange="submit()"
+                                               aria-label="">
+                                    </div>
+                                </form>
+                            </td>
+                            {% elif editable %}
+                            <td class="uk-table-link">
+                                <a class="uk-link-reset" href="team?id={{ team.id }}&edit=true">
+                                    {{ number }}
+                                </a>
+                            </td>
+                            {% else %}
+                            <td>
+                                {{ number }}
+                            </td>
+                            {% endif %}
+
+                            {% if edit_mode %}
+                            <td>
+                                <form method="post" autocomplete="off">
+                                    <input name="player_id" type="hidden" value="{{ player.id }}">
+
+                                    <div class="uk-inline">
+                                        <a class="uk-form-icon uk-form-icon-flip" href="#" uk-icon="icon: pencil"></a>
+                                        <input class="uk-input uk-form-width-medium"
+                                               name="player_name"
+                                               type="text"
+                                               value="{{ player.name }}"
+                                               placeholder="Nom du joueur..."
+                                               onchange="submit()"
+                                               aria-label="">
+                                    </div>
+                                </form>
+                            </td>
+                            {% elif editable %}
+                            <td class="uk-table-link">
+                                <a class="uk-link-reset" href="team?id={{ team.id }}&edit=true">
+                                    {{ player.name }}
+                                </a>
+                            </td>
+                            {% else %}
+                            <td>
+                                {{ player.name }}
+                            </td>
+                            {% endif %}
+
+                            <td>{{ player.position.name("fr") }}</td>
+                            <td>{{ player.movement_allowance(team.roster)? }}</td>
+                            <td>{{ player.strength(team.roster)? }}</td>
+                            <td>{{ player.agility(team.roster)? }}+</td>
+
+                            {% if let Some(passing_ability) = player.passing_ability(team.roster)? %}
+                            <td>{{ passing_ability }}+</td>
+                            {% else %}
+                            <td>-</td>
+                            {% endif %}
+
+                            <td>{{ player.armour_value(team.roster)? }}+</td>
+                            <td>{{ player.skills_names(team.roster, "fr")? }}</td>
+                            <td>{{ player.value(team.roster)? / 1000 }}k</td>
+                        </tr>
+
+                        {% endfor %}
+                        </tbody>
+
+                        <tfoot>
+                        <tr>
+                            <td colspan="10">
+                                <span>Nombre de joueurs : </span>
+                                <span class="uk-text-bold">{{ team.number_of_players() }}</span>
+                                <br>
+                                <span>({{ team.number_of_available_players() }} disponibles pour le prochain match)</span>
+                            </td>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                {% if editable %}
+                <h4>
+                    Recrutement
+                </h4>
+                <div>
+                    <form id="buy_player_form" method="post" autocomplete="off">
+                        <span>Il est encore possible de recruter {{ team.remaining_available_players_number() }} joueurs dont : </span>
+                        <br>
+                        <select id="position_to_buy"
+                                name="position_to_buy"
+                                class="uk-select uk-form-width-large"
+                                aria-label="Select">
+
+                            {% for (position, price, buyable) in positions_buyable %}
+                            <option value="{{ position.type_name() }}"
+                                    {% if ! buyable %}disabled{% endif %}>
+                                {{ position.name("fr") }} ({{ price / 1000 }}k)
+                            </option>
+                            {% endfor %}
+
+                        </select>
+
+                        {% if team.can_buy_player()? %}
+                        <button class="uk-button uk-button-link uk-margin-left"
+                                type="button"
+                                uk-toggle="target: #modal-buy-player">
+                            <span uk-icon="icon: cart"></span>
+                        </button>
+
+                        <div id="modal-buy-player" uk-modal>
+                            <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                                <h2 class="uk-modal-title">Achat de joueur en cours</h2>
+                                <p>Confirmez-vous l'achat pour le poste ?</p>
+                                <p class="uk-text-right">
+                                    <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                                    <button class="uk-button uk-button-primary"
+                                            onclick="document.getElementById('buy_player_form').submit()">
+                                        Confirmer
+                                    </button>
+                                </p>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div x-show="tab==='results'">
+            A venir...
+        </div>
+
+        <div x-show="tab==='stats'">
+            A venir...
+        </div>
+
+        <div x-show="tab==='old_players'">
+            A venir...
+        </div>
 
     </div>
 </div>
