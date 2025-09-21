@@ -71,6 +71,7 @@ pub struct TeamPage {
     deletable: bool,
     editable: bool,
     edit_mode: bool,
+    focus: Option<String>,
     positions_buyable: Vec<(Position, u32, bool)>,
 }
 
@@ -82,6 +83,7 @@ impl TeamPage {
         team: Team,
         roster_definition: RosterDefinition,
         edit_mode: bool,
+        focus: Option<String>,
         positions_buyable: Vec<(Position, u32, bool)>,
     ) -> Self {
         let editable = match profile.clone() {
@@ -104,6 +106,7 @@ impl TeamPage {
             deletable,
             editable,
             edit_mode,
+            focus,
             positions_buyable,
         }
     }

@@ -167,6 +167,7 @@ pub struct TeamQueryParams {
     pub id: i32,
     pub alert_message: Option<String>,
     pub edit: Option<bool>,
+    pub focus: Option<String>,
 }
 
 pub async fn get_team(
@@ -205,6 +206,7 @@ pub async fn get_team(
         team,
         roster_definition,
         edit_mode,
+        params.focus,
         positions_buyable,
     ))
 }
@@ -239,12 +241,14 @@ pub async fn post_team(
                 .await
                 .or_else(|app_error| {
                     Err(Redirect::to(&format!(
-                        "./team?id={}&message={}&edit={}",
+                        "./team?id={}&message={}&edit={}&focus=team_name",
                         params.id,
                         app_error,
-                        params.edit.unwrap_or(false)
+                        params.edit.unwrap_or(false),
                     )))
-                })?
+                })?;
+
+            Ok(Redirect::to(&format!("./team?id={}", params.id,)))
         }
 
         (Some(profile), _, Some(player_id), Some(player_name), _, _, _) => {
@@ -252,12 +256,20 @@ pub async fn post_team(
                 .await
                 .or_else(|app_error| {
                     Err(Redirect::to(&format!(
-                        "./team?id={}&message={}&edit={}",
+                        "./team?id={}&message={}&edit={}&focus=player_{}_name",
                         params.id,
                         app_error,
-                        params.edit.unwrap_or(false)
+                        params.edit.unwrap_or(false),
+                        player_id,
                     )))
-                })?
+                })?;
+
+            Ok(Redirect::to(&format!(
+                "./team?id={}&edit={}&focus=player_{}_name",
+                params.id,
+                params.edit.unwrap_or(false),
+                player_id,
+            )))
         }
 
         (Some(profile), _, Some(player_id), _, Some(player_number), _, _) => {
@@ -265,12 +277,20 @@ pub async fn post_team(
                 .await
                 .or_else(|app_error| {
                     Err(Redirect::to(&format!(
-                        "./team?id={}&message={}&edit={}",
+                        "./team?id={}&message={}&edit={}&focus=player_{}_number",
                         params.id,
                         app_error,
-                        params.edit.unwrap_or(false)
+                        params.edit.unwrap_or(false),
+                        player_id,
                     )))
-                })?
+                })?;
+
+            Ok(Redirect::to(&format!(
+                "./team?id={}&edit={}&focus=player_{}_number",
+                params.id,
+                params.edit.unwrap_or(false),
+                player_id,
+            )))
         }
 
         (Some(profile), _, _, _, _, Some(staff_to_buy), _) => {
@@ -278,12 +298,12 @@ pub async fn post_team(
                 .await
                 .or_else(|app_error| {
                     Err(Redirect::to(&format!(
-                        "./team?id={}&message={}&edit={}",
-                        params.id,
-                        app_error,
-                        params.edit.unwrap_or(false)
+                        "./team?id={}&message={}",
+                        params.id, app_error,
                     )))
-                })?
+                })?;
+
+            Ok(Redirect::to(&format!("./team?id={}", params.id,)))
         }
 
         (Some(profile), _, _, _, _, _, Some(position_to_buy)) => {
@@ -291,22 +311,16 @@ pub async fn post_team(
                 .await
                 .or_else(|app_error| {
                     Err(Redirect::to(&format!(
-                        "./team?id={}&message={}&edit={}",
-                        params.id,
-                        app_error,
-                        params.edit.unwrap_or(false)
+                        "./team?id={}&message={}",
+                        params.id, app_error,
                     )))
-                })?
+                })?;
+
+            Ok(Redirect::to(&format!("./team?id={}", params.id,)))
         }
 
-        _ => {}
-    };
-
-    Ok(Redirect::to(&format!(
-        "./team?id={}&edit={}",
-        params.id,
-        params.edit.unwrap_or(false)
-    )))
+        _ => Ok(Redirect::to(&format!("./team?id={}", params.id,))),
+    }
 }
 
 #[derive(Deserialize)]
