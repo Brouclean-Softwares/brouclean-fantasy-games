@@ -35,8 +35,8 @@ pub async fn game(
 
 #[derive(Deserialize)]
 pub struct NewGameQueryParams {
-    pub team_a_id: Option<i32>,
-    pub team_b_id: Option<i32>,
+    pub first_team_id: Option<i32>,
+    pub second_team_id: Option<i32>,
 }
 
 pub async fn new_game(
@@ -44,27 +44,27 @@ pub async fn new_game(
     profile: User,
     Query(params): Query<NewGameQueryParams>,
 ) -> Result<NewGamePage, AppError> {
-    let mut team_a: Option<Team> = None;
+    let mut first_team: Option<Team> = None;
 
-    if let Some(id) = params.team_a_id {
-        team_a = Some(teams::select_by_id(&app_state, id).await?);
+    if let Some(id) = params.first_team_id {
+        first_team = Some(teams::select_by_id(&app_state, id).await?);
     }
 
-    let mut team_b: Option<Team> = None;
+    let mut second_team: Option<Team> = None;
 
-    if let Some(id) = params.team_b_id {
-        team_b = Some(teams::select_by_id(&app_state, id).await?);
+    if let Some(id) = params.second_team_id {
+        second_team = Some(teams::select_by_id(&app_state, id).await?);
     }
 
-    let new_game_page = NewGamePage::get(app_state, profile, team_a, team_b);
+    let new_game_page = NewGamePage::get(app_state, profile, first_team, second_team);
 
     Ok(new_game_page)
 }
 
 #[derive(Deserialize)]
 pub struct NewTeamForm {
-    pub team_a_id: Option<i32>,
-    pub team_b_id: Option<i32>,
+    pub first_team_id: Option<i32>,
+    pub second_team_id: Option<i32>,
     pub played_at: Option<String>,
 }
 
@@ -81,27 +81,27 @@ pub async fn create_game(
         }
     };
 
-    let team_a_id = form.team_a_id.and_then(fn_if_id_positive);
-    let team_b_id = form.team_b_id.and_then(fn_if_id_positive);
+    let first_team_id = form.first_team_id.and_then(fn_if_id_positive);
+    let second_team_id = form.second_team_id.and_then(fn_if_id_positive);
 
-    match (team_a_id, team_b_id, form.played_at) {
-        (Some(team_a_id), None, None) => Ok(Redirect::to(&format!(
-            "/blood_bowl/games/new?team_a_id={}",
-            team_a_id
+    match (first_team_id, second_team_id, form.played_at) {
+        (Some(first_team_id), None, None) => Ok(Redirect::to(&format!(
+            "/blood_bowl/games/new?first_team_id={}",
+            first_team_id
         ))),
 
-        (None, Some(team_b_id), None) => Ok(Redirect::to(&format!(
-            "/blood_bowl/games/new?team_b_id={}",
-            team_b_id
+        (None, Some(second_team_id), None) => Ok(Redirect::to(&format!(
+            "/blood_bowl/games/new?second_team_id={}",
+            second_team_id
         ))),
 
-        (Some(team_a_id), Some(team_b_id), None) => Ok(Redirect::to(&format!(
-            "/blood_bowl/games/new?team_a_id={}&team_b_id={}",
-            team_a_id, team_b_id
+        (Some(first_team_id), Some(second_team_id), None) => Ok(Redirect::to(&format!(
+            "/blood_bowl/games/new?first_team_id={}&second_team_id={}",
+            first_team_id, second_team_id
         ))),
 
-        (Some(team_a_id), Some(team_b_id), Some(played_at)) => {
-            let team_a = teams::select_by_id(&app_state, team_a_id)
+        (Some(first_team_id), Some(second_team_id), Some(played_at)) => {
+            let first_team = teams::select_by_id(&app_state, first_team_id)
                 .await
                 .map_err(|_| {
                     NewGamePage::get_with_message(
@@ -116,7 +116,7 @@ pub async fn create_game(
                     )
                 })?;
 
-            let team_b = teams::select_by_id(&app_state, team_b_id)
+            let second_team = teams::select_by_id(&app_state, second_team_id)
                 .await
                 .map_err(|_| {
                     NewGamePage::get_with_message(
@@ -140,12 +140,12 @@ pub async fn create_game(
                             alert_type: AlertType::Danger,
                             message: "Veuillez remplir la date et l'heure du match.".to_string(),
                         }),
-                        Some(team_a.clone()),
-                        Some(team_b.clone()),
+                        Some(first_team.clone()),
+                        Some(second_team.clone()),
                     )
                 })?;
 
-            let game_id = games::create(&app_state, &profile, &team_a, &team_b, played_at)
+            let game_id = games::create(&app_state, &profile, &first_team, &second_team, played_at)
                 .await
                 .map_err(|error| {
                     NewGamePage::get_with_message(
@@ -155,8 +155,8 @@ pub async fn create_game(
                             alert_type: AlertType::Danger,
                             message: error.to_string(),
                         }),
-                        Some(team_a.clone()),
-                        Some(team_b.clone()),
+                        Some(first_team.clone()),
+                        Some(second_team.clone()),
                     )
                 })?;
 

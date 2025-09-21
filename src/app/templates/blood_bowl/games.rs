@@ -5,8 +5,9 @@ use crate::errors::AppError;
 use crate::AppState;
 use askama::Template;
 use askama_web::WebTemplate;
-use blood_bowl_rs::games::Game;
+use blood_bowl_rs::games::{Game, GameSummary};
 use blood_bowl_rs::teams::Team;
+use blood_bowl_rs::translation::{TranslatedName, TypeName};
 
 #[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/games/game_page.html")]
@@ -14,8 +15,6 @@ pub struct GamePage {
     navigation_bar: NavigationBar,
     alert_message: Option<AlertMessage>,
     game: Game,
-    team_a_card: TeamCard,
-    team_b_card: TeamCard,
 }
 
 impl GamePage {
@@ -29,15 +28,10 @@ impl GamePage {
         alert_message: Option<AlertMessage>,
         game: Game,
     ) -> Result<Self, AppError> {
-        let team_a = game.first_team.clone();
-        let team_b = game.second_team.clone();
-
         Ok(Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
             alert_message,
             game,
-            team_a_card: TeamCard::get(team_a),
-            team_b_card: TeamCard::get(team_b),
         })
     }
 }
@@ -47,45 +41,53 @@ impl GamePage {
 pub struct NewGamePage {
     navigation_bar: NavigationBar,
     alert_message: Option<AlertMessage>,
-    team_a_id: i32,
-    team_b_id: i32,
-    team_a_card: Option<TeamCard>,
-    team_b_card: Option<TeamCard>,
-    team_a_selector: TeamSelector,
-    team_b_selector: TeamSelector,
+    first_team_id: i32,
+    second_team_id: i32,
+    first_team_card: Option<TeamCard>,
+    second_team_card: Option<TeamCard>,
+    first_team_selector: TeamSelector,
+    second_team_selector: TeamSelector,
 }
 
 impl NewGamePage {
     pub fn get(
         app_state: AppState,
         profile: User,
-        team_a: Option<Team>,
-        team_b: Option<Team>,
+        first_team: Option<Team>,
+        second_team: Option<Team>,
     ) -> Self {
-        Self::get_with_message(app_state, profile, None, team_a, team_b)
+        Self::get_with_message(app_state, profile, None, first_team, second_team)
     }
 
     pub fn get_with_message(
         app_state: AppState,
         profile: User,
         alert_message: Option<AlertMessage>,
-        team_a: Option<Team>,
-        team_b: Option<Team>,
+        first_team: Option<Team>,
+        second_team: Option<Team>,
     ) -> Self {
-        let team_a_id = team_a.clone().and_then(|team| Some(team.id)).unwrap_or(-1);
-        let team_b_id = team_b.clone().and_then(|team| Some(team.id)).unwrap_or(-1);
-        let team_a_card = team_a.and_then(|team| Some(TeamCard::get_with_details(team, true)));
-        let team_b_card = team_b.and_then(|team| Some(TeamCard::get_with_details(team, true)));
+        let first_team_id = first_team
+            .clone()
+            .and_then(|team| Some(team.id))
+            .unwrap_or(-1);
+        let second_team_id = second_team
+            .clone()
+            .and_then(|team| Some(team.id))
+            .unwrap_or(-1);
+        let first_team_card =
+            first_team.and_then(|team| Some(TeamCard::get_with_details(team, true)));
+        let second_team_card =
+            second_team.and_then(|team| Some(TeamCard::get_with_details(team, true)));
 
         Self {
             navigation_bar: NavigationBar::get(&app_state, &Some(profile)),
             alert_message,
-            team_a_id,
-            team_b_id,
-            team_a_card,
-            team_b_card,
-            team_a_selector: TeamSelector::get("team_a_id".to_string()),
-            team_b_selector: TeamSelector::get("team_b_id".to_string()),
+            first_team_id,
+            second_team_id,
+            first_team_card,
+            second_team_card,
+            first_team_selector: TeamSelector::get("first_team_id".to_string()),
+            second_team_selector: TeamSelector::get("second_team_id".to_string()),
         }
     }
 }
@@ -93,5 +95,12 @@ impl NewGamePage {
 #[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/games/game_card.html")]
 pub struct GameCard {
-    game: Game,
+    game: GameSummary,
+    is_scheduled: bool,
+}
+
+impl GameCard {
+    pub fn get(game: GameSummary, is_scheduled: bool) -> Self {
+        Self { game, is_scheduled }
+    }
 }

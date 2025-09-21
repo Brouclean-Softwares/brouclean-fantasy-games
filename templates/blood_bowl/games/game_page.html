@@ -13,16 +13,69 @@
 {% block body %}
 <div class="uk-section">
     <div class="uk-container">
-        <div class="uk-grid-match uk-hidden@m" uk-grid>
-            <div></div>
-            <div></div>
+
+        <div class="uk-grid-small uk-flex-center uk-flex-middle uk-background-muted uk-margin" uk-grid>
+
+            <div class="uk-width-1-2@m">
+                <div class="uk-grid-small uk-flex-middle" uk-grid>
+                    <div class="uk-width-1-5">
+                        {% if let Some(logo) = game.first_team.external_logo_url %}
+                        <img src="{{ logo }}" alt="">
+                        {% else %}
+                        <img src="/assets/images/blood_bowl/{{ game.first_team.roster.type_name() }}Logo.webp" alt="">
+                        {% endif %}
+                    </div>
+                    <div class="uk-width-expand uk-text-center uk-text-right@m">
+                        <h2 class="uk-margin-remove-bottom">{{ game.first_team.name }}</h2>
+                        <p class="uk-margin-remove-top uk-margin-remove-bottom">{{ game.first_team.roster.name("fr") }}</p>
+                        <p class="uk-margin-remove-top">{{ game.first_team.coach.name }}</p>
+                    </div>
+                    <div class="uk-width-1-5 uk-text-center">
+                        <p class="uk-text-large uk-text-bold uk-background-secondary uk-text-muted">
+                            -
+                        </p>
+                        <p>
+                            -
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="uk-width-1-2@m">
+                <div class="uk-grid-small uk-flex-middle" uk-grid>
+                    <div class="uk-width-1-5 uk-flex-last@m">
+                        {% if let Some(logo) = game.second_team.external_logo_url %}
+                        <img src="{{ logo }}" alt="">
+                        {% else %}
+                        <img src="/assets/images/blood_bowl/{{ game.second_team.roster.type_name() }}Logo.webp" alt="">
+                        {% endif %}
+                    </div>
+                    <div class="uk-width-expand uk-text-center uk-text-left@m">
+                        <h2 class="uk-margin-remove-bottom">{{ game.second_team.name }}</h2>
+                        <p class="uk-margin-remove-top uk-margin-remove-bottom">{{ game.second_team.roster.name("fr") }}</p>
+                        <p class="uk-margin-remove-top">{{ game.second_team.coach.name }}</p>
+                    </div>
+                    <div class="uk-width-1-5 uk-flex-first@m uk-text-center">
+                        <p class="uk-text-large uk-text-bold uk-background-secondary uk-text-muted">
+                            -
+                        </p>
+                        <p>
+                            -
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="uk-width-1-1 uk-text-center uk-text-large uk-margin">
+                {{ game.played_at.format("%d/%m/%Y à %H:%M").to_string() }}
+            </div>
+
+            <div class="uk-width-1-1 uk-text-center uk-text-large uk-margin">
+                Exhibition
+            </div>
+
         </div>
 
-        <div class="uk-grid-match uk-visible@m" uk-grid>
-            <div>{{ team_a_card|escape("none") }}</div>
-            <div></div>
-            <div>{{ team_b_card|escape("none") }}</div>
-        </div>
     </div>
 </div>
 {% endblock %}

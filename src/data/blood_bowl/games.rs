@@ -42,7 +42,7 @@ pub async fn create(
     )?;
 
     let first_team_json_summary = serde_json::to_string(&TeamSummary::from(first_team))?;
-    let second_team_json_summary = serde_json::to_string(&TeamSummary::from(first_team))?;
+    let second_team_json_summary = serde_json::to_string(&TeamSummary::from(second_team))?;
 
     let new_game_id: Id = sqlx::query_as(
         "INSERT INTO bb_games (
@@ -80,13 +80,11 @@ struct GameRow {
     played_at: NaiveDateTime,
     created_by: Option<i32>,
     closed_at: Option<NaiveDateTime>,
-    first_coach_id: Option<i32>,
     first_team_id: Option<i32>,
     first_team_json_summary: String,
     first_team_score: i32,
     first_team_casualties: i32,
     first_team_is_winner: bool,
-    second_coach_id: Option<i32>,
     second_team_id: Option<i32>,
     second_team_json_summary: String,
     second_team_score: i32,
@@ -142,8 +140,24 @@ impl GameRow {
             created_by = coaches::select_by_id(state, Some(coach_id)).await?;
         }
 
-        let first_team_summary = serde_json::from_str(&*self.first_team_json_summary)?;
-        let second_team_summary = serde_json::from_str(&*self.second_team_json_summary)?;
+        let mut first_team_summary: TeamSummary =
+            serde_json::from_str(&*self.first_team_json_summary)?;
+        let mut second_team_summary: TeamSummary =
+            serde_json::from_str(&*self.second_team_json_summary)?;
+
+        if self.closed_at.is_none() {
+            if let Ok(team_summary) =
+                teams::select_summary_by_id(state, first_team_summary.id).await
+            {
+                first_team_summary = team_summary;
+            }
+
+            if let Ok(team_summary) =
+                teams::select_summary_by_id(state, second_team_summary.id).await
+            {
+                second_team_summary = team_summary;
+            }
+        }
 
         let game_summary = GameSummary {
             id: self.id,
@@ -172,13 +186,11 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<Game, AppError> {
                     played_at,
                     created_by,
                     closed_at,
-                    first_coach_id,
                     first_team_id,
                     first_team_json_summary,
                     first_team_score,
                     first_team_casualties,
                     first_team_is_winner,
-                    second_coach_id,
                     second_team_id,
                     second_team_json_summary,
                     second_team_score,
@@ -210,13 +222,11 @@ pub async fn select_played_by_team(
                     played_at,
                     created_by,
                     closed_at,
-                    first_coach_id,
                     first_team_id,
                     first_team_json_summary,
                     first_team_score,
                     first_team_casualties,
                     first_team_is_winner,
-                    second_coach_id,
                     second_team_id,
                     second_team_json_summary,
                     second_team_score,
@@ -247,29 +257,25 @@ pub async fn select_scheduled_for_team(
     let mut game_list: Vec<GameSummary> = Vec::new();
 
     let game_rows: Vec<GameRow> = sqlx::query_as(
-        "SELECT bb_games.id,
-                    bb_games.version,
-                    bb_games.played_at,
-                    bb_games.created_by,
-                    bb_games.closed_at,
-                    bb_games.first_coach_id,
-                    bb_games.first_team_id,
-                    bb_games.first_team_json_summary,
-                    bb_games.first_team_score,
-                    bb_games.first_team_casualties,
-                    bb_games.first_team_is_winner,
-                    bb_games.second_coach_id,
-                    bb_games.second_team_id,
-                    bb_games.second_team_json_summary,
-                    bb_games.second_team_score,
-                    bb_games.second_team_casualties,
-                    bb_games.second_team_is_winner
+        "SELECT id,
+                    version,
+                    played_at,
+                    created_by,
+                    closed_at,
+                    first_team_id,
+                    first_team_json_summary,
+                    first_team_score,
+                    first_team_casualties,
+                    first_team_is_winner,
+                    second_team_id,
+                    second_team_json_summary,
+                    second_team_score,
+                    second_team_casualties,
+                    second_team_is_winner
             FROM bb_games
-            LEFT JOIN bb_games_events
-            ON bb_games_events.game_id = bb_games.id
-            WHERE bb_games.closed_at IS NULL
-            AND (bb_games.first_team_id = $1 OR bb_games.second_team_id = $1)
-            AND bb_games_events.event IS NULL
+            WHERE closed_at IS NULL
+            AND played_at > CURRENT_TIMESTAMP
+            AND (first_team_id = $1 OR second_team_id = $1)
             ORDER BY played_at ASC",
     )
     .bind(team.id.clone())
@@ -290,28 +296,26 @@ pub async fn select_playing_by_team(
     tracing::debug!("select_playing_by_team for team_id={:?}", team.id);
 
     let game_row: Option<GameRow> = sqlx::query_as(
-        "SELECT bb_games.id,
-                    bb_games.version,
-                    bb_games.played_at,
-                    bb_games.created_by,
-                    bb_games.closed_at,
-                    bb_games.first_coach_id,
-                    bb_games.first_team_id,
-                    bb_games.first_team_json_summary,
-                    bb_games.first_team_score,
-                    bb_games.first_team_casualties,
-                    bb_games.first_team_is_winner,
-                    bb_games.second_coach_id,
-                    bb_games.second_team_id,
-                    bb_games.second_team_json_summary,
-                    bb_games.second_team_score,
-                    bb_games.second_team_casualties,
-                    bb_games.second_team_is_winner
+        "SELECT id,
+                    version,
+                    played_at,
+                    created_by,
+                    closed_at,
+                    first_team_id,
+                    first_team_json_summary,
+                    first_team_score,
+                    first_team_casualties,
+                    first_team_is_winner,
+                    second_team_id,
+                    second_team_json_summary,
+                    second_team_score,
+                    second_team_casualties,
+                    second_team_is_winner
             FROM bb_games
-            INNER JOIN bb_games_events
-            ON bb_games_events.game_id = bb_games.id
-            WHERE bb_games.closed_at IS NULL
-            AND (bb_games.first_team_id = $1 OR bb_games.second_team_id = $1)
+            WHERE closed_at IS NULL
+            AND played_at <= CURRENT_TIMESTAMP
+            AND (first_team_id = $1 OR second_team_id = $1)
+            ORDER BY played_at
             LIMIT 1",
     )
     .bind(team.id.clone())

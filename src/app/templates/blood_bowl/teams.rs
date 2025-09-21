@@ -1,3 +1,4 @@
+use crate::app::templates::blood_bowl::games::GameCard;
 use crate::app::templates::{AlertMessage, NavigationBar};
 use crate::data::users::User;
 use crate::errors::AppError;
