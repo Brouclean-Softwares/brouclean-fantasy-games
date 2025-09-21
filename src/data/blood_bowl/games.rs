@@ -225,7 +225,7 @@ pub async fn select_played_by_team(
             FROM bb_games
             WHERE closed_at IS NOT NULL
             AND (first_team_id = $1 OR second_team_id = $1)
-            ORDER BY closed_at ASC",
+            ORDER BY played_at ASC",
     )
     .bind(team.id.clone())
     .fetch_all(&state.db)
