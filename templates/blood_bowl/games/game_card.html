@@ -3,7 +3,11 @@
         <div class="uk-grid-small uk-flex-center uk-flex-middle" uk-grid>
 
             <div class="uk-width-1-1 uk-text-center">
-                {{ game.played_at.format("%d/%m/%Y à %H:%M").to_string() }}
+                {% if let Some(started_at) = game.started_at %}
+                    {{ started_at.format("%d/%m/%Y à %H:%M").to_string() }}
+                {% else %}
+                    {{ game.scheduled_at.format("%d/%m/%Y à %H:%M").to_string() }}
+                {% endif %}
             </div>
 
             <div class="uk-width-1-2@m">
@@ -18,18 +22,18 @@
                     <div class="uk-width-expand uk-text-center uk-text-right@m">
                         <p class="uk-margin-remove-bottom uk-text-bold">{{ game.first_team.name }}</p>
                         <p class="uk-text-meta uk-margin-remove-top uk-margin-remove-bottom">{{ game.first_team.roster.name("fr") }}</p>
-                        <p class="uk-text-meta uk-margin-remove-top">{{ game.first_team.coach.name }}</p>
+                        <p class="uk-text-meta uk-margin-remove-top">{{ game.first_team.coach_name }}</p>
                     </div>
                     <div class="uk-width-1-5 uk-text-center">
                         <p class="uk-text-large uk-text-bold uk-background-secondary uk-text-muted">
-                            {% if is_scheduled %}
+                            {% if game.started_at.is_none() %}
                                 -
                             {% else %}
                                 {{ game.first_team_score }}
                             {% endif %}
                         </p>
                         <p>
-                            {% if is_scheduled %}
+                            {% if game.started_at.is_none() %}
                                 -
                             {% else %}
                                 {{ game.first_team_casualties }}
@@ -51,18 +55,18 @@
                     <div class="uk-width-expand uk-text-center uk-text-left@m">
                         <p class="uk-margin-remove-bottom uk-text-bold">{{ game.second_team.name }}</p>
                         <p class="uk-text-meta uk-margin-remove-top uk-margin-remove-bottom">{{ game.second_team.roster.name("fr") }}</p>
-                        <p class="uk-text-meta uk-margin-remove-top">{{ game.second_team.coach.name }}</p>
+                        <p class="uk-text-meta uk-margin-remove-top">{{ game.second_team.coach_name }}</p>
                     </div>
                     <div class="uk-width-1-5 uk-flex-first@m uk-text-center">
                         <p class="uk-text-large uk-text-bold uk-background-secondary uk-text-muted">
-                            {% if is_scheduled %}
+                            {% if game.started_at.is_none() %}
                                 -
                             {% else %}
                                 {{ game.second_team_score }}
                             {% endif %}
                         </p>
                         <p>
-                            {% if is_scheduled %}
+                            {% if game.started_at.is_none() %}
                                 -
                             {% else %}
                                 {{ game.second_team_casualties }}

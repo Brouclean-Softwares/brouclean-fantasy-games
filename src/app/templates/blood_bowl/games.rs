@@ -96,11 +96,10 @@ impl NewGamePage {
 #[template(path = "blood_bowl/games/game_card.html")]
 pub struct GameCard {
     game: GameSummary,
-    is_scheduled: bool,
 }
 
 impl GameCard {
-    pub fn get(game: GameSummary, is_scheduled: bool) -> Self {
-        Self { game, is_scheduled }
+    pub fn get(game: GameSummary) -> Self {
+        Self { game }
     }
 }

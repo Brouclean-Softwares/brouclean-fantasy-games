@@ -371,7 +371,7 @@
                 <h3>
                     Match en cours
                 </h3>
-                {{ GameCard::get(game_playing.clone(), false)|escape("none") }}
+                {{ GameCard::get(game_playing.clone())|escape("none") }}
             {% endif %}
 
             {% if team.games_scheduled.len() > 0 %}
@@ -380,7 +380,7 @@
                 </h3>
                 <div class="uk-grid-divider uk-child-width-1-1" uk-grid>
                     {% for game in team.games_scheduled %}
-                        {{ GameCard::get(game.clone(), true)|escape("none") }}
+                        {{ GameCard::get(game.clone())|escape("none") }}
                     {% endfor %}
                 </div>
             {% endif %}

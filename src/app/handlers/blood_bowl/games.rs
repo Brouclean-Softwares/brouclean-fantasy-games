@@ -62,16 +62,16 @@ pub async fn new_game(
 }
 
 #[derive(Deserialize)]
-pub struct NewTeamForm {
+pub struct NewGameForm {
     pub first_team_id: Option<i32>,
     pub second_team_id: Option<i32>,
-    pub played_at: Option<String>,
+    pub scheduled_at: Option<String>,
 }
 
 pub async fn create_game(
     State(app_state): State<AppState>,
     profile: User,
-    Form(form): Form<NewTeamForm>,
+    Form(form): Form<NewGameForm>,
 ) -> Result<Redirect, NewGamePage> {
     let fn_if_id_positive = |id| {
         if id < 0 {
@@ -84,7 +84,7 @@ pub async fn create_game(
     let first_team_id = form.first_team_id.and_then(fn_if_id_positive);
     let second_team_id = form.second_team_id.and_then(fn_if_id_positive);
 
-    match (first_team_id, second_team_id, form.played_at) {
+    match (first_team_id, second_team_id, form.scheduled_at) {
         (Some(first_team_id), None, None) => Ok(Redirect::to(&format!(
             "/blood_bowl/games/new?first_team_id={}",
             first_team_id
@@ -100,7 +100,7 @@ pub async fn create_game(
             first_team_id, second_team_id
         ))),
 
-        (Some(first_team_id), Some(second_team_id), Some(played_at)) => {
+        (Some(first_team_id), Some(second_team_id), Some(scheduled_at)) => {
             let first_team = teams::select_by_id(&app_state, first_team_id)
                 .await
                 .map_err(|_| {
@@ -131,8 +131,8 @@ pub async fn create_game(
                     )
                 })?;
 
-            let played_at =
-                NaiveDateTime::parse_from_str(&*played_at, "%Y-%m-%dT%H:%M").map_err(|_| {
+            let scheduled_at = NaiveDateTime::parse_from_str(&*scheduled_at, "%Y-%m-%dT%H:%M")
+                .map_err(|_| {
                     NewGamePage::get_with_message(
                         app_state.clone(),
                         profile.clone(),
@@ -145,20 +145,26 @@ pub async fn create_game(
                     )
                 })?;
 
-            let game_id = games::create(&app_state, &profile, &first_team, &second_team, played_at)
-                .await
-                .map_err(|error| {
-                    NewGamePage::get_with_message(
-                        app_state.clone(),
-                        profile.clone(),
-                        Some(AlertMessage {
-                            alert_type: AlertType::Danger,
-                            message: error.to_string(),
-                        }),
-                        Some(first_team.clone()),
-                        Some(second_team.clone()),
-                    )
-                })?;
+            let game_id = games::create(
+                &app_state,
+                &profile,
+                &first_team,
+                &second_team,
+                scheduled_at,
+            )
+            .await
+            .map_err(|error| {
+                NewGamePage::get_with_message(
+                    app_state.clone(),
+                    profile.clone(),
+                    Some(AlertMessage {
+                        alert_type: AlertType::Danger,
+                        message: error.to_string(),
+                    }),
+                    Some(first_team.clone()),
+                    Some(second_team.clone()),
+                )
+            })?;
 
             Ok(Redirect::to(&format!("./game?id={}", game_id)))
         }

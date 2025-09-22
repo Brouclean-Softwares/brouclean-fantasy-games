@@ -1,4 +1,4 @@
-use crate::data::blood_bowl::{coaches, games, players, staff};
+use crate::data::blood_bowl::{games, players, staff};
 use crate::data::users::User;
 use crate::errors::AppError;
 use crate::AppState;
@@ -25,24 +25,20 @@ struct TeamRow {
 }
 
 impl TeamRow {
-    pub async fn into_team_summary(self, state: &AppState) -> Result<TeamSummary, AppError> {
-        let coach = coaches::select_by_id(state, self.coach_id)
-            .await?
-            .unwrap_or_default();
-
-        Ok(TeamSummary {
+    pub fn into_team_summary(self) -> TeamSummary {
+        TeamSummary {
             id: self.id,
             version: self.version,
             roster: self.roster,
             name: self.name,
-            coach,
+            coach_name: self.coach_name,
             external_logo_url: self.external_logo_url,
             value: self.value as u32,
             current_value: self.current_value as u32,
             treasury: self.treasury,
             last_game_played_date_time: None,
             is_playing_a_game: false,
-        })
+        }
     }
 }
 
@@ -73,7 +69,7 @@ pub async fn select_all(state: &AppState) -> Result<Vec<TeamSummary>, AppError> 
     let mut teams_summaries: Vec<TeamSummary> = Vec::with_capacity(teams.len());
 
     for team in teams {
-        teams_summaries.push(team.into_team_summary(state).await?);
+        teams_summaries.push(team.into_team_summary());
     }
 
     Ok(teams_summaries)
@@ -111,7 +107,7 @@ pub async fn select_all_filtered(
     let mut teams_summaries: Vec<TeamSummary> = Vec::with_capacity(teams.len());
 
     for team in teams {
-        teams_summaries.push(team.into_team_summary(state).await?);
+        teams_summaries.push(team.into_team_summary());
     }
 
     Ok(teams_summaries)
@@ -145,7 +141,7 @@ pub async fn select_owned(state: &AppState, coach: User) -> Result<Vec<TeamSumma
     let mut teams_summaries: Vec<TeamSummary> = Vec::with_capacity(teams.len());
 
     for team in teams {
-        teams_summaries.push(team.into_team_summary(state).await?);
+        teams_summaries.push(team.into_team_summary());
     }
 
     Ok(teams_summaries)
@@ -233,9 +229,7 @@ pub async fn select_summary_by_id(state: &AppState, id: i32) -> Result<TeamSumma
     .fetch_one(&state.db)
     .await?;
 
-    let team_summary = team.into_team_summary(state).await?;
-
-    Ok(team_summary)
+    Ok(team.into_team_summary())
 }
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]

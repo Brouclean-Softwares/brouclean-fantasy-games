@@ -22,12 +22,12 @@ pub async fn create(
     coach: &User,
     first_team: &Team,
     second_team: &Team,
-    played_at: NaiveDateTime,
+    scheduled_at: NaiveDateTime,
 ) -> Result<i32, AppError> {
     tracing::debug!(
         "create by coach={:?} to play at {} for the following teams: team_a_id={} and team_b_id={}",
         coach,
-        played_at,
+        scheduled_at,
         first_team.id,
         second_team.id,
     );
@@ -36,7 +36,7 @@ pub async fn create(
         -1,
         Some(coach.clone().into()),
         first_team.version,
-        played_at,
+        scheduled_at,
         &first_team,
         &second_team,
     )?;
@@ -47,8 +47,8 @@ pub async fn create(
     let new_game_id: Id = sqlx::query_as(
         "INSERT INTO bb_games (
                 version,
-                played_at,
                 created_by,
+                scheduled_at,
                 first_coach_id,
                 first_team_id,
                 first_team_json_summary,
@@ -59,8 +59,8 @@ pub async fn create(
             RETURNING id",
     )
     .bind(game.version.clone())
-    .bind(game.played_at.clone())
     .bind(coach.id.clone())
+    .bind(game.scheduled_at.clone())
     .bind(first_team.coach.id.unwrap_or_default().clone())
     .bind(first_team.id.clone())
     .bind(first_team_json_summary.clone())
@@ -77,8 +77,9 @@ pub async fn create(
 struct GameRow {
     id: i32,
     version: Version,
-    played_at: NaiveDateTime,
     created_by: Option<i32>,
+    scheduled_at: NaiveDateTime,
+    started_at: Option<NaiveDateTime>,
     closed_at: Option<NaiveDateTime>,
     first_team_id: Option<i32>,
     first_team_json_summary: String,
@@ -121,8 +122,9 @@ impl GameRow {
             id: self.id,
             version: self.version,
             created_by,
-            played_at: self.played_at,
             closed_at: self.closed_at,
+            scheduled_at: self.scheduled_at,
+            started_at: self.started_at,
             first_team,
             second_team,
             first_team_playing_players: vec![],
@@ -162,8 +164,8 @@ impl GameRow {
         let game_summary = GameSummary {
             id: self.id,
             version: self.version,
-            created_by,
-            played_at: self.played_at,
+            scheduled_at: self.scheduled_at,
+            started_at: self.started_at,
             closed_at: self.closed_at,
             first_team: first_team_summary,
             second_team: second_team_summary,
@@ -183,8 +185,9 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<Game, AppError> {
     let game_row: GameRow = sqlx::query_as(
         "SELECT id,
                     version,
-                    played_at,
                     created_by,
+                    scheduled_at,
+                    started_at,
                     closed_at,
                     first_team_id,
                     first_team_json_summary,
@@ -219,8 +222,9 @@ pub async fn select_played_by_team(
     let game_rows: Vec<GameRow> = sqlx::query_as(
         "SELECT id,
                     version,
-                    played_at,
                     created_by,
+                    scheduled_at,
+                    started_at,
                     closed_at,
                     first_team_id,
                     first_team_json_summary,
@@ -235,7 +239,7 @@ pub async fn select_played_by_team(
             FROM bb_games
             WHERE closed_at IS NOT NULL
             AND (first_team_id = $1 OR second_team_id = $1)
-            ORDER BY played_at ASC",
+            ORDER BY closed_at ASC",
     )
     .bind(team.id.clone())
     .fetch_all(&state.db)
@@ -252,15 +256,16 @@ pub async fn select_scheduled_for_team(
     state: &AppState,
     team: &Team,
 ) -> Result<Vec<GameSummary>, AppError> {
-    tracing::debug!("select_played_by_team for team_id={:?}", team.id);
+    tracing::debug!("select_scheduled_for_team for team_id={:?}", team.id);
 
     let mut game_list: Vec<GameSummary> = Vec::new();
 
     let game_rows: Vec<GameRow> = sqlx::query_as(
         "SELECT id,
                     version,
-                    played_at,
                     created_by,
+                    scheduled_at,
+                    started_at,
                     closed_at,
                     first_team_id,
                     first_team_json_summary,
@@ -274,9 +279,9 @@ pub async fn select_scheduled_for_team(
                     second_team_is_winner
             FROM bb_games
             WHERE closed_at IS NULL
-            AND played_at > CURRENT_TIMESTAMP
+            AND started_at IS NULL
             AND (first_team_id = $1 OR second_team_id = $1)
-            ORDER BY played_at ASC",
+            ORDER BY scheduled_at ASC",
     )
     .bind(team.id.clone())
     .fetch_all(&state.db)
@@ -298,8 +303,9 @@ pub async fn select_playing_by_team(
     let game_row: Option<GameRow> = sqlx::query_as(
         "SELECT id,
                     version,
-                    played_at,
                     created_by,
+                    scheduled_at,
+                    started_at,
                     closed_at,
                     first_team_id,
                     first_team_json_summary,
@@ -313,9 +319,9 @@ pub async fn select_playing_by_team(
                     second_team_is_winner
             FROM bb_games
             WHERE closed_at IS NULL
-            AND played_at <= CURRENT_TIMESTAMP
+            AND started_at IS NOT NULL
             AND (first_team_id = $1 OR second_team_id = $1)
-            ORDER BY played_at
+            ORDER BY started_at
             LIMIT 1",
     )
     .bind(team.id.clone())
