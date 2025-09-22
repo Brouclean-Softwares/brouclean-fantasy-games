@@ -14,7 +14,7 @@
 <div class="uk-section" x-data="{ tab: 'sheet' }">
     <div class="uk-container">
 
-        <div class="uk-grid-small uk-flex-middle uk-margin-bottom" uk-grid>
+        <div class="uk-grid-small uk-flex-middle uk-margin-medium-bottom" uk-grid>
             <div class="uk-width-auto">
                 {% if let Some(logo) = team.external_logo_url %}
                 <img src="{{ logo }}" width="75" height="75" alt="">
@@ -49,12 +49,14 @@
 
                 </h2>
                 <p class="uk-margin-remove-top">
-                    {{ team.roster.name("fr") }} (Catégorie {{ roster_definition.tier }})
+                    <a class="uk-link-reset" href="../rosters/roster?version={{ team.version.type_name() }}&roster={{ team.roster.type_name() }}">
+                        {{ team.roster.name("fr") }} ({{ team.version.type_name() }})
+                    </a>
                 </p>
             </div>
         </div>
 
-        <div class="uk-margin">
+        <div class="uk-margin-medium-bottom">
             <ul class="uk-child-width-expand" uk-tab>
                 <li class="uk-active">
                     <a href="#" uk-icon="icon: file-text" x-on:click="tab='sheet'">
@@ -79,24 +81,19 @@
             </ul>
         </div>
 
-        <div class="uk-margin" x-show="tab==='sheet'" uk-grid>
-            <div class="uk-width-3-4@m">
+        <div x-show="tab==='sheet'" uk-grid>
+            <div class="uk-width-3-4@m uk-margin-medium-bottom">
                 <h3>
                     Informations générales
                 </h3>
 
                 <div uk-grid>
-                    <dl class="uk-description-list uk-width-1-3@m"">
-                        <dt>Roster</dt>
-                        <dd>
-                            <a class="uk-link-reset" href="../rosters/roster?version={{ team.version.type_name() }}&roster={{ team.roster.type_name() }}">
-                                <img src="/assets/images/blood_bowl/{{ team.roster.type_name() }}Logo.webp" width="25" height="25" alt="">
-                                <span>{{ team.roster.name("fr") }} ({{ team.version.type_name() }})</span>
-                            </a>
-                        </dd>
-
+                    <dl class="uk-description-list uk-width-1-3@m">
                         <dt>Coach</dt>
                         <dd>{{ team.coach.name }}</dd>
+
+                        <dt>Catégorie du roster</dt>
+                        <dd>{{ roster_definition.tier }}</dd>
 
                         <dt>Valeur d'équipe (VE)</dt>
                         <dd>{{ team.value()? / 1000 }}k</dd>
@@ -105,7 +102,7 @@
                         <dd>{{ team.current_value()? / 1000 }}k</dd>
                     </dl>
 
-                    <dl class="uk-description-list uk-width-2-3@m"">
+                    <dl class="uk-description-list uk-width-2-3@m">
                         <dt>Fans dévoués</dt>
                         <dd>{{ team.dedicated_fans }}</dd>
 
@@ -115,8 +112,7 @@
                 </div>
             </div>
 
-
-            <div class="uk-width-1-4@m">
+            <div class="uk-width-1-4@m uk-margin-medium-bottom">
                 <h3>
                     Staff
                 </h3>
@@ -157,7 +153,7 @@
                 </dl>
             </div>
 
-            <div class="uk-width-1-1@m">
+            <div class="uk-width-1-1@m uk-margin-medium-bottom">
                 <h3>
                     Joueurs
                 </h3>
@@ -272,15 +268,18 @@
                         <dd>{{ team.number_of_available_players() }}</dd>
                     </dl>
                 </div>
+            </div>
 
-                {% if editable %}
+            {% if editable %}
+            <div class="uk-width-1-1@m uk-margin-medium-bottom">
                 <h3>
                     Recrutement
                 </h3>
                 <div>
                     <form id="buy_player_form" method="post" autocomplete="off">
-                        <p>Il est encore possible de recruter {{ team.remaining_available_players_number() }} joueurs dont les postes suivants. </p>
-                        <br>
+                        <p>
+                            Il est encore possible de recruter {{ team.remaining_available_players_number() }} joueurs dans les postes restants
+                        </p>
                         <select id="position_to_buy"
                                 name="position_to_buy"
                                 class="uk-select uk-form-width-large"
@@ -318,7 +317,18 @@
                         {% endif %}
                     </form>
                 </div>
-                {% endif %}
+            </div>
+            {% endif %}
+
+            <div class="uk-width-1-1@m uk-margin-medium-bottom">
+                <h3>
+                    Règles spéciales
+                </h3>
+                <ul>
+                    {% for special_rule in roster_definition.special_rules %}
+                    <li>{{ special_rule.name("fr") }}</li>
+                    {% endfor %}
+                </ul>
             </div>
 
             <div class="uk-width-1-1@m uk-margin">
@@ -366,23 +376,23 @@
             </div>
         </div>
 
-        <div class="uk-margin" x-show="tab==='results'">
+        <div x-show="tab==='results'">
             {% if let Some(game_playing) = team.game_playing %}
-                <h3>
-                    Match en cours
-                </h3>
-                {{ GameCard::get(game_playing.clone())|escape("none") }}
+            <h3>
+                Match en cours
+            </h3>
+            {{ GameCard::get(game_playing.clone())|escape("none") }}
             {% endif %}
 
             {% if team.games_scheduled.len() > 0 %}
-                <h3>
-                    Match planifiés
-                </h3>
-                <div class="uk-grid-divider uk-child-width-1-1" uk-grid>
-                    {% for game in team.games_scheduled %}
-                        {{ GameCard::get(game.clone())|escape("none") }}
-                    {% endfor %}
-                </div>
+            <h3>
+                Matchs à venir
+            </h3>
+            <div class="uk-grid-divider uk-child-width-1-1" uk-grid>
+                {% for game in team.games_scheduled %}
+                    {{ GameCard::get(game.clone())|escape("none") }}
+                {% endfor %}
+            </div>
             {% endif %}
 
             {% if editable && team.game_playing.is_none() %}
@@ -390,13 +400,17 @@
                 Créer un nouveau match
             </a>
             {% endif %}
+
+            <h3>
+                Matchs passés
+            </h3>
         </div>
 
-        <div class="uk-margin" x-show="tab==='stats'">
+        <div x-show="tab==='stats'">
             A venir...
         </div>
 
-        <div class="uk-margin" x-show="tab==='old_players'">
+        <div x-show="tab==='old_players'">
             A venir...
         </div>
 
