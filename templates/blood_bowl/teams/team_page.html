@@ -36,7 +36,7 @@
                             </div>
                         </form>
                     {% elif editable %}
-                    <a class="uk-link-reset" href="team?id={{ team.id }}&edit=true">
+                    <a class="uk-link-reset" href="team?id={{ team.id }}&edit=true" uk-icon="icon: pencil">
                         {{ team.name }}
                     </a>
                     {% else %}

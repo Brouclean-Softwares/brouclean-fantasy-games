@@ -18,6 +18,7 @@ pub enum AppError {
     Unauthorized,
     OptionError,
     ParseIntError(#[from] std::num::TryFromIntError),
+    ParseDateError(#[from] chrono::format::ParseError),
     JsonError(#[from] serde_json::Error),
     FromRequestPartsError(#[from] std::convert::Infallible),
     BloodBowlError(#[from] blood_bowl_rs::errors::Error),
@@ -35,6 +36,7 @@ impl IntoResponse for AppError {
                 "Attempted to get a non-none value but found none".to_string(),
             ),
             Self::ParseIntError(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
+            Self::ParseDateError(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
             Self::JsonError(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
             Self::FromRequestPartsError(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
             Self::BloodBowlError(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
@@ -59,6 +61,9 @@ impl Display for AppError {
                 "Oups! Souci lors d'une conversion de données : {}",
                 error
             ),
+            AppError::ParseDateError(error) => {
+                write!(f, "Oups! Souci lors d'une conversion de dates : {}", error)
+            }
             AppError::JsonError(error) => write!(
                 f,
                 "Oups! Souci lors d'une conversion de données en Json : {}",

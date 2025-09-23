@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS bb_games (
     created_by INTEGER REFERENCES users ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     scheduled_at TIMESTAMP NOT NULL,
-    started_at TIMESTAMP WITH TIME ZONE,
+    started_at TIMESTAMP,
     closed_at TIMESTAMP WITH TIME ZONE,
     first_coach_id INTEGER REFERENCES users ON DELETE SET NULL,
     first_team_id INTEGER REFERENCES bb_teams ON DELETE SET NULL,
@@ -24,11 +24,11 @@ CREATE TABLE IF NOT EXISTS bb_games_teams_players (
     game_id INTEGER REFERENCES bb_games ON DELETE CASCADE,
     team_id INTEGER REFERENCES bb_teams ON DELETE SET NULL,
     player_id INTEGER REFERENCES bb_players ON DELETE SET NULL,
-    number INTEGER NOT NULL
+    player_number INTEGER NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS bb_games_events (
     game_id INTEGER REFERENCES bb_games ON DELETE CASCADE,
     event JSONB NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    event_order INTEGER NOT NULL
 );

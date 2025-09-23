@@ -14,13 +14,14 @@ use serde::Deserialize;
 
 pub fn init_router() -> Router<AppState> {
     Router::new()
-        .route("/game", get(game))
+        .route("/game", get(game).post(update_game))
         .route("/new", get(new_game).post(create_game))
 }
 
 #[derive(Deserialize)]
 pub struct GameQueryParams {
     pub id: i32,
+    pub edit_mode: Option<bool>,
 }
 
 pub async fn game(
@@ -30,7 +31,39 @@ pub async fn game(
 ) -> Result<GamePage, AppError> {
     let game = games::select_by_id(&app_state, params.id).await?;
 
-    Ok(GamePage::get(app_state, profile, game)?)
+    let edit_mode = params.edit_mode.unwrap_or(false);
+
+    Ok(GamePage::get(app_state, profile, game, edit_mode)?)
+}
+
+#[derive(Deserialize)]
+pub struct GameForm {
+    pub game_id: i32,
+    pub scheduled_at: Option<String>,
+    pub started_at: Option<String>,
+}
+
+pub async fn update_game(
+    State(app_state): State<AppState>,
+    profile: User,
+    Form(form): Form<GameForm>,
+) -> Result<Redirect, AppError> {
+    let redirect = Redirect::to(&format!("/blood_bowl/games/game?id={}", form.game_id));
+
+    let mut game = games::select_by_id(&app_state, form.game_id).await?;
+
+    if let Some(game_date) = form.scheduled_at {
+        game.scheduled_at = NaiveDateTime::parse_from_str(&*game_date, "%Y-%m-%dT%H:%M")?;
+    } else if let Some(game_date) = form.started_at {
+        let _ = game.start_at(NaiveDateTime::parse_from_str(
+            &*game_date,
+            "%Y-%m-%dT%H:%M",
+        )?);
+    }
+
+    games::update(&app_state, &profile, game).await?;
+
+    return Ok(redirect);
 }
 
 #[derive(Deserialize)]

@@ -70,11 +70,43 @@
                 {% if let Some(started_at) = game.started_at %}
                     {{ started_at.format("%d/%m/%Y à %H:%M").to_string() }}
                 {% else %}
-                    {% if editable %}
-                        editable
+                    {% if editable && edit_mode %}
+                    <form method="post" autocomplete="off">
+                        <input name="game_id"
+                               type="hidden"
+                               value="{{ game.id }}">
+
+                        <input id="scheduled_at"
+                               name="scheduled_at"
+                               type="datetime-local"
+                               onchange="submit()"
+                               value="{{ game.scheduled_at.format("%Y-%m-%dT%H:%M").to_string() }}">
+                    </form>
+                    {% elif editable %}
+                        <a class="uk-link-reset" href="./game?id={{ game.id }}&edit_mode=true" uk-icon="icon: pencil">
+                            {{ game.scheduled_at.format("%d/%m/%Y à %H:%M").to_string() }}
+                        </a>
+                    {% else %}
+                        {{ game.scheduled_at.format("%d/%m/%Y à %H:%M").to_string() }}
                     {% endif %}
 
-                    {{ game.scheduled_at.format("%d/%m/%Y à %H:%M").to_string() }}
+                    {% if editable %}
+                    <form method="post" autocomplete="off">
+                        <input name="game_id"
+                           type="hidden"
+                           value="{{ game.id }}">
+
+                        <input name="started_at"
+                               type="hidden"
+                               value="{{ game.scheduled_at.format("%Y-%m-%dT%H:%M").to_string() }}">
+
+                        <br>
+
+                        <button class="uk-button uk-button-primary">
+                            Démarrer le match
+                        </button>
+                    </form>
+                    {% endif %}
                 {% endif %}
             </div>
 

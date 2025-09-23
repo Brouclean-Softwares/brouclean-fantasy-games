@@ -17,11 +17,17 @@ pub struct GamePage {
     alert_message: Option<AlertMessage>,
     game: Game,
     editable: bool,
+    edit_mode: bool,
 }
 
 impl GamePage {
-    pub fn get(app_state: AppState, profile: Option<User>, game: Game) -> Result<Self, AppError> {
-        Self::get_with_message(app_state, profile, None, game)
+    pub fn get(
+        app_state: AppState,
+        profile: Option<User>,
+        game: Game,
+        edit_mode: bool,
+    ) -> Result<Self, AppError> {
+        Self::get_with_message(app_state, profile, None, game, edit_mode)
     }
 
     pub fn get_with_message(
@@ -29,6 +35,7 @@ impl GamePage {
         profile: Option<User>,
         alert_message: Option<AlertMessage>,
         game: Game,
+        edit_mode: bool,
     ) -> Result<Self, AppError> {
         let mut editable = false;
 
@@ -43,6 +50,7 @@ impl GamePage {
             alert_message,
             game,
             editable,
+            edit_mode,
         })
     }
 }
