@@ -24,7 +24,7 @@
                     {% if edit_mode %}
                         <form method="post" autocomplete="off">
                             <div class="uk-inline">
-                                <span class="uk-form-icon uk-form-icon-flip" uk-icon="icon: pencil"></span>
+                                <a href="team?id={{ team.id }}" class="uk-form-icon uk-form-icon-flip" uk-icon="icon: pencil"></a>
                                 <input class="uk-input"
                                        id="team_name"
                                        name="team_name"
@@ -36,9 +36,10 @@
                             </div>
                         </form>
                     {% elif editable %}
-                    <a class="uk-link-reset" href="team?id={{ team.id }}&edit=true" uk-icon="icon: pencil">
+                    <a class="uk-link-reset" href="team?id={{ team.id }}&edit=true">
                         {{ team.name }}
                     </a>
+                    <a href="team?id={{ team.id }}&edit=true" uk-icon="icon: pencil"></a>
                     {% else %}
                         {{ team.name }}
                     {% endif %}
