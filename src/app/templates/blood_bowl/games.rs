@@ -16,6 +16,7 @@ pub struct GamePage {
     navigation_bar: NavigationBar,
     alert_message: Option<AlertMessage>,
     game: Game,
+    editable: bool,
 }
 
 impl GamePage {
@@ -29,10 +30,19 @@ impl GamePage {
         alert_message: Option<AlertMessage>,
         game: Game,
     ) -> Result<Self, AppError> {
+        let mut editable = false;
+
+        if let Some(connected_user) = profile.clone() {
+            editable = connected_user.is_option_coach(&game.created_by)
+                || connected_user.is_coach(&game.first_team.coach)
+                || connected_user.is_coach(&game.second_team.coach);
+        }
+
         Ok(Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
             alert_message,
             game,
+            editable,
         })
     }
 }

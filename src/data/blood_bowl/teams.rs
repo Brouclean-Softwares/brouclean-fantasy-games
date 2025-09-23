@@ -293,8 +293,9 @@ pub async fn create(state: &AppState, coach: &User, bb_team: &Team) -> Result<i3
                 treasury,
                 dedicated_fans,
                 value,
-                current_value)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                current_value,
+                under_creation)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, false)
             RETURNING id",
     )
     .bind(bb_team.version.clone())

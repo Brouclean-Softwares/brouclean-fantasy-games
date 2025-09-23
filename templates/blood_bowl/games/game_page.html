@@ -70,6 +70,10 @@
                 {% if let Some(started_at) = game.started_at %}
                     {{ started_at.format("%d/%m/%Y à %H:%M").to_string() }}
                 {% else %}
+                    {% if editable %}
+                        editable
+                    {% endif %}
+
                     {{ game.scheduled_at.format("%d/%m/%Y à %H:%M").to_string() }}
                 {% endif %}
             </div>

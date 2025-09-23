@@ -48,6 +48,21 @@ impl User {
         state.admin_email.eq(&self.email)
     }
 
+    pub fn is_coach(&self, coach: &Coach) -> bool {
+        match (self.id, coach.id) {
+            (Some(id), Some(coach_id)) => id.eq(&coach_id),
+            _ => false,
+        }
+    }
+
+    pub fn is_option_coach(&self, coach: &Option<Coach>) -> bool {
+        if let Some(coach) = coach {
+            self.is_coach(coach)
+        } else {
+            false
+        }
+    }
+
     pub async fn select_connected_user(state: &AppState, cookie: String) -> Result<Self, AppError> {
         let connected_user: User = sqlx::query_as(
             "SELECT users.id,

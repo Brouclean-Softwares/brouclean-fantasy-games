@@ -128,7 +128,7 @@
                            onchange="update_team()"
                            aria-label="Input">
                     <span>
-                        {{ staff.name("fr") }} : {{ staff_information.price / 1000 }}k
+                        {{ staff.name("fr") }} : {{ staff_information.price(true) / 1000 }}k
                     </span>
                 </li>
                 {% endfor %}
@@ -170,7 +170,7 @@
 
                     {% for (staff, staff_information) in roster_definition.staff_information %}
 
-                    treasury = treasury - ({{ staff_information.price }} * document.getElementById('{{ staff.snake_case_type() }}').value);
+                    treasury = treasury - ({{ staff_information.price(true) }} * document.getElementById('{{ staff.snake_case_type() }}').value);
 
                     {% endfor %}
 
