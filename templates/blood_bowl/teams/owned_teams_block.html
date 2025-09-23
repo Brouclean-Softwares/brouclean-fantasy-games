@@ -14,12 +14,12 @@
         <tr>
             <td class="uk-table-link">
                 <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ team.id }}">
+                    <img src="{{ TeamLogo::from(*team).url }}" width="25" height="25" alt="">
                     {{ team.name }}
                 </a>
             </td>
             <td class="uk-table-link">
                 <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ team.id }}">
-                    <img src="/assets/images/blood_bowl/{{ team.roster.type_name() }}Logo.webp" width="25" height="25" alt="">
                     {{ team.roster.name("fr") }} ({{ team.version.type_name() }})
                 </a>
             </td>

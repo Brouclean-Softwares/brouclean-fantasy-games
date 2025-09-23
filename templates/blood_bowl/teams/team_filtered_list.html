@@ -13,14 +13,10 @@
         {% for team in teams %}
         <tr onclick="update_input_id({{ team.id }})">
             <td>
-                {% if let Some(team_logo) = team.external_logo_url %}
-                <img src="{{ team_logo }}" width="25" height="25" alt="">
-                {% endif %}
-
+                <img src="{{ TeamLogo::from(*team).url }}" width="25" height="25" alt="">
                 {{ team.name }}
             </td>
             <td>
-                <img src="/assets/images/blood_bowl/{{ team.roster.type_name() }}Logo.webp" width="25" height="25" alt="">
                 {{ team.roster.name("fr") }} ({{ team.version.type_name() }})
             </td>
             <td>

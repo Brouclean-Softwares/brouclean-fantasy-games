@@ -1,5 +1,6 @@
 use crate::app::templates::blood_bowl::games::GameCard;
 use crate::app::templates::{AlertMessage, NavigationBar};
+use crate::data::blood_bowl::teams::TeamLogo;
 use crate::data::users::User;
 use crate::errors::AppError;
 use crate::{data, AppState};

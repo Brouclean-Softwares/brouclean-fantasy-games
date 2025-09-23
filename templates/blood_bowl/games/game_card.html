@@ -13,11 +13,7 @@
             <div class="uk-width-1-2@m">
                 <div class="uk-grid-small uk-flex-middle" uk-grid>
                     <div class="uk-width-1-5">
-                        {% if let Some(logo) = game.first_team.external_logo_url %}
-                        <img src="{{ logo }}" alt="">
-                        {% else %}
-                        <img src="/assets/images/blood_bowl/{{ game.first_team.roster.type_name() }}Logo.webp" alt="">
-                        {% endif %}
+                        <img src="{{ TeamLogo::from(game.first_team).url }}" alt="">
                     </div>
                     <div class="uk-width-expand uk-text-center uk-text-right@m">
                         <p class="uk-margin-remove-bottom uk-text-bold">{{ game.first_team.name }}</p>
@@ -46,11 +42,7 @@
             <div class="uk-width-1-2@m">
                 <div class="uk-grid-small uk-flex-middle" uk-grid>
                     <div class="uk-width-1-5 uk-flex-last@m">
-                        {% if let Some(logo) = game.second_team.external_logo_url %}
-                        <img src="{{ logo }}" alt="">
-                        {% else %}
-                        <img src="/assets/images/blood_bowl/{{ game.second_team.roster.type_name() }}Logo.webp" alt="">
-                        {% endif %}
+                        <img src="{{ TeamLogo::from(game.second_team).url }}" alt="">
                     </div>
                     <div class="uk-width-expand uk-text-center uk-text-left@m">
                         <p class="uk-margin-remove-bottom uk-text-bold">{{ game.second_team.name }}</p>

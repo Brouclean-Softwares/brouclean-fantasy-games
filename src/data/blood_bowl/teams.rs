@@ -5,8 +5,46 @@ use crate::AppState;
 use blood_bowl_rs::coaches::Coach;
 use blood_bowl_rs::rosters::Roster;
 use blood_bowl_rs::teams::{Team, TeamSummary};
+use blood_bowl_rs::translation::TypeName;
 use blood_bowl_rs::versions::Version;
 use serde::Deserialize;
+
+pub struct TeamLogo {
+    pub url: String,
+}
+
+impl From<&TeamSummary> for TeamLogo {
+    fn from(team: &TeamSummary) -> Self {
+        if let Some(url) = team.external_logo_url.clone() {
+            Self { url }
+        } else {
+            Self {
+                url: format!(
+                    "/assets/images/blood_bowl/{}Logo.webp",
+                    team.roster.type_name()
+                ),
+            }
+        }
+    }
+}
+
+impl From<TeamSummary> for TeamLogo {
+    fn from(team: TeamSummary) -> Self {
+        Self::from(&team)
+    }
+}
+
+impl From<&Team> for TeamLogo {
+    fn from(team: &Team) -> Self {
+        Self::from(&TeamSummary::from(team))
+    }
+}
+
+impl From<Team> for TeamLogo {
+    fn from(team: Team) -> Self {
+        Self::from(&team)
+    }
+}
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
 struct TeamRow {

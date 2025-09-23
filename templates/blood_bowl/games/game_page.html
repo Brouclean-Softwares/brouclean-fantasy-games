@@ -19,14 +19,14 @@
             <div class="uk-width-1-2@m">
                 <div class="uk-grid-small uk-flex-middle" uk-grid>
                     <div class="uk-width-1-5">
-                        {% if let Some(logo) = game.first_team.external_logo_url %}
-                        <img src="{{ logo }}" alt="">
-                        {% else %}
-                        <img src="/assets/images/blood_bowl/{{ game.first_team.roster.type_name() }}Logo.webp" alt="">
-                        {% endif %}
+                        <img src="{{ TeamLogo::from(game.first_team).url }}" alt="">
                     </div>
                     <div class="uk-width-expand uk-text-center uk-text-right@m">
-                        <h2 class="uk-margin-remove-bottom">{{ game.first_team.name }}</h2>
+                        <h2 class="uk-margin-remove-bottom">
+                            <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ game.first_team.id }}">
+                                {{ game.first_team.name }}
+                            </a>
+                        </h2>
                         <p class="uk-margin-remove-top uk-margin-remove-bottom">{{ game.first_team.roster.name("fr") }}</p>
                         <p class="uk-margin-remove-top">{{ game.first_team.coach.name }}</p>
                     </div>
@@ -44,14 +44,14 @@
             <div class="uk-width-1-2@m">
                 <div class="uk-grid-small uk-flex-middle" uk-grid>
                     <div class="uk-width-1-5 uk-flex-last@m">
-                        {% if let Some(logo) = game.second_team.external_logo_url %}
-                        <img src="{{ logo }}" alt="">
-                        {% else %}
-                        <img src="/assets/images/blood_bowl/{{ game.second_team.roster.type_name() }}Logo.webp" alt="">
-                        {% endif %}
+                        <img src="{{ TeamLogo::from(game.second_team).url }}" alt="">
                     </div>
                     <div class="uk-width-expand uk-text-center uk-text-left@m">
-                        <h2 class="uk-margin-remove-bottom">{{ game.second_team.name }}</h2>
+                        <h2 class="uk-margin-remove-bottom">
+                            <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ game.second_team.id }}">
+                                {{ game.second_team.name }}
+                            </a>
+                        </h2>
                         <p class="uk-margin-remove-top uk-margin-remove-bottom">{{ game.second_team.roster.name("fr") }}</p>
                         <p class="uk-margin-remove-top">{{ game.second_team.coach.name }}</p>
                     </div>

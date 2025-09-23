@@ -16,11 +16,7 @@
 
         <div class="uk-grid-small uk-flex-middle uk-margin-medium-bottom" uk-grid>
             <div class="uk-width-auto">
-                {% if let Some(logo) = team.external_logo_url %}
-                <img src="{{ logo }}" width="75" height="75" alt="">
-                {% else %}
-                <img src="/assets/images/blood_bowl/{{ team.roster.type_name() }}Logo.webp" width="75" height="75" alt="">
-                {% endif %}
+                <img src="{{ TeamLogo::from(team).url }}" width="75" height="75" alt="">
             </div>
             <div class="uk-width-expand">
                 <h2 class="uk-margin-remove-bottom">
