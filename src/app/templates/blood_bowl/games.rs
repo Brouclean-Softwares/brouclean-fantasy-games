@@ -1,12 +1,13 @@
 use crate::app::templates::blood_bowl::teams::{TeamCard, TeamSelector};
 use crate::app::templates::{AlertMessage, NavigationBar};
+use crate::data::blood_bowl::games::GameSummary;
 use crate::data::blood_bowl::teams::TeamLogo;
 use crate::data::users::User;
 use crate::errors::AppError;
 use crate::AppState;
 use askama::Template;
 use askama_web::WebTemplate;
-use blood_bowl_rs::games::{Game, GameSummary};
+use blood_bowl_rs::games::Game;
 use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::translation::{TranslatedName, TypeName};
 

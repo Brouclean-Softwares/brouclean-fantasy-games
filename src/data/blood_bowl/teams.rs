@@ -4,7 +4,7 @@ use crate::errors::AppError;
 use crate::AppState;
 use blood_bowl_rs::coaches::Coach;
 use blood_bowl_rs::rosters::Roster;
-use blood_bowl_rs::teams::{Team, TeamSummary};
+use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::translation::TypeName;
 use blood_bowl_rs::versions::Version;
 use serde::Deserialize;
@@ -13,8 +13,8 @@ pub struct TeamLogo {
     pub url: String,
 }
 
-impl From<&TeamSummary> for TeamLogo {
-    fn from(team: &TeamSummary) -> Self {
+impl From<&Team> for TeamLogo {
+    fn from(team: &Team) -> Self {
         if let Some(url) = team.external_logo_url.clone() {
             Self { url }
         } else {
@@ -34,9 +34,18 @@ impl From<TeamSummary> for TeamLogo {
     }
 }
 
-impl From<&Team> for TeamLogo {
-    fn from(team: &Team) -> Self {
-        Self::from(&TeamSummary::from(team))
+impl From<&TeamSummary> for TeamLogo {
+    fn from(team: &TeamSummary) -> Self {
+        if let Some(url) = team.external_logo_url.clone() {
+            Self { url }
+        } else {
+            Self {
+                url: format!(
+                    "/assets/images/blood_bowl/{}Logo.webp",
+                    team.roster.type_name()
+                ),
+            }
+        }
     }
 }
 
@@ -47,43 +56,25 @@ impl From<Team> for TeamLogo {
 }
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
-struct TeamRow {
-    id: i32,
-    version: Version,
-    name: String,
-    roster: Roster,
-    coach_id: Option<i32>,
-    coach_name: String,
-    external_logo_url: Option<String>,
-    value: i32,
-    current_value: i32,
-    treasury: i32,
-    dedicated_fans: i32,
-    under_creation: bool,
-}
-
-impl TeamRow {
-    pub fn into_team_summary(self) -> TeamSummary {
-        TeamSummary {
-            id: self.id,
-            version: self.version,
-            roster: self.roster,
-            name: self.name,
-            coach_name: self.coach_name,
-            external_logo_url: self.external_logo_url,
-            value: self.value as u32,
-            current_value: self.current_value as u32,
-            treasury: self.treasury,
-            last_game_played_date_time: None,
-            is_playing_a_game: false,
-        }
-    }
+pub struct TeamSummary {
+    pub id: i32,
+    pub version: Version,
+    pub name: String,
+    pub roster: Roster,
+    pub coach_id: Option<i32>,
+    pub coach_name: String,
+    pub external_logo_url: Option<String>,
+    pub value: i32,
+    pub current_value: i32,
+    pub treasury: i32,
+    pub dedicated_fans: i32,
+    pub under_creation: bool,
 }
 
 pub async fn select_all(state: &AppState) -> Result<Vec<TeamSummary>, AppError> {
     tracing::debug!("select_all");
 
-    let teams: Vec<TeamRow> = sqlx::query_as(
+    let teams: Vec<TeamSummary> = sqlx::query_as(
         "SELECT bb_teams.id,
                     bb_teams.version,
                     bb_teams.name,
@@ -104,13 +95,7 @@ pub async fn select_all(state: &AppState) -> Result<Vec<TeamSummary>, AppError> 
     .fetch_all(&state.db)
     .await?;
 
-    let mut teams_summaries: Vec<TeamSummary> = Vec::with_capacity(teams.len());
-
-    for team in teams {
-        teams_summaries.push(team.into_team_summary());
-    }
-
-    Ok(teams_summaries)
+    Ok(teams)
 }
 
 pub async fn select_all_filtered(
@@ -119,7 +104,7 @@ pub async fn select_all_filtered(
 ) -> Result<Vec<TeamSummary>, AppError> {
     tracing::debug!("select_all_filtered with filter={}", filter);
 
-    let teams: Vec<TeamRow> = sqlx::query_as(
+    let teams: Vec<TeamSummary> = sqlx::query_as(
         "SELECT bb_teams.id,
                     bb_teams.version,
                     bb_teams.name,
@@ -142,19 +127,13 @@ pub async fn select_all_filtered(
     .fetch_all(&state.db)
     .await?;
 
-    let mut teams_summaries: Vec<TeamSummary> = Vec::with_capacity(teams.len());
-
-    for team in teams {
-        teams_summaries.push(team.into_team_summary());
-    }
-
-    Ok(teams_summaries)
+    Ok(teams)
 }
 
 pub async fn select_owned(state: &AppState, coach: User) -> Result<Vec<TeamSummary>, AppError> {
     tracing::debug!("select_owned for coach={:?}", coach);
 
-    let teams: Vec<TeamRow> = sqlx::query_as(
+    let teams: Vec<TeamSummary> = sqlx::query_as(
         "SELECT bb_teams.id,
                     bb_teams.version,
                     bb_teams.name,
@@ -176,19 +155,41 @@ pub async fn select_owned(state: &AppState, coach: User) -> Result<Vec<TeamSumma
     .fetch_all(&state.db)
     .await?;
 
-    let mut teams_summaries: Vec<TeamSummary> = Vec::with_capacity(teams.len());
+    Ok(teams)
+}
 
-    for team in teams {
-        teams_summaries.push(team.into_team_summary());
-    }
+pub async fn select_summary_by_id(state: &AppState, id: i32) -> Result<TeamSummary, AppError> {
+    tracing::debug!("select_summary_by_id with id={}", id);
 
-    Ok(teams_summaries)
+    let team: TeamSummary = sqlx::query_as(
+        "SELECT bb_teams.id,
+                    bb_teams.version,
+                    bb_teams.name,
+                    bb_teams.roster,
+                    bb_teams.coach_id,
+                    users.name as coach_name,
+                    bb_teams.external_logo_url,
+                    bb_teams.value,
+                    bb_teams.current_value,
+                    bb_teams.treasury,
+                    bb_teams.dedicated_fans,
+                    bb_teams.under_creation
+            FROM bb_teams
+            LEFT JOIN users ON bb_teams.coach_id = users.id
+            WHERE bb_teams.id = $1
+            LIMIT 1",
+    )
+    .bind(id.clone())
+    .fetch_one(&state.db)
+    .await?;
+
+    Ok(team)
 }
 
 pub async fn select_by_id(state: &AppState, id: i32) -> Result<Team, AppError> {
     tracing::debug!("select_from_id with id={}", id);
 
-    let team: TeamRow = sqlx::query_as(
+    let team: TeamSummary = sqlx::query_as(
         "SELECT bb_teams.id,
                     bb_teams.version,
                     bb_teams.name,
@@ -213,7 +214,7 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<Team, AppError> {
 
     let staff = staff::select_for_team(state, id).await?;
 
-    let mut team = Team {
+    let team = Team {
         id: team.id,
         version: team.version,
         roster: team.roster,
@@ -226,48 +227,11 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<Team, AppError> {
         external_logo_url: team.external_logo_url,
         staff,
         players,
-        games_played: vec![],
-        game_playing: None,
-        games_scheduled: vec![],
         dedicated_fans: team.dedicated_fans as u8,
         under_creation: team.under_creation,
     };
 
-    team.games_played = games::select_played_by_team(state, &team).await?;
-
-    team.game_playing = games::select_playing_by_team(state, &team).await?;
-
-    team.games_scheduled = games::select_scheduled_for_team(state, &team).await?;
-
     Ok(team)
-}
-
-pub async fn select_summary_by_id(state: &AppState, id: i32) -> Result<TeamSummary, AppError> {
-    tracing::debug!("select_summary_by_id with id={}", id);
-
-    let team: TeamRow = sqlx::query_as(
-        "SELECT bb_teams.id,
-                    bb_teams.version,
-                    bb_teams.name,
-                    bb_teams.roster,
-                    bb_teams.coach_id,
-                    users.name as coach_name,
-                    bb_teams.external_logo_url,
-                    bb_teams.value,
-                    bb_teams.current_value,
-                    bb_teams.treasury,
-                    bb_teams.dedicated_fans,
-                    bb_teams.under_creation
-            FROM bb_teams
-            LEFT JOIN users ON bb_teams.coach_id = users.id
-            WHERE bb_teams.id = $1
-            LIMIT 1",
-    )
-    .bind(id.clone())
-    .fetch_one(&state.db)
-    .await?;
-
-    Ok(team.into_team_summary())
 }
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
@@ -400,10 +364,11 @@ pub async fn delete(
         team_id,
     );
 
-    let team = select_by_id(state, team_id.clone()).await?;
+    let games_played = games::select_played_by_team(state, team_id).await?;
+    let games_scheduled = games::select_scheduled_for_team(state, team_id).await?;
+    let game_playing = games::select_playing_by_team(state, team_id).await?;
 
-    if team.games_played.len() > 0 || team.games_scheduled.len() > 0 || team.game_playing.is_some()
-    {
+    if games_played.len() > 0 || games_scheduled.len() > 0 || game_playing.is_some() {
         return Ok(false);
     }
 

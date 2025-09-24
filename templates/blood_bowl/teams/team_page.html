@@ -374,25 +374,25 @@
         </div>
 
         <div x-show="tab==='results'">
-            {% if let Some(game_playing) = team.game_playing %}
+            {% if let Some(game_playing) = game_playing %}
             <h3>
                 Match en cours
             </h3>
             {{ GameCard::get(game_playing.clone())|escape("none") }}
             {% endif %}
 
-            {% if team.games_scheduled.len() > 0 %}
+            {% if games_scheduled.len() > 0 %}
             <h3>
                 Matchs à venir
             </h3>
             <div class="uk-grid-divider uk-child-width-1-1" uk-grid>
-                {% for game in team.games_scheduled %}
+                {% for game in games_scheduled %}
                     {{ GameCard::get(game.clone())|escape("none") }}
                 {% endfor %}
             </div>
             {% endif %}
 
-            {% if editable && team.game_playing.is_none() %}
+            {% if editable && game_playing.is_none() %}
             <a href="/blood_bowl/games/new?first_team_id={{ team.id }}" class="uk-button uk-button-primary uk-margin-top">
                 Créer un nouveau match
             </a>

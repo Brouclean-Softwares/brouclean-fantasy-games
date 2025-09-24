@@ -115,3 +115,19 @@ impl Into<Coach> for User {
         }
     }
 }
+
+impl PartialEq<Coach> for User {
+    fn eq(&self, other: &Coach) -> bool {
+        self.id.eq(&other.id)
+    }
+}
+
+impl PartialEq<Option<Coach>> for User {
+    fn eq(&self, other: &Option<Coach>) -> bool {
+        if let Some(other_coach) = other.clone() {
+            self.eq(&other_coach)
+        } else {
+            false
+        }
+    }
+}

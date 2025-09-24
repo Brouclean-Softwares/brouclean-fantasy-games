@@ -1,6 +1,7 @@
 use crate::app::templates::blood_bowl::games::GameCard;
 use crate::app::templates::{AlertMessage, NavigationBar};
-use crate::data::blood_bowl::teams::TeamLogo;
+use crate::data::blood_bowl::games::GameSummary;
+use crate::data::blood_bowl::teams::{TeamLogo, TeamSummary};
 use crate::data::users::User;
 use crate::errors::AppError;
 use crate::{data, AppState};
@@ -8,7 +9,7 @@ use askama::Template;
 use askama_web::WebTemplate;
 use blood_bowl_rs::positions::Position;
 use blood_bowl_rs::rosters::{Roster, RosterDefinition};
-use blood_bowl_rs::teams::{Team, TeamSummary};
+use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::translation::{TranslatedName, TypeName};
 use blood_bowl_rs::versions::Version;
 
@@ -68,6 +69,9 @@ pub struct TeamPage {
     navigation_bar: NavigationBar,
     alert_message: Option<AlertMessage>,
     team: Team,
+    games_scheduled: Vec<GameSummary>,
+    game_playing: Option<GameSummary>,
+    games_played: Vec<GameSummary>,
     roster_definition: RosterDefinition,
     deletable: bool,
     editable: bool,
@@ -82,6 +86,9 @@ impl TeamPage {
         profile: Option<User>,
         alert_message: Option<AlertMessage>,
         team: Team,
+        games_scheduled: Vec<GameSummary>,
+        game_playing: Option<GameSummary>,
+        games_played: Vec<GameSummary>,
         roster_definition: RosterDefinition,
         edit_mode: bool,
         focus: Option<String>,
@@ -95,14 +102,17 @@ impl TeamPage {
         let edit_mode = edit_mode && editable;
 
         let deletable = editable
-            && team.games_played.len() == 0
-            && team.games_scheduled.len() == 0
-            && team.game_playing.is_none();
+            && games_played.len() == 0
+            && games_scheduled.len() == 0
+            && game_playing.is_none();
 
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
             alert_message,
             team,
+            games_scheduled,
+            game_playing,
+            games_played,
             roster_definition,
             deletable,
             editable,

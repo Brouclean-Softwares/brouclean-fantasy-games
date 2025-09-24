@@ -2,14 +2,13 @@ use crate::app::templates::blood_bowl::teams::{
     NewTeamPage, TeamFilteredList, TeamPage, TeamsPage,
 };
 use crate::app::templates::{AlertMessage, AlertType};
-use crate::data::blood_bowl::{players, staff, teams};
+use crate::data::blood_bowl::{games, players, staff, teams};
 use crate::data::users::User;
 use crate::AppState;
 use axum::extract::{Query, State};
 use axum::response::Redirect;
 use axum::routing::{get, post};
 use axum::{Form, Router};
-use blood_bowl_rs::coaches::Coach;
 use blood_bowl_rs::positions::Position;
 use blood_bowl_rs::rosters::{Roster, Staff};
 use blood_bowl_rs::teams::Team;
@@ -175,13 +174,14 @@ pub async fn get_team(
     profile: Option<User>,
     Query(params): Query<TeamQueryParams>,
 ) -> Result<TeamPage, Redirect> {
+    let error_handler = |error| {
+        tracing::debug!("get_team: Error: {}", error);
+        Redirect::to("../teams")
+    };
+
     let team = teams::select_by_id(&app_state, params.id)
         .await
-        .map_err(|error| {
-            tracing::debug!("get_team: Error: {}", error);
-
-            Redirect::to("../teams")
-        })?;
+        .map_err(error_handler)?;
 
     let roster_definition = team
         .roster
@@ -199,11 +199,26 @@ pub async fn get_team(
 
     let positions_buyable = team.positions_buyable().or(Err(Redirect::to("../teams")))?;
 
+    let games_scheduled = games::select_scheduled_for_team(&app_state, &team.id)
+        .await
+        .map_err(error_handler)?;
+
+    let game_playing = games::select_playing_by_team(&app_state, &team.id)
+        .await
+        .map_err(error_handler)?;
+
+    let games_played = games::select_played_by_team(&app_state, &team.id)
+        .await
+        .map_err(error_handler)?;
+
     Ok(TeamPage::get(
         app_state,
         profile,
         alert_message,
         team,
+        games_scheduled,
+        game_playing,
+        games_played,
         roster_definition,
         edit_mode,
         params.focus,

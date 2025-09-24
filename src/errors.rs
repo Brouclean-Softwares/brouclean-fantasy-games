@@ -22,6 +22,7 @@ pub enum AppError {
     JsonError(#[from] serde_json::Error),
     FromRequestPartsError(#[from] std::convert::Infallible),
     BloodBowlError(#[from] blood_bowl_rs::errors::Error),
+    BloodBowlAppError(String),
 }
 
 impl IntoResponse for AppError {
@@ -40,6 +41,7 @@ impl IntoResponse for AppError {
             Self::JsonError(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
             Self::FromRequestPartsError(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
             Self::BloodBowlError(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
+            Self::BloodBowlAppError(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
         };
 
         response.into_response()
@@ -80,6 +82,9 @@ impl Display for AppError {
                     "Règles de blood bowl non respectées : {}",
                     error.name("fr")
                 )
+            }
+            AppError::BloodBowlAppError(error) => {
+                write!(f, "Oups ! {}", error)
             }
         }
     }
