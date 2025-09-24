@@ -9,7 +9,7 @@ use askama::Template;
 use askama_web::WebTemplate;
 use blood_bowl_rs::games::Game;
 use blood_bowl_rs::teams::Team;
-use blood_bowl_rs::translation::{TranslatedName, TypeName};
+use blood_bowl_rs::translation::TranslatedName;
 
 #[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/games/game_page.html")]

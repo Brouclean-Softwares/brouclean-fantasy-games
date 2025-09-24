@@ -80,7 +80,6 @@ impl GameRow {
 
         let mut first_team_playing_players = vec![];
         let mut second_team_playing_players = vec![];
-        let mut events = vec![];
 
         if self.started_at.is_some() {
             first_team_playing_players =
@@ -103,7 +102,7 @@ impl GameRow {
             second_team,
             first_team_playing_players,
             second_team_playing_players,
-            events,
+            events: vec![],
         };
 
         Ok(game)
@@ -455,15 +454,6 @@ pub async fn update(state: &AppState, profile: &User, game: Game) -> Result<(), 
         .bind(profile.id.unwrap_or(-1).clone())
         .execute(&mut *transaction)
         .await?;
-
-    let mut team_id: Option<i32> = None;
-    let mut player_id: Option<i32> = None;
-
-    for event in game.events {
-        (team_id, player_id) = match event {
-            _ => (None, None),
-        }
-    }
 
     transaction.commit().await?;
 

@@ -20,7 +20,7 @@ pub async fn select_by_id(state: &AppState, id: Option<i32>) -> Result<Option<Co
             WHERE users.id = $1
             LIMIT 1",
         )
-        .bind(id.clone())
+        .bind(coach_id.clone())
         .fetch_optional(&state.db)
         .await?;
 
