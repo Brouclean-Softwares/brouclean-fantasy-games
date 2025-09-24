@@ -2,18 +2,20 @@
     <a class="uk-link-reset" href="/blood_bowl/games/game?id={{ game.id }}">
         <div class="uk-grid-small uk-flex-center uk-flex-middle" uk-grid>
 
-            <div class="uk-width-1-1 uk-text-center">
+            <div class="uk-width-1-1 uk-text-center uk-text-meta uk-margin-remove-bottom">
                 {% if let Some(started_at) = game.started_at %}
                     {{ started_at.format("%d/%m/%Y à %H:%M").to_string() }}
                 {% else %}
                     {{ game.scheduled_at.format("%d/%m/%Y à %H:%M").to_string() }}
                 {% endif %}
+
+                - Exhibition
             </div>
 
             <div class="uk-width-1-2@m">
                 <div class="uk-grid-small uk-flex-middle" uk-grid>
                     <div class="uk-width-1-5">
-                        <img src="{{ TeamLogo::from(game.first_team).url }}" alt="">
+                        <img src="{{ TeamLogo::from(game.first_team).url }}" width="50" height="50" alt="">
                     </div>
                     <div class="uk-width-expand uk-text-center uk-text-right@m">
                         <p class="uk-margin-remove-bottom uk-text-bold">{{ game.first_team.name }}</p>
@@ -42,7 +44,7 @@
             <div class="uk-width-1-2@m">
                 <div class="uk-grid-small uk-flex-middle" uk-grid>
                     <div class="uk-width-1-5 uk-flex-last@m">
-                        <img src="{{ TeamLogo::from(game.second_team).url }}" alt="">
+                        <img src="{{ TeamLogo::from(game.second_team).url }}" width="50" height="50" alt="">
                     </div>
                     <div class="uk-width-expand uk-text-center uk-text-left@m">
                         <p class="uk-margin-remove-bottom uk-text-bold">{{ game.second_team.name }}</p>
@@ -66,10 +68,6 @@
                         </p>
                     </div>
                 </div>
-            </div>
-
-            <div class="uk-width-1-1 uk-text-center">
-                Exhibition
             </div>
 
         </div>
