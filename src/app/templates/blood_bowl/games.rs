@@ -8,8 +8,10 @@ use crate::AppState;
 use askama::Template;
 use askama_web::WebTemplate;
 use blood_bowl_rs::games::Game;
+use blood_bowl_rs::games::GameStatus;
 use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::translation::TranslatedName;
+use chrono::NaiveDateTime;
 
 #[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/games/game_page.html")]
@@ -19,6 +21,9 @@ pub struct GamePage {
     game: Game,
     editable: bool,
     edit_mode: bool,
+    game_date_input: String,
+    game_date: String,
+    game_status: String,
 }
 
 impl GamePage {
@@ -46,12 +51,32 @@ impl GamePage {
                 || connected_user.is_coach(&game.second_team.coach);
         }
 
+        let game_status = game.status().name("fr");
+
+        let game_date: Option<NaiveDateTime> = match game.status() {
+            GameStatus::Scheduled => Some(game.scheduled_at),
+            _ => game.started_at,
+        };
+
+        let game_date_input = match game_date {
+            None => "".to_string(),
+            Some(date) => date.format("%Y-%m-%dT%H:%M").to_string(),
+        };
+
+        let game_date = match game_date {
+            None => "".to_string(),
+            Some(date) => date.format("%d/%m/%Y à %H:%M").to_string(),
+        };
+
         Ok(Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
             alert_message,
             game,
             editable,
             edit_mode,
+            game_date_input,
+            game_date,
+            game_status,
         })
     }
 }

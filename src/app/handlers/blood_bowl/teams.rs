@@ -21,9 +21,9 @@ pub fn init_router() -> Router<AppState> {
     Router::new()
         .route("/", get(teams))
         .route("/filtered_list", post(filtered_list))
-        .route("/new", get(new_team).post(create_team))
-        .route("/team", get(get_team).post(post_team))
-        .route("/delete", post(delete_team))
+        .route("/new", get(new).post(create))
+        .route("/team", get(team).post(update))
+        .route("/delete", post(delete))
 }
 
 pub async fn teams(
@@ -68,7 +68,7 @@ pub struct NewTeamQueryParams {
     pub roster: Roster,
 }
 
-pub async fn new_team(
+pub async fn new(
     State(app_state): State<AppState>,
     profile: User,
     Query(params): Query<NewTeamQueryParams>,
@@ -106,7 +106,7 @@ impl NewTeamForm {
     }
 }
 
-pub async fn create_team(
+pub async fn create(
     State(app_state): State<AppState>,
     profile: User,
     Form(form): Form<NewTeamForm>,
@@ -169,7 +169,7 @@ pub struct TeamQueryParams {
     pub focus: Option<String>,
 }
 
-pub async fn get_team(
+pub async fn team(
     State(app_state): State<AppState>,
     profile: Option<User>,
     Query(params): Query<TeamQueryParams>,
@@ -236,7 +236,7 @@ pub struct TeamForm {
     pub position_to_buy: Option<Position>,
 }
 
-pub async fn post_team(
+pub async fn update(
     State(app_state): State<AppState>,
     profile: Option<User>,
     Query(params): Query<TeamQueryParams>,
@@ -343,7 +343,7 @@ pub struct DeleteTeamForm {
     pub id: i32,
 }
 
-pub async fn delete_team(
+pub async fn delete(
     State(app_state): State<AppState>,
     profile: User,
     Form(form): Form<DeleteTeamForm>,

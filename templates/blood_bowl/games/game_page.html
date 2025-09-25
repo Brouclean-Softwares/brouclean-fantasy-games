@@ -11,7 +11,15 @@
 {% endblock %}
 
 {% block body %}
-<div class="uk-section">
+<div class="uk-section"
+     {% match game.status() %}
+     {% when GameStatus::Scheduled %} x-data="{ tab: '' }"
+     {% when GameStatus::PreGameSequence %} x-data="{ tab: 'pre_game' }"
+     {% when GameStatus::GameInProgress %} x-data="{ tab: 'game' }"
+     {% when GameStatus::PostGameSequence %} x-data="{ tab: 'post_game' }"
+     {% else %} x-data="{ tab: 'stats' }"
+     {% endmatch %}
+>
     <div class="uk-container">
 
         <div class="uk-grid-small uk-flex-center uk-flex-middle uk-background-muted uk-margin" uk-grid>
@@ -67,16 +75,38 @@
             </div>
 
             <div class="uk-width-1-1 uk-text-center uk-text-large uk-margin">
-                {% if let Some(closed_at) = game.closed_at %}
-                    {{ closed_at.format("%d/%m/%Y à %H:%M").to_string() }}
-                    <br>
-                    <span class="uk-text-default">Match en cours</span>
-                {% else if let Some(started_at) = game.started_at %}
-                    {{ started_at.format("%d/%m/%Y à %H:%M").to_string() }}
-                    <br>
-                    <span class="uk-text-default">Match terminé</span>
-                <br>
-                {% else %}
+                Exhibition
+            </div>
+
+            {% if editable %}
+            <div class="uk-width-1-1 uk-text-center uk-margin">
+                <form id="delete_form" action="./delete" method="post" autocomplete="off">
+                    <input id="id" name="id" type="hidden" value="{{ game.id }}">
+
+                    <button class="uk-button uk-button-danger"
+                            type="button"
+                            uk-toggle="target: #modal-delete">Supprimer</button>
+
+                    <div id="modal-delete" uk-modal>
+                        <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                            <h2 class="uk-modal-title">Suppression du match en cours</h2>
+                            <p>Confirmez-vous la suppression du match ?</p>
+                            <p class="uk-text-right">
+                                <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                                <button class="uk-button uk-button-danger"
+                                        onclick="document.getElementById('delete_form').submit()">
+                                    Confirmer
+                                </button>
+                            </p>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+
+            <div class="uk-width-1-1 uk-text-center uk-text-large uk-margin">
+            {% match game.status() %}
+                {% when GameStatus::Scheduled %}
                     {% if editable && edit_mode %}
                     <form method="post" autocomplete="off">
                         <input name="game_id"
@@ -87,25 +117,25 @@
                                name="scheduled_at"
                                type="datetime-local"
                                onchange="submit()"
-                               value="{{ game.scheduled_at.format("%Y-%m-%dT%H:%M").to_string() }}">
+                               value="{{ game_date_input }}">
                     </form>
                     {% elif editable %}
-                        <a class="uk-link-reset" href="./game?id={{ game.id }}&edit_mode=true" uk-icon="icon: pencil">
-                            {{ game.scheduled_at.format("%d/%m/%Y à %H:%M").to_string() }}
-                        </a>
+                    <a class="uk-link-reset" href="./game?id={{ game.id }}&edit_mode=true" uk-icon="icon: pencil">
+                        {{ game_date }}
+                    </a>
                     {% else %}
-                        {{ game.scheduled_at.format("%d/%m/%Y à %H:%M").to_string() }}
+                        {{ game_date }}
                     {% endif %}
 
                     {% if editable %}
                     <form method="post" autocomplete="off">
                         <input name="game_id"
-                           type="hidden"
-                           value="{{ game.id }}">
+                               type="hidden"
+                               value="{{ game.id }}">
 
                         <input name="started_at"
                                type="hidden"
-                               value="{{ game.scheduled_at.format("%Y-%m-%dT%H:%M").to_string() }}">
+                               value="{{ game_date_input }}">
 
                         <br>
 
@@ -114,13 +144,55 @@
                         </button>
                     </form>
                     {% endif %}
-                {% endif %}
+
+                {% else %}
+                    {{ game_date }}
+            {% endmatch %}
+                <br>
+                <span class="uk-text-default">{{ game_status }}</span>
             </div>
 
-            <div class="uk-width-1-1 uk-text-center uk-text-large uk-margin">
-                Exhibition
-            </div>
+        </div>
 
+        <div class="uk-width-1-1">
+            <ul  class="uk-child-width-expand" uk-tab>
+                <li x-bind:class="tab==='pre_game' ? 'uk-active' : ''">
+                    <a href="#" uk-icon="icon: sign-in" x-on:click="tab='pre_game'">
+                        <span class="uk-visible@m">Avant match</span>
+                    </a>
+                </li>
+                <li x-bind:class="tab==='game' ? 'uk-active' : ''">
+                    <a href="#" uk-icon="icon: play-circle" x-on:click="tab='game'">
+                        <span class="uk-visible@m">Match</span>
+                    </a>
+                </li>
+                <li x-bind:class="tab==='stats' ? 'uk-active' : ''">
+                    <a href="#" uk-icon="icon: info" x-on:click="tab='stats'">
+                        <span class="uk-visible@m">Statistiques</span>
+                    </a>
+                </li>
+                <li x-bind:class="tab==='post_game' ? 'uk-active' : ''">
+                    <a href="#" uk-icon="icon: sign-out" x-on:click="tab='post_game'">
+                        <span class="uk-visible@m">Après match</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="uk-width-1-1" x-show="tab==='pre_game'">
+            A venir...
+        </div>
+
+        <div class="uk-width-1-1" x-show="tab==='game'">
+            A venir...
+        </div>
+
+        <div class="uk-width-1-1" x-show="tab==='stats'">
+            A venir...
+        </div>
+
+        <div class="uk-width-1-1" x-show="tab==='post_game'">
+            A venir...
         </div>
 
     </div>

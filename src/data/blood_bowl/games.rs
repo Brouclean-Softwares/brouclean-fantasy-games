@@ -459,3 +459,71 @@ pub async fn update(state: &AppState, profile: &User, game: Game) -> Result<(), 
 
     Ok(())
 }
+
+pub async fn delete(state: &AppState, profile: &User, game_id: i32) -> Result<(), AppError> {
+    tracing::debug!(
+        "delete by coach_id={:?} for game id {}",
+        profile.id,
+        game_id
+    );
+
+    let game = select_by_id(state, game_id).await?;
+
+    if profile.ne(&game.first_team.coach)
+        && profile.ne(&game.second_team.coach)
+        && profile.ne(&game.created_by)
+    {
+        return Err(BloodBowlAppError(
+            "Seuls les coachs des équipes ou le créateur du match peuvent supprimer !".to_string(),
+        ));
+    }
+
+    if game.closed_at.is_some() {
+        return Err(BloodBowlAppError(
+            "Impossible de supprimer un match déjà clôturé !".to_string(),
+        ));
+    }
+
+    let mut transaction = state.db.begin().await?;
+
+    sqlx::query(
+        "DELETE
+            FROM bb_games_events
+            USING bb_games
+            WHERE bb_games.id = bb_games_events.game_id
+            AND bb_games.id = $1
+            AND (bb_games.created_by = $2 OR bb_games.first_coach_id = $2 OR bb_games.second_coach_id = $2)",
+    )
+        .bind(game.id.clone())
+        .bind(profile.id.unwrap_or(-1).clone())
+        .execute(&mut *transaction)
+        .await?;
+
+    sqlx::query(
+        "DELETE
+            FROM bb_games_teams_players
+            USING bb_games
+            WHERE bb_games.id = bb_games_teams_players.game_id
+            AND bb_games.id = $1
+            AND (bb_games.created_by = $2 OR bb_games.first_coach_id = $2 OR bb_games.second_coach_id = $2)",
+    )
+        .bind(game.id.clone())
+        .bind(profile.id.unwrap_or(-1).clone())
+        .execute(&mut *transaction)
+        .await?;
+
+    sqlx::query(
+        "DELETE
+            FROM bb_games
+            WHERE id = $1
+            AND (created_by = $2 OR first_coach_id = $2 OR second_coach_id = $2)",
+    )
+    .bind(game.id.clone())
+    .bind(profile.id.unwrap_or(-1).clone())
+    .execute(&mut *transaction)
+    .await?;
+
+    transaction.commit().await?;
+
+    Ok(())
+}

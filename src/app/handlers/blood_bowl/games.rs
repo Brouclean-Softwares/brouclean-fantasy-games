@@ -6,7 +6,7 @@ use crate::errors::AppError;
 use crate::AppState;
 use axum::extract::{Query, State};
 use axum::response::Redirect;
-use axum::routing::get;
+use axum::routing::{get, post};
 use axum::{Form, Router};
 use blood_bowl_rs::teams::Team;
 use chrono::NaiveDateTime;
@@ -14,8 +14,9 @@ use serde::Deserialize;
 
 pub fn init_router() -> Router<AppState> {
     Router::new()
-        .route("/game", get(game).post(update_game))
-        .route("/new", get(new_game).post(create_game))
+        .route("/game", get(game).post(update))
+        .route("/new", get(new).post(create))
+        .route("/delete", post(delete))
 }
 
 #[derive(Deserialize)]
@@ -43,7 +44,7 @@ pub struct GameForm {
     pub started_at: Option<String>,
 }
 
-pub async fn update_game(
+pub async fn update(
     State(app_state): State<AppState>,
     profile: User,
     Form(form): Form<GameForm>,
@@ -72,7 +73,7 @@ pub struct NewGameQueryParams {
     pub second_team_id: Option<i32>,
 }
 
-pub async fn new_game(
+pub async fn new(
     State(app_state): State<AppState>,
     profile: User,
     Query(params): Query<NewGameQueryParams>,
@@ -101,7 +102,7 @@ pub struct NewGameForm {
     pub scheduled_at: Option<String>,
 }
 
-pub async fn create_game(
+pub async fn create(
     State(app_state): State<AppState>,
     profile: User,
     Form(form): Form<NewGameForm>,
@@ -204,4 +205,26 @@ pub async fn create_game(
 
         _ => Ok(Redirect::to("/blood_bowl/games/new")),
     }
+}
+
+#[derive(Deserialize)]
+pub struct DeleteGameForm {
+    pub id: i32,
+}
+
+pub async fn delete(
+    State(app_state): State<AppState>,
+    profile: User,
+    Form(form): Form<DeleteGameForm>,
+) -> Result<Redirect, Redirect> {
+    games::delete(&app_state, &profile, form.id.clone())
+        .await
+        .or_else(|app_error| {
+            Err(Redirect::to(&format!(
+                "./game?id={}&message={}",
+                form.id, app_error
+            )))
+        })?;
+
+    Ok(Redirect::to("/blood_bowl"))
 }
