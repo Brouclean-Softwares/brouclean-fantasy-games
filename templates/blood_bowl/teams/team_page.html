@@ -401,6 +401,11 @@
             <h3>
                 Matchs passés
             </h3>
+            <div class="uk-grid-divider uk-child-width-1-1" uk-grid>
+                {% for game in games_played %}
+                {{ GameCard::get(game.clone())|escape("none") }}
+                {% endfor %}
+            </div>
         </div>
 
         <div x-show="tab==='stats'">

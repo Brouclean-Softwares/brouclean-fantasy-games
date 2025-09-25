@@ -14,6 +14,31 @@ use blood_bowl_rs::translation::TranslatedName;
 use chrono::NaiveDateTime;
 
 #[derive(Template, WebTemplate)]
+#[template(path = "blood_bowl/games/games_page.html")]
+pub struct GamesPage {
+    navigation_bar: NavigationBar,
+    games_playing: Vec<GameSummary>,
+    games_played: Vec<GameSummary>,
+    can_create: bool,
+}
+
+impl GamesPage {
+    pub fn get(
+        app_state: AppState,
+        profile: Option<User>,
+        games_playing: Vec<GameSummary>,
+        games_played: Vec<GameSummary>,
+    ) -> Result<Self, AppError> {
+        Ok(Self {
+            navigation_bar: NavigationBar::get(&app_state, &profile),
+            games_playing,
+            games_played,
+            can_create: profile.is_some(),
+        })
+    }
+}
+
+#[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/games/game_page.html")]
 pub struct GamePage {
     navigation_bar: NavigationBar,

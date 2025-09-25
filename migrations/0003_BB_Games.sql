@@ -15,18 +15,13 @@ CREATE TABLE IF NOT EXISTS bb_games (
     second_team_id INTEGER REFERENCES bb_teams ON DELETE RESTRICT,
     second_team_score INTEGER NOT NULL DEFAULT 0,
     second_team_casualties INTEGER NOT NULL DEFAULT 0,
-    second_team_is_winner BOOLEAN NOT NULL DEFAULT FALSE
+    second_team_is_winner BOOLEAN NOT NULL DEFAULT FALSE,
+    events TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS bb_games_teams_players (
     game_id INTEGER REFERENCES bb_games ON DELETE CASCADE,
-    team_id INTEGER REFERENCES bb_teams ON DELETE SET NULL,
-    player_id INTEGER REFERENCES bb_players ON DELETE SET NULL,
+    team_id INTEGER REFERENCES bb_teams ON DELETE RESTRICT,
+    player_id INTEGER REFERENCES bb_players ON DELETE RESTRICT,
     player_number INTEGER NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS bb_games_events (
-    game_id INTEGER REFERENCES bb_games ON DELETE CASCADE,
-    event JSONB NOT NULL,
-    event_order INTEGER NOT NULL
 );

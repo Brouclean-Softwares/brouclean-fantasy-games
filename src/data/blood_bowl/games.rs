@@ -43,6 +43,7 @@ struct GameRow {
     second_team_score: i32,
     second_team_casualties: i32,
     second_team_is_winner: bool,
+    events: String,
 }
 
 impl GameRow {
@@ -102,105 +103,82 @@ impl GameRow {
             second_team,
             first_team_playing_players,
             second_team_playing_players,
-            events: vec![],
+            events: serde_json::from_str(&self.events)?,
         };
 
         Ok(game)
     }
 }
 
-#[derive(Deserialize, sqlx::FromRow, Clone)]
-struct Id {
-    id: i32,
-}
+pub async fn select_all_played(state: &AppState) -> Result<Vec<GameSummary>, AppError> {
+    tracing::debug!("select_all_played");
 
-pub async fn can_create_or_start_for_team(
-    state: &AppState,
-    coach: &User,
-    game_id: &Option<i32>,
-    game_date: &NaiveDateTime,
-    team: &Team,
-) -> Result<bool, AppError> {
-    tracing::debug!(
-        "can_create_or_start_for_team by coach={:?} to play at {} for the following team: team_id={}",
-        coach,
-        game_date,
-        team.id,
-    );
-
-    let game_played_after: Option<Id> = sqlx::query_as(
-        "SELECT id
+    let game_rows: Vec<GameRow> = sqlx::query_as(
+        "SELECT id,
+                    version,
+                    created_by,
+                    scheduled_at,
+                    started_at,
+                    closed_at,
+                    first_team_id,
+                    first_team_score,
+                    first_team_casualties,
+                    first_team_is_winner,
+                    second_team_id,
+                    second_team_score,
+                    second_team_casualties,
+                    second_team_is_winner,
+                    events
             FROM bb_games
-            WHERE (started_at > $2 OR closed_at > $2)
-            AND (first_team_id = $1 OR second_team_id = $1)
-            AND id <> $3
-            LIMIT 1",
+            WHERE closed_at IS NOT NULL
+            ORDER BY started_at DESC",
     )
-    .bind(team.id.clone())
-    .bind(game_date.clone())
-    .bind(game_id.unwrap_or(-1).clone())
-    .fetch_optional(&state.db)
+    .fetch_all(&state.db)
     .await?;
 
-    Ok(game_played_after.is_none())
-}
+    let mut games = Vec::with_capacity(game_rows.len());
 
-pub async fn create(
-    state: &AppState,
-    coach: &User,
-    first_team: &Team,
-    second_team: &Team,
-    scheduled_at: NaiveDateTime,
-) -> Result<i32, AppError> {
-    tracing::debug!(
-        "create by coach={:?} to play at {} for the following teams: team_a_id={} and team_b_id={}",
-        coach,
-        scheduled_at,
-        first_team.id,
-        second_team.id,
-    );
-
-    if !can_create_or_start_for_team(state, coach, &None, &scheduled_at, &first_team).await?
-        || !can_create_or_start_for_team(state, coach, &None, &scheduled_at, &second_team).await?
-    {
-        return Err(BloodBowlAppError(
-            "Impossible de créer ou démarrer un match avant un autre déjà joué ou en cours !"
-                .to_string(),
-        ));
+    for game in game_rows {
+        games.push(game.into_game_summary(state).await?);
     }
 
-    let game = Game::create(
-        -1,
-        Some(coach.clone().into()),
-        first_team.version,
-        scheduled_at,
-        &first_team,
-        &second_team,
-    )?;
+    Ok(games)
+}
 
-    let new_game_id: Id = sqlx::query_as(
-        "INSERT INTO bb_games (
-                version,
-                created_by,
-                scheduled_at,
-                first_coach_id,
-                first_team_id,
-                second_coach_id,
-                second_team_id)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            RETURNING id",
+pub async fn select_all_playing(state: &AppState) -> Result<Vec<GameSummary>, AppError> {
+    tracing::debug!("select_all_playing");
+
+    let game_rows: Vec<GameRow> = sqlx::query_as(
+        "SELECT id,
+                    version,
+                    created_by,
+                    scheduled_at,
+                    started_at,
+                    closed_at,
+                    first_team_id,
+                    first_team_score,
+                    first_team_casualties,
+                    first_team_is_winner,
+                    second_team_id,
+                    second_team_score,
+                    second_team_casualties,
+                    second_team_is_winner,
+                    events
+            FROM bb_games
+            WHERE closed_at IS NULL
+            AND started_at IS NOT NULL
+            ORDER BY started_at ASC",
     )
-    .bind(game.version.clone())
-    .bind(coach.id.clone())
-    .bind(game.scheduled_at.clone())
-    .bind(first_team.coach.id.unwrap_or_default().clone())
-    .bind(first_team.id.clone())
-    .bind(second_team.coach.id.unwrap_or_default().clone())
-    .bind(second_team.id.clone())
-    .fetch_one(&state.db)
+    .fetch_all(&state.db)
     .await?;
 
-    Ok(new_game_id.id)
+    let mut games = Vec::with_capacity(game_rows.len());
+
+    for game in game_rows {
+        games.push(game.into_game_summary(state).await?);
+    }
+
+    Ok(games)
 }
 
 pub async fn select_played_by_team(
@@ -223,11 +201,12 @@ pub async fn select_played_by_team(
                     second_team_id,
                     second_team_score,
                     second_team_casualties,
-                    second_team_is_winner
+                    second_team_is_winner,
+                    events
             FROM bb_games
             WHERE closed_at IS NOT NULL
             AND (first_team_id = $1 OR second_team_id = $1)
-            ORDER BY closed_at ASC",
+            ORDER BY closed_at DESC",
     )
     .bind(team_id.clone())
     .fetch_all(&state.db)
@@ -262,7 +241,8 @@ pub async fn select_scheduled_for_team(
                     second_team_id,
                     second_team_score,
                     second_team_casualties,
-                    second_team_is_winner
+                    second_team_is_winner,
+                    events
             FROM bb_games
             WHERE closed_at IS NULL
             AND started_at IS NULL
@@ -302,7 +282,8 @@ pub async fn select_playing_by_team(
                     second_team_id,
                     second_team_score,
                     second_team_casualties,
-                    second_team_is_winner
+                    second_team_is_winner,
+                    events
             FROM bb_games
             WHERE closed_at IS NULL
             AND started_at IS NOT NULL
@@ -339,7 +320,8 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<Game, AppError> {
                     second_team_id,
                     second_team_score,
                     second_team_casualties,
-                    second_team_is_winner
+                    second_team_is_winner,
+                    events
             FROM bb_games
             WHERE id = $1",
     )
@@ -393,38 +375,173 @@ pub async fn select_playing_players_in_game_for_team(
     Ok(players)
 }
 
-pub async fn update(state: &AppState, profile: &User, game: Game) -> Result<(), AppError> {
+#[derive(Deserialize, sqlx::FromRow, Clone)]
+struct Id {
+    id: i32,
+}
+
+async fn can_be_saved(state: &AppState, profile: &User, game: &Game) -> Result<bool, AppError> {
     tracing::debug!(
-        "update by coach_id={:?} for game_id {}",
-        profile.id,
-        game.id
+        "can_be_updated by coach={:?} for game id={}",
+        profile,
+        game.id,
     );
+
+    if game.first_team.coach.eq(&game.second_team.coach) {
+        return Err(BloodBowlAppError(
+            "Les deux équipes ont le même coach !".to_string(),
+        ));
+    }
 
     if profile.ne(&game.first_team.coach)
         && profile.ne(&game.second_team.coach)
         && profile.ne(&game.created_by)
     {
         return Err(BloodBowlAppError(
-            "Seuls les coachs des équipes ou le créateur du match peuvent mettre à jour !"
-                .to_string(),
+            "Vous n'êtes ni le créateur du match ni l'un des coachs !".to_string(),
         ));
     }
 
-    let game_date = game.started_at.unwrap_or(game.scheduled_at);
-
-    if !can_create_or_start_for_team(state, profile, &Some(game.id), &game_date, &game.first_team)
-        .await?
-        || !can_create_or_start_for_team(
-            state,
-            profile,
-            &Some(game.id),
-            &game_date,
-            &game.second_team,
+    if game.started_at.is_some() {
+        let other_playing_game: Option<Id> = sqlx::query_as(
+            "SELECT id
+            FROM bb_games
+            WHERE started_at IS NOT NULL
+            AND closed_at IS NULL
+            AND (first_team_id = $2 OR second_team_id = $2 OR first_team_id = $3 OR second_team_id = $3)
+            AND id <> $1
+            LIMIT 1",
         )
-        .await?
-    {
-        return Err(BloodBowlAppError("Impossible de créer, modifier ou démarrer un match précédant un autre déjà joué ou en cours !".to_string()));
+            .bind(game.id.clone())
+            .bind(game.first_team.id.clone())
+            .bind(game.second_team.id.clone())
+            .fetch_optional(&state.db)
+            .await?;
+
+        if other_playing_game.is_some() {
+            return Err(BloodBowlAppError(
+                "L'une des équipes est déjà en train de jouer un match !".to_string(),
+            ));
+        }
     }
+
+    let game_played_after: Option<Id> = sqlx::query_as(
+        "SELECT id
+            FROM bb_games
+            WHERE started_at > $2
+            AND (first_team_id = $3 OR second_team_id = $3 OR first_team_id = $4 OR second_team_id = $4)
+            AND id <> $1
+            LIMIT 1",
+    )
+        .bind(game.id.clone())
+        .bind(game.started_at.unwrap_or(game.scheduled_at).clone())
+        .bind(game.first_team.id.clone())
+        .bind(game.second_team.id.clone())
+        .fetch_optional(&state.db)
+        .await?;
+
+    if game_played_after.is_some() {
+        return Err(BloodBowlAppError(
+            "Ce match précède un autre déjà joué par l'une des équipes !".to_string(),
+        ));
+    }
+
+    Ok(true)
+}
+
+pub async fn create(
+    state: &AppState,
+    profile: &User,
+    first_team: &Team,
+    second_team: &Team,
+    scheduled_at: NaiveDateTime,
+) -> Result<i32, AppError> {
+    tracing::debug!(
+        "create by coach={:?} to play at {} for the following teams: team_a_id={} and team_b_id={}",
+        profile,
+        scheduled_at,
+        first_team.id,
+        second_team.id,
+    );
+
+    let game = Game::create(
+        -1,
+        Some(profile.clone().into()),
+        first_team.version,
+        scheduled_at,
+        &first_team,
+        &second_team,
+    )?;
+
+    let _ = can_be_saved(state, profile, &game).await?;
+
+    let new_game_id: Id = sqlx::query_as(
+        "INSERT INTO bb_games (
+                version,
+                created_by,
+                scheduled_at,
+                first_coach_id,
+                first_team_id,
+                second_coach_id,
+                second_team_id,
+                events)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            RETURNING id",
+    )
+    .bind(game.version.clone())
+    .bind(profile.id.clone())
+    .bind(game.scheduled_at.clone())
+    .bind(first_team.coach.id.unwrap_or_default().clone())
+    .bind(first_team.id.clone())
+    .bind(second_team.coach.id.unwrap_or_default().clone())
+    .bind(second_team.id.clone())
+    .bind(serde_json::to_string(&game.events)?)
+    .fetch_one(&state.db)
+    .await?;
+
+    Ok(new_game_id.id)
+}
+
+pub async fn update_schedule(
+    state: &AppState,
+    profile: &User,
+    game: &Game,
+) -> Result<(), AppError> {
+    tracing::debug!(
+        "update_schedule by coach_id={:?} for game_id {}",
+        profile.id,
+        game.id
+    );
+
+    let _ = can_be_saved(state, profile, &game).await?;
+
+    let mut transaction = state.db.begin().await?;
+
+    sqlx::query(
+        "UPDATE bb_games
+            SET scheduled_at = $3
+            WHERE id = $1
+            AND (created_by = $2 OR first_coach_id = $2 OR second_coach_id = $2)",
+    )
+    .bind(game.id.clone())
+    .bind(profile.id.unwrap_or(-1).clone())
+    .bind(game.scheduled_at.clone())
+    .execute(&mut *transaction)
+    .await?;
+
+    transaction.commit().await?;
+
+    Ok(())
+}
+
+pub async fn update_start(state: &AppState, profile: &User, game: &Game) -> Result<(), AppError> {
+    tracing::debug!(
+        "update_start by coach_id={:?} for game_id {}",
+        profile.id,
+        game.id
+    );
+
+    let _ = can_be_saved(state, profile, &game).await?;
 
     let mut transaction = state.db.begin().await?;
 
@@ -444,9 +561,9 @@ pub async fn update(state: &AppState, profile: &User, game: Game) -> Result<(), 
 
     sqlx::query(
         "DELETE
-            FROM bb_games_events
+            FROM bb_games_teams_players
             USING bb_games
-            WHERE bb_games.id = bb_games_events.game_id
+            WHERE bb_games.id = bb_games_teams_players.game_id
             AND bb_games.id = $1
             AND (bb_games.created_by = $2 OR bb_games.first_coach_id = $2 OR bb_games.second_coach_id = $2)",
     )
@@ -485,19 +602,6 @@ pub async fn delete(state: &AppState, profile: &User, game_id: i32) -> Result<()
     }
 
     let mut transaction = state.db.begin().await?;
-
-    sqlx::query(
-        "DELETE
-            FROM bb_games_events
-            USING bb_games
-            WHERE bb_games.id = bb_games_events.game_id
-            AND bb_games.id = $1
-            AND (bb_games.created_by = $2 OR bb_games.first_coach_id = $2 OR bb_games.second_coach_id = $2)",
-    )
-        .bind(game.id.clone())
-        .bind(profile.id.unwrap_or(-1).clone())
-        .execute(&mut *transaction)
-        .await?;
 
     sqlx::query(
         "DELETE

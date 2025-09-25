@@ -94,17 +94,15 @@ impl TeamPage {
         focus: Option<String>,
         positions_buyable: Vec<(Position, u32, bool)>,
     ) -> Self {
-        let editable = match profile.clone() {
-            Some(user) => team.coach.eq(&user.into()),
-            None => false,
-        };
+        let editable = game_playing.is_none()
+            && match profile.clone() {
+                Some(user) => team.coach.eq(&user.into()),
+                None => false,
+            };
 
         let edit_mode = edit_mode && editable;
 
-        let deletable = editable
-            && games_played.len() == 0
-            && games_scheduled.len() == 0
-            && game_playing.is_none();
+        let deletable = editable && games_played.len() == 0 && games_scheduled.len() == 0;
 
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),

@@ -1,4 +1,4 @@
-use crate::app::templates::blood_bowl::games::{GamePage, NewGamePage};
+use crate::app::templates::blood_bowl::games::{GamePage, GamesPage, NewGamePage};
 use crate::app::templates::{AlertMessage, AlertType};
 use crate::data::blood_bowl::{games, teams};
 use crate::data::users::User;
@@ -14,15 +14,28 @@ use serde::Deserialize;
 
 pub fn init_router() -> Router<AppState> {
     Router::new()
+        .route("/", get(games))
         .route("/game", get(game).post(update))
         .route("/new", get(new).post(create))
         .route("/delete", post(delete))
+}
+
+pub async fn games(
+    State(app_state): State<AppState>,
+    profile: Option<User>,
+) -> Result<GamesPage, AppError> {
+    let games_playing = games::select_all_playing(&app_state).await?;
+    let games_played = games::select_all_played(&app_state).await?;
+
+    GamesPage::get(app_state, profile, games_playing, games_played)
 }
 
 #[derive(Deserialize)]
 pub struct GameQueryParams {
     pub id: i32,
     pub edit_mode: Option<bool>,
+    pub info_message: Option<String>,
+    pub error_message: Option<String>,
 }
 
 pub async fn game(
@@ -34,7 +47,29 @@ pub async fn game(
 
     let edit_mode = params.edit_mode.unwrap_or(false);
 
-    Ok(GamePage::get(app_state, profile, game, edit_mode)?)
+    let mut alert_message: Option<AlertMessage> = None;
+
+    if let Some(message) = params.info_message {
+        alert_message = Some(AlertMessage {
+            alert_type: AlertType::Primary,
+            message,
+        });
+    };
+
+    if let Some(message) = params.error_message {
+        alert_message = Some(AlertMessage {
+            alert_type: AlertType::Danger,
+            message,
+        });
+    };
+
+    Ok(GamePage::get_with_message(
+        app_state,
+        profile,
+        alert_message,
+        game,
+        edit_mode,
+    )?)
 }
 
 #[derive(Deserialize)]
@@ -44,27 +79,52 @@ pub struct GameForm {
     pub started_at: Option<String>,
 }
 
+fn redirect_when_update_ko(game_id: &i32, error: AppError) -> Redirect {
+    Redirect::to(&format!(
+        "/blood_bowl/games/game?id={}&error_message={}",
+        game_id,
+        error.to_string()
+    ))
+}
+
 pub async fn update(
     State(app_state): State<AppState>,
     profile: User,
     Form(form): Form<GameForm>,
-) -> Result<Redirect, AppError> {
-    let redirect = Redirect::to(&format!("/blood_bowl/games/game?id={}", form.game_id));
+) -> Result<Redirect, Redirect> {
+    let redirect_ok = Redirect::to(&format!("/blood_bowl/games/game?id={}", form.game_id));
 
-    let mut game = games::select_by_id(&app_state, form.game_id).await?;
+    let mut game = games::select_by_id(&app_state, form.game_id)
+        .await
+        .map_err(|err| redirect_when_update_ko(&form.game_id, err))?;
 
     if let Some(game_date) = form.scheduled_at {
-        game.scheduled_at = NaiveDateTime::parse_from_str(&*game_date, "%Y-%m-%dT%H:%M")?;
-    } else if let Some(game_date) = form.started_at {
-        let _ = game.start_at(NaiveDateTime::parse_from_str(
-            &*game_date,
-            "%Y-%m-%dT%H:%M",
-        )?);
+        game.scheduled_at = NaiveDateTime::parse_from_str(&*game_date, "%Y-%m-%dT%H:%M")
+            .map_err(|err| redirect_when_update_ko(&form.game_id, err.into()))?;
+
+        games::update_schedule(&app_state, &profile, &game)
+            .await
+            .map_err(|err| redirect_when_update_ko(&form.game_id, err))?;
+
+        return Ok(redirect_ok);
     }
 
-    games::update(&app_state, &profile, game).await?;
+    if let Some(game_date) = form.started_at {
+        let game_start = NaiveDateTime::parse_from_str(&*game_date, "%Y-%m-%dT%H:%M")
+            .map_err(|err| redirect_when_update_ko(&form.game_id, err.into()))?;
 
-    return Ok(redirect);
+        let _ = game
+            .start_at(game_start)
+            .map_err(|err| redirect_when_update_ko(&form.game_id, err.into()))?;
+
+        games::update_start(&app_state, &profile, &game)
+            .await
+            .map_err(|err| redirect_when_update_ko(&form.game_id, err))?;
+
+        return Ok(redirect_ok);
+    }
+
+    Ok(redirect_ok)
 }
 
 #[derive(Deserialize)]
