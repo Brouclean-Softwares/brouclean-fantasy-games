@@ -1,11 +1,10 @@
 use crate::data::blood_bowl::teams::TeamSummary;
-use crate::data::blood_bowl::{coaches, players, teams};
+use crate::data::blood_bowl::{coaches, teams};
 use crate::data::users::User;
 use crate::errors::AppError;
 use crate::errors::AppError::BloodBowlAppError;
 use crate::AppState;
 use blood_bowl_rs::games::Game;
-use blood_bowl_rs::players::Player;
 use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::versions::Version;
 use chrono::NaiveDateTime;
@@ -79,19 +78,6 @@ impl GameRow {
         let first_team = teams::select_by_id(state, self.first_team_id).await?;
         let second_team = teams::select_by_id(state, self.second_team_id).await?;
 
-        let mut first_team_playing_players = vec![];
-        let mut second_team_playing_players = vec![];
-
-        if self.started_at.is_some() {
-            first_team_playing_players =
-                select_playing_players_in_game_for_team(state, self.id, first_team.id.clone())
-                    .await?;
-
-            second_team_playing_players =
-                select_playing_players_in_game_for_team(state, self.id, second_team.id.clone())
-                    .await?;
-        }
-
         let game = Game {
             id: self.id,
             version: self.version,
@@ -101,8 +87,6 @@ impl GameRow {
             started_at: self.started_at,
             first_team,
             second_team,
-            first_team_playing_players,
-            second_team_playing_players,
             events: serde_json::from_str(&self.events)?,
         };
 
@@ -335,47 +319,6 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<Game, AppError> {
 }
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
-struct PlayerIdWithNumber {
-    player_id: i32,
-    player_number: i32,
-}
-
-pub async fn select_playing_players_in_game_for_team(
-    state: &AppState,
-    game_id: i32,
-    team_id: i32,
-) -> Result<Vec<(i32, Player)>, AppError> {
-    tracing::debug!(
-        "select_playing_players_in_game_for_team with game_id={} and team_id={}",
-        game_id,
-        team_id
-    );
-
-    let players_id_with_number: Vec<PlayerIdWithNumber> = sqlx::query_as(
-        "SELECT player_id,
-                    player_number
-            FROM bb_games_teams_players
-            WHERE game_id = $1
-            AND team_id = $2",
-    )
-    .bind(game_id.clone())
-    .bind(team_id.clone())
-    .fetch_all(&state.db)
-    .await?;
-
-    let mut players: Vec<(i32, Player)> = Vec::with_capacity(players_id_with_number.len());
-
-    for player_id_with_number in players_id_with_number {
-        let player_number = player_id_with_number.player_number;
-        let player = players::select_by_id(state, player_id_with_number.player_id).await?;
-
-        players.push((player_number, player));
-    }
-
-    Ok(players)
-}
-
-#[derive(Deserialize, sqlx::FromRow, Clone)]
 struct Id {
     id: i32,
 }
@@ -515,8 +458,6 @@ pub async fn update_schedule(
 
     let _ = can_be_saved(state, profile, &game).await?;
 
-    let mut transaction = state.db.begin().await?;
-
     sqlx::query(
         "UPDATE bb_games
             SET scheduled_at = $3
@@ -526,10 +467,8 @@ pub async fn update_schedule(
     .bind(game.id.clone())
     .bind(profile.id.unwrap_or(-1).clone())
     .bind(game.scheduled_at.clone())
-    .execute(&mut *transaction)
+    .execute(&state.db)
     .await?;
-
-    transaction.commit().await?;
 
     Ok(())
 }
@@ -540,10 +479,6 @@ pub async fn update_start(state: &AppState, profile: &User, game: &Game) -> Resu
         profile.id,
         game.id
     );
-
-    let _ = can_be_saved(state, profile, &game).await?;
-
-    let mut transaction = state.db.begin().await?;
 
     sqlx::query(
         "UPDATE bb_games
@@ -556,23 +491,8 @@ pub async fn update_start(state: &AppState, profile: &User, game: &Game) -> Resu
     .bind(profile.id.unwrap_or(-1).clone())
     .bind(game.scheduled_at.clone())
     .bind(game.started_at.clone())
-    .execute(&mut *transaction)
+    .execute(&state.db)
     .await?;
-
-    sqlx::query(
-        "DELETE
-            FROM bb_games_teams_players
-            USING bb_games
-            WHERE bb_games.id = bb_games_teams_players.game_id
-            AND bb_games.id = $1
-            AND (bb_games.created_by = $2 OR bb_games.first_coach_id = $2 OR bb_games.second_coach_id = $2)",
-    )
-        .bind(game.id.clone())
-        .bind(profile.id.unwrap_or(-1).clone())
-        .execute(&mut *transaction)
-        .await?;
-
-    transaction.commit().await?;
 
     Ok(())
 }
