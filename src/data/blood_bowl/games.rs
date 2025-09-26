@@ -480,6 +480,8 @@ pub async fn update_start(state: &AppState, profile: &User, game: &Game) -> Resu
         game.id
     );
 
+    let _ = can_be_saved(state, profile, &game).await?;
+
     sqlx::query(
         "UPDATE bb_games
             SET scheduled_at = $3,
