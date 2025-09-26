@@ -40,6 +40,8 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<Player, AppError>
         position: player_detail.position,
         name: player_detail.name,
         star_player_points: player_detail.star_player_points,
+        is_journeyman: false,
+        is_star_player: false,
     })
 }
 
@@ -77,6 +79,8 @@ pub async fn select_under_contract_for_team(
                 position: player_detail.position,
                 name: player_detail.name,
                 star_player_points: player_detail.star_player_points,
+                is_journeyman: false,
+                is_star_player: false,
             },
         ));
     }
