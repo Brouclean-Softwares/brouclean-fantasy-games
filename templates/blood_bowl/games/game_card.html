@@ -3,12 +3,7 @@
         <div class="uk-grid-small uk-flex-center uk-flex-middle" uk-grid>
 
             <div class="uk-width-1-1 uk-text-center uk-text-meta uk-margin-remove-bottom">
-                {% if let Some(started_at) = game.started_at %}
-                    {{ started_at.format("%d/%m/%Y à %H:%M").to_string() }}
-                {% else %}
-                    {{ game.scheduled_at.format("%d/%m/%Y à %H:%M").to_string() }}
-                {% endif %}
-
+                {{ game.game_at.format("%d/%m/%Y à %H:%M").to_string() }}
                 - Exhibition
             </div>
 
@@ -24,14 +19,14 @@
                     </div>
                     <div class="uk-width-1-5 uk-text-center">
                         <p class="uk-text-large uk-text-bold uk-background-secondary uk-text-muted">
-                            {% if game.started_at.is_none() %}
+                            {% if ! game.started %}
                                 -
                             {% else %}
                                 {{ game.first_team_score }}
                             {% endif %}
                         </p>
                         <p>
-                            {% if game.started_at.is_none() %}
+                            {% if ! game.started %}
                                 -
                             {% else %}
                                 {{ game.first_team_casualties }}
@@ -53,14 +48,14 @@
                     </div>
                     <div class="uk-width-1-5 uk-flex-first@m uk-text-center">
                         <p class="uk-text-large uk-text-bold uk-background-secondary uk-text-muted">
-                            {% if game.started_at.is_none() %}
+                            {% if ! game.started %}
                                 -
                             {% else %}
                                 {{ game.second_team_score }}
                             {% endif %}
                         </p>
                         <p>
-                            {% if game.started_at.is_none() %}
+                            {% if ! game.started %}
                                 -
                             {% else %}
                                 {{ game.second_team_casualties }}

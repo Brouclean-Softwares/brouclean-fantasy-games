@@ -5,6 +5,8 @@ use crate::errors::AppError;
 use crate::errors::AppError::BloodBowlAppError;
 use crate::AppState;
 use blood_bowl_rs::games::Game;
+use blood_bowl_rs::players::Player;
+use blood_bowl_rs::positions::Position;
 use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::versions::Version;
 use chrono::NaiveDateTime;
@@ -13,9 +15,9 @@ use serde::Deserialize;
 #[derive(Deserialize, Clone)]
 pub struct GameSummary {
     pub id: i32,
-    pub scheduled_at: NaiveDateTime,
-    pub started_at: Option<NaiveDateTime>,
-    pub closed_at: Option<NaiveDateTime>,
+    pub game_at: NaiveDateTime,
+    pub started: bool,
+    pub closed: bool,
     pub first_team: TeamSummary,
     pub first_team_score: i32,
     pub first_team_casualties: i32,
@@ -31,9 +33,9 @@ struct GameRow {
     id: i32,
     version: Version,
     created_by: Option<i32>,
-    scheduled_at: NaiveDateTime,
-    started_at: Option<NaiveDateTime>,
-    closed_at: Option<NaiveDateTime>,
+    game_at: NaiveDateTime,
+    started: bool,
+    closed: bool,
     first_team_id: i32,
     first_team_score: i32,
     first_team_casualties: i32,
@@ -43,6 +45,7 @@ struct GameRow {
     second_team_casualties: i32,
     second_team_is_winner: bool,
     events: String,
+    playing_players: Option<String>,
 }
 
 impl GameRow {
@@ -52,9 +55,9 @@ impl GameRow {
 
         let game_summary = GameSummary {
             id: self.id,
-            scheduled_at: self.scheduled_at,
-            started_at: self.started_at,
-            closed_at: self.closed_at,
+            game_at: self.game_at,
+            started: self.started,
+            closed: self.closed,
             first_team,
             first_team_score: self.first_team_score,
             first_team_casualties: self.first_team_casualties,
@@ -78,17 +81,27 @@ impl GameRow {
         let first_team = teams::select_by_id(state, self.first_team_id).await?;
         let second_team = teams::select_by_id(state, self.second_team_id).await?;
 
-        let game = Game {
+        let mut game = Game {
             id: self.id,
             version: self.version,
             created_by,
-            closed_at: self.closed_at,
-            scheduled_at: self.scheduled_at,
-            started_at: self.started_at,
+            game_at: self.game_at,
+            started: self.started,
+            closed: self.closed,
             first_team,
             second_team,
             events: serde_json::from_str(&self.events)?,
         };
+
+        if let Some(players_str) = self.playing_players {
+            let (first_team_players, second_team_players): (
+                Vec<(i32, Player)>,
+                Vec<(i32, Player)>,
+            ) = serde_json::from_str(&players_str)?;
+
+            game.first_team.players = first_team_players;
+            game.second_team.players = second_team_players;
+        }
 
         Ok(game)
     }
@@ -101,9 +114,9 @@ pub async fn select_all_played(state: &AppState) -> Result<Vec<GameSummary>, App
         "SELECT id,
                     version,
                     created_by,
-                    scheduled_at,
-                    started_at,
-                    closed_at,
+                    game_at,
+                    started_at IS NOT NULL AS started,
+                    closed_at IS NOT NULL AS closed,
                     first_team_id,
                     first_team_score,
                     first_team_casualties,
@@ -112,7 +125,8 @@ pub async fn select_all_played(state: &AppState) -> Result<Vec<GameSummary>, App
                     second_team_score,
                     second_team_casualties,
                     second_team_is_winner,
-                    events
+                    events,
+                    playing_players
             FROM bb_games
             WHERE closed_at IS NOT NULL
             ORDER BY started_at DESC",
@@ -136,9 +150,9 @@ pub async fn select_all_playing(state: &AppState) -> Result<Vec<GameSummary>, Ap
         "SELECT id,
                     version,
                     created_by,
-                    scheduled_at,
-                    started_at,
-                    closed_at,
+                    game_at,
+                    started_at IS NOT NULL AS started,
+                    closed_at IS NOT NULL AS closed,
                     first_team_id,
                     first_team_score,
                     first_team_casualties,
@@ -147,7 +161,8 @@ pub async fn select_all_playing(state: &AppState) -> Result<Vec<GameSummary>, Ap
                     second_team_score,
                     second_team_casualties,
                     second_team_is_winner,
-                    events
+                    events,
+                    playing_players
             FROM bb_games
             WHERE closed_at IS NULL
             AND started_at IS NOT NULL
@@ -175,9 +190,9 @@ pub async fn select_played_by_team(
         "SELECT id,
                     version,
                     created_by,
-                    scheduled_at,
-                    started_at,
-                    closed_at,
+                    game_at,
+                    started_at IS NOT NULL AS started,
+                    closed_at IS NOT NULL AS closed,
                     first_team_id,
                     first_team_score,
                     first_team_casualties,
@@ -186,7 +201,8 @@ pub async fn select_played_by_team(
                     second_team_score,
                     second_team_casualties,
                     second_team_is_winner,
-                    events
+                    events,
+                    playing_players
             FROM bb_games
             WHERE closed_at IS NOT NULL
             AND (first_team_id = $1 OR second_team_id = $1)
@@ -215,9 +231,9 @@ pub async fn select_scheduled_for_team(
         "SELECT id,
                     version,
                     created_by,
-                    scheduled_at,
-                    started_at,
-                    closed_at,
+                    game_at,
+                    started_at IS NOT NULL AS started,
+                    closed_at IS NOT NULL AS closed,
                     first_team_id,
                     first_team_score,
                     first_team_casualties,
@@ -226,12 +242,13 @@ pub async fn select_scheduled_for_team(
                     second_team_score,
                     second_team_casualties,
                     second_team_is_winner,
-                    events
+                    events,
+                    playing_players
             FROM bb_games
             WHERE closed_at IS NULL
             AND started_at IS NULL
             AND (first_team_id = $1 OR second_team_id = $1)
-            ORDER BY scheduled_at ASC",
+            ORDER BY game_at ASC",
     )
     .bind(team_id.clone())
     .fetch_all(&state.db)
@@ -256,9 +273,9 @@ pub async fn select_playing_by_team(
         "SELECT id,
                     version,
                     created_by,
-                    scheduled_at,
-                    started_at,
-                    closed_at,
+                    game_at,
+                    started_at IS NOT NULL AS started,
+                    closed_at IS NOT NULL AS closed,
                     first_team_id,
                     first_team_score,
                     first_team_casualties,
@@ -267,7 +284,8 @@ pub async fn select_playing_by_team(
                     second_team_score,
                     second_team_casualties,
                     second_team_is_winner,
-                    events
+                    events,
+                    playing_players
             FROM bb_games
             WHERE closed_at IS NULL
             AND started_at IS NOT NULL
@@ -294,9 +312,9 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<Game, AppError> {
         "SELECT id,
                     version,
                     created_by,
-                    scheduled_at,
-                    started_at,
-                    closed_at,
+                    game_at,
+                    started_at IS NOT NULL AS started,
+                    closed_at IS NOT NULL AS closed,
                     first_team_id,
                     first_team_score,
                     first_team_casualties,
@@ -305,7 +323,8 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<Game, AppError> {
                     second_team_score,
                     second_team_casualties,
                     second_team_is_winner,
-                    events
+                    events,
+                    playing_players
             FROM bb_games
             WHERE id = $1",
     )
@@ -316,6 +335,56 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<Game, AppError> {
     let game = game_row.into_game(state).await?;
 
     Ok(game)
+}
+
+#[derive(Deserialize, sqlx::FromRow, Clone)]
+pub struct PlayerStatisticsRow {
+    pub player_id: i32,
+    pub player_number: i32,
+    pub player_position: Position,
+    pub passing_completions: i32,
+    pub throwing_completions: i32,
+    pub deflections: i32,
+    pub interceptions: i32,
+    pub casualties: i32,
+    pub touchdowns: i32,
+    pub most_valuable_player: i32,
+    pub star_player_points: i32,
+}
+
+pub async fn select_players_statistics_for_team(
+    state: &AppState,
+    game_id: &i32,
+    team_id: &i32,
+) -> Result<Vec<PlayerStatisticsRow>, AppError> {
+    tracing::debug!(
+        "select_players_statistics_for_team in game_id={} for team_id={:?}",
+        game_id,
+        team_id
+    );
+
+    let players_statistics: Vec<PlayerStatisticsRow> = sqlx::query_as(
+        "SELECT player_id,
+                    player_number,
+                    player_position,
+                    passing_completions,
+                    throwing_completions,
+                    deflections,
+                    interceptions,
+                    casualties,
+                    touchdowns,
+                    most_valuable_player,
+                    star_player_points
+            FROM bb_games_teams_players
+            WHERE game_id = $1
+            AND team_id = $2",
+    )
+    .bind(game_id.clone())
+    .bind(team_id.clone())
+    .fetch_all(&state.db)
+    .await?;
+
+    Ok(players_statistics)
 }
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
@@ -345,7 +414,7 @@ async fn can_be_saved(state: &AppState, profile: &User, game: &Game) -> Result<b
         ));
     }
 
-    if game.started_at.is_some() {
+    if game.started {
         let other_playing_game: Option<Id> = sqlx::query_as(
             "SELECT id
             FROM bb_games
@@ -371,13 +440,14 @@ async fn can_be_saved(state: &AppState, profile: &User, game: &Game) -> Result<b
     let game_played_after: Option<Id> = sqlx::query_as(
         "SELECT id
             FROM bb_games
-            WHERE started_at > $2
+            WHERE game_at > $2
+            AND started_at IS NOT NULL
             AND (first_team_id = $3 OR second_team_id = $3 OR first_team_id = $4 OR second_team_id = $4)
             AND id <> $1
             LIMIT 1",
     )
         .bind(game.id.clone())
-        .bind(game.started_at.unwrap_or(game.scheduled_at).clone())
+        .bind(game.game_at.clone())
         .bind(game.first_team.id.clone())
         .bind(game.second_team.id.clone())
         .fetch_optional(&state.db)
@@ -397,12 +467,12 @@ pub async fn create(
     profile: &User,
     first_team: &Team,
     second_team: &Team,
-    scheduled_at: NaiveDateTime,
+    game_at: NaiveDateTime,
 ) -> Result<i32, AppError> {
     tracing::debug!(
         "create by coach={:?} to play at {} for the following teams: team_a_id={} and team_b_id={}",
         profile,
-        scheduled_at,
+        game_at,
         first_team.id,
         second_team.id,
     );
@@ -411,7 +481,7 @@ pub async fn create(
         -1,
         Some(profile.clone().into()),
         first_team.version,
-        scheduled_at,
+        game_at,
         &first_team,
         &second_team,
     )?;
@@ -422,7 +492,7 @@ pub async fn create(
         "INSERT INTO bb_games (
                 version,
                 created_by,
-                scheduled_at,
+                game_at,
                 first_coach_id,
                 first_team_id,
                 second_coach_id,
@@ -433,7 +503,7 @@ pub async fn create(
     )
     .bind(game.version.clone())
     .bind(profile.id.clone())
-    .bind(game.scheduled_at.clone())
+    .bind(game.game_at.clone())
     .bind(first_team.coach.id.unwrap_or_default().clone())
     .bind(first_team.id.clone())
     .bind(second_team.coach.id.unwrap_or_default().clone())
@@ -460,13 +530,13 @@ pub async fn update_schedule(
 
     sqlx::query(
         "UPDATE bb_games
-            SET scheduled_at = $3
+            SET game_at = $3
             WHERE id = $1
             AND (created_by = $2 OR first_coach_id = $2 OR second_coach_id = $2)",
     )
     .bind(game.id.clone())
     .bind(profile.id.unwrap_or(-1).clone())
-    .bind(game.scheduled_at.clone())
+    .bind(game.game_at.clone())
     .execute(&state.db)
     .await?;
 
@@ -484,15 +554,16 @@ pub async fn update_start(state: &AppState, profile: &User, game: &Game) -> Resu
 
     sqlx::query(
         "UPDATE bb_games
-            SET scheduled_at = $3,
-                started_at = $4
+            SET game_at = $3,
+                started_at = CURRENT_TIMESTAMP,
+                playing_players = $4
             WHERE id = $1
             AND (created_by = $2 OR first_coach_id = $2 OR second_coach_id = $2)",
     )
     .bind(game.id.clone())
     .bind(profile.id.unwrap_or(-1).clone())
-    .bind(game.scheduled_at.clone())
-    .bind(game.started_at.clone())
+    .bind(game.game_at.clone())
+    .bind(serde_json::to_string(&game.playing_players())?)
     .execute(&state.db)
     .await?;
 
@@ -516,13 +587,15 @@ pub async fn update_after_event(
 
     sqlx::query(
         "UPDATE bb_games
-            SET events = $3
+            SET events = $3,
+                playing_players = $4
             WHERE id = $1
             AND (created_by = $2 OR first_coach_id = $2 OR second_coach_id = $2)",
     )
     .bind(game.id.clone())
     .bind(profile.id.unwrap_or(-1).clone())
     .bind(serde_json::to_string(&game.events)?)
+    .bind(serde_json::to_string(&game.playing_players())?)
     .execute(&mut *transaction)
     .await?;
 
@@ -549,7 +622,7 @@ pub async fn delete(state: &AppState, profile: &User, game_id: i32) -> Result<()
         ));
     }
 
-    if game.closed_at.is_some() {
+    if game.closed {
         return Err(BloodBowlAppError(
             "Impossible de supprimer un match déjà clôturé !".to_string(),
         ));

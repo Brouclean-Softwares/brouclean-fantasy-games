@@ -75,7 +75,7 @@ pub async fn game(
 #[derive(Deserialize)]
 pub struct GameForm {
     pub game_id: i32,
-    pub scheduled_at: Option<String>,
+    pub game_at: Option<String>,
     pub started_at: Option<String>,
 }
 
@@ -98,8 +98,8 @@ pub async fn update(
         .await
         .map_err(|err| redirect_when_update_ko(&form.game_id, err))?;
 
-    if let Some(game_date) = form.scheduled_at {
-        game.scheduled_at = NaiveDateTime::parse_from_str(&*game_date, "%Y-%m-%dT%H:%M")
+    if let Some(game_date) = form.game_at {
+        game.game_at = NaiveDateTime::parse_from_str(&*game_date, "%Y-%m-%dT%H:%M")
             .map_err(|err| redirect_when_update_ko(&form.game_id, err.into()))?;
 
         games::update_schedule(&app_state, &profile, &game)
@@ -113,9 +113,8 @@ pub async fn update(
         let game_start = NaiveDateTime::parse_from_str(&*game_date, "%Y-%m-%dT%H:%M")
             .map_err(|err| redirect_when_update_ko(&form.game_id, err.into()))?;
 
-        let _ = game
-            .start_at(game_start)
-            .map_err(|err| redirect_when_update_ko(&form.game_id, err.into()))?;
+        game.game_at = game_start;
+        game.start();
 
         games::update_start(&app_state, &profile, &game)
             .await

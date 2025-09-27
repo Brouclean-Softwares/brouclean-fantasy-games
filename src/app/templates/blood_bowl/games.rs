@@ -11,7 +11,6 @@ use blood_bowl_rs::games::Game;
 use blood_bowl_rs::games::GameStatus;
 use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::translation::TranslatedName;
-use chrono::NaiveDateTime;
 
 #[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/games/games_page.html")]
@@ -78,20 +77,9 @@ impl GamePage {
 
         let game_status = game.status().name("fr");
 
-        let game_date: Option<NaiveDateTime> = match game.status() {
-            GameStatus::Scheduled => Some(game.scheduled_at),
-            _ => game.started_at,
-        };
+        let game_date_input = game.game_at.format("%Y-%m-%dT%H:%M").to_string();
 
-        let game_date_input = match game_date {
-            None => "".to_string(),
-            Some(date) => date.format("%Y-%m-%dT%H:%M").to_string(),
-        };
-
-        let game_date = match game_date {
-            None => "".to_string(),
-            Some(date) => date.format("%d/%m/%Y à %H:%M").to_string(),
-        };
+        let game_date = game.game_at.format("%d/%m/%Y à %H:%M").to_string();
 
         Ok(Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
