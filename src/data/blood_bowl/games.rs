@@ -499,6 +499,38 @@ pub async fn update_start(state: &AppState, profile: &User, game: &Game) -> Resu
     Ok(())
 }
 
+pub async fn update_after_event(
+    state: &AppState,
+    profile: &User,
+    game: &Game,
+) -> Result<(), AppError> {
+    tracing::debug!(
+        "update_after_event by coach_id={:?} for game_id {}",
+        profile.id,
+        game.id
+    );
+
+    let _ = can_be_saved(state, profile, &game).await?;
+
+    let mut transaction = state.db.begin().await?;
+
+    sqlx::query(
+        "UPDATE bb_games
+            SET events = $3
+            WHERE id = $1
+            AND (created_by = $2 OR first_coach_id = $2 OR second_coach_id = $2)",
+    )
+    .bind(game.id.clone())
+    .bind(profile.id.unwrap_or(-1).clone())
+    .bind(serde_json::to_string(&game.events)?)
+    .execute(&mut *transaction)
+    .await?;
+
+    transaction.commit().await?;
+
+    Ok(())
+}
+
 pub async fn delete(state: &AppState, profile: &User, game_id: i32) -> Result<(), AppError> {
     tracing::debug!(
         "delete by coach_id={:?} for game id {}",
