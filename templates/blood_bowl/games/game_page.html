@@ -188,7 +188,89 @@
         </div>
 
         <div class="uk-width-1-1" x-show="tab==='stats'">
-            A venir...
+            <h4 class="uk-margin-medium-top">
+                <img src="{{ TeamLogo::from(game.first_team).url }}" width="50" height="50" alt="">
+                <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ game.first_team.id }}">
+                    {{ game.first_team.name }}
+                </a>
+            </h4>
+            <div class="uk-overflow-auto">
+                <table class="uk-table uk-table-striped uk-table-small">
+                    <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Poste</th>
+                        <th uk-tooltip="title: Passe précise receptionnée">PAS</th>
+                        <th uk-tooltip="title: Lancer superbe d'un coéquipier qui a attérit sur ses pieds">LAN</th>
+                        <th uk-tooltip="title: Détournement de passe">DET</th>
+                        <th uk-tooltip="title: Interception">INT</th>
+                        <th uk-tooltip="title: Elimination lors d'un blocage">ELI</th>
+                        <th uk-tooltip="title: Touchdown">TD</th>
+                        <th uk-tooltip="title: Joueur du match">JDM</th>
+                        <th uk-tooltip="title: Points de Star Player">PSP</th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+                    {% for (number, player, player_statistics) in first_team_players_statistics %}
+                    <tr>
+                        <td>{{ number }}</td>
+                        <td>{{ player.position.name("fr") }}</td>
+                        <td>{{ player_statistics.passing_completions }}</td>
+                        <td>{{ player_statistics.throwing_completions }}</td>
+                        <td>{{ player_statistics.deflections }}</td>
+                        <td>{{ player_statistics.interceptions }}</td>
+                        <td>{{ player_statistics.casualties }}</td>
+                        <td>{{ player_statistics.touchdowns }}</td>
+                        <td>{{ player_statistics.most_valuable_player }}</td>
+                        <td>{{ player_statistics.star_player_points }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <h4 class="uk-margin-medium-top">
+                <img src="{{ TeamLogo::from(game.second_team).url }}" width="50" height="50" alt="">
+                <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ game.second_team.id }}">
+                    {{ game.second_team.name }}
+                </a>
+            </h4>
+            <div class="uk-overflow-auto">
+                <table class="uk-table uk-table-striped uk-table-small">
+                    <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Poste</th>
+                        <th uk-tooltip="title: Passe précise receptionnée">PAS</th>
+                        <th uk-tooltip="title: Lancer superbe d'un coéquipier qui a attérit sur ses pieds">LAN</th>
+                        <th uk-tooltip="title: Détournement de passe">DET</th>
+                        <th uk-tooltip="title: Interception">INT</th>
+                        <th uk-tooltip="title: Elimination lors d'un blocage">ELI</th>
+                        <th uk-tooltip="title: Touchdown">TD</th>
+                        <th uk-tooltip="title: Joueur du match">JDM</th>
+                        <th uk-tooltip="title: Points de Star Player">PSP</th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+                    {% for (number, player, player_statistics) in second_team_players_statistics %}
+                    <tr>
+                        <td>{{ number }}</td>
+                        <td>{{ player.position.name("fr") }}</td>
+                        <td>{{ player_statistics.passing_completions }}</td>
+                        <td>{{ player_statistics.throwing_completions }}</td>
+                        <td>{{ player_statistics.deflections }}</td>
+                        <td>{{ player_statistics.interceptions }}</td>
+                        <td>{{ player_statistics.casualties }}</td>
+                        <td>{{ player_statistics.touchdowns }}</td>
+                        <td>{{ player_statistics.most_valuable_player }}</td>
+                        <td>{{ player_statistics.star_player_points }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <div class="uk-width-1-1" x-show="tab==='post_game'">

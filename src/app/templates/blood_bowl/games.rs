@@ -9,6 +9,7 @@ use askama::Template;
 use askama_web::WebTemplate;
 use blood_bowl_rs::games::Game;
 use blood_bowl_rs::games::GameStatus;
+use blood_bowl_rs::players::{Player, PlayerStatistics};
 use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::translation::TranslatedName;
 
@@ -48,6 +49,8 @@ pub struct GamePage {
     game_date_input: String,
     game_date: String,
     game_status: String,
+    first_team_players_statistics: Vec<(i32, Player, PlayerStatistics)>,
+    second_team_players_statistics: Vec<(i32, Player, PlayerStatistics)>,
 }
 
 impl GamePage {
@@ -84,12 +87,14 @@ impl GamePage {
         Ok(Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
             alert_message,
-            game,
+            game: game.clone(),
             editable,
             edit_mode,
             game_date_input,
             game_date,
             game_status,
+            first_team_players_statistics: game.players_statistics_for_team(&game.first_team),
+            second_team_players_statistics: game.players_statistics_for_team(&game.second_team),
         })
     }
 }
