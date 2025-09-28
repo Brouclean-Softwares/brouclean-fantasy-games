@@ -12,6 +12,8 @@ use blood_bowl_rs::games::GameStatus;
 use blood_bowl_rs::players::{Player, PlayerStatistics};
 use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::translation::TranslatedName;
+use blood_bowl_rs::translation::TypeName;
+use blood_bowl_rs::weather::Weather;
 
 #[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/games/games_page.html")]

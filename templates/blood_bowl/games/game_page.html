@@ -180,11 +180,122 @@
         </div>
 
         <div class="uk-width-1-1" x-show="tab==='pre_game'">
-            A venir...
+            <div class="uk-margin-medium-top">
+                {% if let (Some(fans), Some(first_fan_factor), Some(second_fan_factor)) = (game.fans(), game.team_fan_factor(&game.first_team), game.team_fan_factor(&game.second_team)) %}
+                <h4 class="uk-width-1-1">
+                    Fans
+                </h4>
+                <div class="uk-child-width-1-3 uk-text-center" uk-grid>
+                    <dl class="uk-description-list">
+                        <dt uk-tooltip="title: Facteur de popularité">FP première<span class="uk-visible@m"> équipe</span></dt>
+                        <dd>{{ first_fan_factor }}</dd>
+                    </dl>
+                    <dl class="uk-description-list">
+                        <dt>Fans</dt>
+                        <dd>{{ fans }}</dd>
+                    </dl>
+                    <dl class="uk-description-list">
+                        <dt uk-tooltip="title: Facteur de popularité">FP deuxième<span class="uk-visible@m"> équipe</span></dt>
+                        <dd>{{ second_fan_factor }}</dd>
+                    </dl>
+                </div>
+                {% else if editable %}
+                <form method="post" autocomplete="off" class="uk-margin-medium-top uk-form-stacked">
+                    <input name="game_id"
+                           type="hidden"
+                           value="{{ game.id }}">
+
+                    <fieldset class="uk-fieldset" uk-grid>
+                        <h4 class="uk-width-1-1">
+                            Fans
+                        </h4>
+
+                        <div class="uk-width-1-2">
+                            <label class="uk-form-label">Facteur de popularité de la première équipe</label>
+                            <div class="uk-form-controls">
+                                <input class="uk-input" type="number" name="first_team_fan_factor" placeholder="D3 + fans dévoués" aria-label="">
+                            </div>
+                        </div>
+
+                        <div class="uk-width-1-2">
+                            <label class="uk-form-label">Facteur de popularité de la deuxième équipe</label>
+                            <div class="uk-form-controls">
+                                <input class="uk-input" type="number" name="second_team_fan_factor" placeholder="D3 + fans dévoués" aria-label="">
+                            </div>
+                        </div>
+
+                        <div class="uk-width-1-1 uk-margin uk-grid-small uk-child-width-auto uk-grid">
+                            <label><input class="uk-checkbox" type="checkbox" name="auto" value="true">Automatique</label>
+                        </div>
+                    </fieldset>
+
+                    <button class="uk-button uk-button-primary">
+                        Valider
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+
+            <div class="uk-margin-medium-top">
+                {% if let Some(weather) = game.weather() %}
+                <h4 class="uk-width-1-1">
+                    Météo
+                </h4>
+                <p>
+                    {{ weather.name("fr") }}
+                </p>
+                {% else if editable %}
+                <form method="post" autocomplete="off" class="uk-margin-medium-top uk-form-stacked">
+                    <input name="game_id"
+                           type="hidden"
+                           value="{{ game.id }}">
+
+                    <fieldset class="uk-fieldset">
+                        <h4>
+                            Météo
+                        </h4>
+
+                        <div>
+                            <select class="uk-select" name="weather" aria-label="">
+                                {% for weather in Weather::options_list() %}
+                                <option value="{{ weather.type_name() }}">{{ weather.name("fr") }}</option>
+                                {% endfor %}}
+                            </select>
+                        </div>
+
+                        <div class="uk-margin uk-grid-small uk-child-width-auto uk-grid">
+                            <label><input class="uk-checkbox" type="checkbox" name="auto" value="true">Automatique</label>
+                        </div>
+                    </fieldset>
+
+                    <button class="uk-button uk-button-primary">
+                        Valider
+                    </button>
+                </form>
+                {% endif %}
+            </div>
         </div>
 
         <div class="uk-width-1-1" x-show="tab==='game'">
-            A venir...
+            {% for event in game.events %}
+            <p>{{ format!("{:?}", event) }}</p>
+            {% endfor %}
+
+            {% if editable %}
+            <form method="post" autocomplete="off" class="uk-margin-medium-top uk-form-stacked">
+                <input name="game_id"
+                       type="hidden"
+                       value="{{ game.id }}">
+
+                <input name="cancel_last_event"
+                       type="hidden"
+                       value="true">
+
+                <button class="uk-button uk-button-danger">
+                    Annuler le dernier évènement
+                </button>
+            </form>
+            {% endif %}
         </div>
 
         <div class="uk-width-1-1" x-show="tab==='stats'">

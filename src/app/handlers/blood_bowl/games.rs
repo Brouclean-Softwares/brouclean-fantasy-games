@@ -9,6 +9,7 @@ use axum::response::Redirect;
 use axum::routing::{get, post};
 use axum::{Form, Router};
 use blood_bowl_rs::teams::Team;
+use blood_bowl_rs::weather::Weather;
 use chrono::NaiveDateTime;
 use serde::Deserialize;
 
@@ -77,13 +78,17 @@ pub struct GameForm {
     pub game_id: i32,
     pub game_at: Option<String>,
     pub started_at: Option<String>,
+    pub cancel_last_event: Option<bool>,
+    pub auto: Option<bool>,
+    pub first_team_fan_factor: Option<String>,
+    pub second_team_fan_factor: Option<String>,
+    pub weather: Option<Weather>,
 }
 
-fn redirect_when_update_ko(game_id: &i32, error: AppError) -> Redirect {
+fn redirect_when_update_ko(game_id: &i32, message: String) -> Redirect {
     Redirect::to(&format!(
         "/blood_bowl/games/game?id={}&error_message={}",
-        game_id,
-        error.to_string()
+        game_id, message
     ))
 }
 
@@ -96,31 +101,86 @@ pub async fn update(
 
     let mut game = games::select_by_id(&app_state, form.game_id)
         .await
-        .map_err(|err| redirect_when_update_ko(&form.game_id, err))?;
+        .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
 
     if let Some(game_date) = form.game_at {
         game.game_at = NaiveDateTime::parse_from_str(&*game_date, "%Y-%m-%dT%H:%M")
-            .map_err(|err| redirect_when_update_ko(&form.game_id, err.into()))?;
+            .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
 
         games::update_schedule(&app_state, &profile, &game)
             .await
-            .map_err(|err| redirect_when_update_ko(&form.game_id, err))?;
+            .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
 
         return Ok(redirect_ok);
     }
 
     if let Some(game_date) = form.started_at {
         let game_start = NaiveDateTime::parse_from_str(&*game_date, "%Y-%m-%dT%H:%M")
-            .map_err(|err| redirect_when_update_ko(&form.game_id, err.into()))?;
+            .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
 
         game.game_at = game_start;
         game.start();
 
         games::update_start(&app_state, &profile, &game)
             .await
-            .map_err(|err| redirect_when_update_ko(&form.game_id, err))?;
+            .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
 
         return Ok(redirect_ok);
+    }
+
+    if form.cancel_last_event.is_some() {
+        let _ = game.events.pop();
+    }
+
+    if let (Some(first_fan_factor), Some(second_fan_factor)) =
+        (form.first_team_fan_factor, form.second_team_fan_factor)
+    {
+        if form.auto.is_some() {
+            game.generate_fans()
+                .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
+        } else {
+            let first_fan_factor: u8 = first_fan_factor.parse().map_err(|_| {
+                redirect_when_update_ko(
+                    &form.game_id,
+                    "Veuillez remplir la valeur de fan factor (D3 et fans dévoués) ou bien générer en automatique".to_string(),
+                )
+            })?;
+
+            let second_fan_factor: u8 = second_fan_factor.parse().map_err(|_| {
+                redirect_when_update_ko(
+                    &form.game_id,
+                    "Veuillez remplir la valeur de fan factor (D3 et fans dévoués) ou bien générer en automatique".to_string(),
+                )
+            })?;
+
+            game.set_team_fan_factor(game.first_team.clone(), first_fan_factor)
+                .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
+
+            game.set_team_fan_factor(game.second_team.clone(), second_fan_factor)
+                .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
+        }
+    }
+
+    if let Some(weather) = form.weather {
+        if form.auto.is_some() {
+            game.generate_weather()
+                .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
+        } else {
+            game.push_weather(weather)
+                .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
+        }
+    }
+
+    if game.started {
+        if !game.journey_men_ok() {
+            let _ = game
+                .generate_journeymen()
+                .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
+        }
+
+        games::update_after_event(&app_state, &profile, &game)
+            .await
+            .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
     }
 
     Ok(redirect_ok)
