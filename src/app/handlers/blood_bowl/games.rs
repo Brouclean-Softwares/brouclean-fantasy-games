@@ -8,6 +8,7 @@ use axum::extract::{Query, State};
 use axum::response::Redirect;
 use axum::routing::{get, post};
 use axum::{Form, Router};
+use blood_bowl_rs::inducements::Inducement;
 use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::weather::Weather;
 use chrono::NaiveDateTime;
@@ -83,6 +84,8 @@ pub struct GameForm {
     pub first_team_fan_factor: Option<String>,
     pub second_team_fan_factor: Option<String>,
     pub weather: Option<Weather>,
+    pub first_team_inducement: Option<Inducement>,
+    pub second_team_inducement: Option<Inducement>,
     pub toss_winner: Option<i32>,
     pub kicking_team: Option<i32>,
 }
@@ -173,6 +176,16 @@ pub async fn update(
             game.push_weather(weather)
                 .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
         }
+    }
+
+    if let Some(inducement) = form.first_team_inducement {
+        game.team_buy_inducement(game.first_team.id.clone(), inducement)
+            .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
+    }
+
+    if let Some(inducement) = form.second_team_inducement {
+        game.team_buy_inducement(game.second_team.id.clone(), inducement)
+            .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
     }
 
     if let Some(toss_winner) = form.toss_winner {

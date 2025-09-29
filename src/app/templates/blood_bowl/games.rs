@@ -9,7 +9,7 @@ use askama::Template;
 use askama_web::WebTemplate;
 use blood_bowl_rs::games::Game;
 use blood_bowl_rs::games::GameStatus;
-use blood_bowl_rs::inducements::TreasuryAndPettyCash;
+use blood_bowl_rs::inducements::{Inducement, TreasuryAndPettyCash};
 use blood_bowl_rs::players::{Player, PlayerStatistics};
 use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::translation::TranslatedName;
@@ -54,6 +54,10 @@ pub struct GamePage {
     game_status: String,
     first_team_money: TreasuryAndPettyCash,
     second_team_money: TreasuryAndPettyCash,
+    first_team_buyable_inducements: Vec<Inducement>,
+    second_team_buyable_inducements: Vec<Inducement>,
+    first_team_inducements: Vec<Inducement>,
+    second_team_inducements: Vec<Inducement>,
     first_team_players_statistics: Vec<(i32, Player, PlayerStatistics)>,
     second_team_players_statistics: Vec<(i32, Player, PlayerStatistics)>,
 }
@@ -91,6 +95,11 @@ impl GamePage {
 
         let (first_team_money, second_team_money) = game.teams_money_left()?;
 
+        let (first_team_buyable_inducements, second_team_buyable_inducements) =
+            game.inducements_buyable_by_teams()?;
+
+        let (first_team_inducements, second_team_inducements) = game.teams_inducements();
+
         Ok(Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
             alert_message,
@@ -102,6 +111,10 @@ impl GamePage {
             game_status,
             first_team_money,
             second_team_money,
+            first_team_buyable_inducements,
+            second_team_buyable_inducements,
+            first_team_inducements,
+            second_team_inducements,
             first_team_players_statistics: game.players_statistics_for_team(&game.first_team),
             second_team_players_statistics: game.players_statistics_for_team(&game.second_team),
         })

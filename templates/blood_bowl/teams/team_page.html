@@ -80,7 +80,7 @@
 
         <div x-show="tab==='sheet'" uk-grid>
             <div class="uk-width-3-4@m uk-margin-medium-bottom">
-                <h3>
+                <h3 class="uk-heading-divider">
                     Informations générales
                 </h3>
 
@@ -110,7 +110,7 @@
             </div>
 
             <div class="uk-width-1-4@m uk-margin-medium-bottom">
-                <h3>
+                <h3 class="uk-heading-divider">
                     Staff
                 </h3>
 
@@ -151,7 +151,7 @@
             </div>
 
             <div class="uk-width-1-1@m uk-margin-medium-bottom">
-                <h3>
+                <h3 class="uk-heading-divider">
                     Joueurs
                 </h3>
                 <div class="uk-overflow-auto">
@@ -269,7 +269,7 @@
 
             {% if editable %}
             <div class="uk-width-1-1@m uk-margin-medium-bottom">
-                <h3>
+                <h3 class="uk-heading-divider">
                     Recrutement
                 </h3>
                 <div>
@@ -318,7 +318,7 @@
             {% endif %}
 
             <div class="uk-width-1-1@m uk-margin-medium-bottom">
-                <h3>
+                <h3 class="uk-heading-divider">
                     Règles spéciales
                 </h3>
                 <ul>
@@ -375,14 +375,14 @@
 
         <div x-show="tab==='results'">
             {% if let Some(game_playing) = game_playing %}
-            <h3>
+            <h3 class="uk-heading-divider">
                 Match en cours
             </h3>
             {{ GameCard::get(game_playing.clone())|escape("none") }}
             {% endif %}
 
             {% if games_scheduled.len() > 0 %}
-            <h3>
+            <h3 class="uk-heading-divider">
                 Matchs à venir
             </h3>
             <div class="uk-grid-divider uk-child-width-1-1" uk-grid>
@@ -398,7 +398,7 @@
             </a>
             {% endif %}
 
-            <h3>
+            <h3 class="uk-heading-divider">
                 Matchs passés
             </h3>
             <div class="uk-grid-divider uk-child-width-1-1" uk-grid>

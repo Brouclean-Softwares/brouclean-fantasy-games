@@ -35,13 +35,16 @@
             <input id="roster" name="roster" type="hidden" value="{{ roster.type_name() }}">
 
             <div class="uk-background-default" uk-sticky>
-                <h3>
-                    Trésorerie : <span id="treasury_text">1000</span>k
+                <h3 class="uk-heading-divider">
+                    Trésorerie
                 </h3>
+                <p class="uk-text-large">
+                    <span id="treasury_text">1000</span>k
+                </p>
                 <input id="treasury" name="treasury" type="hidden" value="{{ initial_treasury }}">
             </div>
 
-            <h3>
+            <h3 class="uk-heading-divider">
                 Joueurs
             </h3>
             <div class="uk-overflow-auto">
@@ -111,7 +114,7 @@
                 </table>
             </div>
 
-            <h3>
+            <h3 class="uk-heading-divider">
                 Staff
             </h3>
             <ul>
@@ -134,19 +137,21 @@
                 {% endfor %}
             </ul>
 
-            <h3>
-                Fans dévoués :
-                <input id="dedicated_fans"
-                       name="dedicated_fans"
-                       class="uk-input"
-                       style="width: 70px;"
-                       type="number"
-                       value="1"
-                       min="{{ roster_definition.dedicated_fans_information.initial }}"
-                       max="{{ roster_definition.dedicated_fans_information.maximum }}"
-                       onchange="update_team()"
-                       aria-label="Input">
+            <h3 class="uk-heading-divider">
+                Fans dévoués
             </h3>
+            <p>
+                <input id="dedicated_fans"
+                   name="dedicated_fans"
+                   class="uk-input"
+                   style="width: 70px;"
+                   type="number"
+                   value="1"
+                   min="{{ roster_definition.dedicated_fans_information.initial }}"
+                   max="{{ roster_definition.dedicated_fans_information.maximum }}"
+                   onchange="update_team()"
+                   aria-label="Input">
+            </p>
 
             <button class="uk-button uk-button-primary">Créer</button>
 

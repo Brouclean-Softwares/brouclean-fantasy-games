@@ -599,6 +599,26 @@ pub async fn update_after_event(
     .execute(&mut *transaction)
     .await?;
 
+    sqlx::query(
+        "UPDATE bb_teams
+            SET treasury = $2
+            WHERE id = $1",
+    )
+    .bind(game.first_team.id.clone())
+    .bind(game.first_team.treasury.clone())
+    .execute(&mut *transaction)
+    .await?;
+
+    sqlx::query(
+        "UPDATE bb_teams
+            SET treasury = $2
+            WHERE id = $1",
+    )
+    .bind(game.second_team.id.clone())
+    .bind(game.second_team.treasury.clone())
+    .execute(&mut *transaction)
+    .await?;
+
     transaction.commit().await?;
 
     Ok(())
