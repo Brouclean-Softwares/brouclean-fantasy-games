@@ -83,6 +83,8 @@ pub struct GameForm {
     pub first_team_fan_factor: Option<String>,
     pub second_team_fan_factor: Option<String>,
     pub weather: Option<Weather>,
+    pub toss_winner: Option<i32>,
+    pub kicking_team: Option<i32>,
 }
 
 fn redirect_when_update_ko(game_id: &i32, message: String) -> Redirect {
@@ -129,7 +131,9 @@ pub async fn update(
     }
 
     if form.cancel_last_event.is_some() {
-        let _ = game.events.pop();
+        let _ = game
+            .cancel_last_event()
+            .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
     }
 
     if let (Some(first_fan_factor), Some(second_fan_factor)) =
@@ -169,6 +173,21 @@ pub async fn update(
             game.push_weather(weather)
                 .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
         }
+    }
+
+    if let Some(toss_winner) = form.toss_winner {
+        if form.auto.is_some() {
+            game.generate_toss_winner()
+                .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
+        } else {
+            game.push_toss_winner(toss_winner)
+                .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
+        }
+    }
+
+    if let Some(kicking_team) = form.kicking_team {
+        game.push_kicking_team(kicking_team)
+            .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
     }
 
     if game.started {

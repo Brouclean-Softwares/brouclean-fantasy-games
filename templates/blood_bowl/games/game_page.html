@@ -207,7 +207,7 @@
                         <dd>{{ second_fan_factor }}</dd>
                     </dl>
                 </div>
-                {% else if editable %}
+                {% else if editable && ! game.pre_game_sequence_is_finished() %}
                 <form method="post" autocomplete="off" class="uk-margin-medium-top uk-form-stacked">
                     <input name="game_id"
                            type="hidden"
@@ -260,7 +260,7 @@
                     </p>
                     <div></div>
                 </div>
-                {% else if editable %}
+                {% else if editable && ! game.pre_game_sequence_is_finished() %}
                 <form method="post" autocomplete="off" class="uk-margin-medium-top uk-form-stacked">
                     <input name="game_id"
                            type="hidden"
@@ -315,6 +315,37 @@
                     Coups de pouce
                 </h4>
             </div>
+            <div class="uk-child-width-1-3 uk-text-center" uk-grid>
+                {% if editable && ! game.pre_game_sequence_is_finished() %}
+                <dl class="uk-description-list">
+                    <dt>
+                        <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
+                        <span> Trésorerie</span>
+                    </dt>
+                    <dd>{{ first_team_money.treasury / 1000 }}k</dd>
+
+                    <dt>
+                        <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
+                        <span> Petite monnaie</span>
+                    </dt>
+                    <dd>{{ first_team_money.petty_cash / 1000 }}k</dd>
+                </dl>
+                <div></div>
+                <dl class="uk-description-list">
+                    <dt>
+                        <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
+                        <span> Trésorerie</span>
+                    </dt>
+                    <dd>{{ second_team_money.treasury / 1000 }}k</dd>
+
+                    <dt>
+                        <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
+                        <span> Petite monnaie</span>
+                    </dt>
+                    <dd>{{ second_team_money.petty_cash / 1000 }}k</dd>
+                </dl>
+                {% endif %}
+            </div>
 
             <div class="uk-margin-medium-top">
                 <h4 class="uk-width-1-1">
@@ -345,7 +376,99 @@
                 <h4 class="uk-width-1-1">
                     Pile ou face pour le coup d'envoi
                 </h4>
+
+                {% if let Some(toss_winner) = game.toss_winner() %}
+                <div class="uk-child-width-1-3 uk-text-center" uk-grid>
+                    <div>
+                        {% if toss_winner.id.eq(game.first_team.id) %}
+                        <img src="{{ TeamLogo::from(toss_winner.clone()).url }}" width="30" height="30" alt="">
+                        <span> gagne le pile ou face</span>
+                        {% endif %}
+                    </div>
+                    <div></div>
+                    <div>
+                        {% if toss_winner.id.eq(game.second_team.id) %}
+                        <img src="{{ TeamLogo::from(toss_winner.clone()).url }}" width="30" height="30" alt="">
+                        <span> gagne le pile ou face</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else if editable && ! game.pre_game_sequence_is_finished() %}
+                <form method="post" autocomplete="off" class="uk-margin-medium-top uk-form-stacked">
+                    <input name="game_id"
+                           type="hidden"
+                           value="{{ game.id }}">
+
+                    <fieldset class="uk-fieldset">
+                        <div>
+                            <select class="uk-select" name="toss_winner" aria-label="">
+                                <option value="{{ game.first_team.id }}">{{ game.first_team.name }}</option>
+                                <option value="{{ game.second_team.id }}">{{ game.second_team.name }}</option>
+                            </select>
+                        </div>
+
+                        <div class="uk-margin uk-grid-small uk-child-width-auto uk-grid">
+                            <label><input class="uk-checkbox" type="checkbox" name="auto" value="true">Automatique</label>
+                        </div>
+                    </fieldset>
+
+                    <button class="uk-button uk-button-primary">
+                        Valider
+                    </button>
+                </form>
+                {% endif %}
+
+                {% if let Some(kicking_team) = game.kicking_team() %}
+                <div class="uk-child-width-1-3 uk-text-center" uk-grid>
+                    <div>
+                        {% if kicking_team.id.eq(game.first_team.id) %}
+                        <img src="{{ TeamLogo::from(kicking_team.clone()).url }}" width="30" height="30" alt="">
+                        <span> botte le coup d'envoi</span>
+                        {% endif %}
+                    </div>
+                    <div></div>
+                    <div>
+                        {% if kicking_team.id.eq(game.second_team.id) %}
+                        <img src="{{ TeamLogo::from(kicking_team.clone()).url }}" width="30" height="30" alt="">
+                        <span> botte le coup d'envoi</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else if editable && ! game.pre_game_sequence_is_finished() %}
+                <form method="post" autocomplete="off" class="uk-margin-medium-top uk-form-stacked">
+                    <input name="game_id"
+                           type="hidden"
+                           value="{{ game.id }}">
+
+                    <div>
+                        <select class="uk-select" name="kicking_team" aria-label="">
+                            <option value="{{ game.first_team.id }}">{{ game.first_team.name }}</option>
+                            <option value="{{ game.second_team.id }}">{{ game.second_team.name }}</option>
+                        </select>
+                    </div>
+
+                    <button class="uk-button uk-button-primary uk-margin-top">
+                        Valider
+                    </button>
+                </form>
+                {% endif %}
             </div>
+
+            {% if editable && ! game.pre_game_sequence_is_finished() %}
+            <form method="post" autocomplete="off" class="uk-margin-medium-top uk-form-stacked">
+                <input name="game_id"
+                       type="hidden"
+                       value="{{ game.id }}">
+
+                <input name="cancel_last_event"
+                       type="hidden"
+                       value="true">
+
+                <button class="uk-button uk-button-danger">
+                    Annuler le dernier évènement
+                </button>
+            </form>
+            {% endif %}
         </div>
 
         <div class="uk-width-1-1" x-show="tab==='game'">
