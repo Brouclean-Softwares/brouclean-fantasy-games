@@ -1,0 +1,115 @@
+<div>
+    {% if editable && game.events.len() > 0 %}
+    <form method="post" autocomplete="off" class="uk-margin-medium-top uk-form-stacked">
+        <input name="game_id"
+               type="hidden"
+               value="{{ game.id }}">
+
+        <input name="cancel_last_event"
+               type="hidden"
+               value="true">
+
+        <button class="uk-button uk-button-danger">
+            Annuler le dernier évènement
+        </button>
+    </form>
+    {% endif %}
+
+    <div class="uk-margin-medium-top">
+    {% for event in game.events.iter().rev() %}
+        {% match event %}
+
+        {% when GameEvent::FanFactor { team_id: team_id, fan_factor: fan_factor } %}
+        {% if game.first_team.id.eq(team_id.into()) %}
+        <p class="uk-text-left">
+            <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
+            <span>Fan factor de {{ fan_factor }}</span>
+        </p>
+        {% else %}
+        <p class="uk-text-right">
+            <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
+            <span>Fan factor de {{ fan_factor }}</span>
+        </p>
+        {% endif %}
+
+
+
+        {% when GameEvent::Weather(weather) %}
+        <p class="uk-text-center">
+            <span>Météo : {{ weather.name("fr") }}</span>
+        </p>
+
+
+
+        {% when GameEvent::BuyInducement { team_id: team_id, inducement: inducement, .. } %}
+        {% if game.first_team.id.eq(team_id.into()) %}
+        <p class="uk-text-left">
+            <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
+            <span>Achat du coup de pouce : {{ inducement.name("fr") }}</span>
+        </p>
+        {% else %}
+        <p class="uk-text-right">
+            <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
+            <span>Achat du coup de pouce : {{ inducement.name("fr") }}</span>
+        </p>
+        {% endif %}
+
+
+
+        {% when GameEvent::PrayerToNuffle { team_id: team_id, prayer_to_nuffle: prayer_to_nuffle } %}
+        {% if game.first_team.id.eq(team_id.into()) %}
+        <p class="uk-text-left">
+            <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
+            <span>Prière à Nuffle : {{ prayer_to_nuffle.name("fr") }}</span>
+        </p>
+        {% else %}
+        <p class="uk-text-right">
+            <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
+            <span>Prière à Nuffle : {{ prayer_to_nuffle.name("fr") }}</span>
+        </p>
+        {% endif %}
+
+
+
+        {% when GameEvent::TossWinner { team_id: team_id } %}
+        {% if game.first_team.id.eq(team_id.into()) %}
+        <p class="uk-text-left">
+            <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
+            <span>a gagné le pile ou face</span>
+        </p>
+        {% else %}
+        <p class="uk-text-right">
+            <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
+            <span>a gagné le pile ou face</span>
+        </p>
+        {% endif %}
+
+
+
+        {% when GameEvent::KickingTeam { team_id: team_id } %}
+        <h3 class="uk-heading-divider">
+            Fin de la séquence d'avant match
+        </h3>
+        {% if game.first_team.id.eq(team_id.into()) %}
+        <p class="uk-text-left">
+            <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
+            <span>botte le coup d'envoi</span>
+        </p>
+        {% else %}
+        <p class="uk-text-right">
+            <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
+            <span>botte le coup d'envoi</span>
+        </p>
+        {% endif %}
+
+
+
+        {% when _ %}
+        <p>
+            {{ format!("{:?}", event) }}
+        </p>
+
+        {% endmatch %}
+    {% endfor %}
+    </div>
+</div>

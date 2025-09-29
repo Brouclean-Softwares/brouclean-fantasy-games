@@ -7,10 +7,12 @@ use crate::errors::AppError;
 use crate::AppState;
 use askama::Template;
 use askama_web::WebTemplate;
+use blood_bowl_rs::events::GameEvent;
 use blood_bowl_rs::games::Game;
 use blood_bowl_rs::games::GameStatus;
 use blood_bowl_rs::inducements::{Inducement, TreasuryAndPettyCash};
 use blood_bowl_rs::players::{Player, PlayerStatistics};
+use blood_bowl_rs::prayers::PrayerToNuffle;
 use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::translation::TranslatedName;
 use blood_bowl_rs::translation::TypeName;
@@ -52,14 +54,9 @@ pub struct GamePage {
     game_date_input: String,
     game_date: String,
     game_status: String,
-    first_team_money: TreasuryAndPettyCash,
-    second_team_money: TreasuryAndPettyCash,
-    first_team_buyable_inducements: Vec<Inducement>,
-    second_team_buyable_inducements: Vec<Inducement>,
-    first_team_inducements: Vec<Inducement>,
-    second_team_inducements: Vec<Inducement>,
-    first_team_players_statistics: Vec<(i32, Player, PlayerStatistics)>,
-    second_team_players_statistics: Vec<(i32, Player, PlayerStatistics)>,
+    pre_game_sequence: PreGameSequence,
+    game_sequence: GameSequence,
+    game_statistics: GameStatistics,
 }
 
 impl GamePage {
@@ -100,6 +97,32 @@ impl GamePage {
 
         let (first_team_inducements, second_team_inducements) = game.teams_inducements();
 
+        let (first_team_prayers, second_team_prayers) = game.teams_prayers();
+
+        let pre_game_sequence = PreGameSequence {
+            game: game.clone(),
+            editable,
+            first_team_money,
+            second_team_money,
+            first_team_buyable_inducements,
+            second_team_buyable_inducements,
+            first_team_inducements,
+            second_team_inducements,
+            first_team_prayers,
+            second_team_prayers,
+        };
+
+        let game_sequence = GameSequence {
+            game: game.clone(),
+            editable,
+        };
+
+        let game_statistics = GameStatistics {
+            game: game.clone(),
+            first_team_players_statistics: game.players_statistics_for_team(&game.first_team),
+            second_team_players_statistics: game.players_statistics_for_team(&game.second_team),
+        };
+
         Ok(Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
             alert_message,
@@ -109,16 +132,41 @@ impl GamePage {
             game_date_input,
             game_date,
             game_status,
-            first_team_money,
-            second_team_money,
-            first_team_buyable_inducements,
-            second_team_buyable_inducements,
-            first_team_inducements,
-            second_team_inducements,
-            first_team_players_statistics: game.players_statistics_for_team(&game.first_team),
-            second_team_players_statistics: game.players_statistics_for_team(&game.second_team),
+            pre_game_sequence,
+            game_sequence,
+            game_statistics,
         })
     }
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "blood_bowl/games/pre_game_sequence.html")]
+struct PreGameSequence {
+    game: Game,
+    editable: bool,
+    first_team_money: TreasuryAndPettyCash,
+    second_team_money: TreasuryAndPettyCash,
+    first_team_buyable_inducements: Vec<Inducement>,
+    second_team_buyable_inducements: Vec<Inducement>,
+    first_team_inducements: Vec<Inducement>,
+    second_team_inducements: Vec<Inducement>,
+    first_team_prayers: Vec<PrayerToNuffle>,
+    second_team_prayers: Vec<PrayerToNuffle>,
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "blood_bowl/games/game_sequence.html")]
+struct GameSequence {
+    game: Game,
+    editable: bool,
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "blood_bowl/games/game_statistics.html")]
+struct GameStatistics {
+    game: Game,
+    first_team_players_statistics: Vec<(i32, Player, PlayerStatistics)>,
+    second_team_players_statistics: Vec<(i32, Player, PlayerStatistics)>,
 }
 
 #[derive(Template, WebTemplate)]
