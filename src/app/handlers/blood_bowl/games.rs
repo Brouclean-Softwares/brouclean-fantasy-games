@@ -172,7 +172,7 @@ pub async fn update(
     }
 
     if game.started {
-        if !game.journey_men_ok() {
+        if !game.journeymen_ok() {
             let _ = game
                 .generate_journeymen()
                 .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
