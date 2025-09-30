@@ -48,15 +48,17 @@ impl GamesPage {
 pub struct GamePage {
     navigation_bar: NavigationBar,
     alert_message: Option<AlertMessage>,
+    tab_displayed: String,
     game: Game,
     editable: bool,
     edit_mode: bool,
     game_date_input: String,
     game_date: String,
     game_status: String,
-    pre_game_sequence: PreGameSequence,
+    pre_game_sequence: Option<PreGameSequence>,
     game_sequence: GameSequence,
     game_statistics: GameStatistics,
+    post_game_sequence: Option<PostGameSequence>,
 }
 
 impl GamePage {
@@ -84,37 +86,52 @@ impl GamePage {
                 || connected_user.is_coach(&game.second_team.coach);
         }
 
+        let tab_displayed: String = match (editable, game.status()) {
+            (true, GameStatus::PreGameSequence) => "pre_game".to_string(),
+            (true, GameStatus::PostGameSequence) => "post_game".to_string(),
+            (true, GameStatus::WaitingForValidation) => "post_game".to_string(),
+            (_, _) => "game".to_string(),
+        };
+
         let game_status = game.status().name("fr");
 
         let game_date_input = game.game_at.format("%Y-%m-%dT%H:%M").to_string();
 
         let game_date = game.game_at.format("%d/%m/%Y à %H:%M").to_string();
 
-        let (first_team_money, second_team_money) = game.teams_money_left()?;
+        let mut pre_game_sequence: Option<PreGameSequence> = None;
+        let mut post_game_sequence: Option<PostGameSequence> = None;
 
-        let (first_team_buyable_inducements, second_team_buyable_inducements) =
-            game.inducements_buyable_by_teams()?;
+        if editable {
+            let (first_team_money, second_team_money) = game.teams_money_left()?;
 
-        let (first_team_inducements, second_team_inducements) = game.teams_inducements();
+            let (first_team_buyable_inducements, second_team_buyable_inducements) =
+                game.inducements_buyable_by_teams()?;
 
-        let (first_team_prayers, second_team_prayers) = game.teams_prayers();
+            let (first_team_inducements, second_team_inducements) = game.teams_inducements();
 
-        let pre_game_sequence = PreGameSequence {
-            game: game.clone(),
-            editable,
-            first_team_money,
-            second_team_money,
-            first_team_buyable_inducements,
-            second_team_buyable_inducements,
-            first_team_inducements,
-            second_team_inducements,
-            first_team_prayers,
-            second_team_prayers,
-        };
+            let (first_team_prayers, second_team_prayers) = game.teams_prayers();
+
+            pre_game_sequence = Some(PreGameSequence {
+                game: game.clone(),
+                editable,
+                first_team_money,
+                second_team_money,
+                first_team_buyable_inducements,
+                second_team_buyable_inducements,
+                first_team_inducements,
+                second_team_inducements,
+                first_team_prayers,
+                second_team_prayers,
+            });
+
+            post_game_sequence = Some(PostGameSequence {});
+        }
 
         let game_sequence = GameSequence {
             game: game.clone(),
             editable,
+            game_controller: GameEventController { game: game.clone() },
         };
 
         let game_statistics = GameStatistics {
@@ -126,6 +143,7 @@ impl GamePage {
         Ok(Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
             alert_message,
+            tab_displayed,
             game: game.clone(),
             editable,
             edit_mode,
@@ -135,6 +153,7 @@ impl GamePage {
             pre_game_sequence,
             game_sequence,
             game_statistics,
+            post_game_sequence,
         })
     }
 }
@@ -159,6 +178,13 @@ struct PreGameSequence {
 struct GameSequence {
     game: Game,
     editable: bool,
+    game_controller: GameEventController,
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "blood_bowl/games/game_event_controller.html")]
+struct GameEventController {
+    game: Game,
 }
 
 #[derive(Template, WebTemplate)]
@@ -168,6 +194,10 @@ struct GameStatistics {
     first_team_players_statistics: Vec<(i32, Player, PlayerStatistics)>,
     second_team_players_statistics: Vec<(i32, Player, PlayerStatistics)>,
 }
+
+#[derive(Template, WebTemplate)]
+#[template(path = "blood_bowl/games/post_game_sequence.html")]
+struct PostGameSequence {}
 
 #[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/games/new_game_page.html")]

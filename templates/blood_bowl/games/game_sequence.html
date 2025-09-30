@@ -1,18 +1,6 @@
 <div>
     {% if editable && game.events.len() > 0 %}
-    <form method="post" autocomplete="off" class="uk-margin-medium-top uk-form-stacked">
-        <input name="game_id"
-               type="hidden"
-               value="{{ game.id }}">
-
-        <input name="cancel_last_event"
-               type="hidden"
-               value="true">
-
-        <button class="uk-button uk-button-danger">
-            Annuler le dernier évènement
-        </button>
-    </form>
+    {{ game_controller|escape("none") }}
     {% endif %}
 
     <div class="uk-margin-medium-top">
