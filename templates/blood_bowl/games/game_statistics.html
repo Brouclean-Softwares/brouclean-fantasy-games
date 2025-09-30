@@ -12,6 +12,7 @@
             <tr>
                 <th>#</th>
                 <th>Poste</th>
+                <th>Blessures</th>
                 <th uk-tooltip="title: Passe précise receptionnée">PAS</th>
                 <th uk-tooltip="title: Lancer superbe d'un coéquipier qui a attérit sur ses pieds">LAN</th>
                 <th uk-tooltip="title: Détournement de passe">DET</th>
@@ -28,6 +29,7 @@
             <tr>
                 <td>{{ number }}</td>
                 <td>{{ player.position.name("fr") }}</td>
+                <td>{{ game.suffered_injuries_names(game.first_team.id.clone(), player.id.clone(), "fr") }}</td>
                 <td>{{ player_statistics.passing_completions }}</td>
                 <td>{{ player_statistics.throwing_completions }}</td>
                 <td>{{ player_statistics.deflections }}</td>
@@ -54,6 +56,7 @@
             <tr>
                 <th>#</th>
                 <th>Poste</th>
+                <th>Blessures</th>
                 <th uk-tooltip="title: Passe précise receptionnée">PAS</th>
                 <th uk-tooltip="title: Lancer superbe d'un coéquipier qui a attérit sur ses pieds">LAN</th>
                 <th uk-tooltip="title: Détournement de passe">DET</th>
@@ -70,6 +73,7 @@
             <tr>
                 <td>{{ number }}</td>
                 <td>{{ player.position.name("fr") }}</td>
+                <td>{{ game.suffered_injuries_names(game.second_team.id.clone(), player.id.clone(), "fr") }}</td>
                 <td>{{ player_statistics.passing_completions }}</td>
                 <td>{{ player_statistics.throwing_completions }}</td>
                 <td>{{ player_statistics.deflections }}</td>
