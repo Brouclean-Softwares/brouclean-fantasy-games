@@ -3,6 +3,10 @@
     {{ game_controller|escape("none") }}
     {% endif %}
 
+    <h3 class="uk-margin-medium-top uk-heading-divider">
+        Déroulé du match
+    </h3>
+
     <div class="uk-margin-medium-top">
     {% for event in game.events.iter().rev() %}
         {% match event %}
@@ -63,30 +67,57 @@
         {% if game.first_team.id.eq(team_id.into()) %}
         <p class="uk-text-left">
             <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
-            <span>a gagné le pile ou face</span>
+            <span>A gagné le pile ou face</span>
         </p>
         {% else %}
         <p class="uk-text-right">
             <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
-            <span>a gagné le pile ou face</span>
+            <span>A gagné le pile ou face</span>
         </p>
         {% endif %}
 
 
 
         {% when GameEvent::KickingTeam { team_id: team_id } %}
-        <h3 class="uk-heading-divider">
+        <h4 class="uk-heading-divider">
             Fin de la séquence d'avant match
-        </h3>
+        </h4>
         {% if game.first_team.id.eq(team_id.into()) %}
         <p class="uk-text-left">
             <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
-            <span>botte le coup d'envoi</span>
+            <span>Botte le coup d'envoi</span>
         </p>
         {% else %}
         <p class="uk-text-right">
             <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
-            <span>botte le coup d'envoi</span>
+            <span>Botte le coup d'envoi</span>
+        </p>
+        {% endif %}
+
+
+
+        {% when GameEvent::Injury { team_id: team_id, player_id: player_id, injury: injury } %}
+        {% if game.first_team.id.eq(team_id.into()) %}
+        <p class="uk-text-left">
+            <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
+
+            {% if let Some((number, player)) = game.first_team.player_by_id(player_id.clone()) %}
+            <span>Le joueur </span>
+            <span class="uk-text-bold">#{{ number }} - {{ player.position.name("fr") }} - {{ player.name }}</span>
+            <span>a subi : </span>
+            <span class="uk-text-bold">{{ injury.name("fr") }}</span>
+            {% endif %}
+        </p>
+        {% else %}
+        <p class="uk-text-right">
+            <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
+
+            {% if let Some((number, player)) = game.second_team.player_by_id(player_id.clone()) %}
+            <span>Le joueur </span>
+            <span class="uk-text-bold">#{{ number }} - {{ player.position.name("fr") }} - {{ player.name }}</span>
+            <span>a subi : </span>
+            <span class="uk-text-bold">{{ injury.name("fr") }}</span>
+            {% endif %}
         </p>
         {% endif %}
 

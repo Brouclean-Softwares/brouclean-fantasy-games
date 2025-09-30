@@ -1,7 +1,11 @@
 <div>
-    <div>
-
-    </div>
+    <h3 class="uk-margin-medium-top uk-heading-divider">
+        Nouveaux évènements
+    </h3>
+    <ul class="uk-margin-medium-top" uk-accordion>
+        {{ first_team_event_controller|escape("none") }}
+        {{ second_team_event_controller|escape("none") }}
+    </ul>
 
     <div>
         <form method="post" autocomplete="off" class="uk-margin-medium-top uk-form-stacked">

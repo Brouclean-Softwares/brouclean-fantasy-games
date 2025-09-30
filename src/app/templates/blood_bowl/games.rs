@@ -11,6 +11,7 @@ use blood_bowl_rs::events::GameEvent;
 use blood_bowl_rs::games::Game;
 use blood_bowl_rs::games::GameStatus;
 use blood_bowl_rs::inducements::{Inducement, TreasuryAndPettyCash};
+use blood_bowl_rs::injuries::Injury;
 use blood_bowl_rs::players::{Player, PlayerStatistics};
 use blood_bowl_rs::prayers::PrayerToNuffle;
 use blood_bowl_rs::teams::Team;
@@ -131,7 +132,17 @@ impl GamePage {
         let game_sequence = GameSequence {
             game: game.clone(),
             editable,
-            game_controller: GameEventController { game: game.clone() },
+            game_controller: GameEventController {
+                game: game.clone(),
+                first_team_event_controller: TeamEventController {
+                    game: game.clone(),
+                    team: game.first_team.clone(),
+                },
+                second_team_event_controller: TeamEventController {
+                    game: game.clone(),
+                    team: game.second_team.clone(),
+                },
+            },
         };
 
         let game_statistics = GameStatistics {
@@ -185,6 +196,15 @@ struct GameSequence {
 #[template(path = "blood_bowl/games/game_event_controller.html")]
 struct GameEventController {
     game: Game,
+    first_team_event_controller: TeamEventController,
+    second_team_event_controller: TeamEventController,
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "blood_bowl/games/team_event_controller.html")]
+struct TeamEventController {
+    game: Game,
+    team: Team,
 }
 
 #[derive(Template, WebTemplate)]

@@ -1,0 +1,125 @@
+<li>
+    <a class="uk-accordion-title" href>
+        <img src="{{ TeamLogo::from(team.clone()).url }}" width="40" height="40" alt="">
+        {{ team.name }}
+    </a>
+    <div class="uk-accordion-content">
+        <div class="uk-overflow-auto">
+            <table class="uk-table uk-table-striped uk-table-small">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Poste</th>
+                    <th>Blessure</th>
+                    <th uk-tooltip="title: Passe précise receptionnée">PAS</th>
+                    <th uk-tooltip="title: Lancer superbe d'un coéquipier qui a attérit sur ses pieds">LAN</th>
+                    <th uk-tooltip="title: Détournement de passe">DET</th>
+                    <th uk-tooltip="title: Interception">INT</th>
+                    <th uk-tooltip="title: Elimination lors d'un blocage">ELI</th>
+                    <th uk-tooltip="title: Touchdown">TD</th>
+                    <th uk-tooltip="title: Joueur du match">JDM</th>
+                    <th uk-tooltip="title: Points de Star Player">PSP</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                {% for (number, player) in team.players %}
+                <tr>
+                    <td>{{ number }}</td>
+                    <td>{{ player.position.name("fr") }}</td>
+                    <td>
+                        <form method="post" autocomplete="off">
+                            <input name="game_id" type="hidden" value="{{ game.id }}">
+                            <input name="team_id" type="hidden" value="{{ team.id }}">
+                            <input name="player_id" type="hidden" value="{{ player.id }}">
+                            <div class="uk-flex-inline">
+                                <select class="uk-select uk-width-small" name="injury" aria-label="">
+                                    {% for injury in Injury::list() %}
+                                    <option value="{{ injury.type_name() }}">
+                                        {{ injury.name("fr") }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <button class="uk-button uk-button-default uk-button-small">+</button>
+                            </div>
+                        </form>
+                    </td>
+                    <td>
+                        <form method="post" autocomplete="off">
+                            <input name="game_id" type="hidden" value="{{ game.id }}">
+                            <input name="team_id" type="hidden" value="{{ team.id }}">
+                            <input name="player_id" type="hidden" value="{{ player.id }}">
+                            <input name="accurate_pass" type="hidden" value="1">
+                            <button class="uk-button uk-button-default uk-button-small">+1</button>
+                        </form>
+                    </td>
+                    <td>
+                        <form method="post" autocomplete="off">
+                            <input name="game_id" type="hidden" value="{{ game.id }}">
+                            <input name="team_id" type="hidden" value="{{ team.id }}">
+                            <input name="player_id" type="hidden" value="{{ player.id }}">
+                            <input name="superb_throw" type="hidden" value="1">
+                            <button class="uk-button uk-button-default uk-button-small">+1</button>
+                        </form>
+                    </td>
+                    <td>
+                        <form method="post" autocomplete="off">
+                            <input name="game_id" type="hidden" value="{{ game.id }}">
+                            <input name="team_id" type="hidden" value="{{ team.id }}">
+                            <input name="player_id" type="hidden" value="{{ player.id }}">
+                            <input name="deflection" type="hidden" value="1">
+                            <button class="uk-button uk-button-default uk-button-small">+1</button>
+                        </form>
+                    </td>
+                    <td>
+                        <form method="post" autocomplete="off">
+                            <input name="game_id" type="hidden" value="{{ game.id }}">
+                            <input name="team_id" type="hidden" value="{{ team.id }}">
+                            <input name="player_id" type="hidden" value="{{ player.id }}">
+                            <input name="interception" type="hidden" value="1">
+                            <button class="uk-button uk-button-default uk-button-small">+1</button>
+                        </form>
+                    </td>
+                    <td>
+                        <form method="post" autocomplete="off">
+                            <input name="game_id" type="hidden" value="{{ game.id }}">
+                            <input name="team_id" type="hidden" value="{{ team.id }}">
+                            <input name="player_id" type="hidden" value="{{ player.id }}">
+                            <input name="casualty" type="hidden" value="1">
+                            <button class="uk-button uk-button-default uk-button-small">+1</button>
+                        </form>
+                    </td>
+                    <td>
+                        <form method="post" autocomplete="off">
+                            <input name="game_id" type="hidden" value="{{ game.id }}">
+                            <input name="team_id" type="hidden" value="{{ team.id }}">
+                            <input name="player_id" type="hidden" value="{{ player.id }}">
+                            <input name="touchdown" type="hidden" value="1">
+                            <button class="uk-button uk-button-default uk-button-small">+1</button>
+                        </form>
+                    </td>
+                    <td>
+                        <form method="post" autocomplete="off">
+                            <input name="game_id" type="hidden" value="{{ game.id }}">
+                            <input name="team_id" type="hidden" value="{{ team.id }}">
+                            <input name="player_id" type="hidden" value="{{ player.id }}">
+                            <input name="mvp" type="hidden" value="1">
+                            <button class="uk-button uk-button-default uk-button-small">+1</button>
+                        </form>
+                    </td>
+                    <td>
+                        <form method="post" autocomplete="off">
+                            <input name="game_id" type="hidden" value="{{ game.id }}">
+                            <input name="team_id" type="hidden" value="{{ team.id }}">
+                            <input name="player_id" type="hidden" value="{{ player.id }}">
+                            <input name="spp" type="hidden" value="1">
+                            <button class="uk-button uk-button-default uk-button-small">+1</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</li>

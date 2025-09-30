@@ -9,6 +9,7 @@ use axum::response::{IntoResponse, Redirect, Response};
 use axum::routing::{get, post};
 use axum::{Form, Router};
 use blood_bowl_rs::games::Game;
+use blood_bowl_rs::injuries::Injury;
 use blood_bowl_rs::prayers::PrayerToNuffle;
 use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::weather::Weather;
@@ -68,6 +69,9 @@ pub struct GameForm {
     pub second_team_prayer: Option<PrayerToNuffle>,
     pub toss_winner: Option<i32>,
     pub kicking_team: Option<i32>,
+    pub team_id: Option<i32>,
+    pub player_id: Option<i32>,
+    pub injury: Option<Injury>,
 }
 
 fn redirect_when_update_ko(
@@ -256,6 +260,15 @@ pub async fn update(
         game.push_kicking_team(kicking_team).map_err(|err| {
             redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
         })?;
+    }
+
+    if let (Some(team_id), Some(player_id), Some(injury)) =
+        (form.team_id, form.player_id, form.injury)
+    {
+        game.push_injury(team_id, player_id, injury)
+            .map_err(|err| {
+                redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+            })?;
     }
 
     if game.started {
