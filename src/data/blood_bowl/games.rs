@@ -631,7 +631,7 @@ pub async fn delete(state: &AppState, profile: &User, game_id: i32) -> Result<()
         game_id
     );
 
-    let game = select_by_id(state, game_id).await?;
+    let mut game = select_by_id(state, game_id).await?;
 
     if profile.ne(&game.first_team.coach)
         && profile.ne(&game.second_team.coach)
@@ -649,6 +649,11 @@ pub async fn delete(state: &AppState, profile: &User, game_id: i32) -> Result<()
     }
 
     let mut transaction = state.db.begin().await?;
+
+    for _ in 0..game.events.len() {
+        game.cancel_last_event()?;
+        update_after_event(state, profile, &game).await?;
+    }
 
     sqlx::query(
         "DELETE
