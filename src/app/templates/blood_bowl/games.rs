@@ -7,6 +7,7 @@ use crate::errors::AppError;
 use crate::AppState;
 use askama::Template;
 use askama_web::WebTemplate;
+use blood_bowl_rs::actions::Action;
 use blood_bowl_rs::events::GameEvent;
 use blood_bowl_rs::games::Game;
 use blood_bowl_rs::games::GameStatus;
@@ -53,6 +54,8 @@ pub struct GamePage {
     game: Game,
     editable: bool,
     edit_mode: bool,
+    score: (usize, usize),
+    casualties: (usize, usize),
     game_date_input: String,
     game_date: String,
     game_status: String,
@@ -95,6 +98,10 @@ impl GamePage {
         };
 
         let game_status = game.status().name("fr");
+
+        let score = game.score();
+
+        let casualties = game.casualties();
 
         let game_date_input = game.game_at.format("%Y-%m-%dT%H:%M").to_string();
 
@@ -158,6 +165,8 @@ impl GamePage {
             game: game.clone(),
             editable,
             edit_mode,
+            score,
+            casualties,
             game_date_input,
             game_date,
             game_status,

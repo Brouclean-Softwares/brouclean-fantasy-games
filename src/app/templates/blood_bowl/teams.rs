@@ -94,7 +94,12 @@ impl TeamPage {
         focus: Option<String>,
         positions_buyable: Vec<(Position, u32, bool)>,
     ) -> Self {
-        let editable = game_playing.is_none()
+        let mut is_playing_game = false;
+        if let Some(game) = game_playing.clone() {
+            is_playing_game = game.started && !game.finished;
+        }
+
+        let editable = !is_playing_game
             && match profile.clone() {
                 Some(user) => team.coach.eq(&user.into()),
                 None => false,

@@ -2,6 +2,7 @@ use crate::data::blood_bowl::teams;
 use crate::data::users::User;
 use crate::errors::AppError;
 use crate::AppState;
+use blood_bowl_rs::injuries::Injury;
 use blood_bowl_rs::players::Player;
 use blood_bowl_rs::positions::Position;
 use blood_bowl_rs::versions::Version;
@@ -34,6 +35,8 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<Player, AppError>
     .fetch_one(&state.db)
     .await?;
 
+    let player_injuries = select_player_injuries(state, id).await?;
+
     Ok(Player {
         id: player_detail.id,
         version: player_detail.version,
@@ -42,8 +45,8 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<Player, AppError>
         star_player_points: player_detail.star_player_points,
         is_journeyman: false,
         is_star_player: false,
-        miss_next_game: false,
-        injuries: vec![],
+        miss_next_game: PlayerInjury::extract_miss_next_game(&player_injuries),
+        injuries: PlayerInjury::extract_remaining_injuries(&player_injuries),
     })
 }
 
@@ -240,4 +243,99 @@ pub async fn buy_position_for_team(
     }
 
     Ok(())
+}
+
+#[derive(Deserialize, sqlx::FromRow, Clone)]
+struct PlayerInjury {
+    injury: Injury,
+    before_last_game: bool,
+}
+
+impl PlayerInjury {
+    fn extract_miss_next_game(player_injuries: &Vec<Self>) -> bool {
+        player_injuries
+            .iter()
+            .filter(|&player_injury| {
+                match (
+                    player_injury.injury.clone(),
+                    player_injury.before_last_game.clone(),
+                ) {
+                    (Injury::SeriouslyHurt, false)
+                    | (Injury::SeriousInjury, false)
+                    | (Injury::HeadInjury, false)
+                    | (Injury::SmashedKnee, false)
+                    | (Injury::BrokenArm, false)
+                    | (Injury::NeckInjury, false)
+                    | (Injury::DislocatedShoulder, false)
+                    | (Injury::Dead, _) => true,
+
+                    (Injury::Stunned, _)
+                    | (Injury::KO, _)
+                    | (Injury::BadlyHurt, _)
+                    | (Injury::SeriouslyHurt, true)
+                    | (Injury::SeriousInjury, true)
+                    | (Injury::HeadInjury, true)
+                    | (Injury::SmashedKnee, true)
+                    | (Injury::BrokenArm, true)
+                    | (Injury::NeckInjury, true)
+                    | (Injury::DislocatedShoulder, true) => false,
+                }
+            })
+            .count()
+            > 0
+    }
+
+    fn extract_remaining_injuries(player_injuries: &Vec<Self>) -> Vec<Injury> {
+        let mut remaining_injuries = vec![];
+
+        for player_injury in player_injuries.iter() {
+            match (
+                player_injury.injury.clone(),
+                player_injury.before_last_game.clone(),
+            ) {
+                (Injury::SeriouslyHurt, false)
+                | (Injury::SeriousInjury, false)
+                | (Injury::HeadInjury, _)
+                | (Injury::SmashedKnee, _)
+                | (Injury::BrokenArm, _)
+                | (Injury::NeckInjury, _)
+                | (Injury::DislocatedShoulder, _)
+                | (Injury::Dead, _) => remaining_injuries.push(player_injury.injury.clone()),
+
+                (Injury::Stunned, _)
+                | (Injury::KO, _)
+                | (Injury::BadlyHurt, _)
+                | (Injury::SeriouslyHurt, true)
+                | (Injury::SeriousInjury, true) => {}
+            };
+        }
+
+        remaining_injuries
+    }
+}
+
+async fn select_player_injuries(
+    state: &AppState,
+    player_id: i32,
+) -> Result<Vec<PlayerInjury>, AppError> {
+    tracing::debug!("select_player_injuries with id={}", player_id);
+
+    let injuries: Vec<PlayerInjury> = sqlx::query_as(
+        "SELECT bb_players_injuries.injury,
+                    bb_players_injuries.created_at < MAX(bb_games.started_at) as before_last_game
+            FROM bb_players_injuries
+            INNER JOIN bb_games_teams_players
+            ON bb_games_teams_players.player_id = bb_players_injuries.player_id
+            INNER JOIN bb_games
+            ON bb_games.id = bb_games_teams_players.game_id
+            WHERE bb_players_injuries.player_id = $1
+            AND bb_players_injuries.recovered_at IS NULL
+            GROUP BY bb_players_injuries.injury,
+            bb_players_injuries.created_at",
+    )
+    .bind(player_id.clone())
+    .fetch_all(&state.db)
+    .await?;
+
+    Ok(injuries)
 }

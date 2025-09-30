@@ -8,6 +8,7 @@ use axum::extract::{Query, State};
 use axum::response::{IntoResponse, Redirect, Response};
 use axum::routing::{get, post};
 use axum::{Form, Router};
+use blood_bowl_rs::actions::Action;
 use blood_bowl_rs::games::Game;
 use blood_bowl_rs::injuries::Injury;
 use blood_bowl_rs::prayers::PrayerToNuffle;
@@ -72,6 +73,7 @@ pub struct GameForm {
     pub team_id: Option<i32>,
     pub player_id: Option<i32>,
     pub injury: Option<Injury>,
+    pub action: Option<Action>,
     pub end_game: Option<String>,
 }
 
@@ -267,6 +269,15 @@ pub async fn update(
         (form.team_id, form.player_id, form.injury)
     {
         game.push_injury(team_id, player_id, injury)
+            .map_err(|err| {
+                redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+            })?;
+    }
+
+    if let (Some(team_id), Some(player_id), Some(action)) =
+        (form.team_id, form.player_id, form.action)
+    {
+        game.push_action(team_id, player_id, action)
             .map_err(|err| {
                 redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
             })?;

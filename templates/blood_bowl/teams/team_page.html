@@ -161,12 +161,14 @@
                             <th>#</th>
                             <th>Nom</th>
                             <th>Poste</th>
-                            <th>M</th>
-                            <th>F</th>
-                            <th>AG</th>
-                            <th>CP</th>
-                            <th>AR</th>
+                            <th uk-tooltip="title: Mouvement">M</th>
+                            <th uk-tooltip="title: Force">F</th>
+                            <th uk-tooltip="title: Agilité">AG</th>
+                            <th uk-tooltip="title: Capacité de Passe">CP</th>
+                            <th uk-tooltip="title: Armure">AR</th>
                             <th>Compétences & Traits</th>
+                            <th uk-tooltip="title: Points de Star Player">PSP</th>
+                            <th>Blessures</th>
                             <th>Valeur</th>
                         </tr>
                         </thead>
@@ -249,6 +251,8 @@
 
                             <td>{{ player.armour_value(team.roster)? }}+</td>
                             <td>{{ player.skills_names(team.roster, "fr")? }}</td>
+                            <td>{{ player.star_player_points }}</td>
+                            <td>{{ player.injuries_names("fr")? }}</td>
                             <td>{{ player.value(team.roster)? / 1000 }}k</td>
                         </tr>
 

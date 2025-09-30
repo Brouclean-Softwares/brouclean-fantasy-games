@@ -30,14 +30,30 @@
                 <td>{{ number }}</td>
                 <td>{{ player.position.name("fr") }}</td>
                 <td>{{ game.suffered_injuries_names(game.first_team.id.clone(), player.id.clone(), "fr") }}</td>
-                <td>{{ player_statistics.passing_completions }}</td>
-                <td>{{ player_statistics.throwing_completions }}</td>
-                <td>{{ player_statistics.deflections }}</td>
-                <td>{{ player_statistics.interceptions }}</td>
-                <td>{{ player_statistics.casualties }}</td>
-                <td>{{ player_statistics.touchdowns }}</td>
-                <td>{{ player_statistics.most_valuable_player }}</td>
-                <td>{{ player_statistics.star_player_points }}</td>
+
+                {% let pas = player_statistics.passing_completions.clone() %}
+                <td>{% if pas > 0 %}{{ pas }}{% endif %}</td>
+
+                {% let thr = player_statistics.throwing_completions.clone() %}
+                <td>{% if thr > 0 %}{{ thr }}{% endif %}</td>
+
+                {% let defl = player_statistics.deflections.clone() %}
+                <td>{% if defl > 0 %}{{ defl }}{% endif %}</td>
+
+                {% let inte = player_statistics.interceptions.clone() %}
+                <td>{% if inte > 0 %}{{ inte }}{% endif %}</td>
+
+                {% let cas = player_statistics.casualties.clone() %}
+                <td>{% if cas > 0 %}{{ cas }}{% endif %}</td>
+
+                {% let td = player_statistics.touchdowns.clone() %}
+                <td>{% if td > 0 %}{{ td }}{% endif %}</td>
+
+                {% let mvp = player_statistics.most_valuable_player.clone() %}
+                <td>{% if mvp > 0 %}{{ mvp }}{% endif %}</td>
+
+                {% let spp = player_statistics.star_player_points.clone() %}
+                <td>{% if spp > 0 %}{{ spp }}{% endif %}</td>
             </tr>
             {% endfor %}
             </tbody>
@@ -74,14 +90,30 @@
                 <td>{{ number }}</td>
                 <td>{{ player.position.name("fr") }}</td>
                 <td>{{ game.suffered_injuries_names(game.second_team.id.clone(), player.id.clone(), "fr") }}</td>
-                <td>{{ player_statistics.passing_completions }}</td>
-                <td>{{ player_statistics.throwing_completions }}</td>
-                <td>{{ player_statistics.deflections }}</td>
-                <td>{{ player_statistics.interceptions }}</td>
-                <td>{{ player_statistics.casualties }}</td>
-                <td>{{ player_statistics.touchdowns }}</td>
-                <td>{{ player_statistics.most_valuable_player }}</td>
-                <td>{{ player_statistics.star_player_points }}</td>
+
+                {% let pas = player_statistics.passing_completions.clone() %}
+                <td>{% if pas > 0 %}{{ pas }}{% endif %}</td>
+
+                {% let thr = player_statistics.throwing_completions.clone() %}
+                <td>{% if thr > 0 %}{{ thr }}{% endif %}</td>
+
+                {% let defl = player_statistics.deflections.clone() %}
+                <td>{% if defl > 0 %}{{ defl }}{% endif %}</td>
+
+                {% let inte = player_statistics.interceptions.clone() %}
+                <td>{% if inte > 0 %}{{ inte }}{% endif %}</td>
+
+                {% let cas = player_statistics.casualties.clone() %}
+                <td>{% if cas > 0 %}{{ cas }}{% endif %}</td>
+
+                {% let td = player_statistics.touchdowns.clone() %}
+                <td>{% if td > 0 %}{{ td }}{% endif %}</td>
+
+                {% let mvp = player_statistics.most_valuable_player.clone() %}
+                <td>{% if mvp > 0 %}{{ mvp }}{% endif %}</td>
+
+                {% let spp = player_statistics.star_player_points.clone() %}
+                <td>{% if spp > 0 %}{{ spp }}{% endif %}</td>
             </tr>
             {% endfor %}
             </tbody>

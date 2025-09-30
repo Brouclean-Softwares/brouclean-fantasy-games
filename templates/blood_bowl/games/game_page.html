@@ -32,10 +32,18 @@
                     </div>
                     <div class="uk-width-1-5 uk-text-center">
                         <p class="uk-text-large uk-text-bold uk-background-secondary uk-text-muted">
+                            {% if game.started %}
+                            {{ score.0 }}
+                            {% else %}
                             -
+                            {% endif %}
                         </p>
                         <p>
+                            {% if game.started %}
+                            {{ casualties.0 }}
+                            {% else %}
                             -
+                            {% endif %}
                         </p>
                     </div>
                 </div>
@@ -57,11 +65,18 @@
                     </div>
                     <div class="uk-width-1-5 uk-flex-first@m uk-text-center">
                         <p class="uk-text-large uk-text-bold uk-background-secondary uk-text-muted">
+                            {% if game.started %}
+                            {{ score.1 }}
+                            {% else %}
                             -
+                            {% endif %}
                         </p>
                         <p>
+                            {% if game.started %}
+                            {{ casualties.1 }}
+                            {% else %}
                             -
-                        </p>
+                            {% endif %}
                     </div>
                 </div>
             </div>
@@ -70,7 +85,7 @@
                 Exhibition
             </div>
 
-            {% if editable %}
+            {% if editable && !game.pre_game_sequence_is_finished() %}
             <div class="uk-width-1-1 uk-text-center uk-margin">
                 <form id="delete_form" action="./delete" method="post" autocomplete="off">
                     <input id="id" name="id" type="hidden" value="{{ game.id }}">

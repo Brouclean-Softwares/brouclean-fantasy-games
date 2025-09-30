@@ -4,6 +4,7 @@ use crate::data::users::User;
 use crate::errors::AppError;
 use crate::errors::AppError::BloodBowlAppError;
 use crate::AppState;
+use blood_bowl_rs::events::GameEvent;
 use blood_bowl_rs::games::Game;
 use blood_bowl_rs::players::Player;
 use blood_bowl_rs::positions::Position;
@@ -17,6 +18,7 @@ pub struct GameSummary {
     pub id: i32,
     pub game_at: NaiveDateTime,
     pub started: bool,
+    pub finished: bool,
     pub closed: bool,
     pub first_team: TeamSummary,
     pub first_team_score: i32,
@@ -52,11 +54,14 @@ impl GameRow {
     async fn into_game_summary(self, state: &AppState) -> Result<GameSummary, AppError> {
         let first_team = teams::select_summary_by_id(state, self.first_team_id).await?;
         let second_team = teams::select_summary_by_id(state, self.second_team_id).await?;
+        let events: Vec<GameEvent> = serde_json::from_str(&self.events)?;
+        let finished = events.contains(&GameEvent::GameEnd);
 
         let game_summary = GameSummary {
             id: self.id,
             game_at: self.game_at,
             started: self.started,
+            finished,
             closed: self.closed,
             first_team,
             first_team_score: self.first_team_score,
@@ -583,12 +588,22 @@ pub async fn update_after_event(
 
     let _ = can_be_saved(state, profile, &game).await?;
 
+    let score = game.score();
+    let casualties = game.casualties();
+    let winner = game.winner();
+
     let mut transaction = state.db.begin().await?;
 
     sqlx::query(
         "UPDATE bb_games
             SET events = $3,
-                playing_players = $4
+                playing_players = $4,
+                first_team_score = $5,
+                first_team_casualties = $6,
+                first_team_is_winner = $7,
+                second_team_score = $8,
+                second_team_casualties = $9,
+                second_team_is_winner = $10
             WHERE id = $1
             AND (created_by = $2 OR first_coach_id = $2 OR second_coach_id = $2)",
     )
@@ -596,6 +611,12 @@ pub async fn update_after_event(
     .bind(profile.id.unwrap_or(-1).clone())
     .bind(serde_json::to_string(&game.events)?)
     .bind(serde_json::to_string(&game.playing_players())?)
+    .bind(score.0.clone() as i32)
+    .bind(casualties.0.clone() as i32)
+    .bind(winner.0.clone())
+    .bind(score.1.clone() as i32)
+    .bind(casualties.1.clone() as i32)
+    .bind(winner.1.clone())
     .execute(&mut *transaction)
     .await?;
 
