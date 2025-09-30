@@ -5,10 +5,10 @@ use crate::data::users::User;
 use crate::errors::AppError;
 use crate::AppState;
 use axum::extract::{Query, State};
-use axum::response::Redirect;
+use axum::response::{IntoResponse, Redirect, Response};
 use axum::routing::{get, post};
 use axum::{Form, Router};
-use blood_bowl_rs::inducements::Inducement;
+use blood_bowl_rs::games::Game;
 use blood_bowl_rs::prayers::PrayerToNuffle;
 use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::weather::Weather;
@@ -37,8 +37,6 @@ pub async fn games(
 pub struct GameQueryParams {
     pub id: i32,
     pub edit_mode: Option<bool>,
-    pub info_message: Option<String>,
-    pub error_message: Option<String>,
 }
 
 pub async fn game(
@@ -50,29 +48,7 @@ pub async fn game(
 
     let edit_mode = params.edit_mode.unwrap_or(false);
 
-    let mut alert_message: Option<AlertMessage> = None;
-
-    if let Some(message) = params.info_message {
-        alert_message = Some(AlertMessage {
-            alert_type: AlertType::Primary,
-            message,
-        });
-    };
-
-    if let Some(message) = params.error_message {
-        alert_message = Some(AlertMessage {
-            alert_type: AlertType::Danger,
-            message,
-        });
-    };
-
-    Ok(GamePage::get_with_message(
-        app_state,
-        profile,
-        alert_message,
-        game,
-        edit_mode,
-    )?)
+    Ok(GamePage::get(app_state, profile, game, edit_mode)?)
 }
 
 #[derive(Deserialize)]
@@ -85,110 +61,161 @@ pub struct GameForm {
     pub first_team_fan_factor: Option<String>,
     pub second_team_fan_factor: Option<String>,
     pub weather: Option<Weather>,
-    pub first_team_inducement: Option<Inducement>,
-    pub second_team_inducement: Option<Inducement>,
+    pub generate_journeymen: Option<bool>,
+    pub first_team_inducement: Option<String>,
+    pub second_team_inducement: Option<String>,
     pub first_team_prayer: Option<PrayerToNuffle>,
     pub second_team_prayer: Option<PrayerToNuffle>,
     pub toss_winner: Option<i32>,
     pub kicking_team: Option<i32>,
 }
 
-fn redirect_when_update_ko(game_id: &i32, message: String) -> Redirect {
-    Redirect::to(&format!(
-        "/blood_bowl/games/game?id={}&error_message={}",
-        game_id, message
-    ))
+fn redirect_when_update_ko(
+    app_state: &AppState,
+    profile: &User,
+    game: Option<&Game>,
+    error_message: String,
+) -> Response {
+    if let Some(game) = game {
+        GamePage::get_with_message(
+            app_state.clone(),
+            Some(profile.clone()),
+            Some(AlertMessage {
+                alert_type: AlertType::Danger,
+                message: error_message,
+            }),
+            game.clone(),
+            false,
+        )
+        .into_response()
+    } else {
+        tracing::debug!(error_message);
+        Redirect::to("/blood_bowl/games").into_response()
+    }
 }
 
 pub async fn update(
     State(app_state): State<AppState>,
     profile: User,
     Form(form): Form<GameForm>,
-) -> Result<Redirect, Redirect> {
+) -> Result<Redirect, Response> {
     let redirect_ok = Redirect::to(&format!("/blood_bowl/games/game?id={}", form.game_id));
 
     let mut game = games::select_by_id(&app_state, form.game_id)
         .await
-        .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
+        .map_err(|err| redirect_when_update_ko(&app_state, &profile, None, err.to_string()))?;
 
     if let Some(game_date) = form.game_at {
-        game.game_at = NaiveDateTime::parse_from_str(&*game_date, "%Y-%m-%dT%H:%M")
-            .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
+        game.game_at =
+            NaiveDateTime::parse_from_str(&*game_date, "%Y-%m-%dT%H:%M").map_err(|err| {
+                redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+            })?;
 
         games::update_schedule(&app_state, &profile, &game)
             .await
-            .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
+            .map_err(|err| {
+                redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+            })?;
 
         return Ok(redirect_ok);
     }
 
     if let Some(game_date) = form.started_at {
-        let game_start = NaiveDateTime::parse_from_str(&*game_date, "%Y-%m-%dT%H:%M")
-            .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
+        let game_start =
+            NaiveDateTime::parse_from_str(&*game_date, "%Y-%m-%dT%H:%M").map_err(|err| {
+                redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+            })?;
 
         game.game_at = game_start;
         game.start();
 
         games::update_start(&app_state, &profile, &game)
             .await
-            .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
+            .map_err(|err| {
+                redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+            })?;
 
         return Ok(redirect_ok);
     }
 
     if form.cancel_last_event.is_some() {
-        let _ = game
-            .cancel_last_event()
-            .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
+        let _ = game.cancel_last_event().map_err(|err| {
+            redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+        })?;
     }
 
     if let (Some(first_fan_factor), Some(second_fan_factor)) =
         (form.first_team_fan_factor, form.second_team_fan_factor)
     {
         if form.auto.is_some() {
-            game.generate_fans()
-                .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
+            game.generate_fans().map_err(|err| {
+                redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+            })?;
         } else {
             let first_fan_factor: u8 = first_fan_factor.parse().map_err(|_| {
                 redirect_when_update_ko(
-                    &form.game_id,
-                    "Veuillez remplir la valeur de fan factor (D3 et fans dévoués) ou bien générer en automatique".to_string(),
+                    &app_state, &profile, Some(&game),
+                    "Veuillez remplir la valeur de fan factor (D3 + fans dévoués) ou bien générer en automatique".to_string(),
                 )
             })?;
 
             let second_fan_factor: u8 = second_fan_factor.parse().map_err(|_| {
                 redirect_when_update_ko(
-                    &form.game_id,
-                    "Veuillez remplir la valeur de fan factor (D3 et fans dévoués) ou bien générer en automatique".to_string(),
+                    &app_state, &profile, Some(&game),
+                    "Veuillez remplir la valeur de fan factor (D3 + fans dévoués) ou bien générer en automatique".to_string(),
                 )
             })?;
 
             game.set_team_fan_factor(game.first_team.clone(), first_fan_factor)
-                .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
+                .map_err(|err| {
+                    redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+                })?;
 
             game.set_team_fan_factor(game.second_team.clone(), second_fan_factor)
-                .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
+                .map_err(|err| {
+                    redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+                })?;
         }
     }
 
     if let Some(weather) = form.weather {
         if form.auto.is_some() {
-            game.generate_weather()
-                .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
+            game.generate_weather().map_err(|err| {
+                redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+            })?;
         } else {
-            game.push_weather(weather)
-                .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
+            game.push_weather(weather).map_err(|err| {
+                redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+            })?;
         }
     }
 
+    if form.generate_journeymen.is_some() && !game.journeymen_ok() {
+        let _ = game.generate_journeymen().map_err(|err| {
+            redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+        })?;
+    }
+
     if let Some(inducement) = form.first_team_inducement {
+        let inducement = serde_json::from_str(&inducement).map_err(|err| {
+            redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+        })?;
+
         game.team_buy_inducement(game.first_team.id.clone(), inducement)
-            .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
+            .map_err(|err| {
+                redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+            })?;
     }
 
     if let Some(inducement) = form.second_team_inducement {
+        let inducement = serde_json::from_str(&inducement).map_err(|err| {
+            redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+        })?;
+
         game.team_buy_inducement(game.second_team.id.clone(), inducement)
-            .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
+            .map_err(|err| {
+                redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+            })?;
     }
 
     if let Some(mut prayer) = form.first_team_prayer {
@@ -197,7 +224,9 @@ pub async fn update(
         }
 
         game.push_prayer(game.first_team.id.clone(), prayer)
-            .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
+            .map_err(|err| {
+                redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+            })?;
     }
 
     if let Some(mut prayer) = form.second_team_prayer {
@@ -206,34 +235,35 @@ pub async fn update(
         }
 
         game.push_prayer(game.second_team.id.clone(), prayer)
-            .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
+            .map_err(|err| {
+                redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+            })?;
     }
 
     if let Some(toss_winner) = form.toss_winner {
         if form.auto.is_some() {
-            game.generate_toss_winner()
-                .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
+            game.generate_toss_winner().map_err(|err| {
+                redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+            })?;
         } else {
-            game.push_toss_winner(toss_winner)
-                .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
+            game.push_toss_winner(toss_winner).map_err(|err| {
+                redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+            })?;
         }
     }
 
     if let Some(kicking_team) = form.kicking_team {
-        game.push_kicking_team(kicking_team)
-            .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
+        game.push_kicking_team(kicking_team).map_err(|err| {
+            redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+        })?;
     }
 
     if game.started {
-        if !game.journeymen_ok() {
-            let _ = game
-                .generate_journeymen()
-                .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
-        }
-
         games::update_after_event(&app_state, &profile, &game)
             .await
-            .map_err(|err| redirect_when_update_ko(&form.game_id, err.to_string()))?;
+            .map_err(|err| {
+                redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+            })?;
     }
 
     Ok(redirect_ok)

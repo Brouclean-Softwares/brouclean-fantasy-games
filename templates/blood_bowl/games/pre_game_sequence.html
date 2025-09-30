@@ -126,6 +126,21 @@
                 <dd>{{ game.second_team.journeymen_number() }} / {{ game.second_team.number_of_available_players() }}</dd>
             </dl>
         </div>
+        {% if editable && ! game.journeymen_ok() && ! game.pre_game_sequence_is_finished() %}
+        <form method="post" autocomplete="off" class="uk-margin-medium-top uk-form-stacked">
+            <input name="game_id"
+                   type="hidden"
+                   value="{{ game.id }}">
+
+            <input name="generate_journeymen"
+                   type="hidden"
+                   value="true">
+
+            <button class="uk-button uk-button-primary">
+                Compléter les équipes
+            </button>
+        </form>
+        {% endif %}
     </div>
 
     <div class="uk-margin-medium-top">
@@ -208,7 +223,7 @@
                 <div class="uk-form-controls">
                     <select class="uk-select" name="first_team_inducement" aria-label="">
                         {% for inducement in first_team_buyable_inducements %}
-                        <option value="{{ inducement.type_name() }}">
+                        <option value="{{ serde_json::to_string(&inducement)? }}">
                             {{ inducement.name("fr") }} - {{ inducement.price_for_team(game.first_team) / 1000 }}k
                         </option>
                         {% endfor %}
@@ -236,7 +251,7 @@
                 <div class="uk-form-controls">
                     <select class="uk-select" name="second_team_inducement" aria-label="">
                         {% for inducement in second_team_buyable_inducements %}
-                        <option value="{{ inducement.type_name() }}">
+                        <option value="{{ serde_json::to_string(&inducement)? }}">
                             {{ inducement.name("fr") }} - {{ inducement.price_for_team(game.second_team) / 1000 }}k
                         </option>
                         {% endfor %}
