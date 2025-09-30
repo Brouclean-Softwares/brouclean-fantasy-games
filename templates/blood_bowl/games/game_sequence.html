@@ -79,7 +79,7 @@
 
 
         {% when GameEvent::KickingTeam { team_id: team_id } %}
-        <h4 class="uk-heading-divider">
+        <h4 class="uk-heading-line uk-text-center">
             Fin de la séquence d'avant match
         </h4>
         {% if game.first_team.id.eq(team_id.into()) %}
@@ -120,6 +120,13 @@
             {% endif %}
         </p>
         {% endif %}
+
+
+
+        {% when GameEvent::GameEnd %}
+        <h4 class="uk-heading-line uk-text-center">
+            Fin du match
+        </h4>
 
 
 

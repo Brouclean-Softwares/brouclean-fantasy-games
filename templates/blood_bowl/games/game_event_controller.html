@@ -7,19 +7,37 @@
         {{ second_team_event_controller|escape("none") }}
     </ul>
 
-    <div>
-        <form method="post" autocomplete="off" class="uk-margin-medium-top uk-form-stacked">
-            <input name="game_id"
-                   type="hidden"
-                   value="{{ game.id }}">
+    <div class="uk-flex uk-margin-medium-top">
+        <div>
+            <form method="post" autocomplete="off">
+                <input name="game_id"
+                       type="hidden"
+                       value="{{ game.id }}">
 
-            <input name="cancel_last_event"
-                   type="hidden"
-                   value="true">
+                <input name="end_game"
+                       type="hidden"
+                       value="true">
 
-            <button class="uk-button uk-button-danger">
-                Annuler le dernier évènement
-            </button>
-        </form>
+                <button class="uk-button uk-button-primary">
+                    Fin<span class="uk-visible@m"> du match</span>
+                </button>
+            </form>
+        </div>
+
+        <div class="uk-margin-left">
+            <form method="post" autocomplete="off">
+                <input name="game_id"
+                       type="hidden"
+                       value="{{ game.id }}">
+
+                <input name="cancel_last_event"
+                       type="hidden"
+                       value="true">
+
+                <button class="uk-button uk-button-danger">
+                    Annuler<span class="uk-visible@m"> le dernier évènement</span>
+                </button>
+            </form>
+        </div>
     </div>
 </div>

@@ -72,6 +72,7 @@ pub struct GameForm {
     pub team_id: Option<i32>,
     pub player_id: Option<i32>,
     pub injury: Option<Injury>,
+    pub end_game: Option<String>,
 }
 
 fn redirect_when_update_ko(
@@ -269,6 +270,12 @@ pub async fn update(
             .map_err(|err| {
                 redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
             })?;
+    }
+
+    if form.end_game.is_some() {
+        game.end_game().map_err(|err| {
+            redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+        })?;
     }
 
     if game.started {
