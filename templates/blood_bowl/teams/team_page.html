@@ -169,6 +169,7 @@
                             <th>Compétences & Traits</th>
                             <th uk-tooltip="title: Points de Star Player">PSP</th>
                             <th>Blessures</th>
+                            <th uk-tooltip="title: Rate le Prochain Match">RPM</th>
                             <th>Valeur</th>
                         </tr>
                         </thead>
@@ -251,8 +252,17 @@
 
                             <td>{{ player.armour_value(team.roster)? }}+</td>
                             <td>{{ player.skills_names(team.roster, "fr")? }}</td>
-                            <td>{{ player.star_player_points }}</td>
+                            <td>
+                                {% if player.star_player_points > 0 %}
+                                {{ player.star_player_points }}
+                                {% endif %}
+                            </td>
                             <td>{{ player.injuries_names("fr")? }}</td>
+                            <td>
+                                {% if player.miss_next_game %}
+                                x
+                                {% endif %}
+                            </td>
                             <td>{{ player.value(team.roster)? / 1000 }}k</td>
                         </tr>
 
