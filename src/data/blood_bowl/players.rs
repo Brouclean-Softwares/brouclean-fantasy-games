@@ -46,6 +46,7 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<Player, AppError>
         is_journeyman: false,
         is_star_player: false,
         miss_next_game: PlayerInjury::extract_miss_next_game(&player_injuries),
+        advancements: vec![],
         injuries: PlayerInjury::extract_remaining_injuries(&player_injuries),
     })
 }
@@ -87,6 +88,7 @@ pub async fn select_under_contract_for_team(
                 is_journeyman: false,
                 is_star_player: false,
                 miss_next_game: false,
+                advancements: vec![],
                 injuries: vec![],
             },
         ));
