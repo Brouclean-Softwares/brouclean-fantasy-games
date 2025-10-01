@@ -123,7 +123,7 @@
 
 
 
-        {% when GameEvent::Action { team_id: team_id, player_id: player_id, action: action, star_player_points: star_player_points } %}
+        {% when GameEvent::Success { team_id: team_id, player_id: player_id, success: success, star_player_points: star_player_points } %}
         {% if game.first_team.id.eq(team_id.into()) %}
         <p class="uk-text-left">
             <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
@@ -132,7 +132,7 @@
             <span class="uk-text-bold">#{{ number }} - {{ player.position.name("fr") }}</span>
             <span class="uk-visible@m uk-text-bold"> - {{ player.name }}</span>
             <span> : +1 </span>
-            <span class="uk-text-bold">{{ action.name("fr") }}</span>
+            <span class="uk-text-bold">{{ success.name("fr") }}</span>
             <span> (+{{ star_player_points }} PSP)</span>
             {% endif %}
         </p>
@@ -144,7 +144,7 @@
             <span class="uk-text-bold">#{{ number }} - {{ player.position.name("fr") }}</span>
             <span class="uk-visible@m uk-text-bold"> - {{ player.name }}</span>
             <span> : +1 </span>
-            <span class="uk-text-bold">{{ action.name("fr") }}</span>
+            <span class="uk-text-bold">{{ success.name("fr") }}</span>
             <span> (+{{ star_player_points }} PSP)</span>
             {% endif %}
         </p>

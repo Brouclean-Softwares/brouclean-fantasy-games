@@ -7,7 +7,7 @@ use crate::errors::AppError;
 use crate::AppState;
 use askama::Template;
 use askama_web::WebTemplate;
-use blood_bowl_rs::actions::Action;
+use blood_bowl_rs::actions::Success;
 use blood_bowl_rs::events::GameEvent;
 use blood_bowl_rs::games::Game;
 use blood_bowl_rs::games::GameStatus;
