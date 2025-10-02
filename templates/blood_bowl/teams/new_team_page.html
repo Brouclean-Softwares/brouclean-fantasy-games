@@ -52,6 +52,7 @@
                     <thead>
                     <tr>
                         <th>Qte</th>
+                        <th>Max</th>
                         <th>Poste</th>
                         <th>Coût</th>
                         <th>M</th>
@@ -81,6 +82,7 @@
                                    onchange="update_team()"
                                    aria-label="Input">
                         </td>
+                        <td>/ {{ position_definition.maximum_quantity }}</td>
                         <td>{{ position.name("fr") }}</td>
                         <td>{{ position_definition.cost / 1000 }}k</td>
                         <td>{{ position_definition.movement_allowance() }}</td>
