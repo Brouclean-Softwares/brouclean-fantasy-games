@@ -17,7 +17,6 @@
                     <th uk-tooltip="title: Interception">INT</th>
                     <th uk-tooltip="title: Elimination lors d'un blocage">ELI</th>
                     <th uk-tooltip="title: Touchdown">TD</th>
-                    <th uk-tooltip="title: Joueur du match">JDM</th>
                     <th uk-tooltip="title: Points de Star Player">PSP</th>
                 </tr>
                 </thead>
@@ -95,15 +94,6 @@
                             <input name="team_id" type="hidden" value="{{ team.id }}">
                             <input name="player_id" type="hidden" value="{{ player.id }}">
                             <input name="success" type="hidden" value="{{ Success::Touchdown.type_name() }}">
-                            <button class="uk-button uk-button-default uk-button-small">+1</button>
-                        </form>
-                    </td>
-                    <td>
-                        <form method="post" autocomplete="off">
-                            <input name="game_id" type="hidden" value="{{ game.id }}">
-                            <input name="team_id" type="hidden" value="{{ team.id }}">
-                            <input name="player_id" type="hidden" value="{{ player.id }}">
-                            <input name="success" type="hidden" value="{{ Success::MostValuablePlayer.type_name() }}">
                             <button class="uk-button uk-button-default uk-button-small">+1</button>
                         </form>
                     </td>
