@@ -1,6 +1,4 @@
-use crate::app::templates::blood_bowl::games::events::{
-    GameSequence, PostGameSequence, PreGameSequence,
-};
+use crate::app::templates::blood_bowl::games::events::{EventsController, GameEvents};
 use crate::app::templates::blood_bowl::teams::{TeamCard, TeamSelector};
 use crate::app::templates::{AlertMessage, NavigationBar};
 use crate::data::blood_bowl::games::GameSummary;
@@ -58,17 +56,16 @@ pub struct GamePage {
     game_date_input: String,
     game_date: String,
     game_status: String,
-    pre_game_sequence: Option<PreGameSequence>,
-    game_sequence: GameSequence,
+    events_controller: EventsController,
+    game_events: GameEvents,
     game_statistics: GameStatistics,
-    post_game_sequence: Option<PostGameSequence>,
 }
 
 impl GamePage {
     pub fn get(
         app_state: AppState,
         profile: Option<User>,
-        game: Game,
+        game: &Game,
         edit_mode: bool,
     ) -> Result<Self, AppError> {
         Self::get_with_message(app_state, profile, None, game, edit_mode)
@@ -78,7 +75,7 @@ impl GamePage {
         app_state: AppState,
         profile: Option<User>,
         alert_message: Option<AlertMessage>,
-        game: Game,
+        game: &Game,
         edit_mode: bool,
     ) -> Result<Self, AppError> {
         let mut editable = false;
@@ -89,12 +86,7 @@ impl GamePage {
                 || connected_user.is_coach(&game.second_team.coach);
         }
 
-        let tab_displayed: String = match (editable, game.status()) {
-            (true, GameStatus::PreGameSequence) => "pre_game".to_string(),
-            (true, GameStatus::PostGameSequence) => "post_game".to_string(),
-            (true, GameStatus::WaitingForValidation) => "post_game".to_string(),
-            (_, _) => "game".to_string(),
-        };
+        let tab_displayed: String = "game".to_string();
 
         let game_status = game.status().name("fr");
 
@@ -106,11 +98,7 @@ impl GamePage {
 
         let game_date = game.game_at.format("%d/%m/%Y à %H:%M").to_string();
 
-        let pre_game_sequence: Option<PreGameSequence> =
-            PreGameSequence::try_from_game(game.clone(), editable)?;
-        let post_game_sequence: Option<PostGameSequence> =
-            PostGameSequence::try_from_game(game.clone(), editable)?;
-        let game_sequence = GameSequence::from_game(game.clone(), editable);
+        let game_events = GameEvents::from_game(game);
 
         let game_statistics = GameStatistics {
             game: game.clone(),
@@ -130,10 +118,9 @@ impl GamePage {
             game_date_input,
             game_date,
             game_status,
-            pre_game_sequence,
-            game_sequence,
+            events_controller: EventsController::try_from_game(game)?,
+            game_events,
             game_statistics,
-            post_game_sequence,
         })
     }
 }

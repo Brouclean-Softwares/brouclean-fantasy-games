@@ -1,3 +1,4 @@
+use crate::app::templates::blood_bowl::games::GameStatus;
 use crate::app::templates::blood_bowl::games::Weather;
 use crate::data::blood_bowl::teams::TeamLogo;
 use crate::errors::AppError;
@@ -17,81 +18,70 @@ use blood_bowl_rs::translation::TypeName;
 #[template(path = "blood_bowl/games/events/pre_game_sequence.html")]
 pub struct PreGameSequence {
     game: Game,
-    editable: bool,
     first_team_money: TreasuryAndPettyCash,
     second_team_money: TreasuryAndPettyCash,
     first_team_buyable_inducements: Vec<Inducement>,
     second_team_buyable_inducements: Vec<Inducement>,
-    first_team_inducements: Vec<Inducement>,
-    second_team_inducements: Vec<Inducement>,
-    first_team_prayers: Vec<PrayerToNuffle>,
-    second_team_prayers: Vec<PrayerToNuffle>,
 }
 
 impl PreGameSequence {
-    pub fn try_from_game(game: Game, editable: bool) -> Result<Option<Self>, AppError> {
-        if editable {
-            let (first_team_money, second_team_money) = game.teams_money_left()?;
+    pub fn try_from_game(game: &Game) -> Result<Self, AppError> {
+        let (first_team_money, second_team_money) = game.teams_money_left()?;
 
-            let (first_team_buyable_inducements, second_team_buyable_inducements) =
-                game.inducements_buyable_by_teams()?;
+        let (first_team_buyable_inducements, second_team_buyable_inducements) =
+            game.inducements_buyable_by_teams()?;
 
-            let (first_team_inducements, second_team_inducements) = game.teams_inducements();
-
-            let (first_team_prayers, second_team_prayers) = game.teams_prayers();
-
-            Ok(Some(Self {
-                game: game.clone(),
-                editable,
-                first_team_money,
-                second_team_money,
-                first_team_buyable_inducements,
-                second_team_buyable_inducements,
-                first_team_inducements,
-                second_team_inducements,
-                first_team_prayers,
-                second_team_prayers,
-            }))
-        } else {
-            Ok(None)
-        }
-    }
-}
-
-#[derive(Template, WebTemplate)]
-#[template(path = "blood_bowl/games/events/game_sequence.html")]
-pub struct GameSequence {
-    game: Game,
-    editable: bool,
-    game_controller: GameEventController,
-}
-
-impl GameSequence {
-    pub fn from_game(game: Game, editable: bool) -> Self {
-        Self {
+        Ok(Self {
             game: game.clone(),
-            editable,
-            game_controller: GameEventController {
-                game: game.clone(),
-                first_team_event_controller: TeamEventController {
-                    game: game.clone(),
-                    team: game.first_team.clone(),
-                },
-                second_team_event_controller: TeamEventController {
-                    game: game.clone(),
-                    team: game.second_team.clone(),
-                },
-            },
-        }
+            first_team_money,
+            second_team_money,
+            first_team_buyable_inducements,
+            second_team_buyable_inducements,
+        })
     }
 }
 
 #[derive(Template, WebTemplate)]
-#[template(path = "blood_bowl/games/events/game_event_controller.html")]
-pub struct GameEventController {
+#[template(path = "blood_bowl/games/events/game_events.html")]
+pub struct GameEvents {
     game: Game,
+}
+
+impl GameEvents {
+    pub fn from_game(game: &Game) -> Self {
+        Self { game: game.clone() }
+    }
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "blood_bowl/games/events/events_controller.html")]
+pub struct EventsController {
+    game: Game,
+    pre_game_sequence: PreGameSequence,
+    post_game_sequence: PostGameSequence,
     first_team_event_controller: TeamEventController,
     second_team_event_controller: TeamEventController,
+}
+
+impl EventsController {
+    pub fn try_from_game(game: &Game) -> Result<Self, AppError> {
+        let pre_game_sequence = PreGameSequence::try_from_game(game)?;
+        let post_game_sequence = PostGameSequence::try_from_game(game)?;
+
+        Ok(Self {
+            game: game.clone(),
+            pre_game_sequence,
+            post_game_sequence,
+            first_team_event_controller: TeamEventController::from_team_game(
+                game.clone(),
+                game.first_team.clone(),
+            ),
+            second_team_event_controller: TeamEventController::from_team_game(
+                game.clone(),
+                game.second_team.clone(),
+            ),
+        })
+    }
 }
 
 #[derive(Template, WebTemplate)]
@@ -101,18 +91,28 @@ pub struct TeamEventController {
     team: Team,
 }
 
+impl TeamEventController {
+    pub fn from_team_game(game: Game, team: Team) -> Self {
+        Self { game, team }
+    }
+}
+
 #[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/games/events/post_game_sequence.html")]
 pub struct PostGameSequence {
     game: Game,
+    first_team_winnings: Option<u32>,
+    second_team_winnings: Option<u32>,
 }
 
 impl PostGameSequence {
-    pub fn try_from_game(game: Game, editable: bool) -> Result<Option<Self>, AppError> {
-        if editable {
-            Ok(Some(Self { game }))
-        } else {
-            Ok(None)
-        }
+    pub fn try_from_game(game: &Game) -> Result<Self, AppError> {
+        let (first_team_winnings, second_team_winnings) = game.winnings();
+
+        Ok(Self {
+            game: game.clone(),
+            first_team_winnings,
+            second_team_winnings,
+        })
     }
 }

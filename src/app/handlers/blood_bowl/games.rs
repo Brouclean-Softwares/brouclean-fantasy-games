@@ -50,7 +50,7 @@ pub async fn game(
 
     let edit_mode = params.edit_mode.unwrap_or(false);
 
-    Ok(GamePage::get(app_state, profile, game, edit_mode)?)
+    Ok(GamePage::get(app_state, profile, &game, edit_mode)?)
 }
 
 #[derive(Deserialize)]
@@ -75,6 +75,8 @@ pub struct GameForm {
     pub injury: Option<Injury>,
     pub success: Option<Success>,
     pub end_game: Option<String>,
+    pub first_team_winnings: Option<String>,
+    pub second_team_winnings: Option<String>,
 }
 
 fn redirect_when_update_ko(
@@ -91,7 +93,7 @@ fn redirect_when_update_ko(
                 alert_type: AlertType::Danger,
                 message: error_message,
             }),
-            game.clone(),
+            &game,
             false,
         )
         .into_response()
@@ -287,6 +289,42 @@ pub async fn update(
         game.end_game().map_err(|err| {
             redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
         })?;
+    }
+
+    if form.first_team_winnings.is_some() && form.second_team_winnings.is_some() {
+        if form.auto.is_some() {
+            game.generate_winnings().map_err(|err| {
+                redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+            })?;
+        } else {
+            if let Some(winnings) = form.first_team_winnings {
+                let winnings: u32 = winnings.parse().map_err(|_| {
+                    redirect_when_update_ko(
+                        &app_state, &profile, Some(&game),
+                        "Veuillez remplir la valeur des gains (10000 * TD + Fans / 2) ou bien générer en automatique".to_string(),
+                    )
+                })?;
+
+                game.push_winnings(game.first_team.id, winnings)
+                    .map_err(|err| {
+                        redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+                    })?;
+            }
+
+            if let Some(winnings) = form.second_team_winnings {
+                let winnings: u32 = winnings.parse().map_err(|_| {
+                    redirect_when_update_ko(
+                        &app_state, &profile, Some(&game),
+                        "Veuillez remplir la valeur des gains (10000 * TD + Fans / 2) ou bien générer en automatique".to_string(),
+                    )
+                })?;
+
+                game.push_winnings(game.second_team.id, winnings)
+                    .map_err(|err| {
+                        redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+                    })?;
+            }
+        }
     }
 
     if game.started {

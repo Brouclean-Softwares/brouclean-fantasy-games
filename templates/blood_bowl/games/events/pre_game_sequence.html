@@ -1,32 +1,10 @@
 <div>
+    {% if game.fans().is_none() %}
     <div class="uk-margin-medium-top">
         <h3 class="uk-width-1-1 uk-heading-divider">
             Fans
         </h3>
-        {% if let (Some(fans), Some(first_fan_factor), Some(second_fan_factor)) = (game.fans(), game.team_fan_factor(&game.first_team), game.team_fan_factor(&game.second_team)) %}
-        <div class="uk-child-width-1-3 uk-text-center" uk-grid>
-            <dl class="uk-description-list uk-text-left">
-                <dt>
-                    <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
-                    <span class="uk-hidden@m" uk-tooltip="title: Facteur de popularité"> FP</span>
-                    <span class="uk-visible@m"> Facteur de popularité</span>
-                </dt>
-                <dd>{{ first_fan_factor }}</dd>
-            </dl>
-            <dl class="uk-description-list">
-                <dt>Fans</dt>
-                <dd>{{ fans }}</dd>
-            </dl>
-            <dl class="uk-description-list uk-text-right">
-                <dt>
-                    <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
-                    <span class="uk-hidden@m" uk-tooltip="title: Facteur de popularité"> FP</span>
-                    <span class="uk-visible@m"> Facteur de popularité</span>
-                </dt>
-                <dd>{{ second_fan_factor }}</dd>
-            </dl>
-        </div>
-        {% else if editable && ! game.pre_game_sequence_is_finished() %}
+
         <form method="post" autocomplete="off" class="uk-margin-medium-top uk-form-stacked">
             <input name="game_id"
                    type="hidden"
@@ -64,20 +42,14 @@
                 Valider
             </button>
         </form>
-        {% endif %}
     </div>
 
+    {% else if game.weather().is_none() %}
     <div class="uk-margin-medium-top">
         <h3 class="uk-width-1-1 uk-heading-divider">
             Météo
         </h3>
-        {% if let Some(weather) = game.weather() %}
-        <div class="uk-text-center">
-            <p>
-                {{ weather.name("fr") }}
-            </p>
-        </div>
-        {% else if editable && ! game.pre_game_sequence_is_finished() %}
+
         <form method="post" autocomplete="off" class="uk-margin-medium-top uk-form-stacked">
             <input name="game_id"
                    type="hidden"
@@ -102,31 +74,14 @@
                 Valider
             </button>
         </form>
-        {% endif %}
     </div>
 
+    {% else if ! game.journeymen_ok() %}
     <div class="uk-margin-medium-top">
         <h3 class="uk-width-1-1 uk-heading-divider">
             Journaliers
         </h3>
-        <div class="uk-child-width-1-2 uk-text-center" uk-grid>
-            <dl class="uk-description-list uk-text-left">
-                <dt>
-                    <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
-                    <span> Nombre</span>
-                </dt>
-                <dd>{{ game.first_team.journeymen_number() }} / {{ game.first_team.number_of_available_players() }}</dd>
-            </dl>
 
-            <dl class="uk-description-list uk-text-right">
-                <dt>
-                    <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
-                    <span> Nombre</span>
-                </dt>
-                <dd>{{ game.second_team.journeymen_number() }} / {{ game.second_team.number_of_available_players() }}</dd>
-            </dl>
-        </div>
-        {% if editable && ! game.journeymen_ok() && ! game.pre_game_sequence_is_finished() %}
         <form method="post" autocomplete="off" class="uk-margin-medium-top uk-form-stacked">
             <input name="game_id"
                    type="hidden"
@@ -140,45 +95,17 @@
                 Compléter les équipes
             </button>
         </form>
-        {% endif %}
     </div>
 
+    {% else %}
+
+    {% if game.toss_winner().is_none() %}
     <div class="uk-margin-medium-top">
         <h3 class="uk-width-1-1 uk-heading-divider">
             Coups de pouce
         </h3>
     </div>
-    <div class="uk-child-width-1-2 uk-text-center" uk-grid>
-        <dl class="uk-description-list uk-text-left">
-            <dt>
-                <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
-                <span> Achats</span>
-            </dt>
-            <dd>
-                <ul class="uk-list">
-                    {% for inducement in first_team_inducements %}
-                    <li>{{ inducement.name("fr") }} - {{ inducement.price_for_team(game.first_team) / 1000 }}k</li>
-                    {% endfor %}
-                </ul>
-            </dd>
-        </dl>
 
-        <dl class="uk-description-list uk-text-right">
-            <dt>
-                <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
-                <span> Achats</span>
-            </dt>
-            <dd>
-                <ul class="uk-list">
-                    {% for inducement in second_team_inducements %}
-                    <li>{{ inducement.name("fr") }} - {{ inducement.price_for_team(game.second_team) / 1000 }}k</li>
-                    {% endfor %}
-                </ul>
-            </dd>
-        </dl>
-    </div>
-
-    {% if editable && ! game.pre_game_sequence_is_finished() %}
     <div class="uk-child-width-1-2 uk-text-center" uk-grid>
         <dl class="uk-description-list uk-text-left">
             <dt>
@@ -266,64 +193,33 @@
             </form>
         </div>
     </div>
-    {% endif %}
 
     <div class="uk-margin-medium-top">
         <h3 class="uk-width-1-1 uk-heading-divider">
             Prières à Nuffle
         </h3>
-        <div class="uk-child-width-1-2 uk-text-center" uk-grid>
-            <dl class="uk-description-list uk-text-left">
-                <dt>
-                    <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
-                    <span class="uk-hidden@m" uk-tooltip="title: Valeur d'Equipe Actuelle"> VAE</span>
-                    <span class="uk-visible@m"> Valeur d'Equipe Actuelle</span>
-                </dt>
-                <dd>{{ game.first_team.current_value()? / 1000 }}k</dd>
-            </dl>
-
-            <dl class="uk-description-list uk-text-right">
-                <dt>
-                    <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
-                    <span class="uk-hidden@m" uk-tooltip="title: Valeur d'Equipe Actuelle"> VAE</span>
-                    <span class="uk-visible@m"> Valeur d'Equipe Actuelle</span>
-                </dt>
-                <dd>{{ game.second_team.current_value()? / 1000 }}k</dd>
-            </dl>
-        </div>
-
-        <div class="uk-child-width-1-2 uk-text-center" uk-grid>
-            <dl class="uk-description-list uk-text-left">
-                <dt>
-                    <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
-                    <span> Prières</span>
-                </dt>
-                <dd>
-                    <ul class="uk-list">
-                        {% for prayer in first_team_prayers %}
-                        <li>{{ prayer.name("fr") }}</li>
-                        {% endfor %}
-                    </ul>
-                </dd>
-            </dl>
-
-            <dl class="uk-description-list uk-text-right">
-                <dt>
-                    <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
-                    <span> Prières</span>
-                </dt>
-                <dd>
-                    <ul class="uk-list">
-                        {% for prayer in second_team_prayers %}
-                        <li>{{ prayer.name("fr") }}</li>
-                        {% endfor %}
-                    </ul>
-                </dd>
-            </dl>
-        </div>
     </div>
 
-    {% if editable && ! game.pre_game_sequence_is_finished() %}
+    <div class="uk-child-width-1-2 uk-text-center" uk-grid>
+        <dl class="uk-description-list uk-text-left">
+            <dt>
+                <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
+                <span class="uk-hidden@m" uk-tooltip="title: Valeur d'Equipe Actuelle"> VAE</span>
+                <span class="uk-visible@m"> Valeur d'Equipe Actuelle</span>
+            </dt>
+            <dd>{{ game.first_team.current_value()? / 1000 }}k</dd>
+        </dl>
+
+        <dl class="uk-description-list uk-text-right">
+            <dt>
+                <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
+                <span class="uk-hidden@m" uk-tooltip="title: Valeur d'Equipe Actuelle"> VAE</span>
+                <span class="uk-visible@m"> Valeur d'Equipe Actuelle</span>
+            </dt>
+            <dd>{{ game.second_team.current_value()? / 1000 }}k</dd>
+        </dl>
+    </div>
+
     <div class="uk-child-width-1-2" uk-grid>
         <div class="uk-text-left">
             <form method="post" autocomplete="off" class=" uk-margin-medium-top uk-form-stacked">
@@ -396,23 +292,7 @@
             Pile ou face pour le coup d'envoi
         </h3>
 
-        {% if let Some(toss_winner) = game.toss_winner() %}
-        <div class="uk-child-width-1-2" uk-grid>
-            <div class="uk-text-left">
-                {% if toss_winner.id.eq(game.first_team.id) %}
-                <img src="{{ TeamLogo::from(toss_winner.clone()).url }}" width="30" height="30" alt="">
-                <span> gagne le pile ou face</span>
-                {% endif %}
-            </div>
-
-            <div class="uk-text-right">
-                {% if toss_winner.id.eq(game.second_team.id) %}
-                <img src="{{ TeamLogo::from(toss_winner.clone()).url }}" width="30" height="30" alt="">
-                <span> gagne le pile ou face</span>
-                {% endif %}
-            </div>
-        </div>
-        {% else if editable && ! game.pre_game_sequence_is_finished() %}
+        {% if game.toss_winner().is_none() %}
         <form method="post" autocomplete="off" class="uk-margin-medium-top uk-form-stacked">
             <input name="game_id"
                    type="hidden"
@@ -436,25 +316,8 @@
                 Valider
             </button>
         </form>
-        {% endif %}
 
-        {% if let Some(kicking_team) = game.kicking_team() %}
-        <div class="uk-child-width-1-2 uk-text-center" uk-grid>
-            <div class="uk-text-left">
-                {% if kicking_team.id.eq(game.first_team.id) %}
-                <img src="{{ TeamLogo::from(kicking_team.clone()).url }}" width="30" height="30" alt="">
-                <span> botte le coup d'envoi</span>
-                {% endif %}
-            </div>
-
-            <div class="uk-text-right">
-                {% if kicking_team.id.eq(game.second_team.id) %}
-                <img src="{{ TeamLogo::from(kicking_team.clone()).url }}" width="30" height="30" alt="">
-                <span> botte le coup d'envoi</span>
-                {% endif %}
-            </div>
-        </div>
-        {% else if editable && ! game.pre_game_sequence_is_finished() %}
+        {% else %}
         <form method="post" autocomplete="off" class="uk-margin-medium-top uk-form-stacked">
             <input name="game_id"
                    type="hidden"
@@ -474,20 +337,5 @@
         </form>
         {% endif %}
     </div>
-
-    {% if editable && ! game.pre_game_sequence_is_finished() && game.events.len() > 0 %}
-    <form method="post" autocomplete="off" class="uk-margin-medium-top uk-form-stacked">
-        <input name="game_id"
-               type="hidden"
-               value="{{ game.id }}">
-
-        <input name="cancel_last_event"
-               type="hidden"
-               value="true">
-
-        <button class="uk-button uk-button-danger">
-            Annuler le dernier évènement
-        </button>
-    </form>
     {% endif %}
 </div>

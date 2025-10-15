@@ -1,12 +1,4 @@
 <div>
-    {% if editable && game.events.len() > 0 %}
-    {{ game_controller|escape("none") }}
-    {% endif %}
-
-    <h3 class="uk-margin-medium-top uk-heading-divider">
-        Déroulé du match
-    </h3>
-
     <div class="uk-margin-medium-top">
     {% for event in game.events.iter().rev() %}
         {% match event %}
@@ -156,6 +148,21 @@
         <h4 class="uk-heading-line uk-text-center uk-margin-large-top">
             <span>Fin du match</span>
         </h4>
+
+
+
+        {% when GameEvent::Winnings { team_id: team_id, earned_money: earned_money } %}
+        {% if game.first_team.id.eq(team_id.into()) %}
+        <p class="uk-text-left">
+            <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
+            <span>{{ earned_money / 1000 }}k gagnés</span>
+        </p>
+        {% else %}
+        <p class="uk-text-right">
+            <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
+            <span>{{ earned_money / 1000 }}k gagnés</span>
+        </p>
+        {% endif %}
 
 
 

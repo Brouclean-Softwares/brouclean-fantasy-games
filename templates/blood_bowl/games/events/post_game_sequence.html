@@ -1,3 +1,50 @@
 <div>
-    Séquence d'après match à venir...
+    {% if first_team_winnings.is_none() || second_team_winnings.is_none() %}
+    <div class="uk-margin-medium-top">
+        <h3 class="uk-width-1-1 uk-heading-divider">
+            Gains
+        </h3>
+        <form method="post" autocomplete="off" class="uk-margin-medium-top uk-form-stacked">
+            <input name="game_id"
+                   type="hidden"
+                   value="{{ game.id }}">
+
+            <fieldset class="uk-fieldset" uk-grid>
+                <div class="uk-width-1-2 uk-text-left">
+                    <label class="uk-form-label">
+                        <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
+                    </label>
+                    <div class="uk-form-controls">
+                        {% if let Some(winnings) = first_team_winnings %}
+                        <span>{{ winnings / 1000 }}k</span>
+                        {% else %}
+                        <input class="uk-input" type="number" name="first_team_winnings" placeholder="10000 * TD + Fans / 2" aria-label="">
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="uk-width-1-2 uk-text-right">
+                    <label class="uk-form-label">
+                        <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
+                    </label>
+                    <div class="uk-form-controls">
+                        {% if let Some(winnings) = second_team_winnings %}
+                        <span>{{ winnings / 1000 }}k</span>
+                        {% else %}
+                        <input class="uk-input" type="number" name="second_team_winnings" placeholder="10000 * TD + Fans / 2" aria-label="">
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="uk-width-1-1 uk-margin uk-grid-small uk-child-width-auto uk-grid">
+                    <label><input class="uk-checkbox" type="checkbox" name="auto" value="true">Automatique</label>
+                </div>
+            </fieldset>
+
+            <button class="uk-button uk-button-primary">
+                Valider
+            </button>
+        </form>
+    </div>
+    {% endif %}
 </div>

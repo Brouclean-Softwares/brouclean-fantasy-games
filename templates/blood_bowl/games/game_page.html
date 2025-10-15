@@ -163,14 +163,6 @@
 
         <div class="uk-width-1-1">
             <ul  class="uk-child-width-expand" uk-tab>
-                {% if let Some(pre_game_sequence) = pre_game_sequence %}
-                <li x-bind:class="tab==='pre_game' ? 'uk-active' : ''">
-                    <a href="#" uk-icon="icon: sign-in" x-on:click="tab='pre_game'">
-                        <span class="uk-visible@m">Avant match</span>
-                    </a>
-                </li>
-                {% endif %}
-
                 <li x-bind:class="tab==='game' ? 'uk-active' : ''">
                     <a href="#" uk-icon="icon: play-circle" x-on:click="tab='game'">
                         <span class="uk-visible@m">Match</span>
@@ -182,36 +174,24 @@
                         <span class="uk-visible@m">Statistiques</span>
                     </a>
                 </li>
-
-                {% if let Some(post_game_sequence) = post_game_sequence %}
-                <li x-bind:class="tab==='post_game' ? 'uk-active' : ''">
-                    <a href="#" uk-icon="icon: sign-out" x-on:click="tab='post_game'">
-                        <span class="uk-visible@m">Après match</span>
-                    </a>
-                </li>
-                {% endif %}
             </ul>
         </div>
 
-        {% if let Some(pre_game_sequence) = pre_game_sequence %}
-        <div class="uk-width-1-1" x-show="tab==='pre_game'">
-            {{ pre_game_sequence|escape("none") }}
-        </div>
-        {% endif %}
-
         <div class="uk-width-1-1" x-show="tab==='game'">
-            {{ game_sequence|escape("none") }}
+            {% if editable %}
+            {{ events_controller|escape("none") }}
+
+            <h3 class="uk-margin-medium-top uk-heading-divider">
+                Déroulé du match
+            </h3>
+            {% endif %}
+
+            {{ game_events|escape("none") }}
         </div>
 
         <div class="uk-width-1-1" x-show="tab==='stats'">
             {{ game_statistics|escape("none") }}
         </div>
-
-        {% if let Some(post_game_sequence) = post_game_sequence %}
-        <div class="uk-width-1-1" x-show="tab==='post_game'">
-            {{ post_game_sequence|escape("none") }}
-        </div>
-        {% endif %}
     </div>
 </div>
 {% endblock %}
