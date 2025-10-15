@@ -35,3 +35,11 @@ CREATE TABLE IF NOT EXISTS bb_games_teams_players (
     most_valuable_player INTEGER NOT NULL DEFAULT 0,
     star_player_points INTEGER NOT NULL DEFAULT 0
 );
+
+CREATE TABLE IF NOT EXISTS bb_players_injuries (
+    player_id INTEGER NOT NULL REFERENCES bb_players ON DELETE CASCADE,
+    game_id INTEGER NOT NULL REFERENCES bb_games ON DELETE RESTRICT,
+    injury VARCHAR NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    recovered_at TIMESTAMP WITH TIME ZONE
+);
