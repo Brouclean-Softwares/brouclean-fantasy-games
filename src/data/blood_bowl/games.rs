@@ -673,6 +673,67 @@ pub async fn update_after_event(
         }
     }
 
+    sqlx::query(
+        "DELETE
+            FROM bb_games_teams_players
+            USING bb_games
+            WHERE bb_games.id = bb_games_teams_players.game_id
+            AND bb_games.id = $1
+            AND (bb_games.created_by = $2 OR bb_games.first_coach_id = $2 OR bb_games.second_coach_id = $2)",
+    )
+        .bind(game.id.clone())
+        .bind(profile.id.unwrap_or(-1).clone())
+        .execute(&mut *transaction)
+        .await?;
+
+    for (team_id, team_players) in vec![
+        (game.first_team.id, game.playing_players().0),
+        (game.second_team.id, game.playing_players().1),
+    ] {
+        for (number, player) in team_players {
+            let statistics = game.player_statistics(team_id.clone(), player.id.clone());
+
+            let player_id = if player.is_star_player || player.is_journeyman {
+                None
+            } else {
+                Some(player.id)
+            };
+
+            sqlx::query(
+                "INSERT INTO bb_games_teams_players (
+                        game_id,
+                        team_id,
+                        player_id,
+                        player_number,
+                        player_position,
+                        passing_completions,
+                        throwing_completions,
+                        deflections,
+                        interceptions,
+                        casualties,
+                        touchdowns,
+                        most_valuable_player,
+                        star_player_points)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)",
+            )
+            .bind(game.id.clone())
+            .bind(team_id.clone())
+            .bind(player_id.clone())
+            .bind(number.clone())
+            .bind(player.position.clone())
+            .bind(statistics.passing_completions.clone() as i32)
+            .bind(statistics.throwing_completions.clone() as i32)
+            .bind(statistics.deflections.clone() as i32)
+            .bind(statistics.interceptions.clone() as i32)
+            .bind(statistics.casualties.clone() as i32)
+            .bind(statistics.touchdowns.clone() as i32)
+            .bind(statistics.most_valuable_player.clone() as i32)
+            .bind(statistics.star_player_points.clone() as i32)
+            .execute(&mut *transaction)
+            .await?;
+        }
+    }
+
     transaction.commit().await?;
 
     Ok(())

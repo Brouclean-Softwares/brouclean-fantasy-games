@@ -32,7 +32,8 @@ pub async fn select_under_contract_for_team(
                     bb_players.star_player_points,
                     bb_teams_players.number
             FROM bb_players
-            INNER JOIN bb_teams_players ON bb_players.id = bb_teams_players.player_id
+            INNER JOIN bb_teams_players
+            ON bb_players.id = bb_teams_players.player_id
             WHERE bb_teams_players.team_id = $1
             AND bb_teams_players.contract_end IS NULL
             ORDER BY bb_teams_players.number ASC",
