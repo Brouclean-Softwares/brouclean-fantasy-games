@@ -33,10 +33,9 @@
     {{ post_game_sequence|escape("none") }}
 
     {% else %}
-
     {% endmatch %}
 
-    {% if game.events.len() > 0 %}
+    {% if ! game.closed && game.events.len() > 0 %}
     <form method="post" autocomplete="off" class="uk-margin-medium-top uk-form-stacked">
         <input name="game_id"
                type="hidden"
