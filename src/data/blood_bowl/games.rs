@@ -640,6 +640,39 @@ pub async fn update_after_event(
     .execute(&mut *transaction)
     .await?;
 
+    sqlx::query(
+        "DELETE
+            FROM bb_players_injuries
+            USING bb_games
+            WHERE bb_games.id = bb_players_injuries.game_id
+            AND bb_games.id = $1
+            AND (bb_games.created_by = $2 OR bb_games.first_coach_id = $2 OR bb_games.second_coach_id = $2)",
+    )
+        .bind(game.id.clone())
+        .bind(profile.id.unwrap_or(-1).clone())
+        .execute(&mut *transaction)
+        .await?;
+
+    for event in game.events.iter() {
+        if let GameEvent::Injury {
+            player_id, injury, ..
+        } = event
+        {
+            sqlx::query(
+                "INSERT INTO bb_players_injuries (
+                        player_id,
+                        game_id,
+                        injury)
+                    VALUES ($1, $2, $3)",
+            )
+            .bind(player_id.clone())
+            .bind(game.id.clone())
+            .bind(injury.clone())
+            .execute(&mut *transaction)
+            .await?;
+        }
+    }
+
     transaction.commit().await?;
 
     Ok(())
@@ -675,6 +708,19 @@ pub async fn delete(state: &AppState, profile: &User, game_id: i32) -> Result<()
         game.cancel_last_event()?;
         update_after_event(state, profile, &game).await?;
     }
+
+    sqlx::query(
+        "DELETE
+            FROM bb_players_injuries
+            USING bb_games
+            WHERE bb_games.id = bb_players_injuries.game_id
+            AND bb_games.id = $1
+            AND (bb_games.created_by = $2 OR bb_games.first_coach_id = $2 OR bb_games.second_coach_id = $2)",
+    )
+        .bind(game.id.clone())
+        .bind(profile.id.unwrap_or(-1).clone())
+        .execute(&mut *transaction)
+        .await?;
 
     sqlx::query(
         "DELETE

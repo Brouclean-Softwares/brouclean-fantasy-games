@@ -18,39 +18,6 @@ struct PlayerDetail {
     star_player_points: i32,
 }
 
-pub async fn select_by_id(state: &AppState, id: i32) -> Result<Player, AppError> {
-    tracing::debug!("select_by_id with id={}", id);
-
-    let player_detail: PlayerDetail = sqlx::query_as(
-        "SELECT id,
-                    version,
-                    name,
-                    position,
-                    star_player_points,
-                    0 AS number
-            FROM bb_players
-            WHERE id = $1",
-    )
-    .bind(id.clone())
-    .fetch_one(&state.db)
-    .await?;
-
-    let player_injuries = select_player_injuries(state, id).await?;
-
-    Ok(Player {
-        id: player_detail.id,
-        version: player_detail.version,
-        position: player_detail.position,
-        name: player_detail.name,
-        star_player_points: player_detail.star_player_points,
-        is_journeyman: false,
-        is_star_player: false,
-        miss_next_game: PlayerInjury::extract_miss_next_game(&player_injuries),
-        advancements: vec![],
-        injuries: PlayerInjury::extract_remaining_injuries(&player_injuries),
-    })
-}
-
 pub async fn select_under_contract_for_team(
     state: &AppState,
     team_id: i32,
@@ -77,6 +44,8 @@ pub async fn select_under_contract_for_team(
     let mut players: Vec<(i32, Player)> = Vec::new();
 
     for player_detail in players_detail {
+        let player_injuries = select_player_injuries(state, player_detail.id).await?;
+
         players.push((
             player_detail.number,
             Player {
@@ -87,9 +56,9 @@ pub async fn select_under_contract_for_team(
                 star_player_points: player_detail.star_player_points,
                 is_journeyman: false,
                 is_star_player: false,
-                miss_next_game: false,
+                miss_next_game: PlayerInjury::extract_miss_next_game(&player_injuries),
                 advancements: vec![],
-                injuries: vec![],
+                injuries: PlayerInjury::extract_remaining_injuries(&player_injuries),
             },
         ));
     }
@@ -326,10 +295,10 @@ async fn select_player_injuries(
         "SELECT bb_players_injuries.injury,
                     bb_players_injuries.created_at < MAX(bb_games.started_at) as before_last_game
             FROM bb_players_injuries
-            INNER JOIN bb_games_teams_players
-            ON bb_games_teams_players.player_id = bb_players_injuries.player_id
+            INNER JOIN bb_teams_players
+            ON bb_teams_players.player_id = bb_teams_players.player_id
             INNER JOIN bb_games
-            ON bb_games.id = bb_games_teams_players.game_id
+            ON (bb_teams_players.team_id = bb_games.first_team_id OR bb_teams_players.team_id = bb_games.second_team_id)
             WHERE bb_players_injuries.player_id = $1
             AND bb_players_injuries.recovered_at IS NULL
             GROUP BY bb_players_injuries.injury,

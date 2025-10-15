@@ -94,10 +94,9 @@
             <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
 
             {% if let Some((number, player)) = game.first_team.player_by_id(player_id.clone()) %}
-            <span class="uk-text-bold">#{{ number }} - {{ player.position.name("fr") }}</span>
-            <span class="uk-visible@m uk-text-bold"> - {{ player.name }}</span>
-            <span> : </span>
-            <span class="uk-text-bold">{{ injury.name("fr") }}</span>
+            <span>#{{ number }} - {{ player.position.name("fr") }}</span>
+            <span class="uk-visible@m"> - {{ player.name }}</span>
+            <span> : {{ injury.name("fr") }}</span>
             {% endif %}
         </p>
         {% else %}
@@ -105,10 +104,9 @@
             <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
 
             {% if let Some((number, player)) = game.second_team.player_by_id(player_id.clone()) %}
-            <span class="uk-text-bold">#{{ number }} - {{ player.position.name("fr") }}</span>
-            <span class="uk-visible@m uk-text-bold"> - {{ player.name }}</span>
-            <span> : </span>
-            <span class="uk-text-bold">{{ injury.name("fr") }}</span>
+            <span>#{{ number }} - {{ player.position.name("fr") }}</span>
+            <span class="uk-visible@m"> - {{ player.name }}</span>
+            <span> : {{ injury.name("fr") }}</span>
             {% endif %}
         </p>
         {% endif %}
@@ -121,11 +119,9 @@
             <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
 
             {% if let Some((number, player)) = game.first_team.player_by_id(player_id.clone()) %}
-            <span class="uk-text-bold">#{{ number }} - {{ player.position.name("fr") }}</span>
-            <span class="uk-visible@m uk-text-bold"> - {{ player.name }}</span>
-            <span> : +1 </span>
-            <span class="uk-text-bold">{{ success.name("fr") }}</span>
-            <span> (+{{ star_player_points }} PSP)</span>
+            <span>#{{ number }} - {{ player.position.name("fr") }}</span>
+            <span class="uk-visible@m"> - {{ player.name }}</span>
+            <span> : +1 {{ success.name("fr") }} (+{{ star_player_points }} PSP)</span>
             {% endif %}
         </p>
         {% else %}
@@ -133,11 +129,9 @@
             <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
 
             {% if let Some((number, player)) = game.second_team.player_by_id(player_id.clone()) %}
-            <span class="uk-text-bold">#{{ number }} - {{ player.position.name("fr") }}</span>
-            <span class="uk-visible@m uk-text-bold"> - {{ player.name }}</span>
-            <span> : +1 </span>
-            <span class="uk-text-bold">{{ success.name("fr") }}</span>
-            <span> (+{{ star_player_points }} PSP)</span>
+            <span>#{{ number }} - {{ player.position.name("fr") }}</span>
+            <span class="uk-visible@m"> - {{ player.name }}</span>
+            <span> : +1 {{ success.name("fr") }} (+{{ star_player_points }} PSP)</span>
             {% endif %}
         </p>
         {% endif %}
