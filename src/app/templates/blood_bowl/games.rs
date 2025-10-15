@@ -58,7 +58,8 @@ pub struct GamePage {
     game_status: String,
     events_controller: EventsController,
     game_events: GameEvents,
-    game_statistics: GameStatistics,
+    first_team_statistics: TeamStatistics,
+    second_team_statistics: TeamStatistics,
 }
 
 impl GamePage {
@@ -100,10 +101,16 @@ impl GamePage {
 
         let game_events = GameEvents::from_game(game);
 
-        let game_statistics = GameStatistics {
+        let first_team_statistics = TeamStatistics {
             game: game.clone(),
-            first_team_players_statistics: game.players_statistics_for_team(&game.first_team),
-            second_team_players_statistics: game.players_statistics_for_team(&game.second_team),
+            team: game.first_team.clone(),
+            players_statistics: game.players_statistics_for_team(&game.first_team),
+        };
+
+        let second_team_statistics = TeamStatistics {
+            game: game.clone(),
+            team: game.second_team.clone(),
+            players_statistics: game.players_statistics_for_team(&game.second_team),
         };
 
         Ok(Self {
@@ -120,17 +127,18 @@ impl GamePage {
             game_status,
             events_controller: EventsController::try_from_game(game)?,
             game_events,
-            game_statistics,
+            first_team_statistics,
+            second_team_statistics,
         })
     }
 }
 
 #[derive(Template, WebTemplate)]
-#[template(path = "blood_bowl/games/game_statistics.html")]
-struct GameStatistics {
+#[template(path = "blood_bowl/games/team_statistics.html")]
+struct TeamStatistics {
     game: Game,
-    first_team_players_statistics: Vec<(i32, Player, PlayerStatistics)>,
-    second_team_players_statistics: Vec<(i32, Player, PlayerStatistics)>,
+    team: Team,
+    players_statistics: Vec<(i32, Player, PlayerStatistics)>,
 }
 
 #[derive(Template, WebTemplate)]
