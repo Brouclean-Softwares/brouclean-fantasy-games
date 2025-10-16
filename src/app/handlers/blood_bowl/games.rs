@@ -80,6 +80,8 @@ pub struct GameForm {
     pub second_team_winnings: Option<String>,
     pub first_team_dedicated_fans_delta: Option<String>,
     pub second_team_dedicated_fans_delta: Option<String>,
+    pub first_team_mvp: Option<i32>,
+    pub second_team_mvp: Option<i32>,
 }
 
 fn redirect_when_update_ko(
@@ -436,6 +438,29 @@ pub async fn update(
                     })?;
             }
         }
+
+        if let Some(last_event) = game.events.last() {
+            event = Some(last_event.clone());
+        }
+    }
+
+    // MVPs
+    if let Some(mvp_id) = form.first_team_mvp {
+        game.push_success(game.first_team.id, mvp_id, Success::MostValuablePlayer)
+            .map_err(|err| {
+                redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+            })?;
+
+        if let Some(last_event) = game.events.last() {
+            event = Some(last_event.clone());
+        }
+    }
+
+    if let Some(mvp_id) = form.second_team_mvp {
+        game.push_success(game.second_team.id, mvp_id, Success::MostValuablePlayer)
+            .map_err(|err| {
+                redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+            })?;
 
         if let Some(last_event) = game.events.last() {
             event = Some(last_event.clone());

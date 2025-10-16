@@ -13,7 +13,7 @@
                 <div class="uk-width-1-2 uk-text-left">
                     <label class="uk-form-label">
                         <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
-                        <span>Gains</span>
+                        <span> Gains ?</span>
                     </label>
                     <div class="uk-form-controls">
                         {% if let Some(winnings) = first_team_winnings %}
@@ -27,7 +27,7 @@
                 <div class="uk-width-1-2 uk-text-right">
                     <label class="uk-form-label">
                         <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
-                        <span>Gains</span>
+                        <span> Gains ?</span>
                     </label>
                     <div class="uk-form-controls">
                         {% if let Some(winnings) = second_team_winnings %}
@@ -65,7 +65,7 @@
                 <div class="uk-width-1-2 uk-text-left">
                     <label class="uk-form-label">
                         <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
-                        <span>Delta</span>
+                        <span> Delta ?</span>
                     </label>
                     <div class="uk-form-controls">
                         {% if let Some(delta) = first_team_dedicated_fans_delta %}
@@ -79,7 +79,7 @@
                 <div class="uk-width-1-2 uk-text-right">
                     <label class="uk-form-label">
                         <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
-                        <span>Delta</span>
+                        <span> Delta ?</span>
                     </label>
                     <div class="uk-form-controls">
                         {% if let Some(delta) = second_team_dedicated_fans_delta %}
@@ -101,6 +101,69 @@
                 Valider
             </button>
         </form>
+    </div>
+
+    {% else if most_valuable_players_should_be_nominated %}
+    <div class="uk-margin-medium-top">
+        <h3 class="uk-width-1-1 uk-heading-divider">
+            Joueurs du match
+        </h3>
+
+        <div class="uk-child-width-1-2" uk-grid>
+            <div class="uk-text-left">
+                <form method="post" autocomplete="off" class=" uk-margin-medium-top uk-form-stacked">
+                    <input name="game_id"
+                           type="hidden"
+                           value="{{ game.id }}">
+
+                    <label class="uk-form-label">
+                        <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
+                        <span class="uk-hidden@m" uk-tooltip="title: Joueur Du Match"> JDM ?</span>
+                        <span class="uk-visible@m"> Joueur du match ?</span>
+                    </label>
+                    <div class="uk-form-controls">
+                        <select class="uk-select" name="first_team_mvp" aria-label="">
+                            {% for (number, player) in game.first_team.players %}
+                            {% if ! player.is_star_player && ! player.is_journeyman && ! game.suffered_injuries(game.first_team.id.clone(), player.id.clone()).contains(&Injury::Dead) %}
+                            <option value="{{ player.id }}">#{{ number }} - {{ player.position.name("fr") }}</option>
+                            {% endif %}}
+                            {% endfor %}}
+                        </select>
+                    </div>
+
+                    <button class="uk-button uk-button-primary uk-margin-top">
+                        Ajouter
+                    </button>
+                </form>
+            </div>
+
+            <div class="uk-text-right">
+                <form method="post" autocomplete="off" class=" uk-margin-medium-top uk-form-stacked">
+                    <input name="game_id"
+                           type="hidden"
+                           value="{{ game.id }}">
+
+                    <label class="uk-form-label">
+                        <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
+                        <span class="uk-hidden@m" uk-tooltip="title: Joueur Du Match"> JDM ?</span>
+                        <span class="uk-visible@m"> Joueur du match ?</span>
+                    </label>
+                    <div class="uk-form-controls">
+                        <select class="uk-select" name="second_team_mvp" aria-label="">
+                            {% for (number, player) in game.second_team.players %}
+                            {% if ! player.is_star_player && ! player.is_journeyman && ! game.suffered_injuries(game.second_team.id.clone(), player.id.clone()).contains(&Injury::Dead) %}
+                            <option value="{{ player.id }}">#{{ number }} - {{ player.position.name("fr") }}</option>
+                            {% endif %}}
+                            {% endfor %}}
+                        </select>
+                    </div>
+
+                    <button class="uk-button uk-button-primary uk-margin-top">
+                        Ajouter
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
     {% endif %}
 </div>
