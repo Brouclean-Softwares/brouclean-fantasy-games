@@ -658,18 +658,20 @@ pub async fn update_after_event(
             player_id, injury, ..
         } = event
         {
-            sqlx::query(
-                "INSERT INTO bb_players_injuries (
-                        player_id,
-                        game_id,
-                        injury)
-                    VALUES ($1, $2, $3)",
-            )
-            .bind(player_id.clone())
-            .bind(game.id.clone())
-            .bind(injury.clone())
-            .execute(&mut *transaction)
-            .await?;
+            if injury.remains_after_game() {
+                sqlx::query(
+                    "INSERT INTO bb_players_injuries (
+                            player_id,
+                            game_id,
+                            injury)
+                        VALUES ($1, $2, $3)",
+                )
+                .bind(player_id.clone())
+                .bind(game.id.clone())
+                .bind(injury.clone())
+                .execute(&mut *transaction)
+                .await?;
+            }
         }
     }
 
