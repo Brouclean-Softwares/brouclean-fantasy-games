@@ -78,6 +78,8 @@ pub struct GameForm {
     pub end_game: Option<String>,
     pub first_team_winnings: Option<String>,
     pub second_team_winnings: Option<String>,
+    pub first_team_dedicated_fans_delta: Option<String>,
+    pub second_team_dedicated_fans_delta: Option<String>,
 }
 
 fn redirect_when_update_ko(
@@ -351,7 +353,7 @@ pub async fn update(
     }
 
     // Winnings
-    if form.first_team_winnings.is_some() && form.second_team_winnings.is_some() {
+    if form.first_team_winnings.is_some() || form.second_team_winnings.is_some() {
         if form.auto.is_some() {
             game.generate_winnings().map_err(|err| {
                 redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
@@ -380,6 +382,55 @@ pub async fn update(
                 })?;
 
                 game.push_winnings(game.second_team.id, winnings)
+                    .map_err(|err| {
+                        redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+                    })?;
+            }
+        }
+
+        if let Some(last_event) = game.events.last() {
+            event = Some(last_event.clone());
+        }
+    }
+
+    // Dedicated fans
+    if form.first_team_dedicated_fans_delta.is_some()
+        || form.second_team_dedicated_fans_delta.is_some()
+    {
+        if form.auto.is_some() {
+            game.generate_dedicated_fans_updates().map_err(|err| {
+                redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+            })?;
+        } else {
+            if let Some(delta) = form.first_team_dedicated_fans_delta {
+                let delta: i8 = delta.parse().map_err(|_| {
+                    redirect_when_update_ko(
+                        &app_state,
+                        &profile,
+                        Some(&game),
+                        "Veuillez remplir le delta en terme de fans dévoués (0, +1 ou -1)"
+                            .to_string(),
+                    )
+                })?;
+
+                game.push_dedicated_fans_update(game.first_team.id, delta)
+                    .map_err(|err| {
+                        redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+                    })?;
+            }
+
+            if let Some(delta) = form.second_team_dedicated_fans_delta {
+                let delta: i8 = delta.parse().map_err(|_| {
+                    redirect_when_update_ko(
+                        &app_state,
+                        &profile,
+                        Some(&game),
+                        "Veuillez remplir le delta en terme de fans dévoués (0, +1 ou -1)"
+                            .to_string(),
+                    )
+                })?;
+
+                game.push_dedicated_fans_update(game.second_team.id, delta)
                     .map_err(|err| {
                         redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
                     })?;

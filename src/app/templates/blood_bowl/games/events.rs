@@ -103,16 +103,22 @@ pub struct PostGameSequence {
     game: Game,
     first_team_winnings: Option<u32>,
     second_team_winnings: Option<u32>,
+    first_team_dedicated_fans_delta: Option<i8>,
+    second_team_dedicated_fans_delta: Option<i8>,
 }
 
 impl PostGameSequence {
     pub fn try_from_game(game: &Game) -> Result<Self, AppError> {
         let (first_team_winnings, second_team_winnings) = game.winnings();
+        let (first_team_dedicated_fans_delta, second_team_dedicated_fans_delta) =
+            game.dedicated_fans_updates();
 
         Ok(Self {
             game: game.clone(),
             first_team_winnings,
             second_team_winnings,
+            first_team_dedicated_fans_delta,
+            second_team_dedicated_fans_delta,
         })
     }
 }
