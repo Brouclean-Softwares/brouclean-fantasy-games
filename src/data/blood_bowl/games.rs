@@ -769,6 +769,18 @@ pub async fn update_after_event(
                 .bind(statistics.star_player_points.clone() as i32)
                 .execute(&mut *transaction)
                 .await?;
+
+                if let Some(id) = player_id {
+                    sqlx::query(
+                        "UPDATE bb_players
+                            SET star_player_points = $2
+                            WHERE id = $1",
+                    )
+                    .bind(id.clone())
+                    .bind(player.star_player_points.clone())
+                    .execute(&mut *transaction)
+                    .await?;
+                }
             }
         }
     }
