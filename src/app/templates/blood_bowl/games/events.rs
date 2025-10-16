@@ -106,6 +106,8 @@ pub struct PostGameSequence {
     first_team_dedicated_fans_delta: Option<i8>,
     second_team_dedicated_fans_delta: Option<i8>,
     most_valuable_players_should_be_nominated: bool,
+    first_team_expensive_mistakes: Option<u32>,
+    second_team_expensive_mistakes: Option<u32>,
 }
 
 impl PostGameSequence {
@@ -120,6 +122,9 @@ impl PostGameSequence {
         let most_valuable_players_should_be_nominated =
             (first_team_mvps.len() + second_team_mvps.len()) < 2 && !is_a_friendly_game;
 
+        let (first_team_expensive_mistakes, second_team_expensive_mistakes) =
+            game.expensive_mistakes();
+
         Ok(Self {
             game: game.clone(),
             first_team_winnings,
@@ -127,6 +132,8 @@ impl PostGameSequence {
             first_team_dedicated_fans_delta,
             second_team_dedicated_fans_delta,
             most_valuable_players_should_be_nominated,
+            first_team_expensive_mistakes,
+            second_team_expensive_mistakes,
         })
     }
 }

@@ -165,5 +165,51 @@
             </div>
         </div>
     </div>
+
+    {% else if first_team_expensive_mistakes.is_none() || second_team_expensive_mistakes.is_none() %}
+    <div class="uk-margin-medium-top">
+        <h3 class="uk-width-1-1 uk-heading-divider">
+            Erreurs coûteuses
+        </h3>
+        <form method="post" autocomplete="off" class="uk-margin-medium-top uk-form-stacked">
+            <input name="game_id"
+                   type="hidden"
+                   value="{{ game.id }}">
+
+            <fieldset class="uk-fieldset" uk-grid>
+                <div class="uk-width-1-2 uk-text-left">
+                    <label class="uk-form-label">
+                        <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
+                        <span> Pertes ?</span>
+                    </label>
+                    <div class="uk-form-controls">
+                        {% if let Some(loss) = first_team_expensive_mistakes %}
+                        <span>{{ loss / 1000 }}k</span>
+                        {% else %}
+                        <input class="uk-input" type="number" name="first_team_expensive_mistakes" placeholder="pertes : X000" value="0" aria-label="">
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="uk-width-1-2 uk-text-right">
+                    <label class="uk-form-label">
+                        <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
+                        <span> Pertes ?</span>
+                    </label>
+                    <div class="uk-form-controls">
+                        {% if let Some(loss) = second_team_expensive_mistakes %}
+                        <span>{{ loss / 1000 }}k</span>
+                        {% else %}
+                        <input class="uk-input" type="number" name="second_team_expensive_mistakes" placeholder="pertes : X000" value="0" aria-label="">
+                        {% endif %}
+                    </div>
+                </div>
+            </fieldset>
+
+            <button class="uk-button uk-button-primary uk-margin-top">
+                Valider
+            </button>
+        </form>
+    </div>
     {% endif %}
 </div>

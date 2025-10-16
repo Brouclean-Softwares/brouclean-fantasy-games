@@ -175,6 +175,29 @@
 
 
 
+        {% when GameEvent::ExpensiveMistakes { team_id: team_id, lost_money: lost_money } %}
+        {% if game.first_team.id.eq(team_id.into()) %}
+        <p class="uk-text-left">
+            <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
+            {% if lost_money.clone() > 0 %}
+            <span>{{ lost_money / 1000 }}k perdus</span>
+            {% else %}
+            <span>Pas de pertes</span>
+            {% endif %}
+        </p>
+        {% else %}
+        <p class="uk-text-right">
+            <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
+            {% if lost_money.clone() > 0 %}
+            <span>{{ lost_money / 1000 }}k perdus</span>
+            {% else %}
+            <span>Pas de pertes</span>
+            {% endif %}
+        </p>
+        {% endif %}
+
+
+
         {% when _ %}
         <p>
             {{ format!("{:?}", event) }}

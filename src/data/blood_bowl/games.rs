@@ -635,6 +635,7 @@ pub async fn update_after_event(
         GameEvent::GameEnd => false,
         GameEvent::Winnings { .. } => true,
         GameEvent::DedicatedFansUpdate { .. } => true,
+        GameEvent::ExpensiveMistakes { .. } => true,
     };
 
     if need_teams_update {
@@ -677,6 +678,7 @@ pub async fn update_after_event(
         GameEvent::GameEnd => false,
         GameEvent::Winnings { .. } => false,
         GameEvent::DedicatedFansUpdate { .. } => false,
+        GameEvent::ExpensiveMistakes { .. } => false,
     };
 
     if need_players_update {

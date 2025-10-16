@@ -82,6 +82,8 @@ pub struct GameForm {
     pub second_team_dedicated_fans_delta: Option<String>,
     pub first_team_mvp: Option<i32>,
     pub second_team_mvp: Option<i32>,
+    pub first_team_expensive_mistakes: Option<String>,
+    pub second_team_expensive_mistakes: Option<String>,
 }
 
 fn redirect_when_update_ko(
@@ -461,6 +463,46 @@ pub async fn update(
             .map_err(|err| {
                 redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
             })?;
+
+        if let Some(last_event) = game.events.last() {
+            event = Some(last_event.clone());
+        }
+    }
+
+    // Expensive mistakes
+    if form.first_team_expensive_mistakes.is_some() || form.second_team_expensive_mistakes.is_some()
+    {
+        if let Some(loss) = form.first_team_expensive_mistakes {
+            let loss: i32 = loss.parse().map_err(|_| {
+                redirect_when_update_ko(
+                    &app_state,
+                    &profile,
+                    Some(&game),
+                    "Veuillez remplir la valeur des pertes liées aux erreurs coûteuses".to_string(),
+                )
+            })?;
+
+            game.push_expensive_mistakes(game.first_team.id, loss)
+                .map_err(|err| {
+                    redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+                })?;
+        }
+
+        if let Some(loss) = form.second_team_expensive_mistakes {
+            let loss: i32 = loss.parse().map_err(|_| {
+                redirect_when_update_ko(
+                    &app_state,
+                    &profile,
+                    Some(&game),
+                    "Veuillez remplir la valeur des pertes liées aux erreurs coûteuses".to_string(),
+                )
+            })?;
+
+            game.push_expensive_mistakes(game.second_team.id, loss)
+                .map_err(|err| {
+                    redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+                })?;
+        }
 
         if let Some(last_event) = game.events.last() {
             event = Some(last_event.clone());
