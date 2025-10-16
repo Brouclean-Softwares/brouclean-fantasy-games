@@ -121,7 +121,7 @@
             {% if let Some((number, player)) = game.first_team.player_by_id(player_id.clone()) %}
             <span>#{{ number }} - {{ player.position.name("fr") }}</span>
             <span class="uk-visible@m"> - {{ player.name }}</span>
-            <span> : +1 {{ success.name("fr") }} (+{{ star_player_points }} PSP)</span>
+            <span> : {{ success.name("fr") }} (+{{ star_player_points }} PSP)</span>
             {% endif %}
         </p>
         {% else %}
@@ -131,7 +131,7 @@
             {% if let Some((number, player)) = game.second_team.player_by_id(player_id.clone()) %}
             <span>#{{ number }} - {{ player.position.name("fr") }}</span>
             <span class="uk-visible@m"> - {{ player.name }}</span>
-            <span> : +1 {{ success.name("fr") }} (+{{ star_player_points }} PSP)</span>
+            <span> : {{ success.name("fr") }} (+{{ star_player_points }} PSP)</span>
             {% endif %}
         </p>
         {% endif %}
