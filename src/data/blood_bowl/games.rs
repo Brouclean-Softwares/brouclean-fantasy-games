@@ -579,6 +579,7 @@ pub async fn update_after_event(
     state: &AppState,
     profile: &User,
     game: &Game,
+    event: &GameEvent,
 ) -> Result<(), AppError> {
     tracing::debug!(
         "update_after_event by coach_id={:?} for game_id {}",
@@ -620,119 +621,155 @@ pub async fn update_after_event(
     .execute(&mut *transaction)
     .await?;
 
-    sqlx::query(
-        "UPDATE bb_teams
-            SET treasury = $2
-            WHERE id = $1",
-    )
-    .bind(game.first_team.id.clone())
-    .bind(game.first_team.treasury.clone())
-    .execute(&mut *transaction)
-    .await?;
+    let need_teams_update = match event {
+        GameEvent::FanFactor { .. } => false,
+        GameEvent::Weather(_) => false,
+        GameEvent::Journeyman { .. } => false,
+        GameEvent::BuyInducement { .. } => true,
+        GameEvent::PrayerToNuffle { .. } => false,
+        GameEvent::TossWinner { .. } => false,
+        GameEvent::KickingTeam { .. } => false,
+        GameEvent::TurnStart { .. } => false,
+        GameEvent::Success { .. } => false,
+        GameEvent::Injury { .. } => false,
+        GameEvent::GameEnd => false,
+        GameEvent::Winnings { .. } => true,
+        GameEvent::DedicatedFansUpdate { .. } => true,
+    };
 
-    sqlx::query(
-        "UPDATE bb_teams
-            SET treasury = $2
-            WHERE id = $1",
-    )
-    .bind(game.second_team.id.clone())
-    .bind(game.second_team.treasury.clone())
-    .execute(&mut *transaction)
-    .await?;
-
-    sqlx::query(
-        "DELETE
-            FROM bb_players_injuries
-            USING bb_games
-            WHERE bb_games.id = bb_players_injuries.game_id
-            AND bb_games.id = $1
-            AND (bb_games.created_by = $2 OR bb_games.first_coach_id = $2 OR bb_games.second_coach_id = $2)",
-    )
-        .bind(game.id.clone())
-        .bind(profile.id.unwrap_or(-1).clone())
+    if need_teams_update {
+        sqlx::query(
+            "UPDATE bb_teams
+                SET treasury = $2
+                WHERE id = $1",
+        )
+        .bind(game.first_team.id.clone())
+        .bind(game.first_team.treasury.clone())
         .execute(&mut *transaction)
         .await?;
 
-    for event in game.events.iter() {
-        if let GameEvent::Injury {
-            player_id, injury, ..
-        } = event
-        {
-            if injury.remains_after_game() {
+        sqlx::query(
+            "UPDATE bb_teams
+                SET treasury = $2
+                WHERE id = $1",
+        )
+        .bind(game.second_team.id.clone())
+        .bind(game.second_team.treasury.clone())
+        .execute(&mut *transaction)
+        .await?;
+    }
+
+    let need_players_update = match event {
+        GameEvent::FanFactor { .. } => false,
+        GameEvent::Weather(_) => false,
+        GameEvent::Journeyman { .. } => true,
+        GameEvent::BuyInducement { .. } => true,
+        GameEvent::PrayerToNuffle { .. } => false,
+        GameEvent::TossWinner { .. } => false,
+        GameEvent::KickingTeam { .. } => false,
+        GameEvent::TurnStart { .. } => false,
+        GameEvent::Success { .. } => true,
+        GameEvent::Injury { .. } => true,
+        GameEvent::GameEnd => false,
+        GameEvent::Winnings { .. } => false,
+        GameEvent::DedicatedFansUpdate { .. } => false,
+    };
+
+    if need_players_update {
+        sqlx::query(
+            "DELETE
+                FROM bb_players_injuries
+                USING bb_games
+                WHERE bb_games.id = bb_players_injuries.game_id
+                AND bb_games.id = $1
+                AND (bb_games.created_by = $2 OR bb_games.first_coach_id = $2 OR bb_games.second_coach_id = $2)",
+        )
+            .bind(game.id.clone())
+            .bind(profile.id.unwrap_or(-1).clone())
+            .execute(&mut *transaction)
+            .await?;
+
+        for event in game.events.iter() {
+            if let GameEvent::Injury {
+                player_id, injury, ..
+            } = event
+            {
+                if injury.remains_after_game() {
+                    sqlx::query(
+                        "INSERT INTO bb_players_injuries (
+                                player_id,
+                                game_id,
+                                injury)
+                            VALUES ($1, $2, $3)",
+                    )
+                    .bind(player_id.clone())
+                    .bind(game.id.clone())
+                    .bind(injury.clone())
+                    .execute(&mut *transaction)
+                    .await?;
+                }
+            }
+        }
+
+        sqlx::query(
+            "DELETE
+                FROM bb_games_teams_players
+                USING bb_games
+                WHERE bb_games.id = bb_games_teams_players.game_id
+                AND bb_games.id = $1
+                AND (bb_games.created_by = $2 OR bb_games.first_coach_id = $2 OR bb_games.second_coach_id = $2)",
+        )
+            .bind(game.id.clone())
+            .bind(profile.id.unwrap_or(-1).clone())
+            .execute(&mut *transaction)
+            .await?;
+
+        for (team_id, team_players) in vec![
+            (game.first_team.id, game.playing_players().0),
+            (game.second_team.id, game.playing_players().1),
+        ] {
+            for (number, player) in team_players {
+                let statistics = game.player_statistics(team_id.clone(), player.id.clone());
+
+                let player_id = if player.is_star_player || player.is_journeyman {
+                    None
+                } else {
+                    Some(player.id)
+                };
+
                 sqlx::query(
-                    "INSERT INTO bb_players_injuries (
-                            player_id,
+                    "INSERT INTO bb_games_teams_players (
                             game_id,
-                            injury)
-                        VALUES ($1, $2, $3)",
+                            team_id,
+                            player_id,
+                            player_number,
+                            player_position,
+                            passing_completions,
+                            throwing_completions,
+                            deflections,
+                            interceptions,
+                            casualties,
+                            touchdowns,
+                            most_valuable_player,
+                            star_player_points)
+                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)",
                 )
-                .bind(player_id.clone())
                 .bind(game.id.clone())
-                .bind(injury.clone())
+                .bind(team_id.clone())
+                .bind(player_id.clone())
+                .bind(number.clone())
+                .bind(player.position.clone())
+                .bind(statistics.passing_completions.clone() as i32)
+                .bind(statistics.throwing_completions.clone() as i32)
+                .bind(statistics.deflections.clone() as i32)
+                .bind(statistics.interceptions.clone() as i32)
+                .bind(statistics.casualties.clone() as i32)
+                .bind(statistics.touchdowns.clone() as i32)
+                .bind(statistics.most_valuable_player.clone() as i32)
+                .bind(statistics.star_player_points.clone() as i32)
                 .execute(&mut *transaction)
                 .await?;
             }
-        }
-    }
-
-    sqlx::query(
-        "DELETE
-            FROM bb_games_teams_players
-            USING bb_games
-            WHERE bb_games.id = bb_games_teams_players.game_id
-            AND bb_games.id = $1
-            AND (bb_games.created_by = $2 OR bb_games.first_coach_id = $2 OR bb_games.second_coach_id = $2)",
-    )
-        .bind(game.id.clone())
-        .bind(profile.id.unwrap_or(-1).clone())
-        .execute(&mut *transaction)
-        .await?;
-
-    for (team_id, team_players) in vec![
-        (game.first_team.id, game.playing_players().0),
-        (game.second_team.id, game.playing_players().1),
-    ] {
-        for (number, player) in team_players {
-            let statistics = game.player_statistics(team_id.clone(), player.id.clone());
-
-            let player_id = if player.is_star_player || player.is_journeyman {
-                None
-            } else {
-                Some(player.id)
-            };
-
-            sqlx::query(
-                "INSERT INTO bb_games_teams_players (
-                        game_id,
-                        team_id,
-                        player_id,
-                        player_number,
-                        player_position,
-                        passing_completions,
-                        throwing_completions,
-                        deflections,
-                        interceptions,
-                        casualties,
-                        touchdowns,
-                        most_valuable_player,
-                        star_player_points)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)",
-            )
-            .bind(game.id.clone())
-            .bind(team_id.clone())
-            .bind(player_id.clone())
-            .bind(number.clone())
-            .bind(player.position.clone())
-            .bind(statistics.passing_completions.clone() as i32)
-            .bind(statistics.throwing_completions.clone() as i32)
-            .bind(statistics.deflections.clone() as i32)
-            .bind(statistics.interceptions.clone() as i32)
-            .bind(statistics.casualties.clone() as i32)
-            .bind(statistics.touchdowns.clone() as i32)
-            .bind(statistics.most_valuable_player.clone() as i32)
-            .bind(statistics.star_player_points.clone() as i32)
-            .execute(&mut *transaction)
-            .await?;
         }
     }
 
@@ -768,8 +805,11 @@ pub async fn delete(state: &AppState, profile: &User, game_id: i32) -> Result<()
     let mut transaction = state.db.begin().await?;
 
     for _ in 0..game.events.len() {
-        game.cancel_last_event()?;
-        update_after_event(state, profile, &game).await?;
+        let cancelled_event = game.cancel_last_event()?;
+
+        if let Some(event) = cancelled_event {
+            update_after_event(state, profile, &game, &event).await?;
+        }
     }
 
     sqlx::query(

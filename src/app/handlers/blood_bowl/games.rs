@@ -9,6 +9,7 @@ use axum::response::{IntoResponse, Redirect, Response};
 use axum::routing::{get, post};
 use axum::{Form, Router};
 use blood_bowl_rs::actions::Success;
+use blood_bowl_rs::events::GameEvent;
 use blood_bowl_rs::games::Game;
 use blood_bowl_rs::injuries::Injury;
 use blood_bowl_rs::prayers::PrayerToNuffle;
@@ -114,6 +115,9 @@ pub async fn update(
         .await
         .map_err(|err| redirect_when_update_ko(&app_state, &profile, None, err.to_string()))?;
 
+    let mut event: Option<GameEvent> = None;
+
+    // Scheduling
     if let Some(game_date) = form.game_at {
         game.game_at =
             NaiveDateTime::parse_from_str(&*game_date, "%Y-%m-%dT%H:%M").map_err(|err| {
@@ -125,10 +129,9 @@ pub async fn update(
             .map_err(|err| {
                 redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
             })?;
-
-        return Ok(redirect_ok);
     }
 
+    // Game start
     if let Some(game_date) = form.started_at {
         let game_start =
             NaiveDateTime::parse_from_str(&*game_date, "%Y-%m-%dT%H:%M").map_err(|err| {
@@ -143,16 +146,16 @@ pub async fn update(
             .map_err(|err| {
                 redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
             })?;
-
-        return Ok(redirect_ok);
     }
 
+    // Cancel event
     if form.cancel_last_event.is_some() {
-        let _ = game.cancel_last_event().map_err(|err| {
+        event = game.cancel_last_event().map_err(|err| {
             redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
         })?;
     }
 
+    // Fans
     if let (Some(first_fan_factor), Some(second_fan_factor)) =
         (form.first_team_fan_factor, form.second_team_fan_factor)
     {
@@ -185,8 +188,13 @@ pub async fn update(
                     redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
                 })?;
         }
+
+        if let Some(last_event) = game.events.last() {
+            event = Some(last_event.clone());
+        }
     }
 
+    // Weather
     if let Some(weather) = form.weather {
         if form.auto.is_some() {
             game.generate_weather().map_err(|err| {
@@ -197,14 +205,24 @@ pub async fn update(
                 redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
             })?;
         }
+
+        if let Some(last_event) = game.events.last() {
+            event = Some(last_event.clone());
+        }
     }
 
+    // Journey men
     if form.generate_journeymen.is_some() && !game.journeymen_ok() {
         let _ = game.generate_journeymen().map_err(|err| {
             redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
         })?;
+
+        if let Some(last_event) = game.events.last() {
+            event = Some(last_event.clone());
+        }
     }
 
+    // Inducements
     if let Some(inducement) = form.first_team_inducement {
         let inducement = serde_json::from_str(&inducement).map_err(|err| {
             redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
@@ -214,6 +232,10 @@ pub async fn update(
             .map_err(|err| {
                 redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
             })?;
+
+        if let Some(last_event) = game.events.last() {
+            event = Some(last_event.clone());
+        }
     }
 
     if let Some(inducement) = form.second_team_inducement {
@@ -225,8 +247,13 @@ pub async fn update(
             .map_err(|err| {
                 redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
             })?;
+
+        if let Some(last_event) = game.events.last() {
+            event = Some(last_event.clone());
+        }
     }
 
+    // Prayers
     if let Some(mut prayer) = form.first_team_prayer {
         if form.auto.is_some() {
             prayer = PrayerToNuffle::roll();
@@ -236,6 +263,10 @@ pub async fn update(
             .map_err(|err| {
                 redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
             })?;
+
+        if let Some(last_event) = game.events.last() {
+            event = Some(last_event.clone());
+        }
     }
 
     if let Some(mut prayer) = form.second_team_prayer {
@@ -247,8 +278,13 @@ pub async fn update(
             .map_err(|err| {
                 redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
             })?;
+
+        if let Some(last_event) = game.events.last() {
+            event = Some(last_event.clone());
+        }
     }
 
+    // Toss
     if let Some(toss_winner) = form.toss_winner {
         if form.auto.is_some() {
             game.generate_toss_winner().map_err(|err| {
@@ -259,14 +295,23 @@ pub async fn update(
                 redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
             })?;
         }
+
+        if let Some(last_event) = game.events.last() {
+            event = Some(last_event.clone());
+        }
     }
 
     if let Some(kicking_team) = form.kicking_team {
         game.push_kicking_team(kicking_team).map_err(|err| {
             redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
         })?;
+
+        if let Some(last_event) = game.events.last() {
+            event = Some(last_event.clone());
+        }
     }
 
+    // Injuries
     if let (Some(team_id), Some(player_id), Some(injury)) =
         (form.team_id, form.player_id, form.injury)
     {
@@ -274,8 +319,13 @@ pub async fn update(
             .map_err(|err| {
                 redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
             })?;
+
+        if let Some(last_event) = game.events.last() {
+            event = Some(last_event.clone());
+        }
     }
 
+    // Successes
     if let (Some(team_id), Some(player_id), Some(success)) =
         (form.team_id, form.player_id, form.success)
     {
@@ -283,14 +333,24 @@ pub async fn update(
             .map_err(|err| {
                 redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
             })?;
+
+        if let Some(last_event) = game.events.last() {
+            event = Some(last_event.clone());
+        }
     }
 
+    // Game end
     if form.end_game.is_some() {
         game.end_game().map_err(|err| {
             redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
         })?;
+
+        if let Some(last_event) = game.events.last() {
+            event = Some(last_event.clone());
+        }
     }
 
+    // Winnings
     if form.first_team_winnings.is_some() && form.second_team_winnings.is_some() {
         if form.auto.is_some() {
             game.generate_winnings().map_err(|err| {
@@ -325,10 +385,15 @@ pub async fn update(
                     })?;
             }
         }
+
+        if let Some(last_event) = game.events.last() {
+            event = Some(last_event.clone());
+        }
     }
 
-    if game.started {
-        games::update_after_event(&app_state, &profile, &game)
+    // Update after event if some
+    if let Some(event) = event {
+        games::update_after_event(&app_state, &profile, &game, &event)
             .await
             .map_err(|err| {
                 redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
