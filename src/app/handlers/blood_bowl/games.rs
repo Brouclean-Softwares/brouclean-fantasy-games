@@ -84,6 +84,7 @@ pub struct GameForm {
     pub second_team_mvp: Option<i32>,
     pub first_team_expensive_mistakes: Option<String>,
     pub second_team_expensive_mistakes: Option<String>,
+    pub close_game: Option<String>,
 }
 
 fn redirect_when_update_ko(
@@ -503,6 +504,17 @@ pub async fn update(
                     redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
                 })?;
         }
+
+        if let Some(last_event) = game.events.last() {
+            event = Some(last_event.clone());
+        }
+    }
+
+    // Game closure
+    if form.close_game.is_some() {
+        game.close_game().map_err(|err| {
+            redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+        })?;
 
         if let Some(last_event) = game.events.last() {
             event = Some(last_event.clone());

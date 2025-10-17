@@ -15,7 +15,6 @@ struct PlayerDetail {
     name: String,
     position: Position,
     number: i32,
-    star_player_points: i32,
 }
 
 pub async fn select_under_contract_for_team(
@@ -29,7 +28,6 @@ pub async fn select_under_contract_for_team(
                     bb_players.version,
                     bb_players.name,
                     bb_players.position,
-                    bb_players.star_player_points,
                     bb_teams_players.number
             FROM bb_players
             INNER JOIN bb_teams_players
@@ -46,6 +44,7 @@ pub async fn select_under_contract_for_team(
 
     for player_detail in players_detail {
         let player_injuries = select_player_injuries(state, player_detail.id).await?;
+        let star_player_points = select_player_star_player_points(state, player_detail.id).await?;
 
         players.push((
             player_detail.number,
@@ -54,7 +53,7 @@ pub async fn select_under_contract_for_team(
                 version: player_detail.version,
                 position: player_detail.position,
                 name: player_detail.name,
-                star_player_points: player_detail.star_player_points,
+                star_player_points,
                 is_journeyman: false,
                 is_star_player: false,
                 miss_next_game: PlayerInjury::extract_miss_next_game(&player_injuries),
@@ -310,4 +309,36 @@ async fn select_player_injuries(
     .await?;
 
     Ok(injuries)
+}
+
+#[derive(Deserialize, sqlx::FromRow, Clone)]
+struct Points {
+    points: Option<i64>,
+}
+
+async fn select_player_star_player_points(
+    state: &AppState,
+    player_id: i32,
+) -> Result<i32, AppError> {
+    tracing::debug!("select_player_star_player_points with id={}", player_id);
+
+    let points_won: Points = sqlx::query_as(
+        "SELECT SUM(star_player_points) as points
+            FROM bb_games_teams_players
+            WHERE player_id = $1",
+    )
+    .bind(player_id.clone())
+    .fetch_one(&state.db)
+    .await?;
+
+    let points_spent: Points = sqlx::query_as(
+        "SELECT SUM(star_player_points) as points
+            FROM bb_players_advancements
+            WHERE player_id = $1",
+    )
+    .bind(player_id.clone())
+    .fetch_one(&state.db)
+    .await?;
+
+    Ok((points_won.points.unwrap_or(0) - points_spent.points.unwrap_or(0)) as i32)
 }

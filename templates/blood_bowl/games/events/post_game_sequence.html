@@ -211,5 +211,36 @@
             </button>
         </form>
     </div>
+
+    {% else %}
+    <div class="uk-margin-medium-top">
+        <form id="close_form" method="post" autocomplete="off">
+            <input name="game_id"
+                   type="hidden"
+                   value="{{ game.id }}">
+
+            <input name="close_game"
+                   type="hidden"
+                   value="true">
+
+            <button class="uk-button uk-button-primary"
+                    type="button"
+                    uk-toggle="target: #modal-close">Clôturer</button>
+
+            <div id="modal-close" uk-modal>
+                <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                    <h2 class="uk-modal-title">Clôture du match en cours</h2>
+                    <p>Vous ne pourrez plus modifier le match après sa clôture. Confirmez-vous que tout a bien été rempli ?</p>
+                    <p class="uk-text-right">
+                        <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                        <button class="uk-button uk-button-primary"
+                                onclick="document.getElementById('close_form').submit()">
+                            Confirmer
+                        </button>
+                    </p>
+                </div>
+            </div>
+        </form>
+    </div>
     {% endif %}
 </div>

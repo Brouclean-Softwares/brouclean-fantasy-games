@@ -204,19 +204,19 @@
         <dl class="uk-description-list uk-text-left">
             <dt>
                 <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
-                <span class="uk-hidden@m" uk-tooltip="title: Valeur d'Equipe Actuelle"> VAE</span>
-                <span class="uk-visible@m"> Valeur d'Equipe Actuelle</span>
+                <span class="uk-hidden@m" uk-tooltip="title: Valeur d'Equipe Actuelle Recalculée"> VEAR</span>
+                <span class="uk-visible@m"> Valeur d'équipe actuelle recalculée</span>
             </dt>
-            <dd>{{ game.first_team.current_value()? / 1000 }}k</dd>
+            <dd>{{ first_team_recalculated_value / 1000 }}k</dd>
         </dl>
 
         <dl class="uk-description-list uk-text-right">
             <dt>
                 <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
-                <span class="uk-hidden@m" uk-tooltip="title: Valeur d'Equipe Actuelle"> VAE</span>
-                <span class="uk-visible@m"> Valeur d'Equipe Actuelle</span>
+                <span class="uk-hidden@m" uk-tooltip="title: Valeur d'Equipe Actuelle Recalculée"> VEAR</span>
+                <span class="uk-visible@m"> Valeur d'équipe actuelle recalculée</span>
             </dt>
-            <dd>{{ game.second_team.current_value()? / 1000 }}k</dd>
+            <dd>{{ second_team_recalculated_value / 1000 }}k</dd>
         </dl>
     </div>
 

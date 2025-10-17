@@ -22,6 +22,8 @@ pub struct PreGameSequence {
     second_team_money: TreasuryAndPettyCash,
     first_team_buyable_inducements: Vec<Inducement>,
     second_team_buyable_inducements: Vec<Inducement>,
+    first_team_recalculated_value: u32,
+    second_team_recalculated_value: u32,
 }
 
 impl PreGameSequence {
@@ -31,12 +33,17 @@ impl PreGameSequence {
         let (first_team_buyable_inducements, second_team_buyable_inducements) =
             game.inducements_buyable_by_teams()?;
 
+        let (first_team_recalculated_value, second_team_recalculated_value) =
+            game.recalculated_current_team_values()?;
+
         Ok(Self {
             game: game.clone(),
             first_team_money,
             second_team_money,
             first_team_buyable_inducements,
             second_team_buyable_inducements,
+            first_team_recalculated_value,
+            second_team_recalculated_value,
         })
     }
 }

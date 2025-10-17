@@ -106,6 +106,12 @@ impl GameRow {
 
             game.first_team.players = first_team_players;
             game.second_team.players = second_team_players;
+        } else if game.closed {
+            let (first_team_players, second_team_players) =
+                select_playing_players_for_game(state, &game).await?;
+
+            game.first_team.players = first_team_players;
+            game.second_team.players = second_team_players;
         }
 
         Ok(game)
@@ -340,6 +346,73 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<Game, AppError> {
     let game = game_row.into_game(state).await?;
 
     Ok(game)
+}
+
+#[derive(Deserialize, sqlx::FromRow, Clone)]
+struct GameTeamPlayer {
+    team_id: i32,
+    player_id: Option<i32>,
+    player_id_in_game: i32,
+    player_number: i32,
+    player_position: Position,
+    name: Option<String>,
+}
+
+impl GameTeamPlayer {
+    fn into_player(self, game: &Game) -> (i32, Player) {
+        (
+            self.player_number,
+            Player {
+                id: self.player_id.unwrap_or(self.player_id_in_game),
+                version: game.version.clone(),
+                position: self.player_position,
+                name: self.name.unwrap_or("".to_string()),
+                star_player_points: 0,
+                is_journeyman: false,
+                is_star_player: false,
+                miss_next_game: false,
+                advancements: vec![],
+                injuries: vec![],
+            },
+        )
+    }
+}
+
+pub async fn select_playing_players_for_game(
+    state: &AppState,
+    game: &Game,
+) -> Result<(Vec<(i32, Player)>, Vec<(i32, Player)>), AppError> {
+    tracing::debug!("select_playing_players_for_game with game_id={}", game.id);
+
+    let game_teams_players: Vec<GameTeamPlayer> = sqlx::query_as(
+        "SELECT bb_games_teams_players.team_id,
+                    bb_games_teams_players.player_id,
+                    bb_games_teams_players.player_id_in_game,
+                    bb_games_teams_players.player_number,
+                    bb_games_teams_players.player_position,
+                    bb_players.name
+            FROM bb_games_teams_players
+            LEFT JOIN bb_players
+            ON bb_players.id = bb_games_teams_players.player_id
+            WHERE bb_games_teams_players.game_id = $1
+            ORDER BY bb_games_teams_players.player_number",
+    )
+    .bind(game.id.clone())
+    .fetch_all(&state.db)
+    .await?;
+
+    let mut first_team_players: Vec<(i32, Player)> = vec![];
+    let mut second_team_players: Vec<(i32, Player)> = vec![];
+
+    for game_team_player in game_teams_players {
+        if game_team_player.team_id.eq(&game.first_team.id) {
+            first_team_players.push(game_team_player.into_player(&game));
+        } else {
+            second_team_players.push(game_team_player.into_player(&game));
+        }
+    }
+
+    Ok((first_team_players, second_team_players))
 }
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
@@ -636,6 +709,7 @@ pub async fn update_after_event(
         GameEvent::Winnings { .. } => true,
         GameEvent::DedicatedFansUpdate { .. } => true,
         GameEvent::ExpensiveMistakes { .. } => true,
+        GameEvent::GameClosure { .. } => false,
     };
 
     if need_teams_update {
@@ -679,6 +753,7 @@ pub async fn update_after_event(
         GameEvent::Winnings { .. } => false,
         GameEvent::DedicatedFansUpdate { .. } => false,
         GameEvent::ExpensiveMistakes { .. } => false,
+        GameEvent::GameClosure { .. } => false,
     };
 
     if need_players_update {
@@ -740,7 +815,7 @@ pub async fn update_after_event(
                 let player_id = if player.is_star_player || player.is_journeyman {
                     None
                 } else {
-                    Some(player.id)
+                    Some(player.id.clone())
                 };
 
                 sqlx::query(
@@ -748,6 +823,7 @@ pub async fn update_after_event(
                             game_id,
                             team_id,
                             player_id,
+                            player_id_in_game,
                             player_number,
                             player_position,
                             passing_completions,
@@ -758,11 +834,12 @@ pub async fn update_after_event(
                             touchdowns,
                             most_valuable_player,
                             star_player_points)
-                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)",
+                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)",
                 )
                 .bind(game.id.clone())
                 .bind(team_id.clone())
                 .bind(player_id.clone())
+                .bind(player.id.clone())
                 .bind(number.clone())
                 .bind(player.position.clone())
                 .bind(statistics.passing_completions.clone() as i32)
@@ -775,20 +852,22 @@ pub async fn update_after_event(
                 .bind(statistics.star_player_points.clone() as i32)
                 .execute(&mut *transaction)
                 .await?;
-
-                if let Some(id) = player_id {
-                    sqlx::query(
-                        "UPDATE bb_players
-                            SET star_player_points = $2
-                            WHERE id = $1",
-                    )
-                    .bind(id.clone())
-                    .bind(player.star_player_points.clone())
-                    .execute(&mut *transaction)
-                    .await?;
-                }
             }
         }
+    }
+
+    if matches!(event, GameEvent::GameClosure) {
+        sqlx::query(
+            "UPDATE bb_games
+            SET closed_at = CURRENT_TIMESTAMP,
+                playing_players = NULL
+            WHERE id = $1
+            AND (created_by = $2 OR first_coach_id = $2 OR second_coach_id = $2)",
+        )
+        .bind(game.id.clone())
+        .bind(profile.id.unwrap_or(-1).clone())
+        .execute(&mut *transaction)
+        .await?;
     }
 
     transaction.commit().await?;

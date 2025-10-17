@@ -29,7 +29,7 @@
         </form>
     </div>
 
-    {% when GameStatus::PostGameSequence %}
+    {% when GameStatus::PostGameSequence | GameStatus::WaitingForValidation %}
     {{ post_game_sequence|escape("none") }}
 
     {% else %}

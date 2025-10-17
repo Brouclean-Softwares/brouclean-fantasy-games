@@ -25,6 +25,21 @@
 
 
 
+        {% when GameEvent::Journeyman { team_id: team_id } %}
+        {% if game.first_team.id.eq(team_id.into()) %}
+        <p class="uk-text-left">
+            <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
+            <span>Ajout de journalier</span>
+        </p>
+        {% else %}
+        <p class="uk-text-right">
+            <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
+            <span>Ajout de journalier</span>
+        </p>
+        {% endif %}
+
+
+
         {% when GameEvent::BuyInducement { team_id: team_id, inducement: inducement, .. } %}
         {% if game.first_team.id.eq(team_id.into()) %}
         <p class="uk-text-left">
@@ -195,6 +210,13 @@
             {% endif %}
         </p>
         {% endif %}
+
+
+
+        {% when GameEvent::GameClosure %}
+        <h4 class="uk-heading-line uk-text-center uk-margin-large-top">
+            <span>Fin de la séquence d'après match</span>
+        </h4>
 
 
 
