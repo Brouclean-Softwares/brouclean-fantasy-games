@@ -169,6 +169,7 @@
                             <th>Compétences & Traits</th>
                             <th uk-tooltip="title: Points de Star Player">PSP</th>
                             <th>Blessures</th>
+                            <th uk-tooltip="title: Nombre des Blessures Persistantes">BP</th>
                             <th uk-tooltip="title: Rate le Prochain Match">RPM</th>
                             <th>Valeur</th>
                         </tr>
@@ -258,6 +259,10 @@
                                 {% endif %}
                             </td>
                             <td>{{ player.injuries_names("fr")? }}</td>
+                            <td>
+                                {% if player.remaining_injuries_number > 0 %}
+                                {{ player.remaining_injuries_number }}
+                                {% endif %}</td>
                             <td>
                                 {% if player.miss_next_game %}
                                 x

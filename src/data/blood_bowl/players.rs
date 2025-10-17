@@ -58,7 +58,10 @@ pub async fn select_under_contract_for_team(
                 is_star_player: false,
                 miss_next_game: PlayerInjury::extract_miss_next_game(&player_injuries),
                 advancements: vec![],
-                injuries: PlayerInjury::extract_remaining_injuries(&player_injuries),
+                injuries: PlayerInjury::extract_current_injuries(&player_injuries),
+                remaining_injuries_number: PlayerInjury::extract_remaining_injuries_number(
+                    &player_injuries,
+                ),
             },
         ));
     }
@@ -256,8 +259,8 @@ impl PlayerInjury {
             > 0
     }
 
-    fn extract_remaining_injuries(player_injuries: &Vec<Self>) -> Vec<Injury> {
-        let mut remaining_injuries = vec![];
+    fn extract_current_injuries(player_injuries: &Vec<Self>) -> Vec<Injury> {
+        let mut injuries = vec![];
 
         for player_injury in player_injuries.iter() {
             match (
@@ -271,7 +274,7 @@ impl PlayerInjury {
                 | (Injury::BrokenArm, _)
                 | (Injury::NeckInjury, _)
                 | (Injury::DislocatedShoulder, _)
-                | (Injury::Dead, _) => remaining_injuries.push(player_injury.injury.clone()),
+                | (Injury::Dead, _) => injuries.push(player_injury.injury.clone()),
 
                 (Injury::Stunned, _)
                 | (Injury::KO, _)
@@ -281,7 +284,14 @@ impl PlayerInjury {
             };
         }
 
-        remaining_injuries
+        injuries
+    }
+
+    fn extract_remaining_injuries_number(player_injuries: &Vec<Self>) -> usize {
+        player_injuries
+            .iter()
+            .filter(|&player_injury| matches!(player_injury.injury, Injury::SeriousInjury))
+            .count()
     }
 }
 

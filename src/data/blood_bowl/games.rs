@@ -373,6 +373,7 @@ impl GameTeamPlayer {
                 miss_next_game: false,
                 advancements: vec![],
                 injuries: vec![],
+                remaining_injuries_number: 0,
             },
         )
     }
