@@ -172,6 +172,10 @@
                             <th uk-tooltip="title: Rate le Prochain Match">RPM</th>
                             <th uk-tooltip="title: Nombre de Blessures Persistantes">BP</th>
                             <th>Valeur</th>
+
+                            {% if editable %}
+                            <th></th>
+                            {% endif %}
                         </tr>
                         </thead>
 
@@ -270,6 +274,34 @@
                                 {% endif %}
                             </td>
                             <td>{{ player.value(team.roster)? / 1000 }}k</td>
+
+                            {% if editable %}
+                            <td>
+                                <form id="buyout_player_form-{{ player.id }}" method="post" autocomplete="off">
+                                    <input name="player_id_to_buyout" type="hidden" value="{{ player.id }}">
+
+                                    <button class="uk-button uk-button-link uk-margin-left"
+                                            type="button"
+                                            uk-toggle="target: #modal-buyout-player-{{ player.id }}">
+                                        <span uk-icon="icon: minus-circle"></span>
+                                    </button>
+
+                                    <div id="modal-buyout-player-{{ player.id }}" uk-modal>
+                                        <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                                            <h2 class="uk-modal-title">Renvoi de #{{ number }} {{ player.name }} - {{ player.position.name("fr") }}</h2>
+                                            <p>Vous êtes sur le point de vous séparer du joueur. Confirmez-vous la fin de son contrat ?</p>
+                                            <p class="uk-text-right">
+                                                <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                                                <button class="uk-button uk-button-primary"
+                                                        onclick="document.getElementById('buyout_player_form-{{ player.id }}').submit()">
+                                                    Confirmer
+                                                </button>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </form>
+                            </td>
+                            {% endif %}
                         </tr>
 
                         {% endfor %}

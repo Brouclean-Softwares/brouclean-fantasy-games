@@ -338,12 +338,45 @@ pub async fn update_name(
     if let Some(connected_user_id) = connected_user.id {
         sqlx::query(
             "UPDATE bb_teams
-        SET name = $1,
-            last_updated = CURRENT_TIMESTAMP
-        WHERE id = $2
-        AND coach_id = $3",
+            SET name = $1,
+                last_updated = CURRENT_TIMESTAMP
+            WHERE id = $2
+            AND coach_id = $3",
         )
         .bind(name.clone())
+        .bind(team_id.clone())
+        .bind(connected_user_id.clone())
+        .execute(&state.db)
+        .await?;
+    }
+
+    Ok(())
+}
+
+pub async fn buyout_player_for_team(
+    state: &AppState,
+    connected_user: &User,
+    team_id: i32,
+    player_id: i32,
+) -> Result<(), AppError> {
+    tracing::debug!(
+        "buyout_player by user={:?} for team_id={} and player_id={}",
+        connected_user,
+        team_id,
+        player_id
+    );
+
+    if let Some(connected_user_id) = connected_user.id {
+        sqlx::query(
+            "UPDATE bb_teams_players
+            SET contract_end = CURRENT_TIMESTAMP
+            FROM bb_teams
+            WHERE bb_teams_players.player_id = $1
+            AND bb_teams_players.team_id = $2
+            AND bb_teams.id = bb_teams_players.team_id
+            AND bb_teams.coach_id = $3",
+        )
+        .bind(player_id.clone())
         .bind(team_id.clone())
         .bind(connected_user_id.clone())
         .execute(&state.db)

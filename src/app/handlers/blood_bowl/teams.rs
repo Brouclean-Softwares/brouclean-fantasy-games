@@ -235,6 +235,7 @@ pub struct TeamForm {
     pub player_number: Option<i32>,
     pub staff_to_buy: Option<Staff>,
     pub position_to_buy: Option<Position>,
+    pub player_id_to_buyout: Option<i32>,
 }
 
 pub async fn update(
@@ -243,100 +244,114 @@ pub async fn update(
     Query(params): Query<TeamQueryParams>,
     Form(form): Form<TeamForm>,
 ) -> Result<Redirect, Redirect> {
-    match (
-        profile,
-        form.team_name,
-        form.player_id,
-        form.player_name,
-        form.player_number,
-        form.staff_to_buy,
-        form.position_to_buy,
-    ) {
-        (Some(profile), Some(team_name), _, _, _, _, _) => {
-            teams::update_name(&app_state, &profile, &params.id, &team_name)
-                .await
-                .or_else(|app_error| {
-                    Err(Redirect::to(&format!(
-                        "./team?id={}&message={}&edit={}&focus=team_name",
-                        params.id,
-                        app_error,
-                        params.edit.unwrap_or(false),
-                    )))
-                })?;
+    // Team name
+    if let (Some(profile), Some(team_name)) = (profile.clone(), form.team_name) {
+        teams::update_name(&app_state, &profile, &params.id, &team_name)
+            .await
+            .or_else(|app_error| {
+                Err(Redirect::to(&format!(
+                    "./team?id={}&message={}&edit={}&focus=team_name",
+                    params.id,
+                    app_error,
+                    params.edit.unwrap_or(false),
+                )))
+            })?;
 
-            Ok(Redirect::to(&format!("./team?id={}", params.id,)))
-        }
-
-        (Some(profile), _, Some(player_id), Some(player_name), _, _, _) => {
-            players::update_name(&app_state, &profile, &params.id, &player_id, &player_name)
-                .await
-                .or_else(|app_error| {
-                    Err(Redirect::to(&format!(
-                        "./team?id={}&message={}&edit={}&focus=player_{}_name",
-                        params.id,
-                        app_error,
-                        params.edit.unwrap_or(false),
-                        player_id,
-                    )))
-                })?;
-
-            Ok(Redirect::to(&format!(
-                "./team?id={}&edit={}&focus=player_{}_name",
-                params.id,
-                params.edit.unwrap_or(false),
-                player_id,
-            )))
-        }
-
-        (Some(profile), _, Some(player_id), _, Some(player_number), _, _) => {
-            players::update_number(&app_state, &profile, &params.id, &player_id, &player_number)
-                .await
-                .or_else(|app_error| {
-                    Err(Redirect::to(&format!(
-                        "./team?id={}&message={}&edit={}&focus=player_{}_number",
-                        params.id,
-                        app_error,
-                        params.edit.unwrap_or(false),
-                        player_id,
-                    )))
-                })?;
-
-            Ok(Redirect::to(&format!(
-                "./team?id={}&edit={}&focus=player_{}_number",
-                params.id,
-                params.edit.unwrap_or(false),
-                player_id,
-            )))
-        }
-
-        (Some(profile), _, _, _, _, Some(staff_to_buy), _) => {
-            staff::buy_staff_for_team(&app_state, &profile, params.id, staff_to_buy)
-                .await
-                .or_else(|app_error| {
-                    Err(Redirect::to(&format!(
-                        "./team?id={}&message={}",
-                        params.id, app_error,
-                    )))
-                })?;
-
-            Ok(Redirect::to(&format!("./team?id={}", params.id,)))
-        }
-
-        (Some(profile), _, _, _, _, _, Some(position_to_buy)) => {
-            players::buy_position_for_team(&app_state, &profile, params.id, position_to_buy)
-                .await
-                .or_else(|app_error| {
-                    Err(Redirect::to(&format!(
-                        "./team?id={}&message={}",
-                        params.id, app_error,
-                    )))
-                })?;
-
-            Ok(Redirect::to(&format!("./team?id={}", params.id,)))
-        }
-
-        _ => Ok(Redirect::to(&format!("./team?id={}", params.id,))),
+        return Ok(Redirect::to(&format!("./team?id={}", params.id,)));
     }
+
+    // Player name
+    if let (Some(profile), Some(player_id), Some(player_name)) =
+        (profile.clone(), form.player_id, form.player_name)
+    {
+        players::update_name(&app_state, &profile, &params.id, &player_id, &player_name)
+            .await
+            .or_else(|app_error| {
+                Err(Redirect::to(&format!(
+                    "./team?id={}&message={}&edit={}&focus=player_{}_name",
+                    params.id,
+                    app_error,
+                    params.edit.unwrap_or(false),
+                    player_id,
+                )))
+            })?;
+
+        return Ok(Redirect::to(&format!(
+            "./team?id={}&edit={}&focus=player_{}_name",
+            params.id,
+            params.edit.unwrap_or(false),
+            player_id,
+        )));
+    }
+
+    // Player number
+    if let (Some(profile), Some(player_id), Some(player_number)) =
+        (profile.clone(), form.player_id, form.player_number)
+    {
+        players::update_number(&app_state, &profile, &params.id, &player_id, &player_number)
+            .await
+            .or_else(|app_error| {
+                Err(Redirect::to(&format!(
+                    "./team?id={}&message={}&edit={}&focus=player_{}_number",
+                    params.id,
+                    app_error,
+                    params.edit.unwrap_or(false),
+                    player_id,
+                )))
+            })?;
+
+        return Ok(Redirect::to(&format!(
+            "./team?id={}&edit={}&focus=player_{}_number",
+            params.id,
+            params.edit.unwrap_or(false),
+            player_id,
+        )));
+    }
+
+    // Buy Staff
+    if let (Some(profile), Some(staff_to_buy)) = (profile.clone(), form.staff_to_buy) {
+        staff::buy_staff_for_team(&app_state, &profile, params.id, staff_to_buy)
+            .await
+            .or_else(|app_error| {
+                Err(Redirect::to(&format!(
+                    "./team?id={}&message={}",
+                    params.id, app_error,
+                )))
+            })?;
+
+        return Ok(Redirect::to(&format!("./team?id={}", params.id,)));
+    }
+
+    // Buy Player
+    if let (Some(profile), Some(position_to_buy)) = (profile.clone(), form.position_to_buy) {
+        players::buy_position_for_team(&app_state, &profile, params.id, position_to_buy)
+            .await
+            .or_else(|app_error| {
+                Err(Redirect::to(&format!(
+                    "./team?id={}&message={}",
+                    params.id, app_error,
+                )))
+            })?;
+
+        return Ok(Redirect::to(&format!("./team?id={}", params.id,)));
+    }
+
+    // Buyout Player
+    if let (Some(profile), Some(player_id_to_buyout)) = (profile.clone(), form.player_id_to_buyout)
+    {
+        teams::buyout_player_for_team(&app_state, &profile, params.id, player_id_to_buyout)
+            .await
+            .or_else(|app_error| {
+                Err(Redirect::to(&format!(
+                    "./team?id={}&message={}",
+                    params.id, app_error,
+                )))
+            })?;
+
+        return Ok(Redirect::to(&format!("./team?id={}", params.id,)));
+    }
+
+    Ok(Redirect::to(&format!("./team?id={}", params.id,)))
 }
 
 #[derive(Deserialize)]
