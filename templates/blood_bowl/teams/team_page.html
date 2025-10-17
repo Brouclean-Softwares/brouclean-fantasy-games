@@ -167,10 +167,10 @@
                             <th uk-tooltip="title: Capacité de Passe">CP</th>
                             <th uk-tooltip="title: Armure">AR</th>
                             <th>Compétences & Traits</th>
-                            <th uk-tooltip="title: Points de Star Player">PSP</th>
+                            <th uk-tooltip="title: Points de Star Player non utilisés">PSP</th>
                             <th>Blessures</th>
-                            <th uk-tooltip="title: Nombre des Blessures Persistantes">BP</th>
                             <th uk-tooltip="title: Rate le Prochain Match">RPM</th>
+                            <th uk-tooltip="title: Nombre de Blessures Persistantes">BP</th>
                             <th>Valeur</th>
                         </tr>
                         </thead>
@@ -260,12 +260,13 @@
                             </td>
                             <td>{{ player.injuries_names("fr")? }}</td>
                             <td>
-                                {% if player.remaining_injuries_number > 0 %}
-                                {{ player.remaining_injuries_number }}
-                                {% endif %}</td>
-                            <td>
                                 {% if player.miss_next_game %}
                                 x
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if player.remaining_injuries_number > 0 %}
+                                {{ player.remaining_injuries_number }}
                                 {% endif %}
                             </td>
                             <td>{{ player.value(team.roster)? / 1000 }}k</td>
