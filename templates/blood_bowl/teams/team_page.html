@@ -115,29 +115,29 @@
                 </h3>
 
                 <dl class="uk-description-list">
-                    {% for (staff, staff_information) in roster_definition.staff_information_sorted_by_name("fr") %}
-                    <dt>{{ staff.name("fr") }} ({{ staff_information.price(team.under_creation.clone()) / 1000 }}k)</dt>
+                    {% for staff_information in roster_definition.staff_information_sorted_by_name("fr") %}
+                    <dt>{{ staff_information.staff.name("fr") }} ({{ staff_information.price(team.under_creation.clone()) / 1000 }}k)</dt>
                     <dd>
-                        <form id="buy_{{ staff.type_name() }}_form" method="post" autocomplete="off">
-                            <input name="staff_to_buy" type="hidden" value="{{ staff.type_name() }}">
+                        <form id="buy_{{ staff_information.staff.type_name() }}_form" method="post" autocomplete="off">
+                            <input name="staff_to_buy" type="hidden" value="{{ staff_information.staff.type_name() }}">
 
-                            <span>{{ team.staff_quantity(staff) }}</span>
+                            <span>{{ team.staff_quantity(staff_information.staff) }}</span>
 
-                            {% if editable && team.can_buy_staff(staff)? %}
+                            {% if editable && team.can_buy_staff(staff_information.staff)? %}
                             <button class="uk-button uk-button-link uk-margin-left"
                                     type="button"
-                                    uk-toggle="target: #modal-{{ staff.type_name() }}">
+                                    uk-toggle="target: #modal-{{ staff_information.staff.type_name() }}">
                                 <span uk-icon="icon: cart"></span>
                             </button>
 
-                            <div id="modal-{{ staff.type_name() }}" uk-modal>
+                            <div id="modal-{{ staff_information.staff.type_name() }}" uk-modal>
                                 <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
-                                    <h2 class="uk-modal-title">Achat de {{ staff.lower_name("fr") }} en cours</h2>
+                                    <h2 class="uk-modal-title">Achat de {{ staff_information.staff.lower_name("fr") }} en cours</h2>
                                     <p>Confirmez-vous l'achat pour {{ staff_information.price(team.under_creation.clone()) / 1000 }}k ?</p>
                                     <p class="uk-text-right">
                                         <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
                                         <button class="uk-button uk-button-primary"
-                                                onclick="document.getElementById('buy_{{ staff.type_name() }}_form').submit()">
+                                                onclick="document.getElementById('buy_{{ staff_information.staff.type_name() }}_form').submit()">
                                             Confirmer
                                         </button>
                                     </p>
