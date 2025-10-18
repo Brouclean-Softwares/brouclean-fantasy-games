@@ -44,7 +44,8 @@ pub async fn select_under_contract_for_team(
 
     for player_detail in players_detail {
         let player_injuries = select_player_injuries(state, player_detail.id).await?;
-        let star_player_points = select_player_star_player_points(state, player_detail.id).await?;
+        let star_player_points =
+            select_remaining_star_player_points(state, player_detail.id).await?;
 
         players.push((
             player_detail.number,
@@ -326,11 +327,11 @@ struct Points {
     points: Option<i64>,
 }
 
-async fn select_player_star_player_points(
+async fn select_remaining_star_player_points(
     state: &AppState,
     player_id: i32,
 ) -> Result<i32, AppError> {
-    tracing::debug!("select_player_star_player_points with id={}", player_id);
+    tracing::debug!("select_remaining_star_player_points with id={}", player_id);
 
     let points_won: Points = sqlx::query_as(
         "SELECT SUM(star_player_points) as points
