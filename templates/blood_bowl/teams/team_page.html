@@ -245,18 +245,12 @@
                             {% endif %}
 
                             <td>{{ player.position.name("fr") }}</td>
-                            <td>{{ player.movement_allowance(team.roster)? }}</td>
-                            <td>{{ player.strength(team.roster)? }}</td>
-                            <td>{{ player.agility(team.roster)? }}+</td>
-
-                            {% if let Some(passing_ability) = player.passing_ability(team.roster)? %}
-                            <td>{{ passing_ability }}+</td>
-                            {% else %}
-                            <td>-</td>
-                            {% endif %}
-
-                            <td>{{ player.armour_value(team.roster)? }}+</td>
-                            <td>{{ player.skills_names(team.roster, "fr")? }}</td>
+                            <td>{{ crate::app::templates::blood_bowl::players::movement_allowance_html(player, team.roster)?|escape("none") }}</td>
+                            <td>{{ crate::app::templates::blood_bowl::players::strength_html(player, team.roster)?|escape("none") }}</td>
+                            <td>{{ crate::app::templates::blood_bowl::players::agility_html(player, team.roster)?|escape("none") }}</td>
+                            <td>{{ crate::app::templates::blood_bowl::players::passing_ability_html(player, team.roster)?|escape("none") }}</td>
+                            <td>{{ crate::app::templates::blood_bowl::players::armour_value_html(player, team.roster)?|escape("none") }}</td>
+                            <td>{{ crate::app::templates::blood_bowl::players::skills_names_html(player, team.roster, "fr")?|escape("none") }}</td>
                             <td>
                                 {% if player.star_player_points > 0 %}
                                 {{ player.star_player_points }}
