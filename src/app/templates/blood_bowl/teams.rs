@@ -69,15 +69,11 @@ pub struct TeamPage {
     navigation_bar: NavigationBar,
     alert_message: Option<AlertMessage>,
     team: Team,
-    games_scheduled: Vec<GameSummary>,
-    game_playing: Option<GameSummary>,
-    games_played: Vec<GameSummary>,
-    roster_definition: RosterDefinition,
-    deletable: bool,
     editable: bool,
     edit_mode: bool,
     focus: Option<String>,
-    positions_buyable: Vec<(Position, u32, bool)>,
+    sheet: TeamSheet,
+    results: TeamResults,
 }
 
 impl TeamPage {
@@ -112,18 +108,48 @@ impl TeamPage {
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
             alert_message,
-            team,
-            games_scheduled,
-            game_playing,
-            games_played,
-            roster_definition,
-            deletable,
+            team: team.clone(),
             editable,
             edit_mode,
-            focus,
-            positions_buyable,
+            focus: focus.clone(),
+            sheet: TeamSheet {
+                team: team.clone(),
+                roster_definition,
+                deletable,
+                editable,
+                edit_mode,
+                positions_buyable,
+            },
+            results: TeamResults {
+                team: team.clone(),
+                editable,
+                games_scheduled,
+                game_playing,
+                games_played,
+            },
         }
     }
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "blood_bowl/teams/team_sheet.html")]
+struct TeamSheet {
+    team: Team,
+    roster_definition: RosterDefinition,
+    deletable: bool,
+    editable: bool,
+    edit_mode: bool,
+    positions_buyable: Vec<(Position, u32, bool)>,
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "blood_bowl/teams/team_results.html")]
+struct TeamResults {
+    team: Team,
+    editable: bool,
+    games_scheduled: Vec<GameSummary>,
+    game_playing: Option<GameSummary>,
+    games_played: Vec<GameSummary>,
 }
 
 #[derive(Template, WebTemplate)]

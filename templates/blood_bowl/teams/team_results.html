@@ -1,0 +1,34 @@
+<div>
+    {% if let Some(game_playing) = game_playing %}
+    <h3 class="uk-heading-divider">
+        Match en cours
+    </h3>
+    {{ GameCard::get(game_playing.clone())|escape("none") }}
+    {% endif %}
+
+    {% if games_scheduled.len() > 0 %}
+    <h3 class="uk-heading-divider">
+        Matchs à venir
+    </h3>
+    <div class="uk-grid-divider uk-child-width-1-1" uk-grid>
+        {% for game in games_scheduled %}
+        {{ GameCard::get(game.clone())|escape("none") }}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if editable && game_playing.is_none() %}
+    <a href="/blood_bowl/games/new?first_team_id={{ team.id }}" class="uk-button uk-button-primary uk-margin-top">
+        Créer un nouveau match
+    </a>
+    {% endif %}
+
+    <h3 class="uk-heading-divider">
+        Matchs passés
+    </h3>
+    <div class="uk-grid-divider uk-child-width-1-1" uk-grid>
+        {% for game in games_played %}
+        {{ GameCard::get(game.clone())|escape("none") }}
+        {% endfor %}
+    </div>
+</div>
