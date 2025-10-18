@@ -1,6 +1,7 @@
 use crate::errors::AppError;
 use blood_bowl_rs::players::Player;
 use blood_bowl_rs::rosters::Roster;
+use blood_bowl_rs::translation::TranslatedName;
 
 pub fn movement_allowance_html(player: &Player, roster: &Roster) -> Result<String, AppError> {
     let value = player.movement_allowance(roster)?;
@@ -67,5 +68,22 @@ pub fn skills_names_html(
     roster: &Roster,
     lang_id: &str,
 ) -> Result<String, AppError> {
-    Ok(player.skills_names(roster, lang_id)?)
+    let initial_values: Vec<String> = player
+        .skills_from_position(roster)?
+        .iter()
+        .map(|skill| skill.name(lang_id))
+        .collect();
+
+    let added_values: Vec<String> = player
+        .added_skills(roster)?
+        .iter()
+        .map(|skill| {
+            format!(
+                "<span class=\"uk-text-bold\">{}</span>",
+                skill.name(lang_id)
+            )
+        })
+        .collect();
+
+    Ok(vec![initial_values, added_values].concat().join(", "))
 }
