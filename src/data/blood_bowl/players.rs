@@ -5,6 +5,7 @@ use crate::AppState;
 use blood_bowl_rs::injuries::Injury;
 use blood_bowl_rs::players::Player;
 use blood_bowl_rs::positions::Position;
+use blood_bowl_rs::rosters::Roster;
 use blood_bowl_rs::versions::Version;
 use serde::Deserialize;
 
@@ -14,6 +15,7 @@ struct PlayerDetail {
     version: Version,
     name: String,
     position: Position,
+    roster: Roster,
     number: i32,
 }
 
@@ -26,6 +28,7 @@ impl PlayerDetail {
             id: self.id,
             version: self.version,
             position: self.position,
+            roster: self.roster,
             name: self.name,
             star_player_points,
             is_journeyman: false,
@@ -53,10 +56,13 @@ pub async fn select_by_id_for_team(
                     bb_players.version,
                     bb_players.name,
                     bb_players.position,
+                    bb_teams.roster,
                     bb_teams_players.number
             FROM bb_players
             INNER JOIN bb_teams_players
             ON bb_players.id = bb_teams_players.player_id
+            INNER JOIN bb_teams
+            ON bb_teams.id = bb_teams_players.team_id
             WHERE bb_teams_players.team_id = $2
             AND bb_teams_players.player_id = $1
             ORDER BY bb_teams_players.number ASC",
@@ -83,10 +89,13 @@ pub async fn select_under_contract_for_team(
                     bb_players.version,
                     bb_players.name,
                     bb_players.position,
+                    bb_teams.roster,
                     bb_teams_players.number
             FROM bb_players
             INNER JOIN bb_teams_players
             ON bb_players.id = bb_teams_players.player_id
+            INNER JOIN bb_teams
+            ON bb_teams.id = bb_teams_players.team_id
             WHERE bb_teams_players.team_id = $1
             AND bb_teams_players.contract_end IS NULL
             ORDER BY bb_teams_players.number ASC",

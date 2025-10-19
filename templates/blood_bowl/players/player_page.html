@@ -63,7 +63,7 @@
                 <dd>{{ team.coach.name }}</dd>
 
                 <dt>Valeur</dt>
-                <dd>{{ player.value(team.roster)? / 1000 }}k</dd>
+                <dd>{{ player.value()? / 1000 }}k</dd>
 
                 <dt>Poste</dt>
                 <dd>{{ player.position.name("fr") }}</dd>
@@ -84,12 +84,12 @@
 
                     <tbody>
                     <tr>
-                        <td>{{ crate::app::templates::blood_bowl::players::movement_allowance_html(player, team.roster)?|escape("none") }}</td>
-                        <td>{{ crate::app::templates::blood_bowl::players::strength_html(player, team.roster)?|escape("none") }}</td>
-                        <td>{{ crate::app::templates::blood_bowl::players::agility_html(player, team.roster)?|escape("none") }}</td>
-                        <td>{{ crate::app::templates::blood_bowl::players::passing_ability_html(player, team.roster)?|escape("none") }}</td>
-                        <td>{{ crate::app::templates::blood_bowl::players::armour_value_html(player, team.roster)?|escape("none") }}</td>
-                        <td>{{ crate::app::templates::blood_bowl::players::skills_names_html(player, team.roster, "fr")?|escape("none") }}</td>
+                        <td>{{ crate::app::templates::blood_bowl::players::movement_allowance_html(player)?|escape("none") }}</td>
+                        <td>{{ crate::app::templates::blood_bowl::players::strength_html(player)?|escape("none") }}</td>
+                        <td>{{ crate::app::templates::blood_bowl::players::agility_html(player)?|escape("none") }}</td>
+                        <td>{{ crate::app::templates::blood_bowl::players::passing_ability_html(player)?|escape("none") }}</td>
+                        <td>{{ crate::app::templates::blood_bowl::players::armour_value_html(player)?|escape("none") }}</td>
+                        <td>{{ crate::app::templates::blood_bowl::players::skills_names_html(player, "fr")?|escape("none") }}</td>
                     </tr>
                     </tbody>
                 </table>

@@ -8,6 +8,7 @@ use blood_bowl_rs::events::GameEvent;
 use blood_bowl_rs::games::Game;
 use blood_bowl_rs::players::Player;
 use blood_bowl_rs::positions::Position;
+use blood_bowl_rs::rosters::Roster;
 use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::versions::Version;
 use chrono::NaiveDateTime;
@@ -357,6 +358,7 @@ struct GameTeamPlayer {
     player_id_in_game: i32,
     player_number: i32,
     player_position: Position,
+    player_roster: Roster,
     name: Option<String>,
 }
 
@@ -368,6 +370,7 @@ impl GameTeamPlayer {
                 id: self.player_id.unwrap_or(self.player_id_in_game),
                 version: game.version.clone(),
                 position: self.player_position,
+                roster: self.player_roster,
                 name: self.name.unwrap_or("".to_string()),
                 star_player_points: 0,
                 is_journeyman: false,
@@ -392,8 +395,11 @@ pub async fn select_playing_players_for_game(
                     bb_games_teams_players.player_id_in_game,
                     bb_games_teams_players.player_number,
                     bb_games_teams_players.player_position,
+                    bb_teams.roster as player_roster,
                     bb_players.name
             FROM bb_games_teams_players
+            INNER JOIN bb_teams
+            ON bb_teams.id = bb_games_teams_players.team_id
             LEFT JOIN bb_players
             ON bb_players.id = bb_games_teams_players.player_id
             WHERE bb_games_teams_players.game_id = $1

@@ -6,7 +6,6 @@ use crate::AppState;
 use askama::Template;
 use askama_web::WebTemplate;
 use blood_bowl_rs::players::Player;
-use blood_bowl_rs::rosters::Roster;
 use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::translation::TranslatedName;
 
@@ -42,9 +41,9 @@ impl PlayerPage {
     }
 }
 
-pub fn movement_allowance_html(player: &Player, roster: &Roster) -> Result<String, AppError> {
-    let value = player.movement_allowance(roster)?;
-    let initial_value = player.movement_allowance_from_position(roster)?;
+pub fn movement_allowance_html(player: &Player) -> Result<String, AppError> {
+    let value = player.movement_allowance()?;
+    let initial_value = player.movement_allowance_from_position()?;
 
     if value == initial_value {
         Ok(value.to_string())
@@ -53,9 +52,9 @@ pub fn movement_allowance_html(player: &Player, roster: &Roster) -> Result<Strin
     }
 }
 
-pub fn strength_html(player: &Player, roster: &Roster) -> Result<String, AppError> {
-    let value = player.strength(roster)?;
-    let initial_value = player.strength_from_position(roster)?;
+pub fn strength_html(player: &Player) -> Result<String, AppError> {
+    let value = player.strength()?;
+    let initial_value = player.strength_from_position()?;
 
     if value == initial_value {
         Ok(value.to_string())
@@ -64,9 +63,9 @@ pub fn strength_html(player: &Player, roster: &Roster) -> Result<String, AppErro
     }
 }
 
-pub fn agility_html(player: &Player, roster: &Roster) -> Result<String, AppError> {
-    let value = player.agility(roster)?;
-    let initial_value = player.agility_from_position(roster)?;
+pub fn agility_html(player: &Player) -> Result<String, AppError> {
+    let value = player.agility()?;
+    let initial_value = player.agility_from_position()?;
 
     if value == initial_value {
         Ok(format!("{}+", value))
@@ -75,9 +74,9 @@ pub fn agility_html(player: &Player, roster: &Roster) -> Result<String, AppError
     }
 }
 
-pub fn passing_ability_html(player: &Player, roster: &Roster) -> Result<String, AppError> {
-    let value = player.passing_ability(roster)?;
-    let initial_value = player.passing_ability_from_position(roster)?;
+pub fn passing_ability_html(player: &Player) -> Result<String, AppError> {
+    let value = player.passing_ability()?;
+    let initial_value = player.passing_ability_from_position()?;
 
     match (value, initial_value) {
         (Some(value), Some(initial_value)) => {
@@ -91,9 +90,9 @@ pub fn passing_ability_html(player: &Player, roster: &Roster) -> Result<String, 
     }
 }
 
-pub fn armour_value_html(player: &Player, roster: &Roster) -> Result<String, AppError> {
-    let value = player.armour_value(roster)?;
-    let initial_value = player.armour_value_from_position(roster)?;
+pub fn armour_value_html(player: &Player) -> Result<String, AppError> {
+    let value = player.armour_value()?;
+    let initial_value = player.armour_value_from_position()?;
 
     if value == initial_value {
         Ok(format!("{}+", value))
@@ -102,19 +101,15 @@ pub fn armour_value_html(player: &Player, roster: &Roster) -> Result<String, App
     }
 }
 
-pub fn skills_names_html(
-    player: &Player,
-    roster: &Roster,
-    lang_id: &str,
-) -> Result<String, AppError> {
+pub fn skills_names_html(player: &Player, lang_id: &str) -> Result<String, AppError> {
     let initial_values: Vec<String> = player
-        .skills_from_position(roster)?
+        .skills_from_position()?
         .iter()
         .map(|skill| skill.name(lang_id))
         .collect();
 
     let added_values: Vec<String> = player
-        .added_skills(roster)?
+        .added_skills()?
         .iter()
         .map(|skill| {
             format!(

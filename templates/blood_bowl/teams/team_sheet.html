@@ -149,32 +149,32 @@
                     </td>
                     <td class="uk-table-link">
                         <a class="uk-link-reset" href="{{ player_url }}">
-                            {{ crate::app::templates::blood_bowl::players::movement_allowance_html(player, team.roster)?|escape("none") }}
+                            {{ crate::app::templates::blood_bowl::players::movement_allowance_html(player)?|escape("none") }}
                         </a>
                     </td>
                     <td class="uk-table-link">
                         <a class="uk-link-reset" href="{{ player_url }}">
-                            {{ crate::app::templates::blood_bowl::players::strength_html(player, team.roster)?|escape("none") }}
+                            {{ crate::app::templates::blood_bowl::players::strength_html(player)?|escape("none") }}
                         </a>
                     </td>
                     <td class="uk-table-link">
                         <a class="uk-link-reset" href="{{ player_url }}">
-                            {{ crate::app::templates::blood_bowl::players::agility_html(player, team.roster)?|escape("none") }}
+                            {{ crate::app::templates::blood_bowl::players::agility_html(player)?|escape("none") }}
                         </a>
                     </td>
                     <td class="uk-table-link">
                         <a class="uk-link-reset" href="{{ player_url }}">
-                            {{ crate::app::templates::blood_bowl::players::passing_ability_html(player, team.roster)?|escape("none") }}
+                            {{ crate::app::templates::blood_bowl::players::passing_ability_html(player)?|escape("none") }}
                         </a>
                     </td>
                     <td class="uk-table-link">
                         <a class="uk-link-reset" href="{{ player_url }}">
-                            {{ crate::app::templates::blood_bowl::players::armour_value_html(player, team.roster)?|escape("none") }}
+                            {{ crate::app::templates::blood_bowl::players::armour_value_html(player)?|escape("none") }}
                         </a>
                     </td>
                     <td class="uk-table-link">
                         <a class="uk-link-reset" href="{{ player_url }}">
-                            {{ crate::app::templates::blood_bowl::players::skills_names_html(player, team.roster, "fr")?|escape("none") }}
+                            {{ crate::app::templates::blood_bowl::players::skills_names_html(player, "fr")?|escape("none") }}
                         </a>
                     </td>
                     <td class="uk-table-link">
@@ -200,7 +200,7 @@
                     </td>
                     <td class="uk-table-link">
                         <a class="uk-link-reset" href="{{ player_url }}">
-                            {{ player.value(team.roster)? / 1000 }}k
+                            {{ player.value()? / 1000 }}k
                         </a>
                     </td>
 
