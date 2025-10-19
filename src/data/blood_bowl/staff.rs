@@ -51,7 +51,7 @@ pub async fn buy_staff_for_team(
     );
 
     if let Some(connected_user_id) = connected_user.id {
-        let mut team = teams::select_by_id(state, team_id).await?;
+        let mut team = teams::select_by_id_without_players(state, team_id).await?;
 
         let new_staff_quantity = team.buy_staff(&staff)?;
         println!("new_staff_quantity = {}", new_staff_quantity);

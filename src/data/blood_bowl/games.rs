@@ -83,8 +83,10 @@ impl GameRow {
             created_by = coaches::select_by_id(state, Some(coach_id)).await?;
         }
 
-        let first_team = teams::select_by_id(state, self.first_team_id).await?;
-        let second_team = teams::select_by_id(state, self.second_team_id).await?;
+        let first_team =
+            teams::select_by_id_with_staff_and_players(state, self.first_team_id).await?;
+        let second_team =
+            teams::select_by_id_with_staff_and_players(state, self.second_team_id).await?;
 
         let mut game = Game {
             id: self.id,
@@ -373,7 +375,6 @@ impl GameTeamPlayer {
                 miss_next_game: false,
                 advancements: vec![],
                 injuries: vec![],
-                remaining_injuries_number: 0,
             },
         )
     }

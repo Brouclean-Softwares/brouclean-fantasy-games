@@ -547,13 +547,13 @@ pub async fn new(
     let mut first_team: Option<Team> = None;
 
     if let Some(id) = params.first_team_id {
-        first_team = Some(teams::select_by_id(&app_state, id).await?);
+        first_team = Some(teams::select_by_id_with_staff_and_players(&app_state, id).await?);
     }
 
     let mut second_team: Option<Team> = None;
 
     if let Some(id) = params.second_team_id {
-        second_team = Some(teams::select_by_id(&app_state, id).await?);
+        second_team = Some(teams::select_by_id_with_staff_and_players(&app_state, id).await?);
     }
 
     let new_game_page = NewGamePage::get(app_state, profile, first_team, second_team);
@@ -601,7 +601,7 @@ pub async fn create(
         ))),
 
         (Some(first_team_id), Some(second_team_id), Some(scheduled_at)) => {
-            let first_team = teams::select_by_id(&app_state, first_team_id)
+            let first_team = teams::select_by_id_with_staff_and_players(&app_state, first_team_id)
                 .await
                 .map_err(|_| {
                     NewGamePage::get_with_message(
@@ -616,20 +616,21 @@ pub async fn create(
                     )
                 })?;
 
-            let second_team = teams::select_by_id(&app_state, second_team_id)
-                .await
-                .map_err(|_| {
-                    NewGamePage::get_with_message(
-                        app_state.clone(),
-                        profile.clone(),
-                        Some(AlertMessage {
-                            alert_type: AlertType::Danger,
-                            message: "la deuxième équipe est introuvable.".to_string(),
-                        }),
-                        None,
-                        None,
-                    )
-                })?;
+            let second_team =
+                teams::select_by_id_with_staff_and_players(&app_state, second_team_id)
+                    .await
+                    .map_err(|_| {
+                        NewGamePage::get_with_message(
+                            app_state.clone(),
+                            profile.clone(),
+                            Some(AlertMessage {
+                                alert_type: AlertType::Danger,
+                                message: "la deuxième équipe est introuvable.".to_string(),
+                            }),
+                            None,
+                            None,
+                        )
+                    })?;
 
             let scheduled_at = NaiveDateTime::parse_from_str(&*scheduled_at, "%Y-%m-%dT%H:%M")
                 .map_err(|_| {

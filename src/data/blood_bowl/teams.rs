@@ -8,6 +8,7 @@ use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::translation::TypeName;
 use blood_bowl_rs::versions::Version;
 use serde::Deserialize;
+use std::collections::HashMap;
 
 pub struct TeamLogo {
     pub url: String,
@@ -186,7 +187,30 @@ pub async fn select_summary_by_id(state: &AppState, id: i32) -> Result<TeamSumma
     Ok(team)
 }
 
-pub async fn select_by_id(state: &AppState, id: i32) -> Result<Team, AppError> {
+pub async fn select_by_id_with_staff_and_players(
+    state: &AppState,
+    id: i32,
+) -> Result<Team, AppError> {
+    select_by_id(state, id, true, true).await
+}
+
+pub async fn select_by_id_without_players(state: &AppState, id: i32) -> Result<Team, AppError> {
+    select_by_id(state, id, true, false).await
+}
+
+pub async fn select_by_id_without_staff_nor_players(
+    state: &AppState,
+    id: i32,
+) -> Result<Team, AppError> {
+    select_by_id(state, id, false, false).await
+}
+
+async fn select_by_id(
+    state: &AppState,
+    id: i32,
+    staff_needed: bool,
+    players_needed: bool,
+) -> Result<Team, AppError> {
     tracing::debug!("select_from_id with id={}", id);
 
     let team: TeamSummary = sqlx::query_as(
@@ -210,9 +234,17 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<Team, AppError> {
     .fetch_one(&state.db)
     .await?;
 
-    let players = players::select_under_contract_for_team(state, id).await?;
+    let staff = if staff_needed {
+        staff::select_for_team(state, id).await?
+    } else {
+        HashMap::new()
+    };
 
-    let staff = staff::select_for_team(state, id).await?;
+    let players = if players_needed {
+        players::select_under_contract_for_team(state, id).await?
+    } else {
+        vec![]
+    };
 
     let team = Team {
         id: team.id,

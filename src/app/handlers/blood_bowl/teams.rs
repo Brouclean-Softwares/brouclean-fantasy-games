@@ -180,7 +180,7 @@ pub async fn team(
         Redirect::to("../teams")
     };
 
-    let team = teams::select_by_id(&app_state, params.id)
+    let team = teams::select_by_id_with_staff_and_players(&app_state, params.id)
         .await
         .map_err(error_handler)?;
 
@@ -231,7 +231,6 @@ pub async fn team(
 pub struct TeamForm {
     pub team_name: Option<String>,
     pub player_id: Option<i32>,
-    pub player_name: Option<String>,
     pub player_number: Option<i32>,
     pub staff_to_buy: Option<Staff>,
     pub position_to_buy: Option<Position>,
@@ -258,30 +257,6 @@ pub async fn update(
             })?;
 
         return Ok(Redirect::to(&format!("./team?id={}", params.id,)));
-    }
-
-    // Player name
-    if let (Some(profile), Some(player_id), Some(player_name)) =
-        (profile.clone(), form.player_id, form.player_name)
-    {
-        players::update_name(&app_state, &profile, &params.id, &player_id, &player_name)
-            .await
-            .or_else(|app_error| {
-                Err(Redirect::to(&format!(
-                    "./team?id={}&message={}&edit={}&focus=player_{}_name",
-                    params.id,
-                    app_error,
-                    params.edit.unwrap_or(false),
-                    player_id,
-                )))
-            })?;
-
-        return Ok(Redirect::to(&format!(
-            "./team?id={}&edit={}&focus=player_{}_name",
-            params.id,
-            params.edit.unwrap_or(false),
-            player_id,
-        )));
     }
 
     // Player number

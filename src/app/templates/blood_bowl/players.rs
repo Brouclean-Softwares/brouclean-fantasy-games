@@ -1,7 +1,46 @@
+use crate::app::templates::NavigationBar;
+use crate::data::blood_bowl::teams::TeamLogo;
+use crate::data::users::User;
 use crate::errors::AppError;
+use crate::AppState;
+use askama::Template;
+use askama_web::WebTemplate;
 use blood_bowl_rs::players::Player;
 use blood_bowl_rs::rosters::Roster;
+use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::translation::TranslatedName;
+
+#[derive(Template, WebTemplate)]
+#[template(path = "blood_bowl/players/player_page.html")]
+pub struct PlayerPage {
+    navigation_bar: NavigationBar,
+    number: i32,
+    player: Player,
+    team: Team,
+    editable: bool,
+    edit_mode: bool,
+}
+
+impl PlayerPage {
+    pub fn get(
+        app_state: AppState,
+        profile: Option<User>,
+        number: i32,
+        player: Player,
+        team: Team,
+        editable: bool,
+        edit_mode: bool,
+    ) -> Self {
+        Self {
+            navigation_bar: NavigationBar::get(&app_state, &profile),
+            number,
+            player,
+            team,
+            editable,
+            edit_mode,
+        }
+    }
+}
 
 pub fn movement_allowance_html(player: &Player, roster: &Roster) -> Result<String, AppError> {
     let value = player.movement_allowance(roster)?;

@@ -17,6 +17,61 @@ struct PlayerDetail {
     number: i32,
 }
 
+impl PlayerDetail {
+    async fn into_player(self, state: &AppState) -> Result<Player, AppError> {
+        let player_injuries = select_player_injuries(state, self.id).await?;
+        let star_player_points = select_remaining_star_player_points(state, self.id).await?;
+
+        Ok(Player {
+            id: self.id,
+            version: self.version,
+            position: self.position,
+            name: self.name,
+            star_player_points,
+            is_journeyman: false,
+            is_star_player: false,
+            miss_next_game: PlayerInjury::extract_miss_next_game(&player_injuries),
+            advancements: vec![],
+            injuries: PlayerInjury::extract_current_injuries(&player_injuries),
+        })
+    }
+}
+
+pub async fn select_by_id_for_team(
+    state: &AppState,
+    player_id: i32,
+    team_id: i32,
+) -> Result<(i32, Player), AppError> {
+    tracing::debug!(
+        "select_by_id with player_id={} for team_id={}",
+        player_id,
+        team_id
+    );
+
+    let player_detail: PlayerDetail = sqlx::query_as(
+        "SELECT bb_players.id,
+                    bb_players.version,
+                    bb_players.name,
+                    bb_players.position,
+                    bb_teams_players.number
+            FROM bb_players
+            INNER JOIN bb_teams_players
+            ON bb_players.id = bb_teams_players.player_id
+            WHERE bb_teams_players.team_id = $2
+            AND bb_teams_players.player_id = $1
+            ORDER BY bb_teams_players.number ASC",
+    )
+    .bind(player_id.clone())
+    .bind(team_id.clone())
+    .fetch_one(&state.db)
+    .await?;
+
+    Ok((
+        player_detail.number,
+        player_detail.into_player(state).await?,
+    ))
+}
+
 pub async fn select_under_contract_for_team(
     state: &AppState,
     team_id: i32,
@@ -43,27 +98,9 @@ pub async fn select_under_contract_for_team(
     let mut players: Vec<(i32, Player)> = Vec::new();
 
     for player_detail in players_detail {
-        let player_injuries = select_player_injuries(state, player_detail.id).await?;
-        let star_player_points =
-            select_remaining_star_player_points(state, player_detail.id).await?;
-
         players.push((
             player_detail.number,
-            Player {
-                id: player_detail.id,
-                version: player_detail.version,
-                position: player_detail.position,
-                name: player_detail.name,
-                star_player_points,
-                is_journeyman: false,
-                is_star_player: false,
-                miss_next_game: PlayerInjury::extract_miss_next_game(&player_injuries),
-                advancements: vec![],
-                injuries: PlayerInjury::extract_current_injuries(&player_injuries),
-                remaining_injuries_number: PlayerInjury::extract_remaining_injuries_number(
-                    &player_injuries,
-                ),
-            },
+            player_detail.into_player(state).await?,
         ));
     }
 
@@ -163,7 +200,7 @@ pub async fn buy_position_for_team(
     );
 
     if let Some(connected_user_id) = connected_user.id {
-        let mut team = teams::select_by_id(state, team_id).await?;
+        let mut team = teams::select_by_id_with_staff_and_players(state, team_id).await?;
         let (number, player) = team.buy_position(&position)?;
         let team_value = team.value()?;
         let team_current_value = team.current_value()?;
@@ -269,7 +306,7 @@ impl PlayerInjury {
                 player_injury.before_last_game.clone(),
             ) {
                 (Injury::SeriouslyHurt, false)
-                | (Injury::SeriousInjury, false)
+                | (Injury::SeriousInjury, _)
                 | (Injury::HeadInjury, _)
                 | (Injury::SmashedKnee, _)
                 | (Injury::BrokenArm, _)
@@ -280,19 +317,11 @@ impl PlayerInjury {
                 (Injury::Stunned, _)
                 | (Injury::KO, _)
                 | (Injury::BadlyHurt, _)
-                | (Injury::SeriouslyHurt, true)
-                | (Injury::SeriousInjury, true) => {}
+                | (Injury::SeriouslyHurt, true) => {}
             };
         }
 
         injuries
-    }
-
-    fn extract_remaining_injuries_number(player_injuries: &Vec<Self>) -> usize {
-        player_injuries
-            .iter()
-            .filter(|&player_injury| matches!(player_injury.injury, Injury::SeriousInjury))
-            .count()
     }
 }
 
