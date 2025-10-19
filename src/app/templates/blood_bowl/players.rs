@@ -8,6 +8,7 @@ use askama_web::WebTemplate;
 use blood_bowl_rs::players::Player;
 use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::translation::TranslatedName;
+use std::vec;
 
 #[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/players/player_page.html")]
@@ -18,6 +19,7 @@ pub struct PlayerPage {
     team: Team,
     editable: bool,
     edit_mode: bool,
+    player_advancements: Vec<PlayerAdvancement>,
 }
 
 impl PlayerPage {
@@ -33,10 +35,36 @@ impl PlayerPage {
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
             number,
-            player,
+            player: player.clone(),
             team,
             editable,
             edit_mode,
+            player_advancements: vec![
+                PlayerAdvancement::get(&player, 1, editable),
+                PlayerAdvancement::get(&player, 2, editable),
+                PlayerAdvancement::get(&player, 3, editable),
+                PlayerAdvancement::get(&player, 4, editable),
+                PlayerAdvancement::get(&player, 5, editable),
+                PlayerAdvancement::get(&player, 6, editable),
+            ],
+        }
+    }
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "blood_bowl/players/player_advancement.html")]
+struct PlayerAdvancement {
+    advancement_number: usize,
+    player: Player,
+    editable: bool,
+}
+
+impl PlayerAdvancement {
+    fn get(player: &Player, advancement_number: usize, editable: bool) -> Self {
+        Self {
+            advancement_number,
+            player: player.clone(),
+            editable,
         }
     }
 }

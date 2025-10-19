@@ -1,0 +1,19 @@
+<div>
+    {% if let Some(advancement) = player.advancements.get(advancement_number - 1) %}
+
+        {{ advancement.name("fr") }} : {{ advancement.added_value_for_player(player)? / 1000 }}k
+
+    {% else if player.advancements.len() == advancement_number - 1 %}
+
+        {% if editable %}
+            <div>
+                A venir...
+            </div>
+        {% else  %}
+            -
+        {% endif %}
+
+    {% else  %}
+        -
+    {% endif %}
+</div>
