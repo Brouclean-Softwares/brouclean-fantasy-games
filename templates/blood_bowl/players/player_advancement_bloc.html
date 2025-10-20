@@ -1,0 +1,97 @@
+<div>
+    {% if let Some(error_message) = error_message %}
+
+    <div class="uk-alert-danger" uk-alert>
+        <p>{{ error_message }}</p>
+    </div>
+
+    {% else %}
+
+        {% if let (Some(advancement), Some(cost)) = (advancement.clone(), cost.clone()) %}
+        <span>{{ advancement.name("fr") }} : {{ cost }} PSP</span>
+        {% else if editable %}
+
+            {% if let (Some(choice), Some(cost), Some(advancements_to_choose)) = (choice.clone(), cost.clone(), advancements_to_choose.clone()) %}
+
+            <span>{{ choice.name("fr") }} : {{ cost }} PSP</span>
+            <br>
+            <form id="choose_advancement_form" method="post" autocomplete="off">
+                <select name="advancement_to_add"
+                        class="uk-select uk-form-width-large"
+                        aria-label="Select">
+
+                    {% for advancement_to_choose in advancements_to_choose %}
+                    <option value="{{ serde_json::to_string(&advancement_to_choose)? }}">
+                        {{ advancement_to_choose.name("fr") }}
+                    </option>
+                    {% endfor %}
+
+                </select>
+
+                <button class="uk-button uk-button-link uk-margin-left"
+                        type="button"
+                        uk-toggle="target: #modal-choose-advancement">
+                    <span uk-icon="icon: plus-circle"></span>
+                </button>
+
+                <div id="modal-choose-advancement" uk-modal>
+                    <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                        <h2 class="uk-modal-title">Choix d'amélioration en cours</h2>
+                        <p>Confirmez-vous votre choix d'amélioration pour le joueur ? Ce choix sera définitif.</p>
+                        <p class="uk-text-right">
+                            <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                            <button class="uk-button uk-button-primary"
+                                    onclick="document.getElementById('choose_advancement_form').submit()">
+                                Confirmer
+                            </button>
+                        </p>
+                    </div>
+                </div>
+            </form>
+
+            {% else if choices_available.len() > 0 %}
+
+            <form id="choose_advancement_choice_form" method="post" autocomplete="off">
+                <select name="advancement_choice"
+                        class="uk-select uk-form-width-large"
+                        aria-label="Select">
+
+                    {% for choice_available in choices_available %}
+                    <option value="{{ serde_json::to_string(&choice_available)? }}">
+                        {{ choice_available.name("fr") }} : {{ choice_available.star_player_points_cost(advancement_number.clone()) }} PSP
+                    </option>
+                    {% endfor %}
+
+                </select>
+
+                <button class="uk-button uk-button-link uk-margin-left"
+                        type="button"
+                        uk-toggle="target: #modal-choose-advancement-choice">
+                    <span uk-icon="icon: cart"></span>
+                </button>
+
+                <div id="modal-choose-advancement-choice" uk-modal>
+                    <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                        <h2 class="uk-modal-title">Choix d'amélioration en cours</h2>
+                        <p>Confirmez-vous votre choix d'amélioration pour le joueur ? Ce choix sera définitif.</p>
+                        <p class="uk-text-right">
+                            <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                            <button class="uk-button uk-button-primary"
+                                    onclick="document.getElementById('choose_advancement_choice_form').submit()">
+                                Confirmer
+                            </button>
+                        </p>
+                    </div>
+                </div>
+            </form>
+
+            {% else %}
+            <span>-</span>
+            {% endif %}
+
+        {% else %}
+        <span>-</span>
+        {% endif %}
+
+    {% endif %}
+</div>

@@ -1,11 +1,13 @@
-use crate::data::blood_bowl::teams;
+use crate::data::blood_bowl::{coaches, teams};
 use crate::data::users::User;
 use crate::errors::AppError;
 use crate::AppState;
+use blood_bowl_rs::advancements::{Advancement, AdvancementChoice};
 use blood_bowl_rs::injuries::Injury;
 use blood_bowl_rs::players::Player;
 use blood_bowl_rs::positions::Position;
 use blood_bowl_rs::rosters::Roster;
+use blood_bowl_rs::translation::TypeName;
 use blood_bowl_rs::versions::Version;
 use serde::Deserialize;
 
@@ -23,6 +25,7 @@ impl PlayerDetail {
     async fn into_player(self, state: &AppState) -> Result<Player, AppError> {
         let player_injuries = select_player_injuries(state, self.id).await?;
         let star_player_points = select_remaining_star_player_points(state, self.id).await?;
+        let advancements = select_advancements(state, self.id).await?;
 
         Ok(Player {
             id: self.id,
@@ -34,7 +37,7 @@ impl PlayerDetail {
             is_journeyman: false,
             is_star_player: false,
             miss_next_game: PlayerInjury::extract_miss_next_game(&player_injuries),
-            advancements: vec![],
+            advancements,
             injuries: PlayerInjury::extract_current_injuries(&player_injuries),
         })
     }
@@ -390,4 +393,185 @@ async fn select_remaining_star_player_points(
     .await?;
 
     Ok((points_won.points.unwrap_or(0) - points_spent.points.unwrap_or(0)) as i32)
+}
+
+#[derive(Deserialize, sqlx::FromRow, Clone)]
+pub struct PlayerAdvancement {
+    advancement: Option<String>,
+    choice: Option<String>,
+    star_player_points: Option<i32>,
+    options_to_choose: Option<String>,
+}
+
+impl PlayerAdvancement {
+    pub fn advancement(&self) -> Result<Option<Advancement>, AppError> {
+        if let Some(advancement) = self.advancement.clone() {
+            let advancement: Advancement = serde_json::from_str(&advancement)?;
+
+            Ok(Some(advancement))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn choice(&self) -> Result<Option<AdvancementChoice>, AppError> {
+        if let Some(choice) = self.choice.clone() {
+            let choice: AdvancementChoice = serde_json::from_str(&choice)?;
+
+            Ok(Some(choice))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn star_player_points_cost(&self) -> Option<i32> {
+        self.star_player_points
+    }
+
+    pub fn options_to_choose(&self) -> Result<Option<Vec<Advancement>>, AppError> {
+        if let Some(options_to_choose) = self.options_to_choose.clone() {
+            let options_to_choose: Vec<Advancement> = serde_json::from_str(&options_to_choose)?;
+
+            Ok(Some(options_to_choose))
+        } else {
+            Ok(None)
+        }
+    }
+}
+
+async fn select_advancements(
+    state: &AppState,
+    player_id: i32,
+) -> Result<Vec<Advancement>, AppError> {
+    tracing::debug!("select_advancements with id={}", player_id);
+
+    let player_advancements: Vec<PlayerAdvancement> = sqlx::query_as(
+        "SELECT advancement,
+                    choice,
+                    star_player_points,
+                    options_to_choose
+            FROM bb_players_advancements
+            WHERE player_id = $1
+            AND advancement IS NOT NULL
+            ORDER BY added_at",
+    )
+    .bind(player_id.clone())
+    .fetch_all(&state.db)
+    .await?;
+
+    let mut advancements = vec![];
+
+    for player_advancement in player_advancements {
+        if let Some(advancement) = player_advancement.advancement()? {
+            advancements.push(advancement);
+        }
+    }
+
+    Ok(advancements)
+}
+
+pub async fn select_advancements_with_choices(
+    state: &AppState,
+    player_id: i32,
+) -> Result<Vec<PlayerAdvancement>, AppError> {
+    tracing::debug!("select_advancements with id={}", player_id);
+
+    let advancements: Vec<PlayerAdvancement> = sqlx::query_as(
+        "SELECT advancement,
+                    choice,
+                    star_player_points,
+                    options_to_choose
+            FROM bb_players_advancements
+            WHERE player_id = $1
+            ORDER BY added_at",
+    )
+    .bind(player_id.clone())
+    .fetch_all(&state.db)
+    .await?;
+
+    Ok(advancements)
+}
+
+pub async fn add_advancement_choice(
+    state: &AppState,
+    connected_user: &User,
+    team_id: i32,
+    player_id: i32,
+    advancement_choice: AdvancementChoice,
+) -> Result<(), AppError> {
+    tracing::debug!(
+        "add_advancement_choice by user={:?} for team_id={} and player_id={} with advancement_choice={}",
+        connected_user,
+        team_id,
+        player_id,
+        advancement_choice.type_name(),
+    );
+
+    let (_, player) = select_by_id_for_team(state, player_id, team_id).await?;
+
+    if let Some(team_coach) = coaches::select_from_team(state, team_id).await? {
+        if team_coach.id.eq(&connected_user.id) {
+            sqlx::query(
+                "INSERT INTO bb_players_advancements (
+                player_id,
+                choice,
+                star_player_points,
+                options_to_choose
+            )
+            VALUES ($1, $2, $3, $4)",
+            )
+            .bind(player_id.clone())
+            .bind(serde_json::to_string(&advancement_choice)?)
+            .bind(
+                advancement_choice
+                    .star_player_points_cost_for_player(&player)
+                    .clone() as i32,
+            )
+            .bind(serde_json::to_string(
+                &advancement_choice.roll_advancements_to_choose_for_player(&player)?,
+            )?)
+            .execute(&state.db)
+            .await?;
+        }
+    }
+
+    Ok(())
+}
+
+pub async fn add_advancement(
+    state: &AppState,
+    connected_user: &User,
+    team_id: i32,
+    player_id: i32,
+    advancement_to_add: Advancement,
+) -> Result<(), AppError> {
+    tracing::debug!(
+        "add_advancement by user={:?} for team_id={} and player_id={} with advancement_to_add={}",
+        connected_user,
+        team_id,
+        player_id,
+        advancement_to_add.type_name(),
+    );
+
+    sqlx::query(
+        "UPDATE bb_players_advancements
+            SET advancement = $4,
+                options_to_choose = NULL,
+                added_at = CURRENT_TIMESTAMP
+            FROM bb_teams_players, bb_teams
+            WHERE bb_players_advancements.player_id = bb_teams_players.player_id
+            AND bb_teams.id = bb_teams_players.team_id
+            AND bb_players_advancements.player_id = $1
+            AND bb_teams.id = $2
+            AND bb_teams.coach_id = $3
+            AND bb_players_advancements.advancement IS NULL",
+    )
+    .bind(player_id.clone())
+    .bind(team_id.clone())
+    .bind(connected_user.id.clone())
+    .bind(serde_json::to_string(&advancement_to_add)?)
+    .execute(&state.db)
+    .await?;
+
+    Ok(())
 }

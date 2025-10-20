@@ -1,4 +1,5 @@
 use crate::app::templates::blood_bowl::players::PlayerPage;
+use crate::app::templates::{AlertMessage, AlertType};
 use crate::data::blood_bowl::{games, players, teams};
 use crate::data::users::User;
 use crate::AppState;
@@ -16,6 +17,7 @@ pub fn init_router() -> Router<AppState> {
 pub struct PlayerQueryParams {
     pub player_id: i32,
     pub team_id: i32,
+    pub alert_message: Option<String>,
     pub edit: Option<bool>,
 }
 
@@ -41,6 +43,13 @@ pub async fn player(
         is_playing_game = game.started && !game.finished;
     }
 
+    let alert_message: Option<AlertMessage> = params.alert_message.and_then(|message| {
+        Some(AlertMessage {
+            alert_type: AlertType::Danger,
+            message,
+        })
+    });
+
     let editable = !is_playing_game
         && match profile.clone() {
             Some(user) => team.coach.eq(&user.into()),
@@ -52,11 +61,18 @@ pub async fn player(
             .await
             .map_err(error_handler)?;
 
+    let player_advancements =
+        players::select_advancements_with_choices(&app_state, params.player_id)
+            .await
+            .map_err(error_handler)?;
+
     Ok(PlayerPage::get(
         app_state,
         profile,
+        alert_message,
         number,
         player,
+        player_advancements,
         team,
         editable,
         params.edit.unwrap_or(false) && editable,
@@ -65,10 +81,10 @@ pub async fn player(
 
 #[derive(Deserialize)]
 pub struct PlayerForm {
-    pub team_id: Option<i32>,
-    pub player_id: Option<i32>,
     pub player_number: Option<i32>,
     pub player_name: Option<String>,
+    pub advancement_choice: Option<String>,
+    pub advancement_to_add: Option<String>,
 }
 
 pub async fn update(
@@ -89,7 +105,7 @@ pub async fn update(
         .await
         .or_else(|app_error| {
             Err(Redirect::to(&format!(
-                "./player?player_id={}&team_id={}&message={}&edit={}",
+                "./player?player_id={}&team_id={}&alert_message={}&edit={}",
                 params.player_id,
                 params.team_id,
                 app_error,
@@ -110,7 +126,71 @@ pub async fn update(
         .await
         .or_else(|app_error| {
             Err(Redirect::to(&format!(
-                "./player?player_id={}&team_id={}&message={}&edit={}",
+                "./player?player_id={}&team_id={}&alert_message={}&edit={}",
+                params.player_id,
+                params.team_id,
+                app_error,
+                params.edit.unwrap_or(false),
+            )))
+        })?;
+    }
+
+    // Advancement choice
+    if let (Some(profile), Some(advancement_choice)) = (profile.clone(), form.advancement_choice) {
+        let advancement_choice =
+            serde_json::from_str(&advancement_choice).or_else(|app_error| {
+                Err(Redirect::to(&format!(
+                    "./player?player_id={}&team_id={}&alert_message={}&edit={}",
+                    params.player_id,
+                    params.team_id,
+                    app_error,
+                    params.edit.unwrap_or(false),
+                )))
+            })?;
+
+        players::add_advancement_choice(
+            &app_state,
+            &profile,
+            params.team_id,
+            params.player_id,
+            advancement_choice,
+        )
+        .await
+        .or_else(|app_error| {
+            Err(Redirect::to(&format!(
+                "./player?player_id={}&team_id={}&alert_message={}&edit={}",
+                params.player_id,
+                params.team_id,
+                app_error,
+                params.edit.unwrap_or(false),
+            )))
+        })?;
+    }
+
+    // Advancement
+    if let (Some(profile), Some(advancement_to_add)) = (profile.clone(), form.advancement_to_add) {
+        let advancement_to_add =
+            serde_json::from_str(&advancement_to_add).or_else(|app_error| {
+                Err(Redirect::to(&format!(
+                    "./player?player_id={}&team_id={}&alert_message={}&edit={}",
+                    params.player_id,
+                    params.team_id,
+                    app_error,
+                    params.edit.unwrap_or(false),
+                )))
+            })?;
+
+        players::add_advancement(
+            &app_state,
+            &profile,
+            params.team_id,
+            params.player_id,
+            advancement_to_add,
+        )
+        .await
+        .or_else(|app_error| {
+            Err(Redirect::to(&format!(
+                "./player?player_id={}&team_id={}&alert_message={}&edit={}",
                 params.player_id,
                 params.team_id,
                 app_error,

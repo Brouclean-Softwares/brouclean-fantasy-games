@@ -1,10 +1,12 @@
-use crate::app::templates::NavigationBar;
+use crate::app::templates::{AlertMessage, NavigationBar};
+use crate::data::blood_bowl::players::PlayerAdvancement;
 use crate::data::blood_bowl::teams::TeamLogo;
 use crate::data::users::User;
 use crate::errors::AppError;
 use crate::AppState;
 use askama::Template;
 use askama_web::WebTemplate;
+use blood_bowl_rs::advancements::{Advancement, AdvancementChoice};
 use blood_bowl_rs::players::Player;
 use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::translation::TranslatedName;
@@ -14,57 +16,119 @@ use std::vec;
 #[template(path = "blood_bowl/players/player_page.html")]
 pub struct PlayerPage {
     navigation_bar: NavigationBar,
+    alert_message: Option<AlertMessage>,
     number: i32,
     player: Player,
     team: Team,
     editable: bool,
     edit_mode: bool,
-    player_advancements: Vec<PlayerAdvancement>,
+    player_advancement_blocs: Vec<PlayerAdvancementBloc>,
 }
 
 impl PlayerPage {
     pub fn get(
         app_state: AppState,
         profile: Option<User>,
+        alert_message: Option<AlertMessage>,
         number: i32,
         player: Player,
+        player_advancements: Vec<PlayerAdvancement>,
         team: Team,
         editable: bool,
         edit_mode: bool,
     ) -> Self {
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
+            alert_message,
             number,
             player: player.clone(),
             team,
             editable,
             edit_mode,
-            player_advancements: vec![
-                PlayerAdvancement::get(&player, 1, editable),
-                PlayerAdvancement::get(&player, 2, editable),
-                PlayerAdvancement::get(&player, 3, editable),
-                PlayerAdvancement::get(&player, 4, editable),
-                PlayerAdvancement::get(&player, 5, editable),
-                PlayerAdvancement::get(&player, 6, editable),
+            player_advancement_blocs: vec![
+                PlayerAdvancementBloc::get(&player, player_advancements.get(0), 1, editable)
+                    .unwrap_or_else(|error| PlayerAdvancementBloc::get_error(error.to_string())),
+                PlayerAdvancementBloc::get(&player, player_advancements.get(1), 2, editable)
+                    .unwrap_or_else(|error| PlayerAdvancementBloc::get_error(error.to_string())),
+                PlayerAdvancementBloc::get(&player, player_advancements.get(2), 3, editable)
+                    .unwrap_or_else(|error| PlayerAdvancementBloc::get_error(error.to_string())),
+                PlayerAdvancementBloc::get(&player, player_advancements.get(3), 4, editable)
+                    .unwrap_or_else(|error| PlayerAdvancementBloc::get_error(error.to_string())),
+                PlayerAdvancementBloc::get(&player, player_advancements.get(4), 5, editable)
+                    .unwrap_or_else(|error| PlayerAdvancementBloc::get_error(error.to_string())),
+                PlayerAdvancementBloc::get(&player, player_advancements.get(5), 6, editable)
+                    .unwrap_or_else(|error| PlayerAdvancementBloc::get_error(error.to_string())),
             ],
         }
     }
 }
 
 #[derive(Template, WebTemplate)]
-#[template(path = "blood_bowl/players/player_advancement.html")]
-struct PlayerAdvancement {
+#[template(path = "blood_bowl/players/player_advancement_bloc.html")]
+struct PlayerAdvancementBloc {
+    error_message: Option<String>,
+    advancement: Option<Advancement>,
     advancement_number: usize,
-    player: Player,
+    choice: Option<AdvancementChoice>,
+    cost: Option<i32>,
+    advancements_to_choose: Option<Vec<Advancement>>,
+    choices_available: Vec<AdvancementChoice>,
     editable: bool,
 }
 
-impl PlayerAdvancement {
-    fn get(player: &Player, advancement_number: usize, editable: bool) -> Self {
+impl PlayerAdvancementBloc {
+    fn get(
+        player: &Player,
+        player_advancement: Option<&PlayerAdvancement>,
+        advancement_number: usize,
+        editable: bool,
+    ) -> Result<Self, AppError> {
+        if let Some(player_advancement) = player_advancement {
+            let advancement = player_advancement.advancement()?;
+            let choice = player_advancement.choice()?;
+            let cost = player_advancement.star_player_points_cost();
+            let advancements_to_choose = player_advancement.options_to_choose()?;
+
+            Ok(Self {
+                error_message: None,
+                advancement,
+                advancement_number,
+                choice,
+                cost,
+                advancements_to_choose,
+                choices_available: vec![],
+                editable,
+            })
+        } else {
+            let choices_available = if advancement_number == player.advancements.len() + 1 {
+                AdvancementChoice::list_available_for_player(player)?
+            } else {
+                vec![]
+            };
+
+            Ok(Self {
+                error_message: None,
+                advancement: None,
+                advancement_number,
+                choice: None,
+                cost: None,
+                advancements_to_choose: None,
+                choices_available,
+                editable,
+            })
+        }
+    }
+
+    fn get_error(error_message: String) -> Self {
         Self {
-            advancement_number,
-            player: player.clone(),
-            editable,
+            error_message: Some(error_message),
+            advancement: None,
+            advancement_number: 0,
+            choice: None,
+            cost: None,
+            advancements_to_choose: None,
+            choices_available: vec![],
+            editable: false,
         }
     }
 }

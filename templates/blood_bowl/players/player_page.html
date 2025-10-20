@@ -4,6 +4,12 @@
 {{ navigation_bar|escape("none") }}
 {% endblock %}
 
+{% block messages %}
+{% if let Some(alert_message) = alert_message %}
+{{ alert_message|escape("none") }}
+{% endif %}
+{% endblock %}
+
 {% block body %}
 <div class="uk-section">
     <div class="uk-container">
@@ -41,7 +47,7 @@
                     </a>
                     <a href="player?player_id={{ player.id }}&team_id={{ team.id }}&edit=true" uk-icon="icon: pencil"></a>
                     {% else %}
-                    #{{ number }} - {{ player.name }}
+                        #{{ number }} - {{ player.name }}
                     {% endif %}
 
                 </h2>
@@ -115,17 +121,17 @@
                     <tr>
                         <td>
                             {% if player.miss_next_game %}
-                            Oui
+                                Oui
                             {% else %}
-                            Non
+                                Non
                             {% endif %}
                         </td>
                         <td>{{ player.niggling_injuries_number() }}</td>
                         <td>
                             {% if player.injuries.len() > 0 %}
-                            {{ player.injuries_names("fr")? }}
+                                {{ player.injuries_names("fr")? }}
                             {% else %}
-                            Aucune
+                                Aucune
                             {% endif %}
                         </td>
                     </tr>
@@ -144,22 +150,22 @@
                 <dd>{{ player.star_player_points }}</dd>
 
                 <dt>1ère amélioration</dt>
-                <dd>{{ player_advancements[0]|escape("none") }}</dd>
+                <dd>{{ player_advancement_blocs[0]|escape("none") }}</dd>
 
                 <dt>2ème amélioration</dt>
-                <dd>{{ player_advancements[1]|escape("none") }}</dd>
+                <dd>{{ player_advancement_blocs[1]|escape("none") }}</dd>
 
                 <dt>3ème amélioration</dt>
-                <dd>{{ player_advancements[2]|escape("none") }}</dd>
+                <dd>{{ player_advancement_blocs[2]|escape("none") }}</dd>
 
                 <dt>4ème amélioration</dt>
-                <dd>{{ player_advancements[3]|escape("none") }}</dd>
+                <dd>{{ player_advancement_blocs[3]|escape("none") }}</dd>
 
                 <dt>5ème amélioration</dt>
-                <dd>{{ player_advancements[4]|escape("none") }}</dd>
+                <dd>{{ player_advancement_blocs[4]|escape("none") }}</dd>
 
                 <dt>6ème amélioration</dt>
-                <dd>{{ player_advancements[5]|escape("none") }}</dd>
+                <dd>{{ player_advancement_blocs[5]|escape("none") }}</dd>
             </dl>
         </div>
 
