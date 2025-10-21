@@ -425,10 +425,7 @@ async fn select_remaining_star_player_points(
     .fetch_one(&state.db)
     .await?;
 
-    Ok(
-        (points_won.points.unwrap_or(0)
-            - points_spent.points.unwrap_or(0)) as i32
-    )
+    Ok((points_won.points.unwrap_or(0) - points_spent.points.unwrap_or(0)) as i32)
 }
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
