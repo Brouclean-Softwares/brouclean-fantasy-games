@@ -880,6 +880,9 @@ pub async fn update_after_event(
 
     transaction.commit().await?;
 
+    teams::update_values(state, profile, game.first_team.id).await?;
+    teams::update_values(state, profile, game.second_team.id).await?;
+
     Ok(())
 }
 

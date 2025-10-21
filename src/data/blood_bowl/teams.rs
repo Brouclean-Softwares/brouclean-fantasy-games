@@ -1,4 +1,4 @@
-use crate::data::blood_bowl::{games, players, staff};
+use crate::data::blood_bowl::{games, players, staff, teams};
 use crate::data::users::User;
 use crate::errors::AppError;
 use crate::AppState;
@@ -354,6 +354,39 @@ pub async fn create(state: &AppState, coach: &User, bb_team: &Team) -> Result<i3
     Ok(new_team_id.id)
 }
 
+pub async fn update_values(
+    state: &AppState,
+    connected_user: &User,
+    team_id: i32,
+) -> Result<(), AppError> {
+    tracing::debug!(
+        "update_values by user={:?} for team_id={}",
+        connected_user,
+        team_id,
+    );
+
+    let team = teams::select_by_id_with_staff_and_players(state, team_id).await?;
+    let team_value = team.value()?;
+    let team_current_value = team.current_value()?;
+
+    sqlx::query(
+        "UPDATE bb_teams
+        SET value = $1,
+            current_value = $2,
+            last_updated = CURRENT_TIMESTAMP
+        WHERE id = $3
+        AND coach_id = $4",
+    )
+    .bind(team_value.clone() as i32)
+    .bind(team_current_value.clone() as i32)
+    .bind(team_id.clone())
+    .bind(connected_user.id.clone())
+    .execute(&state.db)
+    .await?;
+
+    Ok(())
+}
+
 pub async fn update_name(
     state: &AppState,
     connected_user: &User,
@@ -376,39 +409,6 @@ pub async fn update_name(
             AND coach_id = $3",
         )
         .bind(name.clone())
-        .bind(team_id.clone())
-        .bind(connected_user_id.clone())
-        .execute(&state.db)
-        .await?;
-    }
-
-    Ok(())
-}
-
-pub async fn buyout_player_for_team(
-    state: &AppState,
-    connected_user: &User,
-    team_id: i32,
-    player_id: i32,
-) -> Result<(), AppError> {
-    tracing::debug!(
-        "buyout_player by user={:?} for team_id={} and player_id={}",
-        connected_user,
-        team_id,
-        player_id
-    );
-
-    if let Some(connected_user_id) = connected_user.id {
-        sqlx::query(
-            "UPDATE bb_teams_players
-            SET contract_end = CURRENT_TIMESTAMP
-            FROM bb_teams
-            WHERE bb_teams_players.player_id = $1
-            AND bb_teams_players.team_id = $2
-            AND bb_teams.id = bb_teams_players.team_id
-            AND bb_teams.coach_id = $3",
-        )
-        .bind(player_id.clone())
         .bind(team_id.clone())
         .bind(connected_user_id.clone())
         .execute(&state.db)

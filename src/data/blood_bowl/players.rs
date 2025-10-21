@@ -269,6 +269,39 @@ pub async fn buy_position_for_team(
     Ok(())
 }
 
+pub async fn buyout_for_team(
+    state: &AppState,
+    connected_user: &User,
+    team_id: i32,
+    player_id: i32,
+) -> Result<(), AppError> {
+    tracing::debug!(
+        "buyout_player by user={:?} for team_id={} and player_id={}",
+        connected_user,
+        team_id,
+        player_id
+    );
+
+    sqlx::query(
+        "UPDATE bb_teams_players
+        SET contract_end = CURRENT_TIMESTAMP
+        FROM bb_teams
+        WHERE bb_teams_players.player_id = $1
+        AND bb_teams_players.team_id = $2
+        AND bb_teams.id = bb_teams_players.team_id
+        AND bb_teams.coach_id = $3",
+    )
+    .bind(player_id.clone())
+    .bind(team_id.clone())
+    .bind(connected_user.id.clone())
+    .execute(&state.db)
+    .await?;
+
+    teams::update_values(state, connected_user, team_id).await?;
+
+    Ok(())
+}
+
 #[derive(Deserialize, sqlx::FromRow, Clone)]
 struct PlayerInjury {
     injury: Injury,
@@ -555,16 +588,16 @@ pub async fn add_advancement(
 
     sqlx::query(
         "UPDATE bb_players_advancements
-            SET advancement = $4,
-                options_to_choose = NULL,
-                added_at = CURRENT_TIMESTAMP
-            FROM bb_teams_players, bb_teams
-            WHERE bb_players_advancements.player_id = bb_teams_players.player_id
-            AND bb_teams.id = bb_teams_players.team_id
-            AND bb_players_advancements.player_id = $1
-            AND bb_teams.id = $2
-            AND bb_teams.coach_id = $3
-            AND bb_players_advancements.advancement IS NULL",
+        SET advancement = $4,
+            options_to_choose = NULL,
+            added_at = CURRENT_TIMESTAMP
+        FROM bb_teams_players, bb_teams
+        WHERE bb_players_advancements.player_id = bb_teams_players.player_id
+        AND bb_teams.id = bb_teams_players.team_id
+        AND bb_players_advancements.player_id = $1
+        AND bb_teams.id = $2
+        AND bb_teams.coach_id = $3
+        AND bb_players_advancements.advancement IS NULL",
     )
     .bind(player_id.clone())
     .bind(team_id.clone())
@@ -572,6 +605,8 @@ pub async fn add_advancement(
     .bind(serde_json::to_string(&advancement_to_add)?)
     .execute(&state.db)
     .await?;
+
+    teams::update_values(state, connected_user, team_id).await?;
 
     Ok(())
 }

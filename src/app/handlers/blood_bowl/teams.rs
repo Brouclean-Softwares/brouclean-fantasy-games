@@ -314,7 +314,7 @@ pub async fn update(
     // Buyout Player
     if let (Some(profile), Some(player_id_to_buyout)) = (profile.clone(), form.player_id_to_buyout)
     {
-        teams::buyout_player_for_team(&app_state, &profile, params.id, player_id_to_buyout)
+        players::buyout_for_team(&app_state, &profile, params.id, player_id_to_buyout)
             .await
             .or_else(|app_error| {
                 Err(Redirect::to(&format!(
