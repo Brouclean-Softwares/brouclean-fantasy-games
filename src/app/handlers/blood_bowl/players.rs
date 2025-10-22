@@ -66,6 +66,11 @@ pub async fn player(
             .await
             .map_err(error_handler)?;
 
+    let is_under_contract =
+        players::is_under_contract_for_team(&app_state, params.player_id, params.team_id)
+            .await
+            .map_err(error_handler)?;
+
     Ok(PlayerPage::get(
         app_state,
         profile,
@@ -76,6 +81,7 @@ pub async fn player(
         team,
         editable,
         params.edit.unwrap_or(false) && editable,
+        is_under_contract,
     ))
 }
 

@@ -68,7 +68,8 @@ pub async fn select_by_id_for_team(
             ON bb_teams.id = bb_teams_players.team_id
             WHERE bb_teams_players.team_id = $2
             AND bb_teams_players.player_id = $1
-            ORDER BY bb_teams_players.number ASC",
+            ORDER BY bb_teams_players.number ASC
+            LIMIT 1",
     )
     .bind(player_id.clone())
     .bind(team_id.clone())
@@ -117,6 +118,41 @@ pub async fn select_under_contract_for_team(
     }
 
     Ok(players)
+}
+
+#[derive(Deserialize, sqlx::FromRow, Clone)]
+struct IsUnderContract {
+    is_under_contract: bool,
+}
+
+pub async fn is_under_contract_for_team(
+    state: &AppState,
+    player_id: i32,
+    team_id: i32,
+) -> Result<bool, AppError> {
+    tracing::debug!(
+        "is_under_contract_for_team with player_id={} for team_id={}",
+        player_id,
+        team_id
+    );
+
+    let result: Option<IsUnderContract> = sqlx::query_as(
+        "SELECT contract_end IS NULL as is_under_contract
+            FROM bb_teams_players
+            WHERE team_id = $1
+            AND player_id = $2
+            LIMIT 1",
+    )
+    .bind(team_id.clone())
+    .bind(player_id.clone())
+    .fetch_optional(&state.db)
+    .await?;
+
+    if let Some(result) = result {
+        Ok(result.is_under_contract)
+    } else {
+        Ok(false)
+    }
 }
 
 pub async fn select_former_for_team(

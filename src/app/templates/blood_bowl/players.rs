@@ -22,6 +22,7 @@ pub struct PlayerPage {
     team: Team,
     editable: bool,
     edit_mode: bool,
+    is_under_contract: bool,
     player_advancement_blocs: Vec<PlayerAdvancementBloc>,
 }
 
@@ -36,6 +37,7 @@ impl PlayerPage {
         team: Team,
         editable: bool,
         edit_mode: bool,
+        is_under_contract: bool,
     ) -> Self {
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
@@ -45,6 +47,7 @@ impl PlayerPage {
             team,
             editable,
             edit_mode,
+            is_under_contract,
             player_advancement_blocs: vec![
                 PlayerAdvancementBloc::get(&player, player_advancements.get(0), 1, editable)
                     .unwrap_or_else(|error| PlayerAdvancementBloc::get_error(error.to_string())),

@@ -169,6 +169,32 @@
             </dl>
         </div>
 
+        {% if editable && is_under_contract %}
+        <div>
+            <form id="buyout_form" action="../teams/team?id={{ team.id }}" method="post" autocomplete="off">
+                <input name="player_id_to_buyout" type="hidden" value="{{ player.id }}">
+
+                <button class="uk-button uk-button-danger"
+                        type="button"
+                        uk-toggle="target: #modal-buyout">Renvoyer</button>
+
+                <div id="modal-buyout" uk-modal>
+                    <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                        <h2 class="uk-modal-title">Renvoi de #{{ number }} {{ player.name }} - {{ player.position.name("fr") }}</h2>
+                        <p>Vous êtes sur le point de vous séparer du joueur. Confirmez-vous la fin de son contrat ?</p>
+                        <p class="uk-text-right">
+                            <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                            <button class="uk-button uk-button-primary"
+                                    onclick="document.getElementById('buyout_form').submit()">
+                                Confirmer
+                            </button>
+                        </p>
+                    </div>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+
     </div>
 </div>
 {% endblock %}
