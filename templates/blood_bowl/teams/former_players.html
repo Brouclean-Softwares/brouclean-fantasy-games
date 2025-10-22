@@ -17,7 +17,7 @@
                     <th uk-tooltip="title: Capacité de Passe">CP</th>
                     <th uk-tooltip="title: Armure">AR</th>
                     <th>Compétences<span class="uk-visible@m"> & Traits</span></th>
-                    <th uk-tooltip="title: Nombre de Blessures Persistantes">BP</th>
+                    <th>Blessures</th>
                     <th>Valeur</th>
                 </tr>
                 </thead>
@@ -75,12 +75,12 @@
                             {{ crate::app::templates::blood_bowl::players::skills_names_html(player, "fr")?|escape("none") }}
                         </a>
                     </td>
-                    <td class="uk-table-link">
-                        <a class="uk-link-reset" href="{{ player_url }}">
-                            {% if player.niggling_injuries_number() > 0 %}
-                            {{ player.niggling_injuries_number() }}
-                            {% endif %}
-                        </a>
+                    <td>
+                        {% if player.injuries.len() > 0 %}
+                            {{ player.injuries_names("fr")? }}
+                        {% else %}
+                            Aucune
+                        {% endif %}
                     </td>
                     <td class="uk-table-link">
                         <a class="uk-link-reset" href="{{ player_url }}">
