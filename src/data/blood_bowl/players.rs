@@ -193,6 +193,62 @@ pub async fn select_former_for_team(
     Ok(players)
 }
 
+#[derive(Deserialize, sqlx::FromRow, Clone)]
+pub struct PlayerStats {
+    pub games_number: i64,
+    pub passing_completions: i64,
+    pub throwing_completions: i64,
+    pub deflections: i64,
+    pub interceptions: i64,
+    pub casualties: i64,
+    pub touchdowns: i64,
+    pub most_valuable_player: i64,
+    pub star_player_points: i64,
+}
+
+impl PlayerStats {
+    pub fn new() -> Self {
+        Self {
+            games_number: 0,
+            passing_completions: 0,
+            throwing_completions: 0,
+            deflections: 0,
+            interceptions: 0,
+            casualties: 0,
+            touchdowns: 0,
+            most_valuable_player: 0,
+            star_player_points: 0,
+        }
+    }
+}
+
+pub async fn select_statistics(state: &AppState, player_id: i32) -> Result<PlayerStats, AppError> {
+    tracing::debug!("select_statistics for player_id={}", player_id);
+
+    let statistics: Option<PlayerStats> = sqlx::query_as(
+        "SELECT COUNT(game_id) as games_number,
+                    SUM(passing_completions) as passing_completions,
+                    SUM(throwing_completions) as throwing_completions,
+                    SUM(deflections) as deflections,
+                    SUM(interceptions) as interceptions,
+                    SUM(casualties) as casualties,
+                    SUM(touchdowns) as touchdowns,
+                    SUM(most_valuable_player) as most_valuable_player,
+                    SUM(star_player_points) as star_player_points
+            FROM bb_games_teams_players
+            WHERE player_id = $1",
+    )
+    .bind(player_id.clone())
+    .fetch_optional(&state.db)
+    .await?;
+
+    if let Some(statistics) = statistics {
+        Ok(statistics.into())
+    } else {
+        Ok(PlayerStats::new())
+    }
+}
+
 pub async fn update_name(
     state: &AppState,
     connected_user: &User,

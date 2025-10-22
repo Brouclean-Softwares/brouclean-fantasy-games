@@ -71,6 +71,10 @@ pub async fn player(
             .await
             .map_err(error_handler)?;
 
+    let stats = players::select_statistics(&app_state, params.player_id)
+        .await
+        .map_err(error_handler)?;
+
     Ok(PlayerPage::get(
         app_state,
         profile,
@@ -82,6 +86,7 @@ pub async fn player(
         editable,
         params.edit.unwrap_or(false) && editable,
         is_under_contract,
+        stats,
     ))
 }
 
