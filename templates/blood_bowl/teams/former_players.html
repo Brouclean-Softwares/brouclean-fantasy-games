@@ -17,7 +17,6 @@
                     <th uk-tooltip="title: Capacité de Passe">CP</th>
                     <th uk-tooltip="title: Armure">AR</th>
                     <th>Compétences<span class="uk-visible@m"> & Traits</span></th>
-                    <th uk-tooltip="title: Points de Star Player non utilisés">PSP</th>
                     <th uk-tooltip="title: Nombre de Blessures Persistantes">BP</th>
                     <th>Valeur</th>
                 </tr>
@@ -74,13 +73,6 @@
                     <td class="uk-table-link">
                         <a class="uk-link-reset" href="{{ player_url }}">
                             {{ crate::app::templates::blood_bowl::players::skills_names_html(player, "fr")?|escape("none") }}
-                        </a>
-                    </td>
-                    <td class="uk-table-link">
-                        <a class="uk-link-reset" href="{{ player_url }}">
-                            {% if player.star_player_points > 0 %}
-                            {{ player.star_player_points }}
-                            {% endif %}
                         </a>
                     </td>
                     <td class="uk-table-link">
