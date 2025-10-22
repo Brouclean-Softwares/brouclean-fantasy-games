@@ -1,0 +1,106 @@
+<div>
+    <div class="uk-margin-medium-bottom">
+        <h3 class="uk-heading-divider">
+            Anciens joueurs
+        </h3>
+
+        <div class="uk-overflow-auto">
+            <table class="uk-table uk-table-striped uk-table-small uk-table-hover">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Nom</th>
+                    <th>Poste</th>
+                    <th uk-tooltip="title: Mouvement">M</th>
+                    <th uk-tooltip="title: Force">F</th>
+                    <th uk-tooltip="title: Agilité">AG</th>
+                    <th uk-tooltip="title: Capacité de Passe">CP</th>
+                    <th uk-tooltip="title: Armure">AR</th>
+                    <th>Compétences<span class="uk-visible@m"> & Traits</span></th>
+                    <th uk-tooltip="title: Points de Star Player non utilisés">PSP</th>
+                    <th uk-tooltip="title: Nombre de Blessures Persistantes">BP</th>
+                    <th>Valeur</th>
+                </tr>
+                </thead>
+
+                <tbody>
+
+                {% for (number, player) in former_players %}
+
+                {% let team_id = team.id %}
+                {% let player_url = format!("../players/player?player_id={}&team_id={}", player.id, team_id) %}
+
+                <tr>
+                    <td class="uk-table-link">
+                        <a class="uk-link-reset" href="{{ player_url }}">
+                            {{ number }}
+                        </a>
+                    </td>
+                    <td class="uk-table-link">
+                        <a class="uk-link-reset" href="{{ player_url }}">
+                            {{ player.name }}
+                        </a>
+                    </td>
+                    <td class="uk-table-link">
+                        <a class="uk-link-reset" href="{{ player_url }}">
+                            {{ player.position.name("fr") }}
+                        </a>
+                    </td>
+                    <td class="uk-table-link">
+                        <a class="uk-link-reset" href="{{ player_url }}">
+                            {{ crate::app::templates::blood_bowl::players::movement_allowance_html(player)?|escape("none") }}
+                        </a>
+                    </td>
+                    <td class="uk-table-link">
+                        <a class="uk-link-reset" href="{{ player_url }}">
+                            {{ crate::app::templates::blood_bowl::players::strength_html(player)?|escape("none") }}
+                        </a>
+                    </td>
+                    <td class="uk-table-link">
+                        <a class="uk-link-reset" href="{{ player_url }}">
+                            {{ crate::app::templates::blood_bowl::players::agility_html(player)?|escape("none") }}
+                        </a>
+                    </td>
+                    <td class="uk-table-link">
+                        <a class="uk-link-reset" href="{{ player_url }}">
+                            {{ crate::app::templates::blood_bowl::players::passing_ability_html(player)?|escape("none") }}
+                        </a>
+                    </td>
+                    <td class="uk-table-link">
+                        <a class="uk-link-reset" href="{{ player_url }}">
+                            {{ crate::app::templates::blood_bowl::players::armour_value_html(player)?|escape("none") }}
+                        </a>
+                    </td>
+                    <td class="uk-table-link">
+                        <a class="uk-link-reset" href="{{ player_url }}">
+                            {{ crate::app::templates::blood_bowl::players::skills_names_html(player, "fr")?|escape("none") }}
+                        </a>
+                    </td>
+                    <td class="uk-table-link">
+                        <a class="uk-link-reset" href="{{ player_url }}">
+                            {% if player.star_player_points > 0 %}
+                            {{ player.star_player_points }}
+                            {% endif %}
+                        </a>
+                    </td>
+                    <td class="uk-table-link">
+                        <a class="uk-link-reset" href="{{ player_url }}">
+                            {% if player.niggling_injuries_number() > 0 %}
+                            {{ player.niggling_injuries_number() }}
+                            {% endif %}
+                        </a>
+                    </td>
+                    <td class="uk-table-link">
+                        <a class="uk-link-reset" href="{{ player_url }}">
+                            {{ player.value()? / 1000 }}k
+                        </a>
+                    </td>
+                </tr>
+
+                {% endfor %}
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

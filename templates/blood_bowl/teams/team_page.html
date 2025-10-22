@@ -71,7 +71,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#" uk-icon="icon: users" x-on:click="tab='old_players'">
+                    <a href="#" uk-icon="icon: users" x-on:click="tab='former_players'">
                         <span class="uk-visible@m">Anciens joueurs</span>
                     </a>
                 </li>
@@ -90,8 +90,8 @@
             A venir...
         </div>
 
-        <div x-show="tab==='old_players'">
-            A venir...
+        <div x-show="tab==='former_players'">
+            {{ former_players|escape("none") }}
         </div>
 
     </div>

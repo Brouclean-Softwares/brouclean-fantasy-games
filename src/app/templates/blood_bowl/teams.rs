@@ -7,6 +7,7 @@ use crate::errors::AppError;
 use crate::{data, AppState};
 use askama::Template;
 use askama_web::WebTemplate;
+use blood_bowl_rs::players::Player;
 use blood_bowl_rs::positions::Position;
 use blood_bowl_rs::rosters::{Roster, RosterDefinition};
 use blood_bowl_rs::teams::Team;
@@ -74,6 +75,7 @@ pub struct TeamPage {
     focus: Option<String>,
     sheet: TeamSheet,
     results: TeamResults,
+    former_players: FormerPlayers,
 }
 
 impl TeamPage {
@@ -89,6 +91,7 @@ impl TeamPage {
         edit_mode: bool,
         focus: Option<String>,
         positions_buyable: Vec<(Position, u32, bool)>,
+        former_players: Vec<(i32, Player)>,
     ) -> Self {
         let mut is_playing_game = false;
         if let Some(game) = game_playing.clone() {
@@ -127,6 +130,10 @@ impl TeamPage {
                 game_playing,
                 games_played,
             },
+            former_players: FormerPlayers {
+                team,
+                former_players,
+            },
         }
     }
 }
@@ -150,6 +157,13 @@ struct TeamResults {
     games_scheduled: Vec<GameSummary>,
     game_playing: Option<GameSummary>,
     games_played: Vec<GameSummary>,
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "blood_bowl/teams/former_players.html")]
+struct FormerPlayers {
+    team: Team,
+    former_players: Vec<(i32, Player)>,
 }
 
 #[derive(Template, WebTemplate)]

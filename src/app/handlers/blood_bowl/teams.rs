@@ -184,10 +184,7 @@ pub async fn team(
         .await
         .map_err(error_handler)?;
 
-    let roster_definition = team
-        .roster
-        .definition(team.version)
-        .or(Err(Redirect::to("../teams")))?;
+    let roster_definition = team.roster_definition().or(Err(Redirect::to("../teams")))?;
 
     let edit_mode = params.edit.unwrap_or(false);
 
@@ -212,6 +209,10 @@ pub async fn team(
         .await
         .map_err(error_handler)?;
 
+    let former_players = players::select_former_for_team(&app_state, team.id)
+        .await
+        .map_err(error_handler)?;
+
     Ok(TeamPage::get(
         app_state,
         profile,
@@ -224,6 +225,7 @@ pub async fn team(
         edit_mode,
         params.focus,
         positions_buyable,
+        former_players,
     ))
 }
 

@@ -119,6 +119,44 @@ pub async fn select_under_contract_for_team(
     Ok(players)
 }
 
+pub async fn select_former_for_team(
+    state: &AppState,
+    team_id: i32,
+) -> Result<Vec<(i32, Player)>, AppError> {
+    tracing::debug!("select_former_for_team with team_id={}", team_id);
+
+    let players_detail: Vec<PlayerDetail> = sqlx::query_as(
+        "SELECT bb_players.id,
+                    bb_players.version,
+                    bb_players.name,
+                    bb_players.position,
+                    bb_teams.roster,
+                    bb_teams_players.number
+            FROM bb_players
+            INNER JOIN bb_teams_players
+            ON bb_players.id = bb_teams_players.player_id
+            INNER JOIN bb_teams
+            ON bb_teams.id = bb_teams_players.team_id
+            WHERE bb_teams_players.team_id = $1
+            AND bb_teams_players.contract_end IS NOT NULL
+            ORDER BY bb_teams_players.contract_end DESC",
+    )
+    .bind(team_id.clone())
+    .fetch_all(&state.db)
+    .await?;
+
+    let mut players: Vec<(i32, Player)> = Vec::new();
+
+    for player_detail in players_detail {
+        players.push((
+            player_detail.number,
+            player_detail.into_player(state).await?,
+        ));
+    }
+
+    Ok(players)
+}
+
 pub async fn update_name(
     state: &AppState,
     connected_user: &User,
