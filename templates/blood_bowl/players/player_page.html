@@ -30,24 +30,28 @@
                                    onchange="submit()"
                                    aria-label="">
 
+                        {% if player.is_journeyman || player.is_star_player %}
+                            {{ player.name("fr") }}
+                        {% else %}
                         <div class="uk-inline">
-                            <a href="player?player_id={{ player.id }}&team_id={{ team.id }}" class="uk-form-icon uk-form-icon-flip" uk-icon="icon: pencil"></a>
+                            <a href="{{ link_url }}" class="uk-form-icon uk-form-icon-flip" uk-icon="icon: pencil"></a>
                             <input class="uk-input uk-form-width-large"
                                    name="player_name"
                                    type="text"
-                                   value="{{ player.name }}"
+                                   value="{{ player.name("fr") }}"
                                    placeholder="Nom du joueur..."
                                    onchange="submit()"
                                    aria-label="">
                         </div>
+                        {% endif %}
                     </form>
                     {% elif editable %}
-                    <a class="uk-link-reset" href="player?player_id={{ player.id }}&team_id={{ team.id }}&edit=true">
-                        #{{ number }} - {{ player.name }}
+                    <a class="uk-link-reset" href="{{ link_url }}&edit=true">
+                        #{{ number }} - {{ player.name("fr") }}
                     </a>
-                    <a href="player?player_id={{ player.id }}&team_id={{ team.id }}&edit=true" uk-icon="icon: pencil"></a>
+                    <a href="{{ link_url }}&edit=true" uk-icon="icon: pencil"></a>
                     {% else %}
-                        #{{ number }} - {{ player.name }}
+                        #{{ number }} - {{ player.name("fr") }}
                     {% endif %}
 
                 </h2>
@@ -75,6 +79,7 @@
                 <dd>{{ player.position.name("fr") }}</dd>
             </dl>
 
+            {% if ! player.is_star_player %}
             <div class="uk-overflow-auto">
                 <table class="uk-table uk-table-divider uk-table-small">
                     <thead>
@@ -100,6 +105,7 @@
                     </tbody>
                 </table>
             </div>
+            {% endif %}
         </div>
 
         <div class="uk-margin-medium-bottom">
@@ -107,6 +113,7 @@
                 Statistiques
             </h3>
 
+            {% if ! player.is_star_player %}
             <dl class="uk-description-list">
                 <dt>Nombre de matches</dt>
                 <dd>{{ stats.games_number }}</dd>
@@ -114,6 +121,7 @@
                 <dt>Points de Star Player (PSP)</dt>
                 <dd>{{ stats.star_player_points }}</dd>
             </dl>
+            {% endif %}
 
             <div class="uk-overflow-auto">
                 <table class="uk-table uk-table-divider uk-table-small">
@@ -144,6 +152,7 @@
             </div>
         </div>
 
+        {% if ! player.is_star_player %}
         <div class="uk-margin-medium-bottom">
             <h3 class="uk-heading-divider">
                 Blessures
@@ -181,7 +190,9 @@
                 </table>
             </div>
         </div>
+        {% endif %}
 
+        {% if ! player.is_journeyman && ! player.is_star_player %}
         <div class="uk-margin-medium-bottom">
             <h3 class="uk-heading-divider">
                 Améliorations
@@ -210,8 +221,35 @@
                 <dd>{{ player_advancement_blocs[5]|escape("none") }}</dd>
             </dl>
         </div>
+        {% endif %}
 
-        {% if editable && is_under_contract %}
+        {% if player.is_journeyman && can_buy %}
+        <div>
+            <form id="buy_journeyman_form" method="post" autocomplete="off">
+                <input name="journeyman_to_recruit_id_in_game" type="hidden" value="{{ player.id }}">
+
+                <button class="uk-button uk-button-primary"
+                        type="button"
+                        uk-toggle="target: #modal-buy-journeyman">Recruter</button>
+
+                <div id="modal-buy-journeyman" uk-modal>
+                    <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                        <h2 class="uk-modal-title">Signature de #{{ number }} - {{ player.position.name("fr") }}</h2>
+                        <p>Vous êtes sur le point de recruter le journalier. Confirmez-vous la signature de son contrat ?</p>
+                        <p class="uk-text-right">
+                            <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                            <button class="uk-button uk-button-primary"
+                                    onclick="document.getElementById('buy_journeyman_form').submit()">
+                                Confirmer
+                            </button>
+                        </p>
+                    </div>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+
+        {% if can_buyout %}
         <div>
             <form id="buyout_form" action="../teams/team?id={{ team.id }}" method="post" autocomplete="off">
                 <input name="player_id_to_buyout" type="hidden" value="{{ player.id }}">

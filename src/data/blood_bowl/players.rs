@@ -1,4 +1,5 @@
-use crate::data::blood_bowl::{coaches, teams};
+use crate::data::blood_bowl::games::select_playing_team_player_for_game;
+use crate::data::blood_bowl::{coaches, games, teams};
 use crate::data::users::User;
 use crate::errors::AppError;
 use crate::AppState;
@@ -47,14 +48,14 @@ pub async fn select_by_id_for_team(
     state: &AppState,
     player_id: i32,
     team_id: i32,
-) -> Result<(i32, Player), AppError> {
+) -> Result<Option<(i32, Player)>, AppError> {
     tracing::debug!(
         "select_by_id with player_id={} for team_id={}",
         player_id,
         team_id
     );
 
-    let player_detail: PlayerDetail = sqlx::query_as(
+    let player_detail: Option<PlayerDetail> = sqlx::query_as(
         "SELECT bb_players.id,
                     bb_players.version,
                     bb_players.name,
@@ -68,18 +69,21 @@ pub async fn select_by_id_for_team(
             ON bb_teams.id = bb_teams_players.team_id
             WHERE bb_teams_players.team_id = $2
             AND bb_teams_players.player_id = $1
-            ORDER BY bb_teams_players.number ASC
             LIMIT 1",
     )
     .bind(player_id.clone())
     .bind(team_id.clone())
-    .fetch_one(&state.db)
+    .fetch_optional(&state.db)
     .await?;
 
-    Ok((
-        player_detail.number,
-        player_detail.into_player(state).await?,
-    ))
+    if let Some(player_detail) = player_detail {
+        Ok(Some((
+            player_detail.number,
+            player_detail.into_player(state).await?,
+        )))
+    } else {
+        Ok(None)
+    }
 }
 
 pub async fn select_under_contract_for_team(
@@ -227,14 +231,14 @@ pub async fn select_statistics(state: &AppState, player_id: i32) -> Result<Playe
 
     let statistics: Option<PlayerStats> = sqlx::query_as(
         "SELECT COUNT(game_id) as games_number,
-                    SUM(passing_completions) as passing_completions,
-                    SUM(throwing_completions) as throwing_completions,
-                    SUM(deflections) as deflections,
-                    SUM(interceptions) as interceptions,
-                    SUM(casualties) as casualties,
-                    SUM(touchdowns) as touchdowns,
-                    SUM(most_valuable_player) as most_valuable_player,
-                    SUM(star_player_points) as star_player_points
+                    COALESCE(SUM(passing_completions), 0) as passing_completions,
+                    COALESCE(SUM(throwing_completions), 0) as throwing_completions,
+                    COALESCE(SUM(deflections), 0) as deflections,
+                    COALESCE(SUM(interceptions), 0) as interceptions,
+                    COALESCE(SUM(casualties), 0) as casualties,
+                    COALESCE(SUM(touchdowns), 0) as touchdowns,
+                    COALESCE(SUM(most_valuable_player), 0) as most_valuable_player,
+                    COALESCE(SUM(star_player_points), 0) as star_player_points
             FROM bb_games_teams_players
             WHERE player_id = $1",
     )
@@ -299,7 +303,7 @@ pub async fn update_number(
         connected_user,
         team_id,
         player_id,
-        number
+        number,
     );
 
     if let Some(connected_user_id) = connected_user.id {
@@ -394,6 +398,100 @@ pub async fn buy_position_for_team(
         .await?;
 
         transaction.commit().await?;
+    }
+
+    Ok(())
+}
+
+pub async fn buy_journeyman_in_game_for_team(
+    state: &AppState,
+    connected_user: &User,
+    team_id: i32,
+    player_id_in_game: i32,
+    game_id: i32,
+) -> Result<(), AppError> {
+    tracing::debug!(
+        "buy_journeyman_in_game_for_team by user={:?} for team_id={}, game_id={} and player_id={}",
+        connected_user,
+        team_id,
+        game_id,
+        player_id_in_game,
+    );
+
+    if let Some(connected_user_id) = connected_user.id {
+        let mut team = teams::select_by_id_with_staff_and_players(state, team_id).await?;
+        let game = games::select_by_id(state, game_id).await?;
+        let journey_man =
+            select_playing_team_player_for_game(state, &game, team_id, player_id_in_game).await?;
+
+        if let Some(journey_man) = journey_man {
+            if let Some((number, player)) = team.buy_journeyman(journey_man)? {
+                let team_value = team.value()?;
+                let team_current_value = team.current_value()?;
+
+                let mut transaction = state.db.begin().await?;
+
+                let new_player_id: Id = sqlx::query_as(
+                    "INSERT INTO bb_players (
+                        version,
+                        name,
+                        position)
+                    VALUES ($1, $2, $3)
+                    RETURNING id",
+                )
+                .bind(player.version.clone())
+                .bind(player.name.clone())
+                .bind(player.position.clone())
+                .fetch_one(&mut *transaction)
+                .await?;
+
+                sqlx::query(
+                    "INSERT INTO bb_teams_players (
+                        number,
+                        team_id,
+                        player_id)
+                    VALUES ($1, $2, $3)",
+                )
+                .bind(number.clone())
+                .bind(team_id.clone())
+                .bind(new_player_id.id.clone())
+                .execute(&mut *transaction)
+                .await?;
+
+                sqlx::query(
+                    "UPDATE bb_games_teams_players
+                    SET player_id = $1
+                    WHERE player_id_in_game = $2
+                    AND game_id = $3
+                    AND team_id = $4",
+                )
+                .bind(new_player_id.id.clone())
+                .bind(player_id_in_game.clone())
+                .bind(game_id.clone())
+                .bind(team_id.clone())
+                .execute(&mut *transaction)
+                .await?;
+
+                sqlx::query(
+                    "UPDATE bb_teams
+                    SET treasury = $1,
+                        value = $2,
+                        current_value = $3,
+                        last_updated = CURRENT_TIMESTAMP
+                    WHERE id = $4
+                    AND coach_id = $5",
+                )
+                .bind(team.treasury.clone())
+                .bind(team_value.clone() as i32)
+                .bind(team_current_value.clone() as i32)
+                .bind(team_id.clone())
+                .bind(connected_user_id.clone())
+                .execute(&mut *transaction)
+                .await?;
+
+                transaction.commit().await?;
+            }
+        }
     }
 
     Ok(())
@@ -670,31 +768,31 @@ pub async fn add_advancement_choice(
         advancement_choice.type_name(),
     );
 
-    let (_, player) = select_by_id_for_team(state, player_id, team_id).await?;
-
-    if let Some(team_coach) = coaches::select_from_team(state, team_id).await? {
-        if team_coach.id.eq(&connected_user.id) {
-            sqlx::query(
-                "INSERT INTO bb_players_advancements (
-                player_id,
-                choice,
-                star_player_points,
-                options_to_choose
-            )
-            VALUES ($1, $2, $3, $4)",
-            )
-            .bind(player_id.clone())
-            .bind(serde_json::to_string(&advancement_choice)?)
-            .bind(
-                advancement_choice
-                    .star_player_points_cost_for_player(&player)
-                    .clone() as i32,
-            )
-            .bind(serde_json::to_string(
-                &advancement_choice.roll_advancements_to_choose_for_player(&player)?,
-            )?)
-            .execute(&state.db)
-            .await?;
+    if let Some((_, player)) = select_by_id_for_team(state, player_id, team_id).await? {
+        if let Some(team_coach) = coaches::select_from_team(state, team_id).await? {
+            if team_coach.id.eq(&connected_user.id) {
+                sqlx::query(
+                    "INSERT INTO bb_players_advancements (
+                    player_id,
+                    choice,
+                    star_player_points,
+                    options_to_choose
+                )
+                VALUES ($1, $2, $3, $4)",
+                )
+                .bind(player_id.clone())
+                .bind(serde_json::to_string(&advancement_choice)?)
+                .bind(
+                    advancement_choice
+                        .star_player_points_cost_for_player(&player)
+                        .clone() as i32,
+                )
+                .bind(serde_json::to_string(
+                    &advancement_choice.roll_advancements_to_choose_for_player(&player)?,
+                )?)
+                .execute(&state.db)
+                .await?;
+            }
         }
     }
 

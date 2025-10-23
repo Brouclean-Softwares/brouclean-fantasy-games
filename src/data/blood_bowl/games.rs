@@ -1,5 +1,5 @@
 use crate::data::blood_bowl::teams::TeamSummary;
-use crate::data::blood_bowl::{coaches, teams};
+use crate::data::blood_bowl::{coaches, players, teams};
 use crate::data::users::User;
 use crate::errors::AppError;
 use crate::errors::AppError::BloodBowlAppError;
@@ -319,6 +319,36 @@ pub async fn select_playing_by_team(
     }
 }
 
+pub async fn is_last_for_team(
+    state: &AppState,
+    game_id: &i32,
+    team_id: &i32,
+) -> Result<bool, AppError> {
+    tracing::debug!(
+        "is_last_for_team for team_id={} with game_id={}",
+        team_id,
+        game_id
+    );
+
+    let last_game_id: Option<Id> = sqlx::query_as(
+        "SELECT id
+            FROM bb_games
+            WHERE (first_team_id = $1 OR second_team_id = $1)
+            AND started_at IS NOT NULL
+            ORDER BY started_at DESC
+            LIMIT 1",
+    )
+    .bind(team_id.clone())
+    .fetch_optional(&state.db)
+    .await?;
+
+    if let Some(last_game_id) = last_game_id {
+        Ok(last_game_id.id.eq(game_id))
+    } else {
+        Ok(false)
+    }
+}
+
 pub async fn select_by_id(state: &AppState, id: i32) -> Result<Game, AppError> {
     tracing::debug!("select_by_id with id={}", id);
 
@@ -367,14 +397,14 @@ impl GameTeamPlayer {
         (
             self.player_number,
             Player {
-                id: self.player_id.unwrap_or(self.player_id_in_game),
+                id: self.player_id_in_game,
                 version: game.version.clone(),
                 position: self.player_position,
                 roster: self.player_roster,
                 name: self.name.unwrap_or("".to_string()),
                 star_player_points: 0,
-                is_journeyman: false,
-                is_star_player: false,
+                is_journeyman: self.player_position.is_journeyman(),
+                is_star_player: self.player_position.is_star(),
                 miss_next_game: false,
                 advancements: vec![],
                 injuries: vec![],
@@ -423,54 +453,54 @@ pub async fn select_playing_players_for_game(
     Ok((first_team_players, second_team_players))
 }
 
-#[derive(Deserialize, sqlx::FromRow, Clone)]
-pub struct PlayerStatisticsRow {
-    pub player_id: i32,
-    pub player_number: i32,
-    pub player_position: Position,
-    pub passing_completions: i32,
-    pub throwing_completions: i32,
-    pub deflections: i32,
-    pub interceptions: i32,
-    pub casualties: i32,
-    pub touchdowns: i32,
-    pub most_valuable_player: i32,
-    pub star_player_points: i32,
-}
-
-pub async fn select_players_statistics_for_team(
+pub async fn select_playing_team_player_for_game(
     state: &AppState,
-    game_id: &i32,
-    team_id: &i32,
-) -> Result<Vec<PlayerStatisticsRow>, AppError> {
+    game: &Game,
+    team_id: i32,
+    player_id_in_game: i32,
+) -> Result<Option<(i32, Player)>, AppError> {
     tracing::debug!(
-        "select_players_statistics_for_team in game_id={} for team_id={:?}",
-        game_id,
-        team_id
+        "select_playing_player_for_game with game_id={}, team_id={} and player_id_in_game={}",
+        game.id,
+        team_id,
+        player_id_in_game,
     );
 
-    let players_statistics: Vec<PlayerStatisticsRow> = sqlx::query_as(
-        "SELECT player_id,
-                    player_number,
-                    player_position,
-                    passing_completions,
-                    throwing_completions,
-                    deflections,
-                    interceptions,
-                    casualties,
-                    touchdowns,
-                    most_valuable_player,
-                    star_player_points
+    let game_team_player: Option<GameTeamPlayer> = sqlx::query_as(
+        "SELECT bb_games_teams_players.team_id,
+                    bb_games_teams_players.player_id,
+                    bb_games_teams_players.player_id_in_game,
+                    bb_games_teams_players.player_number,
+                    bb_games_teams_players.player_position,
+                    bb_teams.roster as player_roster,
+                    '' as name
             FROM bb_games_teams_players
-            WHERE game_id = $1
-            AND team_id = $2",
+            INNER JOIN bb_teams
+            ON bb_teams.id = bb_games_teams_players.team_id
+            WHERE bb_games_teams_players.game_id = $1
+            AND bb_games_teams_players.team_id = $2
+            AND bb_games_teams_players.player_id_in_game = $3
+            LIMIT 1",
     )
-    .bind(game_id.clone())
+    .bind(game.id.clone())
     .bind(team_id.clone())
-    .fetch_all(&state.db)
+    .bind(player_id_in_game.clone())
+    .fetch_optional(&state.db)
     .await?;
 
-    Ok(players_statistics)
+    if let Some(game_team_player) = game_team_player {
+        if let Some(player_id) = game_team_player.player_id {
+            players::select_by_id_for_team(&state, player_id, team_id).await
+        } else {
+            let (number, mut player) = game_team_player.into_player(&game);
+
+            player.injuries = game.suffered_injuries(team_id, player_id_in_game);
+
+            Ok(Some((number, player)))
+        }
+    } else {
+        Ok(None)
+    }
 }
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
@@ -882,6 +912,74 @@ pub async fn update_after_event(
 
     teams::update_values(state, profile, game.first_team.id).await?;
     teams::update_values(state, profile, game.second_team.id).await?;
+
+    Ok(())
+}
+
+pub async fn update_number_for_added_player_in_game(
+    state: &AppState,
+    connected_user: &User,
+    team_id: i32,
+    player_id_in_game: i32,
+    game_id: i32,
+    number: i32,
+) -> Result<(), AppError> {
+    tracing::debug!(
+        "update_number_for_added_player_in_game by user={:?} for team_id={}, player_id_in_game={} and game_id={} with number={}",
+        connected_user,
+        team_id,
+        player_id_in_game,
+        game_id,
+        number,
+    );
+
+    if let Some(connected_user_id) = connected_user.id {
+        let mut game = select_by_id(state, game_id).await?;
+
+        if team_id.eq(&game.first_team.id) {
+            game.first_team
+                .update_player_number(player_id_in_game, number);
+        }
+
+        if team_id.eq(&game.second_team.id) {
+            game.second_team
+                .update_player_number(player_id_in_game, number);
+        }
+
+        let mut transaction = state.db.begin().await?;
+
+        sqlx::query(
+            "UPDATE bb_games
+            SET playing_players = $3
+            WHERE id = $1
+            AND (created_by = $2 OR first_coach_id = $2 OR second_coach_id = $2)",
+        )
+        .bind(game.id.clone())
+        .bind(connected_user_id.clone())
+        .bind(serde_json::to_string(&game.playing_players())?)
+        .execute(&mut *transaction)
+        .await?;
+
+        sqlx::query(
+            "UPDATE bb_games_teams_players
+                SET player_number = $1
+                FROM bb_games
+                WHERE bb_games.id = bb_games_teams_players.game_id
+                AND (bb_games.created_by = $4 OR bb_games.first_coach_id = $4 OR bb_games.second_coach_id = $4)
+                AND bb_games.id = $5
+                AND bb_games_teams_players.player_id_in_game = $2
+                AND bb_games_teams_players.team_id = $3",
+        )
+            .bind(number.clone())
+            .bind(player_id_in_game.clone())
+            .bind(team_id.clone())
+            .bind(connected_user_id.clone())
+            .bind(game_id.clone())
+            .execute(&mut *transaction)
+            .await?;
+
+        transaction.commit().await?;
+    }
 
     Ok(())
 }
