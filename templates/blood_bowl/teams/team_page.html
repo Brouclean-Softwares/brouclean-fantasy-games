@@ -47,7 +47,11 @@
                 </h2>
                 <p class="uk-margin-remove-top">
                     <a class="uk-link-reset" href="../rosters/roster?version={{ team.version.type_name() }}&roster={{ team.roster.type_name() }}">
-                        {{ team.roster.name("fr") }} ({{ team.version.type_name() }})
+                        {{ team.roster.name("fr") }}
+
+                        {% if team.version.ne(&Version::LAST_VERSION) %}
+                        <span> ({{ team.version.type_name() }})</span>
+                        {% endif %}
                     </a>
                 </p>
             </div>

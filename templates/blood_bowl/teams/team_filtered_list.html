@@ -17,7 +17,11 @@
                 {{ team.name }}
             </td>
             <td>
-                {{ team.roster.name("fr") }} ({{ team.version.type_name() }})
+                {{ team.roster.name("fr") }}
+
+                {% if team.version.ne(&Version::LAST_VERSION) %}
+                <span> ({{ team.version.type_name() }})</span>
+                {% endif %}
             </td>
             <td>
                 {{ team.value / 1000 }}k

@@ -32,7 +32,11 @@
                     </td>
                     <td class="uk-table-link">
                         <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ team.id }}">
-                            {{ team.roster.name("fr") }} ({{ team.version.type_name() }})
+                            {{ team.roster.name("fr") }}
+
+                            {% if team.version.ne(&Version::LAST_VERSION) %}
+                            <span> ({{ team.version.type_name() }})</span>
+                            {% endif %}
                         </a>
                     </td>
                     <td class="uk-table-link">
