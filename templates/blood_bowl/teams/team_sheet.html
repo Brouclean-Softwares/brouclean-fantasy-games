@@ -93,7 +93,7 @@
                     <th>Valeur</th>
 
                     {% if editable %}
-                    <th></th>
+                    <th>Renvoi</th>
                     {% endif %}
                 </tr>
                 </thead>
@@ -209,7 +209,7 @@
                         <form id="buyout_player_form-{{ player.id }}" method="post" autocomplete="off">
                             <input name="player_id_to_buyout" type="hidden" value="{{ player.id }}">
 
-                            <button class="uk-button uk-button-link uk-margin-left"
+                            <button class="uk-button uk-button-link"
                                     type="button"
                                     uk-toggle="target: #modal-buyout-player-{{ player.id }}">
                                 <span uk-icon="icon: minus-circle"></span>
@@ -221,9 +221,9 @@
                                     <p>Vous êtes sur le point de vous séparer du joueur. Confirmez-vous la fin de son contrat ?</p>
                                     <p class="uk-text-right">
                                         <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
-                                        <button class="uk-button uk-button-primary"
+                                        <button class="uk-button uk-button-danger"
                                                 onclick="document.getElementById('buyout_player_form-{{ player.id }}').submit()">
-                                            Confirmer
+                                            Renvoyer
                                         </button>
                                     </p>
                                 </div>

@@ -121,9 +121,11 @@
                             <input name="competition_id" type="hidden" value="{{ competition.id }}">
                             <input name="team_to_unregistered_id" type="hidden" value="{{ team.id }}">
 
-                            <button class="uk-button uk-button-default"
+                            <button class="uk-button uk-button-link"
                                     type="button"
-                                    uk-toggle="target: #modal-unregister-team-{{ team.id }}">Désinscrire</button>
+                                    uk-toggle="target: #modal-unregister-team-{{ team.id }}">
+                                <span uk-icon="icon: minus-circle"></span>
+                            </button>
 
                             <div id="modal-unregister-team-{{ team.id }}" uk-modal>
                                 <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
