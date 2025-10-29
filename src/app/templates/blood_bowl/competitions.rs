@@ -1,3 +1,4 @@
+use crate::app::templates::blood_bowl::teams::TeamSelector;
 use crate::app::templates::{AlertMessage, NavigationBar};
 use crate::data::blood_bowl::competitions::Competition;
 use crate::data::blood_bowl::teams::TeamLogo;
@@ -84,10 +85,12 @@ impl CompetitionPage {
             information: CompetitionInformation {
                 competition,
                 registered_teams,
+                profile,
                 deletable,
                 editable,
                 edit_mode,
                 link_url,
+                team_selector: TeamSelector::get("team_to_registered_id".to_string()),
             },
         }
     }
@@ -98,8 +101,10 @@ impl CompetitionPage {
 pub struct CompetitionInformation {
     competition: Competition,
     registered_teams: Vec<TeamSummary>,
+    profile: Option<User>,
     deletable: bool,
     editable: bool,
     edit_mode: bool,
     link_url: String,
+    team_selector: TeamSelector,
 }

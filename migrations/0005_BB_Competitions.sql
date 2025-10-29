@@ -15,7 +15,8 @@ CREATE TABLE IF NOT EXISTS bb_competitions_teams (
     team_id INTEGER REFERENCES bb_teams ON DELETE RESTRICT,
     validated BOOLEAN,
     team_number INTEGER,
-    registered_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    registered_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (competition_id, team_id)
 );
 
 CREATE TABLE IF NOT EXISTS bb_competitions_stages (
@@ -24,7 +25,8 @@ CREATE TABLE IF NOT EXISTS bb_competitions_stages (
     stage_position INTEGER NOT NULL,
     stage_type VARCHAR NOT NULL,
     stage_name VARCHAR NOT NULL,
-    stage_rules VARCHAR
+    stage_rules VARCHAR,
+    UNIQUE (competition_id, stage_position)
 );
 
 CREATE TABLE IF NOT EXISTS bb_competitions_games (
@@ -32,5 +34,6 @@ CREATE TABLE IF NOT EXISTS bb_competitions_games (
     stage_id INTEGER NOT NULL REFERENCES bb_competitions_stages ON DELETE CASCADE,
     game_id INTEGER NOT NULL REFERENCES bb_games ON DELETE CASCADE,
     game_reference VARCHAR NOT NULL,
-    game_name VARCHAR NOT NULL
+    game_name VARCHAR NOT NULL,
+    UNIQUE (competition_id, game_id)
 );

@@ -231,33 +231,6 @@ impl Competition {
         Ok(competitions)
     }
 
-    pub async fn select_editions(&self, state: &AppState) -> Result<Vec<Self>, AppError> {
-        tracing::debug!("select_editions with name={}", self.name);
-
-        let rows: Vec<CompetitionRow> = sqlx::query_as(
-            "SELECT id,
-                    name,
-                    edition_number,
-                    director,
-                    version,
-                    description
-            FROM bb_competitions
-            WHERE name = $1
-            ORDER BY edition_number, created_at",
-        )
-        .bind(self.name.clone())
-        .fetch_all(&state.db)
-        .await?;
-
-        let mut competitions: Vec<Competition> = Vec::with_capacity(rows.len());
-
-        for row in rows {
-            competitions.push(row.into_competition(state).await?);
-        }
-
-        Ok(competitions)
-    }
-
     pub async fn select_registered_teams(
         &self,
         state: &AppState,
@@ -290,6 +263,59 @@ impl Competition {
         .await?;
 
         Ok(teams)
+    }
+
+    pub async fn insert_team_registration(
+        state: &AppState,
+        competition_id: i32,
+        team_id: i32,
+    ) -> Result<(), AppError> {
+        tracing::debug!(
+            "insert_team_registration for competition_id={} and team_id={}",
+            competition_id,
+            team_id
+        );
+
+        sqlx::query(
+            "INSERT INTO bb_competitions_teams (
+                    competition_id,
+                    team_id)
+                VALUES ($1, $2)
+                ON CONFLICT (competition_id, team_id) DO NOTHING",
+        )
+        .bind(competition_id.clone())
+        .bind(team_id.clone())
+        .execute(&state.db)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn select_editions(&self, state: &AppState) -> Result<Vec<Self>, AppError> {
+        tracing::debug!("select_editions with name={}", self.name);
+
+        let rows: Vec<CompetitionRow> = sqlx::query_as(
+            "SELECT id,
+                    name,
+                    edition_number,
+                    director,
+                    version,
+                    description
+            FROM bb_competitions
+            WHERE name = $1
+            ORDER BY edition_number, created_at",
+        )
+        .bind(self.name.clone())
+        .fetch_all(&state.db)
+        .await?;
+
+        let mut competitions: Vec<Competition> = Vec::with_capacity(rows.len());
+
+        for row in rows {
+            competitions.push(row.into_competition(state).await?);
+        }
+
+        Ok(competitions)
     }
 }
 

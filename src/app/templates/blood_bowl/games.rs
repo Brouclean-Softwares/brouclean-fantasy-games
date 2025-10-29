@@ -175,12 +175,15 @@ impl NewGamePage {
             .clone()
             .and_then(|team| Some(team.id))
             .unwrap_or(-1);
+
         let second_team_id = second_team
             .clone()
             .and_then(|team| Some(team.id))
             .unwrap_or(-1);
+
         let first_team_card =
             first_team.and_then(|team| Some(TeamCard::get_with_details(team, true)));
+
         let second_team_card =
             second_team.and_then(|team| Some(TeamCard::get_with_details(team, true)));
 
