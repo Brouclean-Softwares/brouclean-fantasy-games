@@ -291,6 +291,31 @@ impl Competition {
         Ok(())
     }
 
+    pub async fn delete_team_registration(
+        state: &AppState,
+        competition_id: i32,
+        team_id: i32,
+    ) -> Result<(), AppError> {
+        tracing::debug!(
+            "delete_team_registration for competition_id={} and team_id={}",
+            competition_id,
+            team_id
+        );
+
+        sqlx::query(
+            "DELETE
+                FROM bb_competitions_teams
+                WHERE competition_id = $1
+                AND team_id = $2",
+        )
+        .bind(competition_id.clone())
+        .bind(team_id.clone())
+        .execute(&state.db)
+        .await?;
+
+        Ok(())
+    }
+
     pub async fn select_editions(&self, state: &AppState) -> Result<Vec<Self>, AppError> {
         tracing::debug!("select_editions with name={}", self.name);
 

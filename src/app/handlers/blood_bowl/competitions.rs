@@ -16,6 +16,7 @@ pub fn init_router() -> Router<AppState> {
         .route("/delete", post(delete))
         .route("/competition", get(competition).post(save))
         .route("/register_team", post(register_team))
+        .route("/unregister_team", post(unregister_team))
 }
 
 pub async fn competitions(
@@ -192,6 +193,32 @@ pub async fn register_team(
         .await
         {
             tracing::debug!("competition registering team: Error: {}", error);
+        }
+    }
+
+    Redirect::to(&format!("./competition?id={}", form.competition_id))
+}
+
+#[derive(Deserialize)]
+pub struct UnregisterTeamForm {
+    pub competition_id: i32,
+    pub team_to_unregistered_id: i32,
+}
+
+pub async fn unregister_team(
+    State(app_state): State<AppState>,
+    profile: Option<User>,
+    Form(form): Form<UnregisterTeamForm>,
+) -> Redirect {
+    if profile.is_some() {
+        if let Err(error) = Competition::delete_team_registration(
+            &app_state,
+            form.competition_id,
+            form.team_to_unregistered_id,
+        )
+        .await
+        {
+            tracing::debug!("competition unregistering team: Error: {}", error);
         }
     }
 

@@ -76,6 +76,10 @@
                     <th>Roster</th>
                     <th uk-tooltip="Valeur d'Equipe">VE</th>
                     <th>Coach</th>
+
+                    {% if editable %}
+                    <th>Actions</th>
+                    {% endif %}
                 </tr>
                 </thead>
 
@@ -110,6 +114,33 @@
                             {{ team.coach_name }}
                         </a>
                     </td>
+
+                    {% if editable %}
+                    <td>
+                        <form id="unregister_team_form_{{ team.id }}" action="./unregister_team" method="post" autocomplete="off">
+                            <input name="competition_id" type="hidden" value="{{ competition.id }}">
+                            <input name="team_to_unregistered_id" type="hidden" value="{{ team.id }}">
+
+                            <button class="uk-button uk-button-default"
+                                    type="button"
+                                    uk-toggle="target: #modal-unregister-team-{{ team.id }}">Désinscrire</button>
+
+                            <div id="modal-unregister-team-{{ team.id }}" uk-modal>
+                                <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                                    <h2 class="uk-modal-title">Désinscription de l'équipe</h2>
+                                    <p>Confirmez vous la désinscription de l'équipe : {{ team.name }} ?</p>
+                                    <p class="uk-text-right">
+                                        <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                                        <button class="uk-button uk-button-danger"
+                                                onclick="document.getElementById('unregister_team_form_{{ team.id }}').submit()">
+                                            Désinscrire
+                                        </button>
+                                    </p>
+                                </div>
+                            </div>
+                        </form>
+                    </td>
+                    {% endif %}
                 </tr>
 
                 {% endfor %}
