@@ -374,13 +374,11 @@ pub async fn update_values(
         SET value = $1,
             current_value = $2,
             last_updated = CURRENT_TIMESTAMP
-        WHERE id = $3
-        AND coach_id = $4",
+        WHERE id = $3",
     )
     .bind(team_value.clone() as i32)
     .bind(team_current_value.clone() as i32)
     .bind(team_id.clone())
-    .bind(connected_user.id.clone())
     .execute(&state.db)
     .await?;
 

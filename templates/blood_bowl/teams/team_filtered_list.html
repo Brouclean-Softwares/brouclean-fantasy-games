@@ -10,6 +10,7 @@
         </tr>
         </thead>
 
+        <tbody>
         {% for team in teams %}
         <tr onclick="update_input_id({{ team.id }})">
             <td>
@@ -35,7 +36,7 @@
             </td>
         </tr>
         {% endfor %}
-        <tbody>
+        </tbody>
     </table>
 </div>
 <script>

@@ -83,6 +83,33 @@ impl User {
         Ok(connected_user)
     }
 
+    pub async fn select_by_id(state: &AppState, id: Option<i32>) -> Result<Option<Self>, AppError> {
+        tracing::debug!("select_by_id with id={:?}", id);
+
+        if let Some(user_id) = id {
+            let user: Option<User> = sqlx::query_as(
+                "SELECT users.id,
+                    users.email,
+                    users.name,
+                    users.given_name,
+                    users.family_name,
+                    users.picture
+            FROM users
+            INNER JOIN bb_teams
+            ON users.id = bb_teams.coach_id
+            WHERE users.id = $1
+            LIMIT 1",
+            )
+            .bind(user_id.clone())
+            .fetch_optional(&state.db)
+            .await?;
+
+            Ok(user)
+        } else {
+            Ok(None)
+        }
+    }
+
     pub async fn upsert(&self, state: &AppState) -> Result<Self, AppError> {
         let upserted_user: User = sqlx::query_as(
             "INSERT INTO users (email, name, given_name, family_name, picture)
@@ -126,6 +153,26 @@ impl PartialEq<Option<Coach>> for User {
     fn eq(&self, other: &Option<Coach>) -> bool {
         if let Some(other_coach) = other.clone() {
             self.eq(&other_coach)
+        } else {
+            false
+        }
+    }
+}
+
+impl PartialEq<User> for User {
+    fn eq(&self, other: &User) -> bool {
+        if let (Some(id), Some(other_id)) = (self.id.clone(), other.id.clone()) {
+            id.eq(&other_id)
+        } else {
+            false
+        }
+    }
+}
+
+impl PartialEq<Option<User>> for User {
+    fn eq(&self, other: &Option<User>) -> bool {
+        if let Some(other_user) = other.clone() {
+            self.eq(&other_user)
         } else {
             false
         }

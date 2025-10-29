@@ -6,6 +6,7 @@ use axum::response::Redirect;
 use axum::routing::get;
 use axum::Router;
 
+pub mod competitions;
 pub mod games;
 pub mod players;
 pub mod rosters;
@@ -14,6 +15,7 @@ pub mod teams;
 pub fn init_router() -> Router<AppState> {
     Router::new()
         .route("/", get(home))
+        .nest("/competitions", competitions::init_router())
         .nest("/games", games::init_router())
         .nest("/players", players::init_router())
         .nest("/rosters", rosters::init_router())

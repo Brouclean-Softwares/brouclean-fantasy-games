@@ -6,6 +6,7 @@ use crate::AppState;
 use askama::Template;
 use askama_web::WebTemplate;
 
+pub mod competitions;
 pub mod games;
 pub mod players;
 pub mod rosters;

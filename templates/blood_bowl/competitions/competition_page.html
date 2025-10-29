@@ -1,0 +1,86 @@
+{% extends "page_base.html" %}
+
+{% block navbar %}
+{{ navigation_bar|escape("none") }}
+{% endblock %}
+
+{% block messages %}
+{% if let Some(alert_message) = alert_message %}
+{{ alert_message|escape("none") }}
+{% endif %}
+{% endblock %}
+
+{% block body %}
+<div class="uk-section" x-data="{ tab: 'info' }">
+    <div class="uk-container">
+
+        <h2 class="uk-margin-medium-bottom">
+            {% if edit_mode %}
+            <form method="post" autocomplete="off">
+                <div class="uk-inline">
+                    <a href="{{ link_url }}" class="uk-form-icon uk-form-icon-flip" uk-icon="icon: pencil"></a>
+                    <input class="uk-input uk-form-width-large"
+                           name="competition_name"
+                           type="text"
+                           value="{{ competition.name }}"
+                           placeholder="Nom de la compétition..."
+                           onchange="submit()"
+                           aria-label="">
+                </div>
+            </form>
+            
+            {% elif editable %}
+            <a class="uk-link-reset" href="{{ link_url }}&edit=true">
+                {{ competition.name() }}
+            </a>
+            <a href="{{ link_url }}&edit=true" uk-icon="icon: pencil"></a>
+            
+            {% else %}
+                {{ competition.name() }}
+            {% endif %}
+        </h2>
+
+        <div class="uk-margin-medium-bottom">
+            <ul class="uk-child-width-expand" uk-tab>
+                <li class="uk-active">
+                    <a href="#" uk-icon="icon: file-text" x-on:click="tab='info'">
+                        <span class="uk-visible@m">Informations</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" uk-icon="icon: calendar" x-on:click="tab='results'">
+                        <span class="uk-visible@m">Résultats</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" uk-icon="icon: info" x-on:click="tab='stats'">
+                        <span class="uk-visible@m">Statistiques</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" uk-icon="icon: history" x-on:click="tab='history'">
+                        <span class="uk-visible@m">Historique</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div x-show="tab==='info'">
+            {{ information|escape("none") }}
+        </div>
+
+        <div x-show="tab==='results'">
+            A venir...
+        </div>
+
+        <div x-show="tab==='stats'">
+            A venir...
+        </div>
+
+        <div x-show="tab==='history'">
+            A venir...
+        </div>
+
+    </div>
+</div>
+{% endblock %}

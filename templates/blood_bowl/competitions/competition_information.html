@@ -1,0 +1,132 @@
+<div>
+    <div class="uk-margin-medium-bottom">
+        <h3 class="uk-heading-divider">
+            Informations générales
+        </h3>
+
+        <dl class="uk-description-list">
+            <dt>Édition</dt>
+            <dd>{{ competition.edition_number() }}</dd>
+
+            <dt>Organisateur</dt>
+            <dd>
+                {% if let Some(director) = competition.director %}
+                    {{ director.name }}
+                {% else %}
+                    -
+                {% endif %}
+            </dd>
+
+            <dt>Version des règles</dt>
+            <dd>{{ competition.version.type_name() }}</dd>
+
+            <dt>Description</dt>
+            <dd>
+                {% if edit_mode %}
+                <form method="post" autocomplete="off">
+                    <div class="uk-inline">
+                        <a href="{{ link_url }}" class="uk-form-icon uk-form-icon-flip" uk-icon="icon: pencil"></a>
+                        <input class="uk-input uk-form-width-large"
+                               name="competition_description"
+                               type="text"
+                               value="{{ competition.description }}"
+                               placeholder="Description..."
+                               onchange="submit()"
+                               aria-label="">
+                    </div>
+                </form>
+                
+                {% elif editable %}
+                <a class="uk-link-reset" href="{{ link_url }}&edit=true">
+                    {{ competition.description }}
+                </a>
+                <a href="{{ link_url }}&edit=true" uk-icon="icon: pencil"></a>
+                
+                {% else %}
+                    {{ competition.description }}
+                {% endif %}
+            </dd>
+        </dl>
+    </div>
+
+    <div class="uk-margin-medium-bottom">
+        <h3 class="uk-heading-divider">
+            Équipes inscrites
+        </h3>
+
+        <div class="uk-overflow-auto">
+            <table class="uk-table uk-table-striped uk-table-small uk-table-hover">
+                <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Roster</th>
+                    <th uk-tooltip="Valeur d'Equipe">VE</th>
+                    <th>Coach</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                {% for team in registered_teams %}
+
+                {% let team_url = format!("../teams/team?id={}", team.id) %}
+
+                <tr>
+                    <td class="uk-table-link">
+                        <a class="uk-link-reset" href="{{ team_url }}">
+                            <img src="{{ TeamLogo::from(*team).url }}" width="25" height="25" alt="">
+                            {{ team.name }}
+                        </a>
+                    </td>
+                    <td class="uk-table-link">
+                        <a class="uk-link-reset" href="{{ team_url }}">
+                            {{ team.roster.name("fr") }}
+
+                            {% if team.version.ne(&Version::LAST_VERSION) %}
+                            <span> ({{ team.version.type_name() }})</span>
+                            {% endif %}
+                        </a>
+                    </td>
+                    <td class="uk-table-link">
+                        <a class="uk-link-reset" href="{{ team_url }}">
+                            {{ team.value / 1000 }}k
+                        </a>
+                    </td>
+                    <td class="uk-table-link">
+                        <a class="uk-link-reset" href="{{ team_url }}">
+                            {{ team.coach_name }}
+                        </a>
+                    </td>
+                </tr>
+
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if deletable %}
+    <div>
+        <form id="delete_form" action="./delete" method="post" autocomplete="off">
+            <input id="id" name="id" type="hidden" value="{{ competition.id }}">
+
+            <button class="uk-button uk-button-danger"
+                    type="button"
+                    uk-toggle="target: #modal-delete">Supprimer</button>
+
+            <div id="modal-delete" uk-modal>
+                <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                    <h2 class="uk-modal-title">Suppression de la compétition en cours</h2>
+                    <p>Confirmez-vous la suppression de la compétition ?</p>
+                    <p class="uk-text-right">
+                        <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                        <button class="uk-button uk-button-danger"
+                                onclick="document.getElementById('delete_form').submit()">
+                            Confirmer
+                        </button>
+                    </p>
+                </div>
+            </div>
+        </form>
+    </div>
+    {% endif %}
+</div>
