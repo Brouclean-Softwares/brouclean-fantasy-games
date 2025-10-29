@@ -56,9 +56,10 @@
                         class="uk-select uk-form-width-large"
                         aria-label="Select">
 
-                    {% for choice_available in choices_available %}
-                    <option value="{{ serde_json::to_string(&choice_available)? }}">
-                        {{ choice_available.name("fr") }} : {{ choice_available.star_player_points_cost(advancement_number.clone()) }} PSP
+                    {% for (choice, is_available) in choices_available %}
+                    <option value="{{ serde_json::to_string(&choice)? }}"
+                            {% if ! is_available %}disabled{% endif %}>
+                        {{ choice.name("fr") }} : {{ choice.star_player_points_cost(advancement_number.clone()) }} PSP
                     </option>
                     {% endfor %}
 

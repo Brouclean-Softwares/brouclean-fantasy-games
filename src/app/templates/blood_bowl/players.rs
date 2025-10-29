@@ -84,7 +84,7 @@ struct PlayerAdvancementBloc {
     choice: Option<AdvancementChoice>,
     cost: Option<i32>,
     advancements_to_choose: Option<Vec<Advancement>>,
-    choices_available: Vec<AdvancementChoice>,
+    choices_available: Vec<(AdvancementChoice, bool)>,
     editable: bool,
 }
 
@@ -112,11 +112,13 @@ impl PlayerAdvancementBloc {
                 editable,
             })
         } else {
-            let choices_available = if advancement_number == player.advancements.len() + 1 {
-                AdvancementChoice::list_available_for_player(player)?
-            } else {
-                vec![]
-            };
+            let mut choices_available = vec![];
+
+            if advancement_number == player.advancements.len() + 1 {
+                for choice in AdvancementChoice::list_could_be_available_for_player(player)? {
+                    choices_available.push((choice.clone(), choice.is_buyable_for_player(player)));
+                }
+            }
 
             Ok(Self {
                 error_message: None,
