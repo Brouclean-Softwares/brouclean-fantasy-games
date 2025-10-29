@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS bb_competitions_stages (
     competition_id INTEGER NOT NULL REFERENCES bb_competitions ON DELETE CASCADE,
     stage_position INTEGER NOT NULL,
     stage_type VARCHAR NOT NULL,
+    stage_name VARCHAR NOT NULL,
     stage_rules VARCHAR
 );
 
