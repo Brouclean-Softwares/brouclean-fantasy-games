@@ -1,9 +1,10 @@
 use crate::app::templates::blood_bowl::teams::TeamSelector;
 use crate::app::templates::{AlertMessage, NavigationBar};
-use crate::data::blood_bowl::competitions::Competition;
+use crate::data::blood_bowl::competitions::{Competition, CompetitionStage, CompetitionStageType};
 use crate::data::blood_bowl::teams::TeamLogo;
 use crate::data::blood_bowl::teams::TeamSummary;
 use crate::data::users::User;
+use crate::errors::AppError;
 use crate::AppState;
 use askama::Template;
 use askama_web::WebTemplate;
@@ -55,27 +56,25 @@ impl CompetitionPage {
         alert_message: Option<AlertMessage>,
         competition: Competition,
         edit_mode: bool,
-    ) -> Self {
+    ) -> Result<Self, AppError> {
         let editable = if let Some(connected_user) = profile.clone() {
             connected_user.eq(&competition.director)
         } else {
             false
         };
 
-        let deletable = editable;
+        let deletable = editable && !competition.started;
 
         let edit_mode = edit_mode && editable;
 
         let link_url = format!("competition?id={}", competition.id);
 
         let registered_teams: Vec<TeamSummary> =
-            if let Ok(teams) = competition.select_registered_teams(&app_state).await {
-                teams
-            } else {
-                vec![]
-            };
+            competition.select_registered_teams(&app_state).await?;
 
-        Self {
+        let stages = competition.select_stages(&app_state).await?;
+
+        Ok(Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
             alert_message,
             competition: competition.clone(),
@@ -84,6 +83,8 @@ impl CompetitionPage {
             link_url: link_url.clone(),
             information: CompetitionInformation {
                 competition,
+                stages,
+                stage_types: CompetitionStageType::available_list(),
                 registered_teams,
                 profile,
                 deletable,
@@ -92,7 +93,7 @@ impl CompetitionPage {
                 link_url,
                 team_selector: TeamSelector::get("team_to_registered_id".to_string()),
             },
-        }
+        })
     }
 }
 
@@ -100,6 +101,8 @@ impl CompetitionPage {
 #[template(path = "blood_bowl/competitions/competition_information.html")]
 pub struct CompetitionInformation {
     competition: Competition,
+    stages: Vec<CompetitionStage>,
+    stage_types: Vec<CompetitionStageType>,
     registered_teams: Vec<TeamSummary>,
     profile: Option<User>,
     deletable: bool,

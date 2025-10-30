@@ -1,7 +1,8 @@
 use crate::app::templates::blood_bowl::competitions::{CompetitionPage, CompetitionsPage};
 use crate::app::templates::{AlertMessage, AlertType};
-use crate::data::blood_bowl::competitions::Competition;
+use crate::data::blood_bowl::competitions::{Competition, CompetitionStageType};
 use crate::data::users::User;
+use crate::errors::AppError;
 use crate::AppState;
 use axum::extract::{Query, State};
 use axum::response::Redirect;
@@ -15,6 +16,8 @@ pub fn init_router() -> Router<AppState> {
         .route("/new", get(new).post(save))
         .route("/delete", post(delete))
         .route("/competition", get(competition).post(save))
+        .route("/add_stage", post(add_stage))
+        .route("/delete_stage", post(delete_stage))
         .route("/register_team", post(register_team))
         .route("/unregister_team", post(unregister_team))
 }
@@ -51,9 +54,16 @@ pub async fn new(
     if profile.is_some() {
         let competition = Competition::new(profile.clone());
 
-        Ok(CompetitionPage::get(app_state, profile, None, competition, true).await)
+        Ok(
+            CompetitionPage::get(app_state, profile, None, competition, true)
+                .await
+                .map_err(|error| {
+                    tracing::debug!("competition: Error: {}", error);
+                    Redirect::to("../competitions")
+                })?,
+        )
     } else {
-        Err(Redirect::to(".."))
+        Err(Redirect::to("../competitions"))
     }
 }
 
@@ -94,7 +104,8 @@ pub async fn competition(
             competition,
             params.edit.unwrap_or(false),
         )
-        .await)
+        .await
+        .map_err(error_handler)?)
     } else {
         Err(Redirect::to("../competitions"))
     }
@@ -174,6 +185,87 @@ pub async fn delete(
 }
 
 #[derive(Deserialize)]
+pub struct AddStageForm {
+    pub competition_id: i32,
+    pub stage_type_to_add: String,
+}
+
+pub async fn add_stage(
+    State(app_state): State<AppState>,
+    profile: Option<User>,
+    Form(form): Form<AddStageForm>,
+) -> Result<Redirect, Redirect> {
+    let error_handler = |error: AppError| {
+        Redirect::to(&format!(
+            "./competition?id={}&alert_message={}",
+            form.competition_id,
+            error.to_string()
+        ))
+    };
+
+    let competition = Competition::select_by_id(&app_state, form.competition_id)
+        .await
+        .map_err(error_handler)?;
+
+    if let (Some(mut competition), Some(connected_user)) = (competition, profile) {
+        let stage_type_to_add: CompetitionStageType = serde_json::from_str(&form.stage_type_to_add)
+            .map_err(|error| {
+                Redirect::to(&format!(
+                    "./competition?id={}&alert_message={}",
+                    form.competition_id,
+                    error.to_string()
+                ))
+            })?;
+
+        competition
+            .insert_stage(&app_state, &connected_user, stage_type_to_add)
+            .await
+            .map_err(error_handler)?;
+    }
+
+    Ok(Redirect::to(&format!(
+        "./competition?id={}",
+        form.competition_id
+    )))
+}
+
+#[derive(Deserialize)]
+pub struct DeleteStageForm {
+    pub competition_id: i32,
+    pub stage_id: i32,
+}
+
+pub async fn delete_stage(
+    State(app_state): State<AppState>,
+    profile: Option<User>,
+    Form(form): Form<DeleteStageForm>,
+) -> Result<Redirect, Redirect> {
+    let error_handler = |error: AppError| {
+        Redirect::to(&format!(
+            "./competition?id={}&alert_message={}",
+            form.competition_id,
+            error.to_string()
+        ))
+    };
+
+    let competition = Competition::select_by_id(&app_state, form.competition_id)
+        .await
+        .map_err(error_handler)?;
+
+    if let (Some(mut competition), Some(connected_user)) = (competition, profile) {
+        competition
+            .delete_stage(&app_state, &connected_user, form.stage_id)
+            .await
+            .map_err(error_handler)?;
+    }
+
+    Ok(Redirect::to(&format!(
+        "./competition?id={}",
+        form.competition_id
+    )))
+}
+
+#[derive(Deserialize)]
 pub struct RegisterTeamForm {
     pub competition_id: i32,
     pub team_to_registered_id: i32,
@@ -183,20 +275,30 @@ pub async fn register_team(
     State(app_state): State<AppState>,
     profile: Option<User>,
     Form(form): Form<RegisterTeamForm>,
-) -> Redirect {
-    if profile.is_some() {
-        if let Err(error) = Competition::insert_team_registration(
-            &app_state,
+) -> Result<Redirect, Redirect> {
+    let error_handler = |error: AppError| {
+        Redirect::to(&format!(
+            "./competition?id={}&alert_message={}",
             form.competition_id,
-            form.team_to_registered_id,
-        )
+            error.to_string()
+        ))
+    };
+
+    let competition = Competition::select_by_id(&app_state, form.competition_id)
         .await
-        {
-            tracing::debug!("competition registering team: Error: {}", error);
-        }
+        .map_err(error_handler)?;
+
+    if let (Some(competition), Some(_)) = (competition, profile) {
+        competition
+            .insert_team_registration(&app_state, form.team_to_registered_id)
+            .await
+            .map_err(error_handler)?;
     }
 
-    Redirect::to(&format!("./competition?id={}", form.competition_id))
+    Ok(Redirect::to(&format!(
+        "./competition?id={}",
+        form.competition_id
+    )))
 }
 
 #[derive(Deserialize)]
@@ -209,18 +311,28 @@ pub async fn unregister_team(
     State(app_state): State<AppState>,
     profile: Option<User>,
     Form(form): Form<UnregisterTeamForm>,
-) -> Redirect {
-    if profile.is_some() {
-        if let Err(error) = Competition::delete_team_registration(
-            &app_state,
+) -> Result<Redirect, Redirect> {
+    let error_handler = |error: AppError| {
+        Redirect::to(&format!(
+            "./competition?id={}&alert_message={}",
             form.competition_id,
-            form.team_to_unregistered_id,
-        )
+            error.to_string()
+        ))
+    };
+
+    let competition = Competition::select_by_id(&app_state, form.competition_id)
         .await
-        {
-            tracing::debug!("competition unregistering team: Error: {}", error);
-        }
+        .map_err(error_handler)?;
+
+    if let (Some(competition), Some(_)) = (competition, profile) {
+        competition
+            .delete_team_registration(&app_state, form.team_to_unregistered_id)
+            .await
+            .map_err(error_handler)?;
     }
 
-    Redirect::to(&format!("./competition?id={}", form.competition_id))
+    Ok(Redirect::to(&format!(
+        "./competition?id={}",
+        form.competition_id
+    )))
 }

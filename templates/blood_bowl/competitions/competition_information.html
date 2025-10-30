@@ -55,13 +55,81 @@
         </h3>
 
         <ul class="uk-list uk-list-decimal">
-            <li>A venir...</li>
+            {% for stage in stages %}
+            <li>
+                <span>{{ stage.stage_name }} </span>
 
-            {% if editable %}
-            <li>Ajouter</li>
-            {% endif %}
+                {% if editable && ! competition.started %}
+                <span>
+                    <button class="uk-button uk-button-link"
+                            type="button"
+                            uk-toggle="target: #modal-delete-stage-{{ stage.id }}">
+                        <span uk-icon="icon: minus-circle"></span>
+                    </button>
+
+                    <div id="modal-delete-stage-{{ stage.id }}" uk-modal>
+                        <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                            <h2 class="uk-modal-title">Suppression de la phase de compétition</h2>
+                            <p>Confirmez vous la suppression de la phase : {{ stage.stage_name }} ?</p>
+                            <p class="uk-text-right">
+                                <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                                <button class="uk-button uk-button-danger"
+                                        onclick="document.getElementById('delete_stage_form_{{ stage.id }}').submit()">
+                                    Supprimer
+                                </button>
+                            </p>
+                        </div>
+                    </div>
+                </span>
+
+                <form id="delete_stage_form_{{ stage.id }}" action="./delete_stage" method="post" autocomplete="off">
+                    <input name="competition_id" type="hidden" value="{{ competition.id }}">
+                    <input name="stage_id" type="hidden" value="{{ stage.id }}">
+                </form>
+                {% endif %}
+            </li>
+            {% endfor %}
         </ul>
     </div>
+
+    {% if editable && ! competition.closed %}
+    <div class="uk-margin-medium-bottom">
+        <button class="uk-button uk-button-primary"
+                type="button"
+                uk-toggle="target: #modal-add-stage">Ajouter une phase</button>
+
+        <div id="modal-add-stage" uk-modal>
+            <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                <h2 class="uk-modal-title">Ajout d'une phase à la compétition</h2>
+                <p>Quelle type de phase voulez vous ajouter ?</p>
+                <p>
+                    <form id="add_stage_form" action="./add_stage" method="post" autocomplete="off">
+                        <input name="competition_id" type="hidden" value="{{ competition.id }}">
+
+                        <select name="stage_type_to_add"
+                                class="uk-select uk-form-width-large"
+                                aria-label="Select">
+
+                            {% for stage_type in stage_types %}
+                            <option value="{{ serde_json::to_string(&stage_type)? }}">
+                                {{ stage_type.to_string() }}
+                            </option>
+                            {% endfor %}
+
+                        </select>
+                    </form>
+                </p>
+                <p class="uk-text-right">
+                    <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                    <button class="uk-button uk-button-primary"
+                            onclick="document.getElementById('add_stage_form').submit()">
+                        Ajouter
+                    </button>
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <div class="uk-margin-medium-bottom">
         <h3 class="uk-heading-divider">
@@ -115,7 +183,7 @@
                         </a>
                     </td>
 
-                    {% if editable %}
+                    {% if editable && ! competition.started %}
                     <td>
                         <form id="unregister_team_form_{{ team.id }}" action="./unregister_team" method="post" autocomplete="off">
                             <input name="competition_id" type="hidden" value="{{ competition.id }}">
@@ -151,6 +219,7 @@
         </div>
     </div>
 
+    {% if ! competition.started %}
     {% if let Some(user_profile) = profile %}
     <div class="uk-margin-medium-bottom">
         <form id="register_team_form" action="./register_team" method="post" autocomplete="off">
@@ -177,6 +246,7 @@
             </div>
         </form>
     </div>
+    {% endif %}
     {% endif %}
 
     {% if deletable %}

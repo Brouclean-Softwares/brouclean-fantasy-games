@@ -370,7 +370,8 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<Game, AppError> {
                     events,
                     playing_players
             FROM bb_games
-            WHERE id = $1",
+            WHERE id = $1
+            LIMIT 1",
     )
     .bind(id.clone())
     .fetch_one(&state.db)
@@ -379,6 +380,46 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<Game, AppError> {
     let game = game_row.into_game(state).await?;
 
     Ok(game)
+}
+
+pub async fn select_summary_by_id(
+    state: &AppState,
+    id: i32,
+) -> Result<Option<GameSummary>, AppError> {
+    tracing::debug!("select_summary_by_id with id={}", id);
+
+    let game_row: Option<GameRow> = sqlx::query_as(
+        "SELECT id,
+                    version,
+                    created_by,
+                    game_at,
+                    started_at IS NOT NULL AS started,
+                    closed_at IS NOT NULL AS closed,
+                    first_team_id,
+                    first_team_score,
+                    first_team_casualties,
+                    first_team_is_winner,
+                    second_team_id,
+                    second_team_score,
+                    second_team_casualties,
+                    second_team_is_winner,
+                    events,
+                    playing_players
+            FROM bb_games
+            WHERE id = $1
+            LIMIT 1",
+    )
+    .bind(id.clone())
+    .fetch_optional(&state.db)
+    .await?;
+
+    if let Some(game_row) = game_row {
+        let game_summary = game_row.into_game_summary(state).await?;
+
+        Ok(Some(game_summary))
+    } else {
+        Ok(None)
+    }
 }
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]

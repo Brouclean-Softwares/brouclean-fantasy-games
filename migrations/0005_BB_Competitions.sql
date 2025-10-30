@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS bb_competitions (
     version VARCHAR NOT NULL,
     description TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    started_at TIMESTAMP WITH TIME ZONE,
     closed_at TIMESTAMP WITH TIME ZONE,
     last_updated TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -22,18 +23,16 @@ CREATE TABLE IF NOT EXISTS bb_competitions_teams (
 CREATE TABLE IF NOT EXISTS bb_competitions_stages (
     id SERIAL PRIMARY KEY,
     competition_id INTEGER NOT NULL REFERENCES bb_competitions ON DELETE CASCADE,
-    stage_position INTEGER NOT NULL,
     stage_type VARCHAR NOT NULL,
     stage_name VARCHAR NOT NULL,
     stage_rules VARCHAR,
-    UNIQUE (competition_id, stage_position)
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS bb_competitions_games (
     competition_id INTEGER NOT NULL REFERENCES bb_competitions ON DELETE CASCADE,
     stage_id INTEGER NOT NULL REFERENCES bb_competitions_stages ON DELETE CASCADE,
-    game_id INTEGER NOT NULL REFERENCES bb_games ON DELETE CASCADE,
+    game_id INTEGER NOT NULL REFERENCES bb_games ON DELETE CASCADE UNIQUE,
     game_reference VARCHAR NOT NULL,
-    game_name VARCHAR NOT NULL,
-    UNIQUE (competition_id, game_id)
+    game_name VARCHAR NOT NULL
 );
