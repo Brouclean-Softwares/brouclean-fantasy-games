@@ -1,6 +1,7 @@
 use crate::data::blood_bowl::teams::TeamSummary;
 use crate::data::blood_bowl::{coaches, players, teams};
 use crate::data::users::User;
+use crate::data::Id;
 use crate::errors::AppError;
 use crate::errors::AppError::BloodBowlAppError;
 use crate::AppState;
@@ -542,11 +543,6 @@ pub async fn select_playing_team_player_for_game(
     } else {
         Ok(None)
     }
-}
-
-#[derive(Deserialize, sqlx::FromRow, Clone)]
-struct Id {
-    id: i32,
 }
 
 async fn can_be_saved(state: &AppState, profile: &User, game: &Game) -> Result<bool, AppError> {

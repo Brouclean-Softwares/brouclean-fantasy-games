@@ -44,6 +44,29 @@ impl FromRequestParts<AppState> for User {
 }
 
 impl User {
+    pub fn optional_user_eq_other(optional_user: &Option<User>, other: &Option<User>) -> bool {
+        if let Some(other) = other {
+            Self::optional_user_has_optional_id(optional_user, &other.id)
+        } else {
+            false
+        }
+    }
+
+    pub fn optional_user_has_optional_id(
+        optional_user: &Option<User>,
+        optional_id: &Option<i32>,
+    ) -> bool {
+        if let (Some(user), Some(id)) = (optional_user, optional_id) {
+            if let Some(user_id) = user.id {
+                user_id.eq(id)
+            } else {
+                false
+            }
+        } else {
+            false
+        }
+    }
+
     pub fn is_admin(&self, state: &AppState) -> bool {
         state.admin_email.eq(&self.email)
     }

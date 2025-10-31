@@ -20,6 +20,7 @@ pub fn init_router() -> Router<AppState> {
         .route("/delete_stage", post(delete_stage))
         .route("/register_team", post(register_team))
         .route("/unregister_team", post(unregister_team))
+        .route("/update_team_validation", post(update_team_validation))
 }
 
 pub async fn competitions(
@@ -288,9 +289,9 @@ pub async fn register_team(
         .await
         .map_err(error_handler)?;
 
-    if let (Some(competition), Some(_)) = (competition, profile) {
+    if let (Some(competition), Some(connected_user)) = (competition, profile) {
         competition
-            .insert_team_registration(&app_state, form.team_to_registered_id)
+            .insert_team_registration(&app_state, &connected_user, form.team_to_registered_id)
             .await
             .map_err(error_handler)?;
     }
@@ -324,9 +325,46 @@ pub async fn unregister_team(
         .await
         .map_err(error_handler)?;
 
-    if let (Some(competition), Some(_)) = (competition, profile) {
+    if let (Some(competition), Some(connected_user)) = (competition, profile) {
         competition
-            .delete_team_registration(&app_state, form.team_to_unregistered_id)
+            .delete_team_registration(&app_state, &connected_user, form.team_to_unregistered_id)
+            .await
+            .map_err(error_handler)?;
+    }
+
+    Ok(Redirect::to(&format!(
+        "./competition?id={}",
+        form.competition_id
+    )))
+}
+
+#[derive(Deserialize)]
+pub struct TeamValidationForm {
+    pub competition_id: i32,
+    pub team_id: i32,
+    pub validation: bool,
+}
+
+pub async fn update_team_validation(
+    State(app_state): State<AppState>,
+    profile: Option<User>,
+    Form(form): Form<TeamValidationForm>,
+) -> Result<Redirect, Redirect> {
+    let error_handler = |error: AppError| {
+        Redirect::to(&format!(
+            "./competition?id={}&alert_message={}",
+            form.competition_id,
+            error.to_string()
+        ))
+    };
+
+    let competition = Competition::select_by_id(&app_state, form.competition_id)
+        .await
+        .map_err(error_handler)?;
+
+    if let (Some(competition), Some(connected_user)) = (competition, profile) {
+        competition
+            .update_team_validation(&app_state, &connected_user, form.team_id, form.validation)
             .await
             .map_err(error_handler)?;
     }

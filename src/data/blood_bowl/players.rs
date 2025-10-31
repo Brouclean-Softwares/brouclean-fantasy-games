@@ -1,6 +1,7 @@
 use crate::data::blood_bowl::games::select_playing_team_player_for_game;
 use crate::data::blood_bowl::{coaches, games, teams};
 use crate::data::users::User;
+use crate::data::{Id, IsTrue, Sum};
 use crate::errors::AppError;
 use crate::AppState;
 use blood_bowl_rs::advancements::{Advancement, AdvancementChoice};
@@ -124,11 +125,6 @@ pub async fn select_under_contract_for_team(
     Ok(players)
 }
 
-#[derive(Deserialize, sqlx::FromRow, Clone)]
-struct IsUnderContract {
-    is_under_contract: bool,
-}
-
 pub async fn is_under_contract_for_team(
     state: &AppState,
     player_id: i32,
@@ -140,8 +136,8 @@ pub async fn is_under_contract_for_team(
         team_id
     );
 
-    let result: Option<IsUnderContract> = sqlx::query_as(
-        "SELECT contract_end IS NULL as is_under_contract
+    let result: Option<IsTrue> = sqlx::query_as(
+        "SELECT contract_end IS NULL as is_true
             FROM bb_teams_players
             WHERE team_id = $1
             AND player_id = $2
@@ -153,7 +149,7 @@ pub async fn is_under_contract_for_team(
     .await?;
 
     if let Some(result) = result {
-        Ok(result.is_under_contract)
+        Ok(result.is_true)
     } else {
         Ok(false)
     }
@@ -325,11 +321,6 @@ pub async fn update_number(
     }
 
     Ok(())
-}
-
-#[derive(Deserialize, sqlx::FromRow, Clone)]
-struct Id {
-    id: i32,
 }
 
 pub async fn buy_position_for_team(
@@ -624,19 +615,14 @@ async fn select_player_injuries(
     Ok(injuries)
 }
 
-#[derive(Deserialize, sqlx::FromRow, Clone)]
-struct Points {
-    points: Option<i64>,
-}
-
 async fn select_remaining_star_player_points(
     state: &AppState,
     player_id: i32,
 ) -> Result<i32, AppError> {
     tracing::debug!("select_remaining_star_player_points with id={}", player_id);
 
-    let points_won: Points = sqlx::query_as(
-        "SELECT SUM(star_player_points) as points
+    let points_won: Sum = sqlx::query_as(
+        "SELECT SUM(star_player_points) as sum
             FROM bb_games_teams_players
             WHERE player_id = $1",
     )
@@ -644,8 +630,8 @@ async fn select_remaining_star_player_points(
     .fetch_one(&state.db)
     .await?;
 
-    let points_spent: Points = sqlx::query_as(
-        "SELECT SUM(star_player_points) as points
+    let points_spent: Sum = sqlx::query_as(
+        "SELECT SUM(star_player_points) as sum
             FROM bb_players_advancements
             WHERE player_id = $1",
     )
@@ -653,7 +639,7 @@ async fn select_remaining_star_player_points(
     .fetch_one(&state.db)
     .await?;
 
-    Ok((points_won.points.unwrap_or(0) - points_spent.points.unwrap_or(0)) as i32)
+    Ok((points_won.sum.unwrap_or(0) - points_spent.sum.unwrap_or(0)) as i32)
 }
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]

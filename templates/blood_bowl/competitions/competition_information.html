@@ -57,10 +57,10 @@
         <ul class="uk-list uk-list-decimal">
             {% for stage in stages %}
             <li>
-                <span>{{ stage.stage_name }} </span>
+                <span>{{ stage.stage_name }}</span>
 
                 {% if editable && ! competition.started %}
-                <span>
+                <span class="uk-margin-left">
                     <button class="uk-button uk-button-link"
                             type="button"
                             uk-toggle="target: #modal-delete-stage-{{ stage.id }}">
@@ -140,23 +140,33 @@
             <table class="uk-table uk-table-striped uk-table-small uk-table-hover">
                 <thead>
                 <tr>
+                    <th uk-tooltip="Inscription validée">VAL</th>
                     <th>Nom</th>
                     <th>Roster</th>
                     <th uk-tooltip="Valeur d'Equipe">VE</th>
                     <th>Coach</th>
 
-                    {% if editable %}
+                    {% if profile.is_some() && ! competition.started %}
                     <th>Actions</th>
                     {% endif %}
                 </tr>
                 </thead>
 
                 <tbody>
-                {% for team in registered_teams %}
+                {% for (team, optional_validation) in registered_teams_with_optional_validation %}
 
                 {% let team_url = format!("../teams/team?id={}", team.id) %}
 
                 <tr>
+                    <td>
+                        {% if let Some(validation) = optional_validation %}
+                        {% if validation %}
+                        <span uk-icon="icon: check"></span>
+                        {% else %}
+                        <span uk-icon="icon: close"></span>
+                        {% endif %}
+                        {% endif %}
+                    </td>
                     <td class="uk-table-link">
                         <a class="uk-link-reset" href="{{ team_url }}">
                             <img src="{{ TeamLogo::from(*team).url }}" width="25" height="25" alt="">
@@ -183,32 +193,58 @@
                         </a>
                     </td>
 
-                    {% if editable && ! competition.started %}
+                    {% if profile.is_some() && ! competition.started %}
                     <td>
-                        <form id="unregister_team_form_{{ team.id }}" action="./unregister_team" method="post" autocomplete="off">
-                            <input name="competition_id" type="hidden" value="{{ competition.id }}">
-                            <input name="team_to_unregistered_id" type="hidden" value="{{ team.id }}">
+                        <div class="uk-flex-inline">
+                            {% if editable %}
+                            <form action="./update_team_validation" method="post" autocomplete="off">
+                                <input name="competition_id" type="hidden" value="{{ competition.id }}">
+                                <input name="team_id" type="hidden" value="{{ team.id }}">
+                                <input name="validation" type="hidden" value="true">
 
-                            <button class="uk-button uk-button-link"
-                                    type="button"
-                                    uk-toggle="target: #modal-unregister-team-{{ team.id }}">
-                                <span uk-icon="icon: minus-circle"></span>
-                            </button>
+                                <button class="uk-button uk-button-link">
+                                    <span uk-icon="icon: check"></span>
+                                </button>
+                            </form>
 
-                            <div id="modal-unregister-team-{{ team.id }}" uk-modal>
-                                <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
-                                    <h2 class="uk-modal-title">Désinscription de l'équipe</h2>
-                                    <p>Confirmez vous la désinscription de l'équipe : {{ team.name }} ?</p>
-                                    <p class="uk-text-right">
-                                        <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
-                                        <button class="uk-button uk-button-danger"
-                                                onclick="document.getElementById('unregister_team_form_{{ team.id }}').submit()">
-                                            Désinscrire
-                                        </button>
-                                    </p>
+                            <form class="uk-margin-small-left" action="./update_team_validation" method="post" autocomplete="off">
+                                <input name="competition_id" type="hidden" value="{{ competition.id }}">
+                                <input name="team_id" type="hidden" value="{{ team.id }}">
+                                <input name="validation" type="hidden" value="false">
+
+                                <button class="uk-button uk-button-link">
+                                    <span uk-icon="icon: close"></span>
+                                </button>
+                            </form>
+                            {% endif %}
+
+                            {% if editable || User::optional_user_has_optional_id(profile, team.coach_id) %}
+                            <form class="uk-margin-small-left" id="unregister_team_form_{{ team.id }}" action="./unregister_team" method="post" autocomplete="off">
+                                <input name="competition_id" type="hidden" value="{{ competition.id }}">
+                                <input name="team_to_unregistered_id" type="hidden" value="{{ team.id }}">
+
+                                <button class="uk-button uk-button-link"
+                                        type="button"
+                                        uk-toggle="target: #modal-unregister-team-{{ team.id }}">
+                                    <span uk-icon="icon: minus-circle"></span>
+                                </button>
+
+                                <div id="modal-unregister-team-{{ team.id }}" uk-modal>
+                                    <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                                        <h2 class="uk-modal-title">Désinscription de l'équipe</h2>
+                                        <p>Confirmez vous la désinscription de l'équipe : {{ team.name }} ?</p>
+                                        <p class="uk-text-right">
+                                            <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                                            <button class="uk-button uk-button-danger"
+                                                    onclick="document.getElementById('unregister_team_form_{{ team.id }}').submit()">
+                                                Désinscrire
+                                            </button>
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-                        </form>
+                            </form>
+                            {% endif %}
+                        </div>
                     </td>
                     {% endif %}
                 </tr>

@@ -57,11 +57,7 @@ impl CompetitionPage {
         competition: Competition,
         edit_mode: bool,
     ) -> Result<Self, AppError> {
-        let editable = if let Some(connected_user) = profile.clone() {
-            connected_user.eq(&competition.director)
-        } else {
-            false
-        };
+        let editable = User::optional_user_eq_other(&profile, &competition.director);
 
         let deletable = editable && !competition.started;
 
@@ -69,8 +65,9 @@ impl CompetitionPage {
 
         let link_url = format!("competition?id={}", competition.id);
 
-        let registered_teams: Vec<TeamSummary> =
-            competition.select_registered_teams(&app_state).await?;
+        let registered_teams_with_optional_validation = competition
+            .select_registered_teams_with_optional_validation(&app_state)
+            .await?;
 
         let stages = competition.select_stages(&app_state).await?;
 
@@ -85,7 +82,7 @@ impl CompetitionPage {
                 competition,
                 stages,
                 stage_types: CompetitionStageType::available_list(),
-                registered_teams,
+                registered_teams_with_optional_validation,
                 profile,
                 deletable,
                 editable,
@@ -103,7 +100,7 @@ pub struct CompetitionInformation {
     competition: Competition,
     stages: Vec<CompetitionStage>,
     stage_types: Vec<CompetitionStageType>,
-    registered_teams: Vec<TeamSummary>,
+    registered_teams_with_optional_validation: Vec<(TeamSummary, Option<bool>)>,
     profile: Option<User>,
     deletable: bool,
     editable: bool,

@@ -48,6 +48,11 @@
                     </a>
                 </li>
                 <li>
+                    <a href="#" uk-icon="icon: list" x-on:click="tab='rankings'">
+                        <span class="uk-visible@m">Classements</span>
+                    </a>
+                </li>
+                <li>
                     <a href="#" uk-icon="icon: calendar" x-on:click="tab='results'">
                         <span class="uk-visible@m">Résultats</span>
                     </a>
@@ -67,6 +72,10 @@
 
         <div x-show="tab==='info'">
             {{ information|escape("none") }}
+        </div>
+
+        <div x-show="tab==='rankings'">
+            A venir...
         </div>
 
         <div x-show="tab==='results'">

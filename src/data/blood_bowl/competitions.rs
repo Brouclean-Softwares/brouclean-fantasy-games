@@ -1,17 +1,13 @@
-use crate::data::blood_bowl::games;
 use crate::data::blood_bowl::games::GameSummary;
 use crate::data::blood_bowl::teams::TeamSummary;
+use crate::data::blood_bowl::{games, teams};
 use crate::data::users::User;
+use crate::data::{Id, IsOptionalTrue};
 use crate::errors::AppError;
 use crate::AppState;
 use blood_bowl_rs::versions::Version;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
-
-#[derive(Deserialize, sqlx::FromRow, Clone)]
-struct Id {
-    id: i32,
-}
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
 struct CompetitionRow {
@@ -286,27 +282,25 @@ impl Competition {
             stage_type_to_add,
         );
 
-        if let Some(director) = &self.director {
-            if connected_user.eq(director) && !self.closed {
-                let rules: Vec<CompetitionStageRule> = vec![];
+        if connected_user.eq(&self.director) && !self.closed {
+            let rules: Vec<CompetitionStageRule> = vec![];
 
-                sqlx::query(
-                    "INSERT INTO bb_competitions_stages (
-                                competition_id,
-                                stage_type,
-                                stage_name,
-                                stage_rules)
-                            VALUES ($1, $2, $3, $4)",
-                )
-                .bind(self.id.clone())
-                .bind(serde_json::to_string(&stage_type_to_add)?.clone())
-                .bind(stage_type_to_add.to_string().clone())
-                .bind(serde_json::to_string(&rules)?.clone())
-                .execute(&state.db)
-                .await?;
+            sqlx::query(
+                "INSERT INTO bb_competitions_stages (
+                            competition_id,
+                            stage_type,
+                            stage_name,
+                            stage_rules)
+                        VALUES ($1, $2, $3, $4)",
+            )
+            .bind(self.id.clone())
+            .bind(serde_json::to_string(&stage_type_to_add)?.clone())
+            .bind(stage_type_to_add.to_string().clone())
+            .bind(serde_json::to_string(&rules)?.clone())
+            .execute(&state.db)
+            .await?;
 
-                self.save(state, connected_user).await?;
-            }
+            self.save(state, connected_user).await?;
         }
 
         Ok(())
@@ -324,22 +318,79 @@ impl Competition {
             stage_id,
         );
 
-        if let Some(director) = &self.director {
-            if connected_user.eq(director) && !self.started {
-                sqlx::query(
-                    "DELETE
-                        FROM bb_competitions_stages
-                        WHERE id = $1",
-                )
-                .bind(stage_id.clone())
-                .execute(&state.db)
-                .await?;
+        if connected_user.eq(&self.director) && !self.started {
+            sqlx::query(
+                "DELETE
+                    FROM bb_competitions_stages
+                    WHERE id = $1",
+            )
+            .bind(stage_id.clone())
+            .execute(&state.db)
+            .await?;
 
-                self.save(state, connected_user).await?;
-            }
+            self.save(state, connected_user).await?;
         }
 
         Ok(())
+    }
+
+    pub async fn is_registration_validated_for_team_id(
+        &self,
+        state: &AppState,
+        team_id: i32,
+    ) -> Result<Option<bool>, AppError> {
+        tracing::debug!(
+            "is_registration_validated_for_team_id for id={} and team_id={}",
+            self.id,
+            team_id
+        );
+
+        let has_validation: Option<IsOptionalTrue> = sqlx::query_as(
+            "SELECT validated as is_optional_true
+            FROM bb_competitions_teams
+            WHERE competition_id = $1
+            AND team_id = $2
+            LIMIT 1",
+        )
+        .bind(self.id.clone())
+        .bind(team_id.clone())
+        .fetch_optional(&state.db)
+        .await?;
+
+        if let Some(has_validation) = has_validation {
+            if let Some(is_validated) = has_validation.is_optional_true {
+                Ok(Some(is_validated))
+            } else {
+                Ok(None)
+            }
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub async fn select_registered_teams_with_optional_validation(
+        &self,
+        state: &AppState,
+    ) -> Result<Vec<(TeamSummary, Option<bool>)>, AppError> {
+        tracing::debug!(
+            "select_registered_teams_with_optional_validation for id={}",
+            self.id
+        );
+
+        let registered_teams = self.select_registered_teams(state).await?;
+
+        let mut teams_with_optional_validation: Vec<(TeamSummary, Option<bool>)> =
+            Vec::with_capacity(registered_teams.len());
+
+        for team_summary in registered_teams {
+            let is_validated = self
+                .is_registration_validated_for_team_id(state, team_summary.id)
+                .await?;
+
+            teams_with_optional_validation.push((team_summary, is_validated));
+        }
+
+        Ok(teams_with_optional_validation)
     }
 
     pub async fn select_registered_teams(
@@ -379,6 +430,7 @@ impl Competition {
     pub async fn insert_team_registration(
         &self,
         state: &AppState,
+        connected_user: &User,
         team_id: i32,
     ) -> Result<(), AppError> {
         tracing::debug!(
@@ -387,7 +439,9 @@ impl Competition {
             team_id
         );
 
-        if !self.started {
+        let team = teams::select_by_id_without_staff_nor_players(state, team_id).await?;
+
+        if (connected_user.eq(&self.director) || connected_user.eq(&team.coach)) && !self.started {
             sqlx::query(
                 "INSERT INTO bb_competitions_teams (
                         competition_id,
@@ -407,6 +461,7 @@ impl Competition {
     pub async fn delete_team_registration(
         &self,
         state: &AppState,
+        connected_user: &User,
         team_id: i32,
     ) -> Result<(), AppError> {
         tracing::debug!(
@@ -415,7 +470,9 @@ impl Competition {
             team_id
         );
 
-        if !self.started {
+        let team = teams::select_by_id_without_staff_nor_players(state, team_id).await?;
+
+        if (connected_user.eq(&self.director) || connected_user.eq(&team.coach)) && !self.started {
             sqlx::query(
                 "DELETE
                     FROM bb_competitions_teams
@@ -424,6 +481,37 @@ impl Competition {
             )
             .bind(self.id.clone())
             .bind(team_id.clone())
+            .execute(&state.db)
+            .await?;
+        }
+
+        Ok(())
+    }
+
+    pub async fn update_team_validation(
+        &self,
+        state: &AppState,
+        connected_user: &User,
+        team_id: i32,
+        validation: bool,
+    ) -> Result<(), AppError> {
+        tracing::debug!(
+            "update_team_validation for competition_id={} and team_id={} with validation={}",
+            self.id,
+            team_id,
+            validation
+        );
+
+        if connected_user.eq(&self.director) && !self.started {
+            sqlx::query(
+                "UPDATE bb_competitions_teams
+                    SET validated = $3
+                    WHERE competition_id = $1
+                    AND team_id = $2",
+            )
+            .bind(self.id.clone())
+            .bind(team_id.clone())
+            .bind(validation.clone())
             .execute(&state.db)
             .await?;
         }

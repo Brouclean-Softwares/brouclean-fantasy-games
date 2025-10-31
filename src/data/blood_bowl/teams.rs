@@ -1,5 +1,6 @@
 use crate::data::blood_bowl::{games, players, staff, teams};
 use crate::data::users::User;
+use crate::data::Id;
 use crate::errors::AppError;
 use crate::AppState;
 use blood_bowl_rs::coaches::Coach;
@@ -264,11 +265,6 @@ async fn select_by_id(
     };
 
     Ok(team)
-}
-
-#[derive(Deserialize, sqlx::FromRow, Clone)]
-struct Id {
-    id: i32,
 }
 
 pub async fn create(state: &AppState, coach: &User, bb_team: &Team) -> Result<i32, AppError> {
