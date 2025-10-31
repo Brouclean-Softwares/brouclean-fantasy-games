@@ -1,6 +1,6 @@
 use crate::data::blood_bowl::games::GameSummary;
+use crate::data::blood_bowl::teams;
 use crate::data::blood_bowl::teams::TeamSummary;
-use crate::data::blood_bowl::{games, teams};
 use crate::data::users::User;
 use crate::data::{Id, IsOptionalTrue};
 use crate::errors::AppError;
@@ -427,6 +427,41 @@ impl Competition {
         Ok(teams)
     }
 
+    pub async fn select_validated_teams(
+        &self,
+        state: &AppState,
+    ) -> Result<Vec<TeamSummary>, AppError> {
+        tracing::debug!("select_validated_teams for id={}", self.id);
+
+        let teams: Vec<TeamSummary> = sqlx::query_as(
+            "SELECT bb_teams.id,
+                    bb_teams.version,
+                    bb_teams.name,
+                    bb_teams.roster,
+                    bb_teams.coach_id,
+                    users.name as coach_name,
+                    bb_teams.external_logo_url,
+                    bb_teams.value,
+                    bb_teams.current_value,
+                    bb_teams.treasury,
+                    bb_teams.dedicated_fans,
+                    bb_teams.under_creation
+            FROM bb_competitions_teams
+            INNER JOIN bb_teams
+            ON bb_teams.id = bb_competitions_teams.team_id
+            LEFT JOIN users
+            ON bb_teams.coach_id = users.id
+            WHERE bb_competitions_teams.competition_id = $1
+            AND bb_competitions_teams.validated = TRUE
+            ORDER BY users.name, bb_teams.name ASC",
+        )
+        .bind(self.id.clone())
+        .fetch_all(&state.db)
+        .await?;
+
+        Ok(teams)
+    }
+
     pub async fn insert_team_registration(
         &self,
         state: &AppState,
@@ -519,30 +554,6 @@ impl Competition {
         Ok(())
     }
 
-    pub async fn select_games(&self, state: &AppState) -> Result<Vec<CompetitionGame>, AppError> {
-        tracing::debug!("select_games for competition_id={}", self.id);
-
-        let rows: Vec<CompetitionGameRow> = sqlx::query_as(
-            "SELECT stage_id,
-                    game_id,
-                    game_reference
-            FROM bb_competitions_games
-            WHERE competition_id = $1
-            ORDER BY stage_id, game_id",
-        )
-        .bind(self.id.clone())
-        .fetch_all(&state.db)
-        .await?;
-
-        let mut games: Vec<CompetitionGame> = Vec::with_capacity(rows.len());
-
-        for row in rows {
-            games.push(row.into_competition_game(state).await?);
-        }
-
-        Ok(games)
-    }
-
     pub async fn select_editions(&self, state: &AppState) -> Result<Vec<Self>, AppError> {
         tracing::debug!("select_editions with name={}", self.name);
 
@@ -599,12 +610,32 @@ pub struct CompetitionStage {
     pub stage_rules: Vec<CompetitionStageRule>,
 }
 
+impl CompetitionStage {
+    async fn select_games(
+        &self,
+        state: &AppState,
+    ) -> Result<Vec<CompetitionGameRow>, AppError> {
+        tracing::debug!("select_games for competition_stage_id={}", self.id);
+
+        let rows: Vec<CompetitionGameRow> = sqlx::query_as(
+            "SELECT game_id,
+                    game_reference
+            FROM bb_competitions_games
+            WHERE stage_id = $1
+            ORDER BY stage_id, game_id",
+        )
+        .bind(self.id.clone())
+        .fetch_all(&state.db)
+        .await?;
+
+        Ok(rows)
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 pub enum CompetitionStageType {
     Championship,
     Cup,
-    Playoffs,
-    RegularSeason,
 }
 
 impl Display for CompetitionStageType {
@@ -612,8 +643,6 @@ impl Display for CompetitionStageType {
         let text = match self {
             CompetitionStageType::Championship => "Championnat",
             CompetitionStageType::Cup => "Coupe",
-            CompetitionStageType::Playoffs => "Playoffs",
-            CompetitionStageType::RegularSeason => "Saison régulière",
         };
 
         write!(f, "{}", text)
@@ -622,12 +651,7 @@ impl Display for CompetitionStageType {
 
 impl CompetitionStageType {
     pub fn available_list() -> Vec<Self> {
-        let mut list = vec![
-            Self::Championship,
-            Self::Cup,
-            Self::Playoffs,
-            Self::RegularSeason,
-        ];
+        let mut list = vec![Self::Championship, Self::Cup];
 
         list.sort_by(|a, b| a.to_string().cmp(&b.to_string()));
 
@@ -640,23 +664,11 @@ pub enum CompetitionStageRule {}
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
 struct CompetitionGameRow {
-    stage_id: i32,
     game_id: i32,
     game_reference: String,
 }
 
-impl CompetitionGameRow {
-    async fn into_competition_game(self, state: &AppState) -> Result<CompetitionGame, AppError> {
-        Ok(CompetitionGame {
-            stage_id: self.stage_id,
-            game_summary: games::select_summary_by_id(state, self.game_id).await?,
-            game_reference: self.game_reference,
-        })
-    }
-}
-
 pub struct CompetitionGame {
-    pub stage_id: i32,
     pub game_summary: Option<GameSummary>,
     pub game_reference: String,
 }
