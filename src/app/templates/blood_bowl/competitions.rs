@@ -1,8 +1,7 @@
 use crate::app::templates::blood_bowl::teams::TeamSelector;
 use crate::app::templates::{AlertMessage, NavigationBar};
-use crate::data::blood_bowl::competitions::{
-    Competition, CompetitionStage, CompetitionStageType, TeamRegistration,
-};
+use crate::data::blood_bowl::competitions::stages::{CompetitionStage, CompetitionStageType};
+use crate::data::blood_bowl::competitions::{Competition, TeamRegistration};
 use crate::data::blood_bowl::teams::TeamLogo;
 use crate::data::users::User;
 use crate::errors::AppError;

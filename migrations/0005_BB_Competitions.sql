@@ -25,14 +25,17 @@ CREATE TABLE IF NOT EXISTS bb_competitions_stages (
     competition_id INTEGER NOT NULL REFERENCES bb_competitions ON DELETE CASCADE,
     stage_type VARCHAR NOT NULL,
     stage_name VARCHAR NOT NULL,
-    stage_rules VARCHAR,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    rules TEXT NOT NULL,
+    standings TEXT,
+    schedule TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    last_updated TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS bb_competitions_games (
+CREATE TABLE IF NOT EXISTS bb_competitions_stages_games (
     competition_id INTEGER NOT NULL REFERENCES bb_competitions ON DELETE CASCADE,
     stage_id INTEGER NOT NULL REFERENCES bb_competitions_stages ON DELETE CASCADE,
     game_id INTEGER NOT NULL REFERENCES bb_games ON DELETE CASCADE UNIQUE,
-    game_reference VARCHAR NOT NULL,
-    game_name VARCHAR NOT NULL
+    step_reference VARCHAR NOT NULL,
+    step_name VARCHAR NOT NULL
 );

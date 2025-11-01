@@ -1,6 +1,7 @@
 use crate::app::templates::blood_bowl::competitions::{CompetitionPage, CompetitionsPage};
 use crate::app::templates::{AlertMessage, AlertType};
-use crate::data::blood_bowl::competitions::{Competition, CompetitionStageType};
+use crate::data::blood_bowl::competitions::stages::CompetitionStageType;
+use crate::data::blood_bowl::competitions::Competition;
 use crate::data::users::User;
 use crate::errors::AppError;
 use crate::AppState;
