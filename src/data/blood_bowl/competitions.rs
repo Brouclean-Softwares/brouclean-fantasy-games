@@ -2,7 +2,7 @@ use crate::data::blood_bowl::games::GameSummary;
 use crate::data::blood_bowl::teams;
 use crate::data::blood_bowl::teams::TeamSummary;
 use crate::data::users::User;
-use crate::data::{Id, IsOptionalTrue};
+use crate::data::Id;
 use crate::errors::AppError;
 use crate::AppState;
 use blood_bowl_rs::versions::Version;
@@ -161,6 +161,35 @@ impl Competition {
         .await?;
 
         Ok(())
+    }
+
+    pub async fn select_editions(&self, state: &AppState) -> Result<Vec<Self>, AppError> {
+        tracing::debug!("select_editions with name={}", self.name);
+
+        let rows: Vec<CompetitionRow> = sqlx::query_as(
+            "SELECT id,
+                    name,
+                    edition_number,
+                    director,
+                    version,
+                    description,
+                    started_at IS NOT NULL as started,
+                    closed_at IS NOT NULL as closed
+            FROM bb_competitions
+            WHERE name = $1
+            ORDER BY edition_number, created_at",
+        )
+        .bind(self.name.clone())
+        .fetch_all(&state.db)
+        .await?;
+
+        let mut competitions: Vec<Competition> = Vec::with_capacity(rows.len());
+
+        for row in rows {
+            competitions.push(row.into_competition(state).await?);
+        }
+
+        Ok(competitions)
     }
 
     pub async fn select_by_id(state: &AppState, id: i32) -> Result<Option<Self>, AppError> {
@@ -334,132 +363,33 @@ impl Competition {
         Ok(())
     }
 
-    pub async fn is_registration_validated_for_team_id(
+    pub async fn select_teams_registrations(
         &self,
         state: &AppState,
-        team_id: i32,
-    ) -> Result<Option<bool>, AppError> {
-        tracing::debug!(
-            "is_registration_validated_for_team_id for id={} and team_id={}",
-            self.id,
-            team_id
-        );
+    ) -> Result<Vec<TeamRegistration>, AppError> {
+        tracing::debug!("select_teams_registrations for id={}", self.id);
 
-        let has_validation: Option<IsOptionalTrue> = sqlx::query_as(
-            "SELECT validated as is_optional_true
-            FROM bb_competitions_teams
-            WHERE competition_id = $1
-            AND team_id = $2
-            LIMIT 1",
-        )
-        .bind(self.id.clone())
-        .bind(team_id.clone())
-        .fetch_optional(&state.db)
-        .await?;
-
-        if let Some(has_validation) = has_validation {
-            if let Some(is_validated) = has_validation.is_optional_true {
-                Ok(Some(is_validated))
-            } else {
-                Ok(None)
-            }
-        } else {
-            Ok(None)
-        }
-    }
-
-    pub async fn select_registered_teams_with_optional_validation(
-        &self,
-        state: &AppState,
-    ) -> Result<Vec<(TeamSummary, Option<bool>)>, AppError> {
-        tracing::debug!(
-            "select_registered_teams_with_optional_validation for id={}",
-            self.id
-        );
-
-        let registered_teams = self.select_registered_teams(state).await?;
-
-        let mut teams_with_optional_validation: Vec<(TeamSummary, Option<bool>)> =
-            Vec::with_capacity(registered_teams.len());
-
-        for team_summary in registered_teams {
-            let is_validated = self
-                .is_registration_validated_for_team_id(state, team_summary.id)
-                .await?;
-
-            teams_with_optional_validation.push((team_summary, is_validated));
-        }
-
-        Ok(teams_with_optional_validation)
-    }
-
-    pub async fn select_registered_teams(
-        &self,
-        state: &AppState,
-    ) -> Result<Vec<TeamSummary>, AppError> {
-        tracing::debug!("select_registered_teams for id={}", self.id);
-
-        let teams: Vec<TeamSummary> = sqlx::query_as(
-            "SELECT bb_teams.id,
-                    bb_teams.version,
-                    bb_teams.name,
-                    bb_teams.roster,
-                    bb_teams.coach_id,
-                    users.name as coach_name,
-                    bb_teams.external_logo_url,
-                    bb_teams.value,
-                    bb_teams.current_value,
-                    bb_teams.treasury,
-                    bb_teams.dedicated_fans,
-                    bb_teams.under_creation
-            FROM bb_competitions_teams
-            INNER JOIN bb_teams
-            ON bb_teams.id = bb_competitions_teams.team_id
-            LEFT JOIN users
-            ON bb_teams.coach_id = users.id
-            WHERE bb_competitions_teams.competition_id = $1
-            ORDER BY users.name, bb_teams.name ASC",
+        let registration_rows: Vec<TeamRegistrationRow> = sqlx::query_as(
+            "SELECT bb_competitions_teams.team_id,
+                    bb_competitions_teams.validated,
+                    bb_competitions_teams.team_number
+                FROM bb_competitions_teams
+                INNER JOIN bb_teams
+                ON bb_teams.id = bb_competitions_teams.team_id
+                WHERE bb_competitions_teams.competition_id = $1
+                ORDER BY bb_teams.coach_id, bb_teams.name",
         )
         .bind(self.id.clone())
         .fetch_all(&state.db)
         .await?;
 
-        Ok(teams)
-    }
+        let mut registrations: Vec<TeamRegistration> = Vec::with_capacity(registration_rows.len());
 
-    pub async fn select_validated_teams(
-        &self,
-        state: &AppState,
-    ) -> Result<Vec<TeamSummary>, AppError> {
-        tracing::debug!("select_validated_teams for id={}", self.id);
+        for registration_row in registration_rows {
+            registrations.push(registration_row.into_team_registration(state).await?);
+        }
 
-        let teams: Vec<TeamSummary> = sqlx::query_as(
-            "SELECT bb_teams.id,
-                    bb_teams.version,
-                    bb_teams.name,
-                    bb_teams.roster,
-                    bb_teams.coach_id,
-                    users.name as coach_name,
-                    bb_teams.external_logo_url,
-                    bb_teams.value,
-                    bb_teams.current_value,
-                    bb_teams.treasury,
-                    bb_teams.dedicated_fans,
-                    bb_teams.under_creation
-            FROM bb_competitions_teams
-            INNER JOIN bb_teams
-            ON bb_teams.id = bb_competitions_teams.team_id
-            LEFT JOIN users
-            ON bb_teams.coach_id = users.id
-            WHERE bb_competitions_teams.competition_id = $1
-            AND bb_competitions_teams.validated = TRUE
-            ORDER BY users.name, bb_teams.name ASC",
-        )
-        .bind(self.id.clone())
-        .fetch_all(&state.db)
-        .await?;
-
-        Ok(teams)
+        Ok(registrations)
     }
 
     pub async fn insert_team_registration(
@@ -553,35 +483,6 @@ impl Competition {
 
         Ok(())
     }
-
-    pub async fn select_editions(&self, state: &AppState) -> Result<Vec<Self>, AppError> {
-        tracing::debug!("select_editions with name={}", self.name);
-
-        let rows: Vec<CompetitionRow> = sqlx::query_as(
-            "SELECT id,
-                    name,
-                    edition_number,
-                    director,
-                    version,
-                    description,
-                    started_at IS NOT NULL as started,
-                    closed_at IS NOT NULL as closed
-            FROM bb_competitions
-            WHERE name = $1
-            ORDER BY edition_number, created_at",
-        )
-        .bind(self.name.clone())
-        .fetch_all(&state.db)
-        .await?;
-
-        let mut competitions: Vec<Competition> = Vec::with_capacity(rows.len());
-
-        for row in rows {
-            competitions.push(row.into_competition(state).await?);
-        }
-
-        Ok(competitions)
-    }
 }
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
@@ -608,28 +509,6 @@ pub struct CompetitionStage {
     pub stage_name: String,
     pub stage_type: CompetitionStageType,
     pub stage_rules: Vec<CompetitionStageRule>,
-}
-
-impl CompetitionStage {
-    async fn select_games(
-        &self,
-        state: &AppState,
-    ) -> Result<Vec<CompetitionGameRow>, AppError> {
-        tracing::debug!("select_games for competition_stage_id={}", self.id);
-
-        let rows: Vec<CompetitionGameRow> = sqlx::query_as(
-            "SELECT game_id,
-                    game_reference
-            FROM bb_competitions_games
-            WHERE stage_id = $1
-            ORDER BY stage_id, game_id",
-        )
-        .bind(self.id.clone())
-        .fetch_all(&state.db)
-        .await?;
-
-        Ok(rows)
-    }
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -663,12 +542,29 @@ impl CompetitionStageType {
 pub enum CompetitionStageRule {}
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
-struct CompetitionGameRow {
-    game_id: i32,
-    game_reference: String,
+struct TeamRegistrationRow {
+    team_id: i32,
+    validated: Option<bool>,
+    team_number: Option<i32>,
 }
 
-pub struct CompetitionGame {
+impl TeamRegistrationRow {
+    async fn into_team_registration(self, state: &AppState) -> Result<TeamRegistration, AppError> {
+        Ok(TeamRegistration {
+            team_summary: teams::select_summary_by_id(state, self.team_id).await?,
+            validated: self.validated,
+            team_number: self.team_number,
+        })
+    }
+}
+
+pub struct TeamRegistration {
+    pub team_summary: TeamSummary,
+    pub validated: Option<bool>,
+    pub team_number: Option<i32>,
+}
+
+pub struct CompetitionResults {
     pub game_summary: Option<GameSummary>,
     pub game_reference: String,
 }

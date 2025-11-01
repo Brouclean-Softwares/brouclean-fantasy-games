@@ -1,8 +1,9 @@
 use crate::app::templates::blood_bowl::teams::TeamSelector;
 use crate::app::templates::{AlertMessage, NavigationBar};
-use crate::data::blood_bowl::competitions::{Competition, CompetitionStage, CompetitionStageType};
+use crate::data::blood_bowl::competitions::{
+    Competition, CompetitionStage, CompetitionStageType, TeamRegistration,
+};
 use crate::data::blood_bowl::teams::TeamLogo;
-use crate::data::blood_bowl::teams::TeamSummary;
 use crate::data::users::User;
 use crate::errors::AppError;
 use crate::AppState;
@@ -65,9 +66,7 @@ impl CompetitionPage {
 
         let link_url = format!("competition?id={}", competition.id);
 
-        let registered_teams_with_optional_validation = competition
-            .select_registered_teams_with_optional_validation(&app_state)
-            .await?;
+        let teams_registrations = competition.select_teams_registrations(&app_state).await?;
 
         let stages = competition.select_stages(&app_state).await?;
 
@@ -82,7 +81,7 @@ impl CompetitionPage {
                 competition,
                 stages,
                 stage_types: CompetitionStageType::available_list(),
-                registered_teams_with_optional_validation,
+                teams_registrations,
                 profile,
                 deletable,
                 editable,
@@ -100,7 +99,7 @@ pub struct CompetitionInformation {
     competition: Competition,
     stages: Vec<CompetitionStage>,
     stage_types: Vec<CompetitionStageType>,
-    registered_teams_with_optional_validation: Vec<(TeamSummary, Option<bool>)>,
+    teams_registrations: Vec<TeamRegistration>,
     profile: Option<User>,
     deletable: bool,
     editable: bool,

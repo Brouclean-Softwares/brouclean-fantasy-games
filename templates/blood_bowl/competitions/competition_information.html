@@ -141,6 +141,7 @@
                 <thead>
                 <tr>
                     <th uk-tooltip="Validation de l'inscription ?">VAL</th>
+                    <th uk-tooltip="Numéro du tirage au sort">#</th>
                     <th>Nom</th>
                     <th>Roster</th>
                     <th uk-tooltip="Valeur d'Equipe">VE</th>
@@ -153,18 +154,24 @@
                 </thead>
 
                 <tbody>
-                {% for (team, optional_validation) in registered_teams_with_optional_validation %}
+                {% for registration in teams_registrations %}
 
+                {% let team = registration.team_summary %}
                 {% let team_url = format!("../teams/team?id={}", team.id) %}
 
                 <tr>
                     <td>
-                        {% if let Some(validation) = optional_validation %}
+                        {% if let Some(validation) = registration.validated %}
                         {% if validation %}
                         <span uk-icon="icon: check"></span>
                         {% else %}
                         <span uk-icon="icon: close"></span>
                         {% endif %}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if let Some(team_number) = registration.team_number %}
+                            {{ team_number }}
                         {% endif %}
                     </td>
                     <td class="uk-table-link">
