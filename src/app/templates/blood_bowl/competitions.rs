@@ -1,6 +1,7 @@
 use crate::app::templates::blood_bowl::teams::TeamSelector;
 use crate::app::templates::{AlertMessage, NavigationBar};
 use crate::data::blood_bowl::competitions::registrations::TeamRegistration;
+use crate::data::blood_bowl::competitions::schedule::GameSchedule;
 use crate::data::blood_bowl::competitions::stages::{CompetitionStage, CompetitionStageType};
 use crate::data::blood_bowl::competitions::Competition;
 use crate::data::blood_bowl::teams::TeamLogo;
@@ -48,6 +49,7 @@ pub struct CompetitionPage {
     edit_mode: bool,
     link_url: String,
     information: CompetitionInformation,
+    schedule: CompetitionSchedule,
 }
 
 impl CompetitionPage {
@@ -70,6 +72,10 @@ impl CompetitionPage {
 
         let stages = competition.select_stages(&app_state).await?;
 
+        let schedule = competition
+            .generate_schedule_and_standings(&app_state)
+            .await?;
+
         Ok(Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
             alert_message,
@@ -79,7 +85,7 @@ impl CompetitionPage {
             link_url: link_url.clone(),
             information: CompetitionInformation {
                 competition,
-                stages,
+                stages: stages.clone(),
                 stage_types: CompetitionStageType::available_list(),
                 teams_registrations,
                 profile,
@@ -89,6 +95,7 @@ impl CompetitionPage {
                 link_url,
                 team_selector: TeamSelector::get("team_to_registered_id".to_string()),
             },
+            schedule: CompetitionSchedule { stages, schedule },
         })
     }
 }
@@ -106,4 +113,11 @@ pub struct CompetitionInformation {
     edit_mode: bool,
     link_url: String,
     team_selector: TeamSelector,
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "blood_bowl/competitions/competition_schedule.html")]
+pub struct CompetitionSchedule {
+    stages: Vec<CompetitionStage>,
+    schedule: Vec<Vec<Vec<GameSchedule>>>,
 }

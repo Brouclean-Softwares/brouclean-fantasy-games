@@ -24,6 +24,7 @@ impl CompetitionStageRow {
     }
 }
 
+#[derive(Clone)]
 pub struct CompetitionStage {
     pub id: i32,
     pub stage_name: String,
@@ -128,7 +129,7 @@ impl CompetitionStage {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum CompetitionStageType {
     Championship,
     Cup,
@@ -155,5 +156,5 @@ impl CompetitionStageType {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub enum CompetitionStageRule {}

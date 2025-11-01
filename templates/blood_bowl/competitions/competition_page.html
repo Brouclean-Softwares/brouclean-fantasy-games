@@ -53,8 +53,8 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#" uk-icon="icon: calendar" x-on:click="tab='results'">
-                        <span class="uk-visible@m">Résultats</span>
+                    <a href="#" uk-icon="icon: calendar" x-on:click="tab='schedule'">
+                        <span class="uk-visible@m">Calendrier</span>
                     </a>
                 </li>
                 <li>
@@ -78,8 +78,8 @@
             A venir...
         </div>
 
-        <div x-show="tab==='results'">
-            A venir...
+        <div x-show="tab==='schedule'">
+            {{ schedule|escape("none") }}
         </div>
 
         <div x-show="tab==='stats'">

@@ -189,4 +189,35 @@ impl TeamRegistration {
 
         Ok(teams)
     }
+
+    pub async fn update_team_number_for_competition(
+        state: &AppState,
+        connected_user: &User,
+        competition: &Competition,
+        team_id: i32,
+        number: i32,
+    ) -> Result<(), AppError> {
+        tracing::debug!(
+            "update_team_number_for_competition for competition_id={} and team_id={} with number={}",
+            competition.id,
+            team_id,
+            number
+        );
+
+        if connected_user.eq(&competition.director) && !competition.started {
+            sqlx::query(
+                "UPDATE bb_competitions_teams
+                SET team_number = $3
+                WHERE competition_id = $1
+                AND team_id = $2",
+            )
+            .bind(competition.id.clone())
+            .bind(team_id.clone())
+            .bind(number.clone())
+            .execute(&state.db)
+            .await?;
+        }
+
+        Ok(())
+    }
 }

@@ -1,4 +1,5 @@
 use crate::data::blood_bowl::competitions::registrations::TeamRegistration;
+use crate::data::blood_bowl::competitions::schedule::GameSchedule;
 use crate::data::blood_bowl::competitions::stages::{CompetitionStage, CompetitionStageType};
 use crate::data::blood_bowl::teams::TeamSummary;
 use crate::data::users::User;
@@ -6,9 +7,12 @@ use crate::data::Id;
 use crate::errors::AppError;
 use crate::AppState;
 use blood_bowl_rs::versions::Version;
+use rand::seq::SliceRandom;
 use serde::Deserialize;
+use tokio::task;
 
 pub mod registrations;
+pub mod schedule;
 pub mod stages;
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
@@ -334,10 +338,62 @@ impl Competition {
         TeamRegistration::update_validation(state, connected_user, self, team_id, validation).await
     }
 
+    pub async fn regenerate_teams_numbers(
+        &self,
+        state: &AppState,
+        connected_user: &User,
+    ) -> Result<(), AppError> {
+        if connected_user.eq(&self.director) && !self.started {
+            let mut teams = self.select_playing_teams(state).await?;
+
+            task::block_in_place(|| {
+                let mut rng = rand::rng();
+                teams.shuffle(&mut rng);
+            });
+
+            for team_index in 0..teams.len() {
+                TeamRegistration::update_team_number_for_competition(
+                    state,
+                    connected_user,
+                    self,
+                    teams[team_index].id,
+                    team_index as i32 + 1,
+                )
+                .await?;
+            }
+        }
+
+        Ok(())
+    }
+
     pub async fn select_playing_teams(
         &self,
         state: &AppState,
     ) -> Result<Vec<TeamSummary>, AppError> {
         TeamRegistration::select_validated_teams_for_competition(state, self).await
+    }
+
+    pub async fn generate_schedule_and_standings(
+        &self,
+        state: &AppState,
+    ) -> Result<Vec<Vec<Vec<GameSchedule>>>, AppError> {
+        let teams = self.select_playing_teams(state).await?;
+        let stages = self.select_stages(state).await?;
+
+        let mut scheduled_games: Vec<Vec<Vec<GameSchedule>>> = vec![];
+
+        for stage in stages.iter() {
+            match stage.stage_type {
+                CompetitionStageType::Championship => {
+                    let games_by_round = GameSchedule::round_robin_schedule(&teams);
+
+                    scheduled_games.push(games_by_round);
+                }
+
+                CompetitionStageType::Cup => {}
+            }
+        }
+
+        Ok(scheduled_games)
     }
 }
