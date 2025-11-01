@@ -1,5 +1,5 @@
+use crate::data::blood_bowl::competitions::registrations::TeamRegistration;
 use crate::data::blood_bowl::competitions::stages::{CompetitionStage, CompetitionStageType};
-use crate::data::blood_bowl::teams;
 use crate::data::blood_bowl::teams::TeamSummary;
 use crate::data::users::User;
 use crate::data::Id;
@@ -8,6 +8,7 @@ use crate::AppState;
 use blood_bowl_rs::versions::Version;
 use serde::Deserialize;
 
+pub mod registrations;
 pub mod stages;
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
@@ -302,29 +303,7 @@ impl Competition {
         &self,
         state: &AppState,
     ) -> Result<Vec<TeamRegistration>, AppError> {
-        tracing::debug!("select_teams_registrations for id={}", self.id);
-
-        let registration_rows: Vec<TeamRegistrationRow> = sqlx::query_as(
-            "SELECT bb_competitions_teams.team_id,
-                    bb_competitions_teams.validated,
-                    bb_competitions_teams.team_number
-                FROM bb_competitions_teams
-                INNER JOIN bb_teams
-                ON bb_teams.id = bb_competitions_teams.team_id
-                WHERE bb_competitions_teams.competition_id = $1
-                ORDER BY bb_teams.coach_id, bb_teams.name",
-        )
-        .bind(self.id.clone())
-        .fetch_all(&state.db)
-        .await?;
-
-        let mut registrations: Vec<TeamRegistration> = Vec::with_capacity(registration_rows.len());
-
-        for registration_row in registration_rows {
-            registrations.push(registration_row.into_team_registration(state).await?);
-        }
-
-        Ok(registrations)
+        TeamRegistration::select_for_competition(state, self).await
     }
 
     pub async fn insert_team_registration(
@@ -333,29 +312,7 @@ impl Competition {
         connected_user: &User,
         team_id: i32,
     ) -> Result<(), AppError> {
-        tracing::debug!(
-            "insert_team_registration for competition_id={} and team_id={}",
-            self.id,
-            team_id
-        );
-
-        let team = teams::select_by_id_without_staff_nor_players(state, team_id).await?;
-
-        if (connected_user.eq(&self.director) || connected_user.eq(&team.coach)) && !self.started {
-            sqlx::query(
-                "INSERT INTO bb_competitions_teams (
-                        competition_id,
-                        team_id)
-                    VALUES ($1, $2)
-                    ON CONFLICT (competition_id, team_id) DO NOTHING",
-            )
-            .bind(self.id.clone())
-            .bind(team_id.clone())
-            .execute(&state.db)
-            .await?;
-        }
-
-        Ok(())
+        TeamRegistration::insert(state, connected_user, self, team_id).await
     }
 
     pub async fn delete_team_registration(
@@ -364,28 +321,7 @@ impl Competition {
         connected_user: &User,
         team_id: i32,
     ) -> Result<(), AppError> {
-        tracing::debug!(
-            "delete_team_registration for competition_id={} and team_id={}",
-            self.id,
-            team_id
-        );
-
-        let team = teams::select_by_id_without_staff_nor_players(state, team_id).await?;
-
-        if (connected_user.eq(&self.director) || connected_user.eq(&team.coach)) && !self.started {
-            sqlx::query(
-                "DELETE
-                    FROM bb_competitions_teams
-                    WHERE competition_id = $1
-                    AND team_id = $2",
-            )
-            .bind(self.id.clone())
-            .bind(team_id.clone())
-            .execute(&state.db)
-            .await?;
-        }
-
-        Ok(())
+        TeamRegistration::delete(state, connected_user, self, team_id).await
     }
 
     pub async fn update_team_validation(
@@ -395,82 +331,13 @@ impl Competition {
         team_id: i32,
         validation: bool,
     ) -> Result<(), AppError> {
-        tracing::debug!(
-            "update_team_validation for competition_id={} and team_id={} with validation={}",
-            self.id,
-            team_id,
-            validation
-        );
-
-        if connected_user.eq(&self.director) && !self.started {
-            sqlx::query(
-                "UPDATE bb_competitions_teams
-                    SET validated = $3
-                    WHERE competition_id = $1
-                    AND team_id = $2",
-            )
-            .bind(self.id.clone())
-            .bind(team_id.clone())
-            .bind(validation.clone())
-            .execute(&state.db)
-            .await?;
-        }
-
-        Ok(())
+        TeamRegistration::update_validation(state, connected_user, self, team_id, validation).await
     }
 
     pub async fn select_playing_teams(
         &self,
         state: &AppState,
     ) -> Result<Vec<TeamSummary>, AppError> {
-        tracing::debug!("select_playing_teams for id={}", self.id);
-
-        let registration_rows: Vec<TeamRegistrationRow> = sqlx::query_as(
-            "SELECT team_id,
-                    validated,
-                    team_number
-                FROM bb_competitions_teams
-                WHERE competition_id = $1
-                AND validated = TRUE
-                ORDER BY team_number",
-        )
-        .bind(self.id.clone())
-        .fetch_all(&state.db)
-        .await?;
-
-        let mut teams: Vec<TeamSummary> = Vec::with_capacity(registration_rows.len());
-
-        for registration_row in registration_rows {
-            teams.push(registration_row.into_team_summary(state).await?);
-        }
-
-        Ok(teams)
+        TeamRegistration::select_validated_teams_for_competition(state, self).await
     }
-}
-
-#[derive(Deserialize, sqlx::FromRow, Clone)]
-struct TeamRegistrationRow {
-    team_id: i32,
-    validated: Option<bool>,
-    team_number: Option<i32>,
-}
-
-impl TeamRegistrationRow {
-    async fn into_team_registration(self, state: &AppState) -> Result<TeamRegistration, AppError> {
-        Ok(TeamRegistration {
-            team_summary: teams::select_summary_by_id(state, self.team_id).await?,
-            validated: self.validated,
-            team_number: self.team_number,
-        })
-    }
-
-    async fn into_team_summary(self, state: &AppState) -> Result<TeamSummary, AppError> {
-        Ok(teams::select_summary_by_id(state, self.team_id).await?)
-    }
-}
-
-pub struct TeamRegistration {
-    pub team_summary: TeamSummary,
-    pub validated: Option<bool>,
-    pub team_number: Option<i32>,
 }
