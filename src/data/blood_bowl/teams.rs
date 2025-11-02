@@ -73,6 +73,12 @@ pub struct TeamSummary {
     pub under_creation: bool,
 }
 
+impl PartialEq<Self> for TeamSummary {
+    fn eq(&self, other: &Self) -> bool {
+        self.id.eq(&other.id)
+    }
+}
+
 impl TeamSummary {
     pub fn list_into_list_with_option(team_list: &Vec<Self>) -> Vec<Option<Self>> {
         team_list.iter().map(|team| Some(team.clone())).collect()

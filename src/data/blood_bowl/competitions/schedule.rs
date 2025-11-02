@@ -1,9 +1,28 @@
 use crate::data::blood_bowl::games::GameSummary;
 use crate::data::blood_bowl::teams::TeamSummary;
+use blood_bowl_rs::rosters::Roster;
+use blood_bowl_rs::versions::Version;
 
 pub struct RoundSchedule {
     pub name: String,
     pub games: Vec<GameSchedule>,
+}
+
+lazy_static::lazy_static! {
+    pub static ref BYE: TeamSummary = TeamSummary {
+        id: -1000,
+        version: Version::V4,
+        name: "BYE".to_string(),
+        roster: Roster::Amazon,
+        coach_id: None,
+        coach_name: "".to_string(),
+        external_logo_url: None,
+        value: 0,
+        current_value: 0,
+        treasury: 0,
+        dedicated_fans: 0,
+        under_creation: false,
+    };
 }
 
 pub struct GameSchedule {
@@ -29,6 +48,10 @@ impl GameSchedule {
     pub fn winner(&self) -> Option<TeamSummary> {
         if let Some(game_summary) = &self.game_summary {
             game_summary.winner()
+        } else if self.home_team.eq(&Some(BYE.clone())) {
+            self.away_team.clone()
+        } else if self.away_team.eq(&Some(BYE.clone())) {
+            self.home_team.clone()
         } else {
             None
         }
@@ -37,6 +60,10 @@ impl GameSchedule {
     pub fn loser(&self) -> Option<TeamSummary> {
         if let Some(game_summary) = &self.game_summary {
             game_summary.loser()
+        } else if self.home_team.eq(&Some(BYE.clone())) {
+            self.home_team.clone()
+        } else if self.away_team.eq(&Some(BYE.clone())) {
+            self.away_team.clone()
         } else {
             None
         }
@@ -74,7 +101,7 @@ pub fn round_robin_schedule(
         let mut teams = TeamSummary::list_into_list_with_option(team_list);
 
         if teams.len() % 2 != 0 {
-            teams.push(None);
+            teams.push(Some(BYE.clone()));
         }
 
         let rounds_number = teams.len() - 1;
@@ -98,7 +125,7 @@ pub fn round_robin_schedule(
                     away_team = rotating[rotating.len() - i].clone();
                 }
 
-                if home_team.is_some() && away_team.is_some() {
+                if home_team.ne(&Some(BYE.clone())) && away_team.ne(&Some(BYE.clone())) {
                     round_games.push(GameSchedule {
                         home_team,
                         home_ranking_number: None,
@@ -147,7 +174,7 @@ pub fn cup_schedule(team_list: &Vec<TeamSummary>, with_ranking: bool) -> Vec<Rou
         }
 
         while teams.len() < cup_teams_number {
-            teams.push(None);
+            teams.push(Some(BYE.clone()));
         }
 
         let mut teams = vec![teams];
@@ -156,31 +183,41 @@ pub fn cup_schedule(team_list: &Vec<TeamSummary>, with_ranking: bool) -> Vec<Rou
             let mut next_round_teams = Vec::with_capacity(teams.len() * 2);
 
             for cup_part_index in 0..teams.len() {
-                let number_for_part = (cup_part_index * teams[cup_part_index].len()) + 1;
+                let teams_number_competing_for_position = teams[cup_part_index].len();
+                let position_teams_are_competing_for =
+                    (cup_part_index * teams_number_competing_for_position) + 1;
 
-                let mut round_games = Vec::with_capacity(teams[cup_part_index].len() / 2);
+                let mut round_games = Vec::with_capacity(teams_number_competing_for_position / 2);
                 let mut first_team_index = 0;
-                let mut second_team_index = teams[cup_part_index].len() - 1;
+                let mut second_team_index = teams_number_competing_for_position - 1;
 
-                let mut winners = Vec::with_capacity(teams[cup_part_index].len() / 2);
-                let mut losers = Vec::with_capacity(teams[cup_part_index].len() / 2);
+                let mut winners = Vec::with_capacity(teams_number_competing_for_position / 2);
+                let mut losers = Vec::with_capacity(teams_number_competing_for_position / 2);
 
                 while first_team_index < second_team_index {
                     let game = GameSchedule {
                         home_team: teams[cup_part_index][first_team_index].clone(),
-                        home_ranking_number: Some(first_team_index + number_for_part),
+                        home_ranking_number: Some(
+                            first_team_index + position_teams_are_competing_for,
+                        ),
                         away_team: teams[cup_part_index][second_team_index].clone(),
-                        away_ranking_number: Some(second_team_index + number_for_part),
+                        away_ranking_number: Some(
+                            second_team_index + position_teams_are_competing_for,
+                        ),
                         game_summary: None,
                     };
 
                     winners.push(game.winner());
 
-                    if with_ranking {
+                    if with_ranking || teams_number_competing_for_position > 4 {
                         losers.push(game.loser());
                     }
 
-                    round_games.push(game);
+                    if game.home_team.ne(&Some(BYE.clone()))
+                        && game.away_team.ne(&Some(BYE.clone()))
+                    {
+                        round_games.push(game);
+                    }
 
                     first_team_index += 1;
                     second_team_index -= 1;
@@ -188,26 +225,33 @@ pub fn cup_schedule(team_list: &Vec<TeamSummary>, with_ranking: bool) -> Vec<Rou
 
                 next_round_teams.push(winners);
 
-                if with_ranking {
+                if with_ranking || teams_number_competing_for_position > 4 {
                     next_round_teams.push(losers);
                 }
 
-                let round_name = match (number_for_part, round_games.len()) {
-                    (1, 1) => "Finale".to_string(),
-                    (1, 2) => "1/2 finale".to_string(),
-                    (1, 4) => "1/4 de finale".to_string(),
-                    (1, 8) => "1/8 de finale".to_string(),
-                    (1, 16) => "1/16 de finale".to_string(),
-                    (1, 32) => "1/32 de finale".to_string(),
-                    (1, _) => "Tableau principal".to_string(),
-                    (number_for_part, 1) => format!("Match pour la {}ème place", number_for_part),
-                    (number_for_part, _) => format!("Tableau pour la {}ème place", number_for_part),
-                };
+                if round_games.len() > 0 {
+                    let round_name = match (position_teams_are_competing_for, round_games.len()) {
+                        (1, 1) => "Finale 🏆".to_string(),
+                        (1, 2) => "1/2 finale".to_string(),
+                        (1, 4) => "1/4 de finale".to_string(),
+                        (1, 8) => "1/8 de finale".to_string(),
+                        (1, 16) => "1/16 de finale".to_string(),
+                        (1, 32) => "1/32 de finale".to_string(),
+                        (1, _) => "Tableau principal".to_string(),
+                        (3, 1) => "Match pour la 3ème place 🥉".to_string(),
+                        (number_for_part, 1) => {
+                            format!("Match pour la {}ème place", number_for_part)
+                        }
+                        (number_for_part, _) => {
+                            format!("Tableau pour la {}ème place", number_for_part)
+                        }
+                    };
 
-                schedule.push(RoundSchedule {
-                    name: round_name,
-                    games: round_games,
-                });
+                    schedule.push(RoundSchedule {
+                        name: round_name,
+                        games: round_games,
+                    });
+                }
             }
 
             teams = next_round_teams;

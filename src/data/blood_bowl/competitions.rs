@@ -359,7 +359,7 @@ impl Competition {
                 }
 
                 CompetitionStageType::Cup => {
-                    stages_schedules.push(schedule::cup_schedule(&teams, true));
+                    stages_schedules.push(schedule::cup_schedule(&teams, false));
                 }
             }
         }
