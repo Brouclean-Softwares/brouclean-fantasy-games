@@ -72,7 +72,7 @@ impl CompetitionPage {
 
         let stages = competition.select_stages(&app_state).await?;
 
-        let schedule = competition
+        let (schedule, standings) = competition
             .generate_schedule_and_standings(&app_state)
             .await?;
 

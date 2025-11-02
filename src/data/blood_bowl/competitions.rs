@@ -1,6 +1,7 @@
 use crate::data::blood_bowl::competitions::registrations::TeamRegistration;
 use crate::data::blood_bowl::competitions::schedule::RoundSchedule;
 use crate::data::blood_bowl::competitions::stages::{CompetitionStage, CompetitionStageType};
+use crate::data::blood_bowl::competitions::standings::StageStandings;
 use crate::data::blood_bowl::teams::TeamSummary;
 use crate::data::users::User;
 use crate::data::Id;
@@ -12,6 +13,7 @@ use serde::Deserialize;
 pub mod registrations;
 pub mod schedule;
 pub mod stages;
+pub mod standings;
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
 struct CompetitionRow {
@@ -346,24 +348,32 @@ impl Competition {
     pub async fn generate_schedule_and_standings(
         &self,
         state: &AppState,
-    ) -> Result<Vec<Vec<RoundSchedule>>, AppError> {
-        let teams = self.select_playing_teams(state).await?;
+    ) -> Result<(Vec<Vec<RoundSchedule>>, Vec<StageStandings>), AppError> {
+        let mut teams_entering_next_stage =
+            TeamSummary::list_into_list_with_option(&self.select_playing_teams(state).await?);
+
         let stages = self.select_stages(state).await?;
 
-        let mut stages_schedules: Vec<Vec<RoundSchedule>> = vec![];
+        let mut stages_schedules: Vec<Vec<RoundSchedule>> = Vec::with_capacity(stages.len());
+        let mut stages_standings: Vec<StageStandings> = Vec::with_capacity(stages.len());
 
         for stage in stages.iter() {
-            match stage.stage_type {
+            let (stage_schedule, stage_standings) = match stage.stage_type {
                 CompetitionStageType::Championship => {
-                    stages_schedules.push(schedule::round_robin_schedule(&teams, true));
+                    stages::round_robin_schedule_and_standings(&teams_entering_next_stage, true)
                 }
 
                 CompetitionStageType::Cup => {
-                    stages_schedules.push(schedule::cup_schedule(&teams, true));
+                    stages::cup_schedule_and_standings(&teams_entering_next_stage, true)
                 }
-            }
+            };
+
+            stages_schedules.push(stage_schedule);
+            stages_standings.push(stage_standings.clone());
+
+            teams_entering_next_stage = stage_standings.into();
         }
 
-        Ok(stages_schedules)
+        Ok((stages_schedules, stages_standings))
     }
 }
