@@ -9,36 +9,50 @@
             {{ stages[stage_index].stage_name }}
         </h4>
 
-        {% let stage_games = schedule[stage_index] %}
+        {% let rounds_schedule = schedule[stage_index] %}
 
-        {% for round_index in 0..stage_games.len() %}
+        {% for round_schedule in rounds_schedule %}
         <h5>
-            Journée #{{ round_index + 1 }}
+            {{ round_schedule.name }}
         </h5>
 
         <div class="uk-overflow-auto">
             <table class="uk-table uk-table-striped uk-table-small uk-table-hover uk-table-middle">
                 <thead>
                 <tr>
-                    <th class="uk-width-2-5 uk-text-center">Domicile</th>
-                    <th class="uk-width-1-5 uk-text-center">Score</th>
-                    <th class="uk-width-2-5 uk-text-center">Extérieur</th>
+                    <th class="uk-width-2-5">Domicile</th>
+                    <th class="uk-width-1-5">Score</th>
+                    <th class="uk-width-2-5">Extérieur</th>
                 </tr>
                 </thead>
 
                 <tbody>
-                {% for game in stage_games[round_index] %}
+                {% for game in round_schedule.games %}
                 <tr>
-                    <td class="uk-text-center">
-                        <img src="{{ TeamLogo::from(game.home_team).url }}" width="25" height="25" alt="">
-                        {{ game.home_team.name }}
+                    <td>
+                        {% if let Some(ranking_number) = game.home_ranking_number %}
+                        <span>#{{ ranking_number }} </span>
+                        {% endif %}
+
+                        {% if let Some(team) = game.home_team %}
+                        <img src="{{ TeamLogo::from(*team).url }}" width="25" height="25" alt="">
+                        {{ team.name }}
+                        {% endif %}
                     </td>
-                    <td class="uk-text-center">
-                        -
+                    <td>
+                        {% if let Some(score) = game.score() %}
+                        <span>{{ score.0 }} - {{ score.1 }}</span>
+                        {% endif %}
                     </td>
-                    <td class="uk-text-center">
-                        <img src="{{ TeamLogo::from(game.away_team).url }}" width="25" height="25" alt="">
-                        {{ game.away_team.name }}
+                    <td>
+                        {% if let Some(ranking_number) = game.away_ranking_number %}
+                        <span>#{{ ranking_number }} </span>
+                        {% endif %}
+
+                        {% if let Some(team) = game.away_team %}
+                        <img src="{{ TeamLogo::from(*team).url }}" width="25" height="25" alt="">
+                        {{ team.name }}
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}

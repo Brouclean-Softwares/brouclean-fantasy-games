@@ -1,5 +1,5 @@
 use crate::data::blood_bowl::competitions::registrations::TeamRegistration;
-use crate::data::blood_bowl::competitions::schedule::GameSchedule;
+use crate::data::blood_bowl::competitions::schedule::RoundSchedule;
 use crate::data::blood_bowl::competitions::stages::{CompetitionStage, CompetitionStageType};
 use crate::data::blood_bowl::teams::TeamSummary;
 use crate::data::users::User;
@@ -346,24 +346,24 @@ impl Competition {
     pub async fn generate_schedule_and_standings(
         &self,
         state: &AppState,
-    ) -> Result<Vec<Vec<Vec<GameSchedule>>>, AppError> {
+    ) -> Result<Vec<Vec<RoundSchedule>>, AppError> {
         let teams = self.select_playing_teams(state).await?;
         let stages = self.select_stages(state).await?;
 
-        let mut scheduled_games: Vec<Vec<Vec<GameSchedule>>> = vec![];
+        let mut stages_schedules: Vec<Vec<RoundSchedule>> = vec![];
 
         for stage in stages.iter() {
             match stage.stage_type {
                 CompetitionStageType::Championship => {
-                    let games_by_round = GameSchedule::round_robin_schedule(&teams);
-
-                    scheduled_games.push(games_by_round);
+                    stages_schedules.push(schedule::round_robin_schedule(&teams, true));
                 }
 
-                CompetitionStageType::Cup => {}
+                CompetitionStageType::Cup => {
+                    stages_schedules.push(schedule::cup_schedule(&teams, true));
+                }
             }
         }
 
-        Ok(scheduled_games)
+        Ok(stages_schedules)
     }
 }

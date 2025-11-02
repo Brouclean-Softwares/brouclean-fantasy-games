@@ -32,6 +32,28 @@ pub struct GameSummary {
     pub second_team_is_winner: bool,
 }
 
+impl GameSummary {
+    pub fn winner(&self) -> Option<TeamSummary> {
+        if self.first_team_is_winner {
+            Some(self.first_team.clone())
+        } else if self.second_team_is_winner {
+            Some(self.second_team.clone())
+        } else {
+            None
+        }
+    }
+
+    pub fn loser(&self) -> Option<TeamSummary> {
+        if self.first_team_is_winner {
+            Some(self.second_team.clone())
+        } else if self.second_team_is_winner {
+            Some(self.first_team.clone())
+        } else {
+            None
+        }
+    }
+}
+
 #[derive(Deserialize, sqlx::FromRow, Clone)]
 struct GameRow {
     id: i32,

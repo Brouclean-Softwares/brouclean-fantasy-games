@@ -73,6 +73,12 @@ pub struct TeamSummary {
     pub under_creation: bool,
 }
 
+impl TeamSummary {
+    pub fn list_into_list_with_option(team_list: &Vec<Self>) -> Vec<Option<Self>> {
+        team_list.iter().map(|team| Some(team.clone())).collect()
+    }
+}
+
 pub async fn select_all(state: &AppState) -> Result<Vec<TeamSummary>, AppError> {
     tracing::debug!("select_all");
 

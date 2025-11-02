@@ -1,7 +1,7 @@
 use crate::app::templates::blood_bowl::teams::TeamSelector;
 use crate::app::templates::{AlertMessage, NavigationBar};
 use crate::data::blood_bowl::competitions::registrations::TeamRegistration;
-use crate::data::blood_bowl::competitions::schedule::GameSchedule;
+use crate::data::blood_bowl::competitions::schedule::RoundSchedule;
 use crate::data::blood_bowl::competitions::stages::{CompetitionStage, CompetitionStageType};
 use crate::data::blood_bowl::competitions::Competition;
 use crate::data::blood_bowl::teams::TeamLogo;
@@ -119,5 +119,5 @@ pub struct CompetitionInformation {
 #[template(path = "blood_bowl/competitions/competition_schedule.html")]
 pub struct CompetitionSchedule {
     stages: Vec<CompetitionStage>,
-    schedule: Vec<Vec<Vec<GameSchedule>>>,
+    schedule: Vec<Vec<RoundSchedule>>,
 }
