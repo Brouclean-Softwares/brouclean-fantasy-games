@@ -141,7 +141,6 @@
                 <thead>
                 <tr>
                     <th uk-tooltip="Validation de l'inscription ?">VAL</th>
-                    <th uk-tooltip="Numéro du tirage au sort">#</th>
                     <th>Nom</th>
                     <th>Roster</th>
                     <th uk-tooltip="Valeur d'Equipe">VE</th>
@@ -167,11 +166,6 @@
                         {% else %}
                         <span uk-icon="icon: close"></span>
                         {% endif %}
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if let Some(team_number) = registration.team_number %}
-                            {{ team_number }}
                         {% endif %}
                     </td>
                     <td class="uk-table-link">

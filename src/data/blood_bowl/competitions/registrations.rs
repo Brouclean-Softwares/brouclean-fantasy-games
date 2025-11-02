@@ -10,7 +10,6 @@ use serde::Deserialize;
 struct TeamRegistrationRow {
     team_id: i32,
     validated: Option<bool>,
-    team_number: Option<i32>,
 }
 
 impl TeamRegistrationRow {
@@ -18,7 +17,6 @@ impl TeamRegistrationRow {
         Ok(TeamRegistration {
             team_summary: teams::select_summary_by_id(state, self.team_id).await?,
             validated: self.validated,
-            team_number: self.team_number,
         })
     }
 
@@ -30,7 +28,6 @@ impl TeamRegistrationRow {
 pub struct TeamRegistration {
     pub team_summary: TeamSummary,
     pub validated: Option<bool>,
-    pub team_number: Option<i32>,
 }
 
 impl TeamRegistration {
@@ -42,8 +39,7 @@ impl TeamRegistration {
 
         let registration_rows: Vec<TeamRegistrationRow> = sqlx::query_as(
             "SELECT bb_competitions_teams.team_id,
-                    bb_competitions_teams.validated,
-                    bb_competitions_teams.team_number
+                    bb_competitions_teams.validated
                 FROM bb_competitions_teams
                 INNER JOIN bb_teams
                 ON bb_teams.id = bb_competitions_teams.team_id
@@ -170,12 +166,11 @@ impl TeamRegistration {
 
         let registration_rows: Vec<TeamRegistrationRow> = sqlx::query_as(
             "SELECT team_id,
-                    validated,
-                    team_number
+                    validated
                 FROM bb_competitions_teams
                 WHERE competition_id = $1
                 AND validated = TRUE
-                ORDER BY team_number",
+                ORDER BY draw_number, team_id",
         )
         .bind(competition.id.clone())
         .fetch_all(&state.db)
@@ -188,36 +183,5 @@ impl TeamRegistration {
         }
 
         Ok(teams)
-    }
-
-    pub async fn update_team_number_for_competition(
-        state: &AppState,
-        connected_user: &User,
-        competition: &Competition,
-        team_id: i32,
-        number: i32,
-    ) -> Result<(), AppError> {
-        tracing::debug!(
-            "update_team_number_for_competition for competition_id={} and team_id={} with number={}",
-            competition.id,
-            team_id,
-            number
-        );
-
-        if connected_user.eq(&competition.director) && !competition.started {
-            sqlx::query(
-                "UPDATE bb_competitions_teams
-                SET team_number = $3
-                WHERE competition_id = $1
-                AND team_id = $2",
-            )
-            .bind(competition.id.clone())
-            .bind(team_id.clone())
-            .bind(number.clone())
-            .execute(&state.db)
-            .await?;
-        }
-
-        Ok(())
     }
 }

@@ -13,7 +13,6 @@ blood-bowl-rs = { git = "https://gitlab.com/brouclean-softwares/blood-bowl-rs.gi
 chrono = { version = "0.4", features = ["clock"] }
 http = "1.1"
 oauth2 = "4.4.1"
-rand = "0.9"
 reqwest = { version = "0.11", features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

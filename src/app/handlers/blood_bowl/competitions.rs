@@ -368,11 +368,6 @@ pub async fn update_team_validation(
             .update_team_validation(&app_state, &connected_user, form.team_id, form.validation)
             .await
             .map_err(error_handler)?;
-
-        competition
-            .regenerate_teams_numbers(&app_state, &connected_user)
-            .await
-            .map_err(error_handler)?;
     }
 
     Ok(Redirect::to(&format!(

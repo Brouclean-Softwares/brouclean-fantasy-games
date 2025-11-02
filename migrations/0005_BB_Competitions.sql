@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS bb_competitions_teams (
     competition_id INTEGER NOT NULL REFERENCES bb_competitions ON DELETE CASCADE,
     team_id INTEGER REFERENCES bb_teams ON DELETE RESTRICT,
     validated BOOLEAN,
-    team_number INTEGER,
+    draw_number DOUBLE PRECISION NOT NULL DEFAULT random(),
     registered_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (competition_id, team_id)
 );

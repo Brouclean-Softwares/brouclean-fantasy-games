@@ -12,60 +12,64 @@ impl GameSchedule {
 
         let n = teams.len();
 
-        let has_bye = if n % 2 != 0 {
-            teams.push(None);
-            true
-        } else {
-            false
-        };
+        if n >= 2 {
+            let has_bye = if n % 2 != 0 {
+                teams.push(None);
+                true
+            } else {
+                false
+            };
 
-        let n = teams.len();
-        let rounds = n - 1;
-        let half = n / 2;
+            let n = teams.len();
+            let rounds = n - 1;
+            let half = n / 2;
 
-        let mut schedule = Vec::new();
+            let mut schedule = Vec::new();
 
-        // Split first team (fixed) from others
-        let fixed = teams[0].clone();
-        let mut rotating = teams[1..].to_vec();
+            // Split first team (fixed) from others
+            let fixed = teams[0].clone();
+            let mut rotating = teams[1..].to_vec();
 
-        for _round in 0..rounds {
-            let mut round_games = Vec::new();
+            for _round in 0..rounds {
+                let mut round_games = Vec::new();
 
-            // Pairs construction
-            for i in 0..half {
-                let home_team: Option<TeamSummary>;
-                let away_team: Option<TeamSummary>;
+                // Pairs construction
+                for i in 0..half {
+                    let home_team: Option<TeamSummary>;
+                    let away_team: Option<TeamSummary>;
 
-                if i == 0 {
-                    home_team = fixed.clone();
-                    away_team = rotating[0].clone();
-                } else {
-                    home_team = rotating[i].clone();
-                    away_team = rotating[rotating.len() - i].clone();
+                    if i == 0 {
+                        home_team = fixed.clone();
+                        away_team = rotating[0].clone();
+                    } else {
+                        home_team = rotating[i].clone();
+                        away_team = rotating[rotating.len() - i].clone();
+                    }
+
+                    // Ignore games with None
+                    if let (Some(home_team), Some(away_team)) = (home_team, away_team) {
+                        round_games.push(GameSchedule {
+                            home_team,
+                            away_team,
+                        });
+                    }
                 }
 
-                // Ignore games with None
-                if let (Some(home_team), Some(away_team)) = (home_team, away_team) {
-                    round_games.push(GameSchedule {
-                        home_team,
-                        away_team,
-                    });
-                }
+                schedule.push(round_games);
+
+                // Rotate teams (except first)
+                let last = rotating.pop().unwrap();
+                rotating.insert(0, last);
             }
 
-            schedule.push(round_games);
-
-            // Rotate teams (except first)
-            let last = rotating.pop().unwrap();
-            rotating.insert(0, last);
-        }
-
-        // remove days with only None
-        if has_bye {
-            schedule.into_iter().filter(|day| !day.is_empty()).collect()
+            // remove days with only None
+            if has_bye {
+                schedule.into_iter().filter(|day| !day.is_empty()).collect()
+            } else {
+                schedule
+            }
         } else {
-            schedule
+            vec![]
         }
     }
 }

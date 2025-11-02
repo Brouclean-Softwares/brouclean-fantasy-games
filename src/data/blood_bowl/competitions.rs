@@ -7,9 +7,7 @@ use crate::data::Id;
 use crate::errors::AppError;
 use crate::AppState;
 use blood_bowl_rs::versions::Version;
-use rand::seq::SliceRandom;
 use serde::Deserialize;
-use tokio::task;
 
 pub mod registrations;
 pub mod schedule;
@@ -336,34 +334,6 @@ impl Competition {
         validation: bool,
     ) -> Result<(), AppError> {
         TeamRegistration::update_validation(state, connected_user, self, team_id, validation).await
-    }
-
-    pub async fn regenerate_teams_numbers(
-        &self,
-        state: &AppState,
-        connected_user: &User,
-    ) -> Result<(), AppError> {
-        if connected_user.eq(&self.director) && !self.started {
-            let mut teams = self.select_playing_teams(state).await?;
-
-            task::block_in_place(|| {
-                let mut rng = rand::rng();
-                teams.shuffle(&mut rng);
-            });
-
-            for team_index in 0..teams.len() {
-                TeamRegistration::update_team_number_for_competition(
-                    state,
-                    connected_user,
-                    self,
-                    teams[team_index].id,
-                    team_index as i32 + 1,
-                )
-                .await?;
-            }
-        }
-
-        Ok(())
     }
 
     pub async fn select_playing_teams(
