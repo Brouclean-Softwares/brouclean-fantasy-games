@@ -1,12 +1,74 @@
+use crate::data::blood_bowl::competitions::stages::CompetitionStage;
 use crate::data::blood_bowl::games::GameSummary;
 use crate::data::blood_bowl::teams::TeamSummary;
 use blood_bowl_rs::rosters::Roster;
 use blood_bowl_rs::versions::Version;
 
+pub struct StageSchedule {
+    pub stage: CompetitionStage,
+    pub rounds_schedule: Vec<RoundSchedule>,
+    pub finished: bool,
+}
+
+impl From<&CompetitionStage> for StageSchedule {
+    fn from(stage: &CompetitionStage) -> Self {
+        Self {
+            stage: stage.clone(),
+            rounds_schedule: Vec::new(),
+            finished: true,
+        }
+    }
+}
+
+impl StageSchedule {
+    pub fn push(&mut self, round_schedule: RoundSchedule) {
+        if !round_schedule.is_empty() {
+            self.finished = self.finished && round_schedule.finished;
+            self.rounds_schedule.push(round_schedule);
+        }
+    }
+
+    pub fn extend(&mut self, other: Self) {
+        self.finished = self.finished && other.finished;
+        self.rounds_schedule.extend(other.rounds_schedule);
+    }
+}
+
 pub struct RoundSchedule {
     pub name: String,
-    pub games: Vec<GameSchedule>,
+    pub games_schedule: Vec<GameSchedule>,
     pub finished: bool,
+}
+
+impl RoundSchedule {
+    pub fn new_with_name(name: String) -> Self {
+        Self {
+            name,
+            games_schedule: Vec::new(),
+            finished: true,
+        }
+    }
+
+    pub fn new_with_name_and_capacity(name: String, capacity: usize) -> Self {
+        Self {
+            name,
+            games_schedule: Vec::with_capacity(capacity),
+            finished: true,
+        }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.games_schedule.is_empty()
+    }
+
+    pub fn push(&mut self, game_schedule: GameSchedule) {
+        if game_schedule.home_team.ne(&Some(BYE.clone()))
+            && game_schedule.away_team.ne(&Some(BYE.clone()))
+        {
+            self.finished = self.finished && game_schedule.finished();
+            self.games_schedule.push(game_schedule);
+        }
+    }
 }
 
 lazy_static::lazy_static! {
@@ -35,6 +97,14 @@ pub struct GameSchedule {
 }
 
 impl GameSchedule {
+    pub fn finished(&self) -> bool {
+        if let Some(game) = &self.game_summary {
+            game.finished
+        } else {
+            false
+        }
+    }
+
     pub fn score(&self) -> Option<(usize, usize)> {
         if let Some(game_summary) = &self.game_summary {
             Some((
@@ -68,25 +138,5 @@ impl GameSchedule {
         } else {
             None
         }
-    }
-
-    pub fn reverse(&self) -> Self {
-        Self {
-            home_team: self.away_team.clone(),
-            home_ranking_number: self.away_ranking_number,
-            away_team: self.home_team.clone(),
-            away_ranking_number: self.home_ranking_number,
-            game_summary: None,
-        }
-    }
-
-    pub fn reverse_all_games(games: &Vec<Self>) -> Vec<Self> {
-        let mut reversed_games = Vec::with_capacity(games.len());
-
-        for game in games.iter() {
-            reversed_games.push(game.reverse());
-        }
-
-        reversed_games
     }
 }

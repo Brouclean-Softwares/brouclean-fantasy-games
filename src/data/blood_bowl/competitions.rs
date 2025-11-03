@@ -1,5 +1,5 @@
 use crate::data::blood_bowl::competitions::registrations::TeamRegistration;
-use crate::data::blood_bowl::competitions::schedule::RoundSchedule;
+use crate::data::blood_bowl::competitions::schedule::StageSchedule;
 use crate::data::blood_bowl::competitions::stages::{CompetitionStage, CompetitionStageType};
 use crate::data::blood_bowl::competitions::standings::StageStandings;
 use crate::data::blood_bowl::teams::TeamSummary;
@@ -345,28 +345,21 @@ impl Competition {
         TeamRegistration::select_validated_teams_for_competition(state, self).await
     }
 
-    pub async fn generate_schedule_and_standings(
+    pub async fn schedule_and_standings(
         &self,
         state: &AppState,
-    ) -> Result<(Vec<Vec<RoundSchedule>>, Vec<StageStandings>), AppError> {
+    ) -> Result<(Vec<StageSchedule>, Vec<StageStandings>), AppError> {
         let mut teams_entering_next_stage =
             TeamSummary::list_into_list_with_option(&self.select_playing_teams(state).await?);
 
         let stages = self.select_stages(state).await?;
 
-        let mut stages_schedules: Vec<Vec<RoundSchedule>> = Vec::with_capacity(stages.len());
+        let mut stages_schedules: Vec<StageSchedule> = Vec::with_capacity(stages.len());
         let mut stages_standings: Vec<StageStandings> = Vec::with_capacity(stages.len());
 
         for stage in stages.iter() {
-            let (stage_schedule, stage_standings) = match stage.stage_type {
-                CompetitionStageType::Championship => {
-                    stages::round_robin_schedule_and_standings(&teams_entering_next_stage, true)
-                }
-
-                CompetitionStageType::Cup => {
-                    stages::cup_schedule_and_standings(&teams_entering_next_stage, true)
-                }
-            };
+            let (stage_schedule, stage_standings) =
+                stage.schedule_and_standings(&teams_entering_next_stage);
 
             stages_schedules.push(stage_schedule);
             stages_standings.push(stage_standings.clone());

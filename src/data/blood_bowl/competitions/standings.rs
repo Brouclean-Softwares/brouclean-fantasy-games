@@ -1,17 +1,31 @@
+use crate::data::blood_bowl::competitions::schedule::GameSchedule;
+use crate::data::blood_bowl::competitions::stages::{CompetitionStage, CompetitionStageType};
 use crate::data::blood_bowl::games::GameSummary;
 use crate::data::blood_bowl::teams::TeamSummary;
 use std::cmp::Ordering;
 
 #[derive(Clone)]
 pub struct StageStandings {
-    pub teams_standings: Vec<Option<TeamStandings>>,
+    pub stage: CompetitionStage,
+    teams: Vec<Option<TeamSummary>>,
+    rounds_standings: Vec<RoundStandings>,
+}
+
+impl From<&StageStandings> for StageStandings {
+    fn from(other: &StageStandings) -> Self {
+        Self {
+            stage: other.stage.clone(),
+            teams: other.teams.clone(),
+            rounds_standings: Vec::new(),
+        }
+    }
 }
 
 impl Into<Vec<Option<TeamSummary>>> for StageStandings {
     fn into(self) -> Vec<Option<TeamSummary>> {
         let mut teams = Vec::new();
 
-        for team_standing in self.teams_standings.iter() {
+        for team_standing in self.standings().iter() {
             if let Some(team_standing) = team_standing {
                 teams.push(Some(team_standing.team.clone()));
             } else {
@@ -23,7 +37,55 @@ impl Into<Vec<Option<TeamSummary>>> for StageStandings {
     }
 }
 
-impl From<&Vec<Option<TeamSummary>>> for StageStandings {
+impl StageStandings {
+    pub fn from_stage_with_teams(
+        stage: &CompetitionStage,
+        teams: &Vec<Option<TeamSummary>>,
+    ) -> Self {
+        Self {
+            stage: stage.clone(),
+            teams: teams.clone(),
+            rounds_standings: Vec::new(),
+        }
+    }
+
+    pub fn new_round_standings(&self) -> RoundStandings {
+        RoundStandings::from(&self.teams)
+    }
+
+    pub fn process_round(&mut self, round_standings: RoundStandings) {
+        match self.stage.stage_type {
+            CompetitionStageType::Championship => {
+                self.rounds_standings = vec![round_standings];
+            }
+            CompetitionStageType::Cup => {}
+        }
+    }
+
+    pub fn extend(&mut self, other: Self) {
+        self.rounds_standings.extend(other.rounds_standings);
+    }
+
+    pub fn standings(&self) -> Vec<Option<TeamStandings>> {
+        match self.stage.stage_type {
+            CompetitionStageType::Championship => {
+                if let Some(round_standings) = self.rounds_standings.last() {
+                    round_standings.teams_standings.clone()
+                } else {
+                    self.new_round_standings().teams_standings
+                }
+            }
+            CompetitionStageType::Cup => self.new_round_standings().teams_standings,
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct RoundStandings {
+    teams_standings: Vec<Option<TeamStandings>>,
+}
+
+impl From<&Vec<Option<TeamSummary>>> for RoundStandings {
     fn from(teams: &Vec<Option<TeamSummary>>) -> Self {
         let mut teams_standings: Vec<Option<TeamStandings>> = Vec::with_capacity(teams.len());
 
@@ -35,24 +97,29 @@ impl From<&Vec<Option<TeamSummary>>> for StageStandings {
     }
 }
 
-impl StageStandings {
-    pub fn process_game_results(&mut self, game_summary: &GameSummary) {
-        if let Some((first_team_results, second_team_results)) =
-            TeamStandings::from_game_summary(game_summary)
-        {
-            for team_standings in self.teams_standings.iter_mut() {
-                if let Some(team_standings) = team_standings {
-                    if team_standings.team.eq(&first_team_results.team) {
-                        team_standings.add(first_team_results.clone());
-                    }
+impl RoundStandings {
+    pub fn standings(&mut self) -> Vec<Option<TeamStandings>> {
+        self.teams_standings.sort();
+        self.teams_standings.clone()
+    }
 
-                    if team_standings.team.eq(&second_team_results.team) {
-                        team_standings.add(second_team_results.clone());
+    pub fn process_game(&mut self, game_schedule: &GameSchedule) {
+        if let Some(game_summary) = &game_schedule.game_summary {
+            if let Some((first_team_results, second_team_results)) =
+                TeamStandings::from_game_summary(game_summary)
+            {
+                for team_standings in self.teams_standings.iter_mut() {
+                    if let Some(team_standings) = team_standings {
+                        if team_standings.team.eq(&first_team_results.team) {
+                            team_standings.add(first_team_results.clone());
+                        }
+
+                        if team_standings.team.eq(&second_team_results.team) {
+                            team_standings.add(second_team_results.clone());
+                        }
                     }
                 }
             }
-
-            self.teams_standings.sort();
         }
     }
 }

@@ -1,6 +1,8 @@
-use crate::data::blood_bowl::competitions::schedule::{GameSchedule, RoundSchedule, BYE};
-use crate::data::blood_bowl::competitions::standings::{StageStandings, TeamStandings};
-use crate::data::blood_bowl::competitions::Competition;
+use crate::data::blood_bowl::competitions::schedule::{
+    GameSchedule, RoundSchedule, StageSchedule, BYE,
+};
+use crate::data::blood_bowl::competitions::standings::StageStandings;
+use crate::data::blood_bowl::competitions::{stages, Competition};
 use crate::data::blood_bowl::teams::TeamSummary;
 use crate::data::users::User;
 use crate::errors::AppError;
@@ -36,6 +38,18 @@ pub struct CompetitionStage {
 }
 
 impl CompetitionStage {
+    pub fn schedule_and_standings(
+        &self,
+        team_list: &Vec<Option<TeamSummary>>,
+    ) -> (StageSchedule, StageStandings) {
+        match self.stage_type {
+            CompetitionStageType::Championship => {
+                stages::round_robin_schedule_and_standings(team_list, self)
+            }
+            CompetitionStageType::Cup => stages::cup_schedule_and_standings(team_list, self),
+        }
+    }
+
     pub async fn select_for_competition(
         state: &AppState,
         competition: &Competition,
@@ -159,16 +173,22 @@ impl CompetitionStageType {
     }
 }
 
-#[derive(Deserialize, Serialize, Clone)]
-pub enum CompetitionStageRule {}
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
+pub enum CompetitionStageRule {
+    HomeAndAway,
+    WithRanking,
+}
 
 pub fn round_robin_schedule_and_standings(
     team_list: &Vec<Option<TeamSummary>>,
-    home_and_away: bool,
-) -> (Vec<RoundSchedule>, StageStandings) {
-    let mut home_schedule = Vec::new();
-    let mut away_schedule = Vec::new();
-    let mut stage_standings = StageStandings::from(team_list);
+    stage: &CompetitionStage,
+) -> (StageSchedule, StageStandings) {
+    let mut home_schedule = StageSchedule::from(stage);
+    let mut away_schedule = StageSchedule::from(stage);
+    let mut home_standings = StageStandings::from_stage_with_teams(stage, team_list);
+    let mut away_standings = StageStandings::from_stage_with_teams(stage, team_list);
+
+    let home_and_away = stage.rules.contains(&CompetitionStageRule::HomeAndAway);
 
     if team_list.len() >= 2 {
         let mut teams = team_list.clone();
@@ -184,10 +204,13 @@ pub fn round_robin_schedule_and_standings(
         let mut rotating = teams[1..].to_vec();
 
         for round in 0..rounds_number {
-            let mut home_round_games = Vec::new();
-            let mut away_round_games = Vec::new();
-            let mut home_round_is_finished = true;
-            let mut away_round_is_finished = true;
+            let mut home_round_schedule =
+                RoundSchedule::new_with_name(format!("Journée {}", round + 1));
+            let mut away_round_schedule =
+                RoundSchedule::new_with_name(format!("Journée {}", round + rounds_number + 1));
+
+            let mut home_round_standings = home_standings.new_round_standings();
+            let mut away_round_standings = away_standings.new_round_standings();
 
             for i in 0..teams_half_number {
                 let home_team: Option<TeamSummary>;
@@ -204,15 +227,6 @@ pub fn round_robin_schedule_and_standings(
                 if home_team.ne(&Some(BYE.clone())) && away_team.ne(&Some(BYE.clone())) {
                     let home_game_summary = None;
 
-                    if let Some(home_game_summary) = &home_game_summary {
-                        stage_standings.process_game_results(&home_game_summary);
-
-                        home_round_is_finished =
-                            home_round_is_finished && home_game_summary.finished;
-                    } else {
-                        home_round_is_finished = false;
-                    }
-
                     let home_game = GameSchedule {
                         home_team: home_team.clone(),
                         home_ranking_number: None,
@@ -221,19 +235,11 @@ pub fn round_robin_schedule_and_standings(
                         game_summary: home_game_summary,
                     };
 
-                    home_round_games.push(home_game);
+                    home_round_standings.process_game(&home_game);
+                    home_round_schedule.push(home_game);
 
                     if home_and_away {
                         let away_game_summary = None;
-
-                        if let Some(away_game_summary) = &away_game_summary {
-                            stage_standings.process_game_results(&away_game_summary);
-
-                            away_round_is_finished =
-                                away_round_is_finished && away_game_summary.finished;
-                        } else {
-                            away_round_is_finished = false;
-                        }
 
                         let away_game = GameSchedule {
                             home_team: away_team.clone(),
@@ -243,23 +249,18 @@ pub fn round_robin_schedule_and_standings(
                             game_summary: away_game_summary,
                         };
 
-                        away_round_games.push(away_game);
+                        away_round_standings.process_game(&away_game);
+                        away_round_schedule.push(away_game);
                     }
                 }
             }
 
-            home_schedule.push(RoundSchedule {
-                name: format!("Journée {}", round + 1),
-                games: home_round_games,
-                finished: home_round_is_finished,
-            });
+            home_schedule.push(home_round_schedule);
+            home_standings.process_round(home_round_standings);
 
             if home_and_away {
-                away_schedule.push(RoundSchedule {
-                    name: format!("Journée {}", round + rounds_number + 1),
-                    games: away_round_games,
-                    finished: away_round_is_finished,
-                });
+                away_schedule.push(away_round_schedule);
+                away_standings.process_round(away_round_standings);
             }
 
             // Rotate teams (except fixed)
@@ -269,18 +270,21 @@ pub fn round_robin_schedule_and_standings(
 
         if home_and_away {
             home_schedule.extend(away_schedule);
+            home_standings.extend(away_standings);
         }
     }
 
-    (home_schedule, stage_standings)
+    (home_schedule, home_standings)
 }
 
 pub fn cup_schedule_and_standings(
     team_list: &Vec<Option<TeamSummary>>,
-    with_ranking: bool,
-) -> (Vec<RoundSchedule>, StageStandings) {
-    let mut schedule = Vec::new();
-    let mut stage_standings = StageStandings::from(team_list);
+    stage: &CompetitionStage,
+) -> (StageSchedule, StageStandings) {
+    let mut stage_schedule = StageSchedule::from(stage);
+    let mut stage_standings = StageStandings::from_stage_with_teams(stage, team_list);
+
+    let with_ranking = stage.rules.contains(&CompetitionStageRule::WithRanking);
 
     if team_list.len() >= 2 {
         let mut teams = team_list.clone();
@@ -305,8 +309,31 @@ pub fn cup_schedule_and_standings(
                 let position_teams_are_competing_for =
                     (cup_part_index * teams_number_competing_for_position) + 1;
 
-                let mut round_games = Vec::with_capacity(teams_number_competing_for_position / 2);
-                let mut round_is_finished = true;
+                let round_name = match (
+                    position_teams_are_competing_for,
+                    teams_number_competing_for_position,
+                ) {
+                    (1, 2) => "Finale 🏆".to_string(),
+                    (1, 4) => "1/2 finale".to_string(),
+                    (1, 8) => "1/4 de finale".to_string(),
+                    (1, 16) => "1/8 de finale".to_string(),
+                    (1, 32) => "1/16 de finale".to_string(),
+                    (1, 64) => "1/32 de finale".to_string(),
+                    (1, 128) => "1/64 de finale".to_string(),
+                    (1, _) => "Tableau principal".to_string(),
+                    (3, 2) => "Match pour la 3ème place 🥉".to_string(),
+                    (number_for_part, 2) => {
+                        format!("Match pour la {}ème place", number_for_part)
+                    }
+                    (number_for_part, _) => {
+                        format!("Tableau pour la {}ème place", number_for_part)
+                    }
+                };
+
+                let mut round_schedule = RoundSchedule::new_with_name_and_capacity(
+                    round_name,
+                    teams_number_competing_for_position / 2,
+                );
 
                 let mut first_team_index = 0;
                 let mut second_team_index = teams_number_competing_for_position - 1;
@@ -327,64 +354,30 @@ pub fn cup_schedule_and_standings(
                         game_summary: None,
                     };
 
-                    let winner = game.winner();
-                    round_is_finished = round_is_finished && winner.is_some();
-                    winners.push(winner);
+                    winners.push(game.winner());
 
                     if with_ranking || teams_number_competing_for_position > 4 {
                         losers.push(game.loser());
                     }
 
-                    if game.home_team.ne(&Some(BYE.clone()))
-                        && game.away_team.ne(&Some(BYE.clone()))
-                    {
-                        round_games.push(game);
-                    }
+                    round_schedule.push(game);
 
                     first_team_index += 1;
                     second_team_index -= 1;
                 }
 
-                let round_is_finished = !winners.contains(&None);
                 next_round_teams.push(winners);
 
                 if with_ranking || teams_number_competing_for_position > 4 {
                     next_round_teams.push(losers);
                 }
 
-                if round_games.len() > 0 {
-                    let round_name = match (
-                        position_teams_are_competing_for,
-                        teams_number_competing_for_position,
-                    ) {
-                        (1, 2) => "Finale 🏆".to_string(),
-                        (1, 4) => "1/2 finale".to_string(),
-                        (1, 8) => "1/4 de finale".to_string(),
-                        (1, 16) => "1/8 de finale".to_string(),
-                        (1, 32) => "1/16 de finale".to_string(),
-                        (1, 64) => "1/32 de finale".to_string(),
-                        (1, 128) => "1/64 de finale".to_string(),
-                        (1, _) => "Tableau principal".to_string(),
-                        (3, 2) => "Match pour la 3ème place 🥉".to_string(),
-                        (number_for_part, 2) => {
-                            format!("Match pour la {}ème place", number_for_part)
-                        }
-                        (number_for_part, _) => {
-                            format!("Tableau pour la {}ème place", number_for_part)
-                        }
-                    };
-
-                    schedule.push(RoundSchedule {
-                        name: round_name,
-                        games: round_games,
-                        finished: round_is_finished,
-                    });
-                }
+                stage_schedule.push(round_schedule);
             }
 
             teams = next_round_teams;
         }
     }
 
-    (schedule, stage_standings)
+    (stage_schedule, stage_standings)
 }

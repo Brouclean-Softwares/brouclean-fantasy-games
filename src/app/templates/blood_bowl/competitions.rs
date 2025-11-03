@@ -1,8 +1,9 @@
 use crate::app::templates::blood_bowl::teams::TeamSelector;
 use crate::app::templates::{AlertMessage, NavigationBar};
 use crate::data::blood_bowl::competitions::registrations::TeamRegistration;
-use crate::data::blood_bowl::competitions::schedule::RoundSchedule;
+use crate::data::blood_bowl::competitions::schedule::StageSchedule;
 use crate::data::blood_bowl::competitions::stages::{CompetitionStage, CompetitionStageType};
+use crate::data::blood_bowl::competitions::standings::StageStandings;
 use crate::data::blood_bowl::competitions::Competition;
 use crate::data::blood_bowl::teams::TeamLogo;
 use crate::data::users::User;
@@ -49,6 +50,7 @@ pub struct CompetitionPage {
     edit_mode: bool,
     link_url: String,
     information: CompetitionInformation,
+    standings: CompetitionStandings,
     schedule: CompetitionSchedule,
 }
 
@@ -72,9 +74,7 @@ impl CompetitionPage {
 
         let stages = competition.select_stages(&app_state).await?;
 
-        let (schedule, standings) = competition
-            .generate_schedule_and_standings(&app_state)
-            .await?;
+        let (schedule, standings) = competition.schedule_and_standings(&app_state).await?;
 
         Ok(Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
@@ -95,7 +95,8 @@ impl CompetitionPage {
                 link_url,
                 team_selector: TeamSelector::get("team_to_registered_id".to_string()),
             },
-            schedule: CompetitionSchedule { stages, schedule },
+            schedule: CompetitionSchedule { schedule },
+            standings: CompetitionStandings { standings },
         })
     }
 }
@@ -116,8 +117,13 @@ pub struct CompetitionInformation {
 }
 
 #[derive(Template, WebTemplate)]
+#[template(path = "blood_bowl/competitions/competition_standings.html")]
+pub struct CompetitionStandings {
+    standings: Vec<StageStandings>,
+}
+
+#[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/competitions/competition_schedule.html")]
 pub struct CompetitionSchedule {
-    stages: Vec<CompetitionStage>,
-    schedule: Vec<Vec<RoundSchedule>>,
+    schedule: Vec<StageSchedule>,
 }

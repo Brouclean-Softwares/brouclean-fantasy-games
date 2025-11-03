@@ -1,0 +1,113 @@
+<div>
+    <div class="uk-margin-medium-bottom">
+        <h3 class="uk-heading-divider">
+            Classements
+        </h3>
+
+        {% for stage_index in 0..standings.len() %}
+
+        {% let stage_standings = standings[stage_index] %}
+        <h4 class="uk-heading-divider">
+            {{ stage_standings.stage.stage_name }}
+        </h4>
+
+        <div class="uk-overflow-auto">
+            <table class="uk-table uk-table-striped uk-table-small uk-table-hover uk-table-middle">
+                <thead>
+                <tr>
+                    <th class="uk-table-shrink">#</th>
+                    <th class="uk-table-expand">Équipe</th>
+
+                    {% match stage_standings.stage.stage_type %}
+                    {% when CompetitionStageType::Championship %}
+                    <th class="uk-table-shrink" uk-tooltip="Nombre de matchs joués">Mat</th>
+                    <th class="uk-table-shrink" uk-tooltip="Nombre de points">Pts</th>
+                    <th class="uk-table-shrink" uk-tooltip="Nombre de victoires">V</th>
+                    <th class="uk-table-shrink" uk-tooltip="Nombre de nuls">N</th>
+                    <th class="uk-table-shrink" uk-tooltip="Nombre de défaites">D</th>
+                    <th class="uk-table-shrink" uk-tooltip="Nombre de touchdowns">TD</th>
+                    <th class="uk-table-shrink" uk-tooltip="Nombre d'éliminations">ELI</th>
+                    {% else %}
+                    {% endmatch %}
+                </tr>
+                </thead>
+
+                <tbody>
+                {% let teams_standings = stage_standings.standings() %}
+
+                {% for team_index in 0..teams_standings.len() %}
+
+                {% let team_standings = teams_standings[team_index] %}
+                <tr>
+                    <td>
+                        {% if stage_index == standings.len() - 1 %}
+
+                        {% if team_index == 0 %}
+                        🏆
+                        {% elif team_index == 1 %}
+                        🥈
+                        {% elif team_index == 2 %}
+                        🥉
+                        {% else %}
+                        #{{ team_index + 1 }}
+                        {% endif %}
+
+                        {% else %}
+                        #{{ team_index + 1 }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if let Some(team_standings) = team_standings %}
+                        <img src="{{ TeamLogo::from(team_standings.team).url }}" width="25" height="25" alt="">
+                        {{ team_standings.team.name }}
+                        {% endif %}
+                    </td>
+
+                    {% match stage_standings.stage.stage_type %}
+                    {% when CompetitionStageType::Championship %}
+                    <td class="uk-text-bold">
+                        {% if let Some(team_standings) = team_standings %}
+                        {{ team_standings.games_played() }}
+                        {% endif %}
+                    </td>
+                    <td class="uk-text-bold">
+                        {% if let Some(team_standings) = team_standings %}
+                        {{ team_standings.points }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if let Some(team_standings) = team_standings %}
+                        {{ team_standings.victories }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if let Some(team_standings) = team_standings %}
+                        {{ team_standings.draws }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if let Some(team_standings) = team_standings %}
+                        {{ team_standings.losses }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if let Some(team_standings) = team_standings %}
+                        {{ team_standings.touchdowns }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if let Some(team_standings) = team_standings %}
+                        {{ team_standings.casualties }}
+                        {% endif %}
+                    </td>
+                    {% else %}
+                    {% endmatch %}
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% endfor %}
+    </div>
+</div>

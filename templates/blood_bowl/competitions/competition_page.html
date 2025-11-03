@@ -48,7 +48,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#" uk-icon="icon: list" x-on:click="tab='rankings'">
+                    <a href="#" uk-icon="icon: list" x-on:click="tab='standings'">
                         <span class="uk-visible@m">Classements</span>
                     </a>
                 </li>
@@ -74,8 +74,8 @@
             {{ information|escape("none") }}
         </div>
 
-        <div x-show="tab==='rankings'">
-            A venir...
+        <div x-show="tab==='standings'">
+            {{ standings|escape("none") }}
         </div>
 
         <div x-show="tab==='schedule'">
