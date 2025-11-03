@@ -361,10 +361,16 @@ impl Competition {
             let (stage_schedule, stage_standings) =
                 stage.schedule_and_standings(&teams_entering_next_stage);
 
+            let stage_is_finished = stage_schedule.finished;
+
             stages_schedules.push(stage_schedule);
             stages_standings.push(stage_standings.clone());
 
-            teams_entering_next_stage = stage_standings.into();
+            if stage_is_finished {
+                teams_entering_next_stage = stage_standings.into();
+            } else {
+                teams_entering_next_stage = vec![None; teams_entering_next_stage.len()];
+            }
         }
 
         Ok((stages_schedules, stages_standings))
