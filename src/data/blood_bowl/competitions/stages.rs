@@ -1,7 +1,9 @@
 use crate::data::blood_bowl::competitions::schedule::{
     GameSchedule, RoundSchedule, StageSchedule, BYE,
 };
-use crate::data::blood_bowl::competitions::standings::StageStandings;
+use crate::data::blood_bowl::competitions::standings::{
+    CompetingForPositionStandings, StageStandings,
+};
 use crate::data::blood_bowl::competitions::{stages, Competition};
 use crate::data::blood_bowl::teams::TeamSummary;
 use crate::data::users::User;
@@ -185,8 +187,7 @@ pub fn round_robin_schedule_and_standings(
 ) -> (StageSchedule, StageStandings) {
     let mut home_schedule = StageSchedule::from(stage);
     let mut away_schedule = StageSchedule::from(stage);
-    let mut home_standings = StageStandings::from_stage_with_teams(stage, team_list);
-    let mut away_standings = StageStandings::from_stage_with_teams(stage, team_list);
+    let mut standings = StageStandings::from_stage_with_teams(stage, team_list);
 
     let home_and_away = stage.rules.contains(&CompetitionStageRule::HomeAndAway);
 
@@ -208,9 +209,6 @@ pub fn round_robin_schedule_and_standings(
                 RoundSchedule::new_with_name(format!("Journée {}", round + 1));
             let mut away_round_schedule =
                 RoundSchedule::new_with_name(format!("Journée {}", round + rounds_number + 1));
-
-            let mut home_round_standings = home_standings.new_round_standings();
-            let mut away_round_standings = away_standings.new_round_standings();
 
             for i in 0..teams_half_number {
                 let home_team: Option<TeamSummary>;
@@ -235,7 +233,7 @@ pub fn round_robin_schedule_and_standings(
                         game_summary: home_game_summary,
                     };
 
-                    home_round_standings.process_game(&home_game);
+                    standings.process_game_for_position(&home_game, 1);
                     home_round_schedule.push(home_game);
 
                     if home_and_away {
@@ -249,18 +247,16 @@ pub fn round_robin_schedule_and_standings(
                             game_summary: away_game_summary,
                         };
 
-                        away_round_standings.process_game(&away_game);
+                        standings.process_game_for_position(&away_game, 1);
                         away_round_schedule.push(away_game);
                     }
                 }
             }
 
             home_schedule.push(home_round_schedule);
-            home_standings.process_round(home_round_standings);
 
             if home_and_away {
                 away_schedule.push(away_round_schedule);
-                away_standings.process_round(away_round_standings);
             }
 
             // Rotate teams (except fixed)
@@ -270,11 +266,10 @@ pub fn round_robin_schedule_and_standings(
 
         if home_and_away {
             home_schedule.extend(away_schedule);
-            home_standings.extend(away_standings);
         }
     }
 
-    (home_schedule, home_standings)
+    (home_schedule, standings)
 }
 
 pub fn cup_schedule_and_standings(
@@ -299,83 +294,82 @@ pub fn cup_schedule_and_standings(
             teams.push(Some(BYE.clone()));
         }
 
-        let mut teams = vec![teams];
+        stage_standings = StageStandings::from_stage_with_teams(stage, &teams);
 
-        while teams[0].len() > 1 {
-            let mut next_round_teams = Vec::with_capacity(teams.len() * 2);
-
-            for cup_part_index in 0..teams.len() {
-                let teams_number_competing_for_position = teams[cup_part_index].len();
+        while stage_standings.teams_number_competing_for_first_position() > 1 {
+            for position_standings in stage_standings.clone().positions_standings() {
                 let position_teams_are_competing_for =
-                    (cup_part_index * teams_number_competing_for_position) + 1;
+                    position_standings.position_teams_are_competing_for;
 
-                let round_name = match (
-                    position_teams_are_competing_for,
-                    teams_number_competing_for_position,
-                ) {
-                    (1, 2) => "Finale 🏆".to_string(),
-                    (1, 4) => "1/2 finale".to_string(),
-                    (1, 8) => "1/4 de finale".to_string(),
-                    (1, 16) => "1/8 de finale".to_string(),
-                    (1, 32) => "1/16 de finale".to_string(),
-                    (1, 64) => "1/32 de finale".to_string(),
-                    (1, 128) => "1/64 de finale".to_string(),
-                    (1, _) => "Tableau principal".to_string(),
-                    (3, 2) => "Match pour la 3ème place 🥉".to_string(),
-                    (number_for_part, 2) => {
-                        format!("Match pour la {}ème place", number_for_part)
-                    }
-                    (number_for_part, _) => {
-                        format!("Tableau pour la {}ème place", number_for_part)
-                    }
-                };
+                if with_ranking || position_teams_are_competing_for <= 3 {
+                    let teams_number_competing_for_position = position_standings.teams_len();
 
-                let mut round_schedule = RoundSchedule::new_with_name_and_capacity(
-                    round_name,
-                    teams_number_competing_for_position / 2,
-                );
-
-                let mut first_team_index = 0;
-                let mut second_team_index = teams_number_competing_for_position - 1;
-
-                let mut winners = Vec::with_capacity(teams_number_competing_for_position / 2);
-                let mut losers = Vec::with_capacity(teams_number_competing_for_position / 2);
-
-                while first_team_index < second_team_index {
-                    let game = GameSchedule {
-                        home_team: teams[cup_part_index][first_team_index].clone(),
-                        home_ranking_number: Some(
-                            first_team_index + position_teams_are_competing_for,
-                        ),
-                        away_team: teams[cup_part_index][second_team_index].clone(),
-                        away_ranking_number: Some(
-                            second_team_index + position_teams_are_competing_for,
-                        ),
-                        game_summary: None,
+                    let round_name = match (
+                        position_teams_are_competing_for,
+                        teams_number_competing_for_position,
+                    ) {
+                        (1, 2) => "Finale 🏆".to_string(),
+                        (1, 4) => "1/2 finale".to_string(),
+                        (1, 8) => "1/4 de finale".to_string(),
+                        (1, 16) => "1/8 de finale".to_string(),
+                        (1, 32) => "1/16 de finale".to_string(),
+                        (1, 64) => "1/32 de finale".to_string(),
+                        (1, 128) => "1/64 de finale".to_string(),
+                        (1, _) => "Tableau principal".to_string(),
+                        (3, 2) => "Match pour la 3ème place 🥉".to_string(),
+                        (number_for_part, 2) => {
+                            format!("Match pour la {}ème place", number_for_part)
+                        }
+                        (number_for_part, _) => {
+                            format!("Tableau pour la {}ème place", number_for_part)
+                        }
                     };
 
-                    winners.push(game.winner());
+                    let mut round_schedule = RoundSchedule::new_with_name_and_capacity(
+                        round_name,
+                        teams_number_competing_for_position / 2,
+                    );
 
-                    if with_ranking || teams_number_competing_for_position > 4 {
-                        losers.push(game.loser());
+                    let mut first_team_index = 0;
+                    let mut second_team_index = teams_number_competing_for_position - 1;
+
+                    let mut winners = CompetingForPositionStandings::with_capacity_for_position(
+                        teams_number_competing_for_position / 2,
+                        position_teams_are_competing_for,
+                    );
+                    let mut losers = CompetingForPositionStandings::with_capacity_for_position(
+                        teams_number_competing_for_position / 2,
+                        position_teams_are_competing_for + teams_number_competing_for_position / 2,
+                    );
+
+                    while first_team_index < second_team_index {
+                        let game = GameSchedule {
+                            home_team: position_standings.team_at_index(first_team_index),
+                            home_ranking_number: Some(
+                                first_team_index + position_teams_are_competing_for,
+                            ),
+                            away_team: position_standings.team_at_index(second_team_index),
+                            away_ranking_number: Some(
+                                second_team_index + position_teams_are_competing_for,
+                            ),
+                            game_summary: None,
+                        };
+
+                        winners.push_team(game.winner());
+                        losers.push_team(game.loser());
+
+                        round_schedule.push(game);
+
+                        first_team_index += 1;
+                        second_team_index -= 1;
                     }
 
-                    round_schedule.push(game);
+                    stage_standings.process_position_standings(winners);
+                    stage_standings.process_position_standings(losers);
 
-                    first_team_index += 1;
-                    second_team_index -= 1;
+                    stage_schedule.push(round_schedule);
                 }
-
-                next_round_teams.push(winners);
-
-                if with_ranking || teams_number_competing_for_position > 4 {
-                    next_round_teams.push(losers);
-                }
-
-                stage_schedule.push(round_schedule);
             }
-
-            teams = next_round_teams;
         }
     }
 
