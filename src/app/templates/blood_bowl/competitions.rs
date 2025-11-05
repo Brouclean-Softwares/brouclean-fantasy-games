@@ -62,12 +62,11 @@ impl CompetitionPage {
         competition: Competition,
         edit_mode: bool,
     ) -> Result<Self, AppError> {
+        let competition_id = competition.id;
         let editable = User::optional_user_eq_other(&profile, &competition.director);
-
-        let deletable = editable && !competition.started;
-
+        let competition_not_started = !competition.started;
+        let deletable = editable && competition_not_started;
         let edit_mode = edit_mode && editable;
-
         let link_url = format!("competition?id={}", competition.id);
 
         let teams_registrations = competition.select_teams_registrations(&app_state).await?;
@@ -85,7 +84,12 @@ impl CompetitionPage {
             link_url: link_url.clone(),
             information: CompetitionInformation {
                 competition,
-                stages: stages.clone(),
+                competition_stages: CompetitionStages {
+                    stages: stages.clone(),
+                    competition_id,
+                    editable,
+                    competition_not_started,
+                },
                 stage_types: CompetitionStageType::available_list(),
                 teams_registrations,
                 profile,
@@ -105,7 +109,7 @@ impl CompetitionPage {
 #[template(path = "blood_bowl/competitions/competition_information.html")]
 pub struct CompetitionInformation {
     competition: Competition,
-    stages: Vec<CompetitionStage>,
+    competition_stages: CompetitionStages,
     stage_types: Vec<CompetitionStageType>,
     teams_registrations: Vec<TeamRegistration>,
     profile: Option<User>,
@@ -114,6 +118,15 @@ pub struct CompetitionInformation {
     edit_mode: bool,
     link_url: String,
     team_selector: TeamSelector,
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "blood_bowl/competitions/competition_stages.html")]
+pub struct CompetitionStages {
+    stages: Vec<CompetitionStage>,
+    competition_id: i32,
+    editable: bool,
+    competition_not_started: bool,
 }
 
 #[derive(Template, WebTemplate)]

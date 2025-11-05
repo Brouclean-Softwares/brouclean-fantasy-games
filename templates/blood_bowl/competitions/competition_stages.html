@@ -1,0 +1,91 @@
+
+<ul class="uk-list uk-list-decimal">
+    {% for stage in stages %}
+    <li>
+        <div class="uk-flex-inline">
+            <span>{{ stage.stage_name }}</span>
+
+            {% if editable && competition_not_started %}
+            <span class="uk-margin-left">
+                <form action="./delete_stage" method="post" autocomplete="off">
+                    <input name="competition_id" type="hidden" value="{{ competition_id }}">
+                    <input name="stage_id" type="hidden" value="{{ stage.id }}">
+
+                    <button class="uk-button uk-button-link">
+                        <span uk-icon="icon: minus-circle"></span>
+                    </button>
+                </form>
+            </span>
+            {% endif %}
+        </div>
+
+        <div class="uk-margin-bottom">
+            <ul>
+                {% for rule in stage.rules %}
+                <li>
+                    <div class="uk-flex-inline">
+                        <span>{{ rule.to_string() }}</span>
+
+                        {% if editable && competition_not_started %}
+                        <span class="uk-margin-left">
+                            <form action="./delete_rule" method="post" autocomplete="off">
+                                <input name="competition_id" type="hidden" value="{{ competition_id }}">
+                                <input name="stage_id" type="hidden" value="{{ stage.id }}">
+                                <input name="rule_to_delete" type="hidden" value="{{ serde_json::to_string(&rule)? }}">
+
+                                <button class="uk-button uk-button-link">
+                                    <span uk-icon="icon: minus-circle"></span>
+                                </button>
+                            </form>
+                        </span>
+                        {% endif %}
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        {% let available_rules = stage.available_rules() %}
+
+        {% if editable && competition_not_started && available_rules.len() > 0 %}
+        <div class="uk-margin-bottom">
+            <button class="uk-button uk-button-primary uk-button-small"
+                    type="button"
+                    uk-toggle="target: #modal-add-rule">Ajouter une règle</button>
+
+            <div id="modal-add-rule" uk-modal>
+                <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                    <h2 class="uk-modal-title">Ajout d'une règle à la phase</h2>
+                    <p>Quelle règle voulez vous ajouter ?</p>
+                    <p>
+                    <form id="add_rule_form" action="./add_rule" method="post" autocomplete="off">
+                        <input name="competition_id" type="hidden" value="{{ competition_id }}">
+                        <input name="stage_id" type="hidden" value="{{ stage.id }}">
+
+                        <select name="rule_to_add"
+                                class="uk-select uk-form-width-large"
+                                aria-label="Select">
+
+                            {% for rule in available_rules %}
+                            <option value="{{ serde_json::to_string(&rule)? }}">
+                                {{ rule.to_string() }}
+                            </option>
+                            {% endfor %}
+
+                        </select>
+                    </form>
+                    </p>
+                    <p class="uk-text-right">
+                        <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                        <button class="uk-button uk-button-primary"
+                                onclick="document.getElementById('add_rule_form').submit()">
+                            Ajouter
+                        </button>
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </li>
+    {% endfor %}
+</ul>

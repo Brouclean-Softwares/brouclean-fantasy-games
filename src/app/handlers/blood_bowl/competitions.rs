@@ -1,6 +1,8 @@
 use crate::app::templates::blood_bowl::competitions::{CompetitionPage, CompetitionsPage};
 use crate::app::templates::{AlertMessage, AlertType};
-use crate::data::blood_bowl::competitions::stages::CompetitionStageType;
+use crate::data::blood_bowl::competitions::stages::{
+    CompetitionStage, CompetitionStageRule, CompetitionStageType,
+};
 use crate::data::blood_bowl::competitions::Competition;
 use crate::data::users::User;
 use crate::errors::AppError;
@@ -19,6 +21,8 @@ pub fn init_router() -> Router<AppState> {
         .route("/competition", get(competition).post(save))
         .route("/add_stage", post(add_stage))
         .route("/delete_stage", post(delete_stage))
+        .route("/add_rule", post(add_rule))
+        .route("/delete_rule", post(delete_rule))
         .route("/register_team", post(register_team))
         .route("/unregister_team", post(unregister_team))
         .route("/update_team_validation", post(update_team_validation))
@@ -259,6 +263,116 @@ pub async fn delete_stage(
             .delete_stage(&app_state, &connected_user, form.stage_id)
             .await
             .map_err(error_handler)?;
+    }
+
+    Ok(Redirect::to(&format!(
+        "./competition?id={}",
+        form.competition_id
+    )))
+}
+
+#[derive(Deserialize)]
+pub struct AddRuleForm {
+    pub competition_id: i32,
+    pub stage_id: i32,
+    pub rule_to_add: String,
+}
+
+pub async fn add_rule(
+    State(app_state): State<AppState>,
+    profile: Option<User>,
+    Form(form): Form<AddRuleForm>,
+) -> Result<Redirect, Redirect> {
+    let error_handler = |error: AppError| {
+        Redirect::to(&format!(
+            "./competition?id={}&alert_message={}",
+            form.competition_id,
+            error.to_string()
+        ))
+    };
+
+    let stage = CompetitionStage::select_by_id(&app_state, form.stage_id)
+        .await
+        .map_err(error_handler)?;
+
+    if let Some(mut stage) = stage {
+        let competition = Competition::select_by_id(&app_state, form.competition_id)
+            .await
+            .map_err(error_handler)?;
+
+        if let (Some(mut competition), Some(connected_user)) = (competition, profile) {
+            let rule_to_add: CompetitionStageRule = serde_json::from_str(&form.rule_to_add)
+                .map_err(|error| {
+                    Redirect::to(&format!(
+                        "./competition?id={}&alert_message={}",
+                        form.competition_id,
+                        error.to_string()
+                    ))
+                })?;
+
+            stage.rules.push(rule_to_add);
+
+            stage
+                .update_for_competition(&app_state, &connected_user, &mut competition)
+                .await
+                .map_err(error_handler)?;
+        }
+    }
+
+    Ok(Redirect::to(&format!(
+        "./competition?id={}",
+        form.competition_id
+    )))
+}
+
+#[derive(Deserialize)]
+pub struct DeleteRuleForm {
+    pub competition_id: i32,
+    pub stage_id: i32,
+    pub rule_to_delete: String,
+}
+
+pub async fn delete_rule(
+    State(app_state): State<AppState>,
+    profile: Option<User>,
+    Form(form): Form<DeleteRuleForm>,
+) -> Result<Redirect, Redirect> {
+    let error_handler = |error: AppError| {
+        Redirect::to(&format!(
+            "./competition?id={}&alert_message={}",
+            form.competition_id,
+            error.to_string()
+        ))
+    };
+
+    let stage = CompetitionStage::select_by_id(&app_state, form.stage_id)
+        .await
+        .map_err(error_handler)?;
+
+    if let Some(mut stage) = stage {
+        let competition = Competition::select_by_id(&app_state, form.competition_id)
+            .await
+            .map_err(error_handler)?;
+
+        if let (Some(mut competition), Some(connected_user)) = (competition, profile) {
+            let rule_to_delete: CompetitionStageRule = serde_json::from_str(&form.rule_to_delete)
+                .map_err(|error| {
+                Redirect::to(&format!(
+                    "./competition?id={}&alert_message={}",
+                    form.competition_id,
+                    error.to_string()
+                ))
+            })?;
+
+            if let Some(position) = stage.rules.iter().position(|rule| rule.eq(&rule_to_delete)) {
+                stage.rules.remove(position);
+
+                stage
+                    .update_for_competition(&app_state, &connected_user, &mut competition)
+                    .await
+                    .map_err(error_handler)?;
+            }
+        }
     }
 
     Ok(Redirect::to(&format!(

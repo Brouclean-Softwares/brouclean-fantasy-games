@@ -72,6 +72,11 @@ impl StageStandings {
         } else {
             self.positions_standings.push(position_standings);
         }
+
+        self.positions_standings.sort_by(|a, b| {
+            b.position_teams_are_competing_for
+                .cmp(&a.position_teams_are_competing_for)
+        })
     }
 
     pub fn process_game_for_position(

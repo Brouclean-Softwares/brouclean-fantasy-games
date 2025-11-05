@@ -41,21 +41,37 @@
                 {% for team_index in 0..teams_standings.len() %}
                 <tr>
                     <td>
-                        {% if stage_index == standings.len() - 1 %}
+                        {% let is_last_stage = stage_index == standings.len() - 1 %}
 
-                        {% if position_standings.position_teams_are_competing_for + team_index == 1 %}
-                        🏆
-                        {% elif position_standings.position_teams_are_competing_for + team_index == 2 %}
-                        🥈
-                        {% elif position_standings.position_teams_are_competing_for + team_index == 3 %}
-                        🥉
-                        {% else %}
-                        #{{ position_standings.position_teams_are_competing_for + team_index }}
-                        {% endif %}
+                        {% match (is_last_stage, stage_standings.stage.stage_type.clone()) %}
+                        {% when (true, CompetitionStageType::Championship) %}
+                            {% if position_standings.position_teams_are_competing_for + team_index == 1 %}
+                                🏆
+                            {% elif position_standings.position_teams_are_competing_for + team_index == 2 %}
+                                🥈
+                            {% elif position_standings.position_teams_are_competing_for + team_index == 3 %}
+                                🥉
+                            {% else %}
+                                #{{ position_standings.position_teams_are_competing_for + team_index }}
+                            {% endif %}
 
-                        {% else %}
-                        #{{ position_standings.position_teams_are_competing_for + team_index }}
-                        {% endif %}
+                        {% when (false, CompetitionStageType::Championship) %}
+                            #{{ position_standings.position_teams_are_competing_for + team_index }}
+
+                        {% when (true, CompetitionStageType::Cup) %}
+                            {% if position_standings.position_teams_are_competing_for == 1 %}
+                                🏆
+                            {% elif position_standings.position_teams_are_competing_for == 2 %}
+                                🥈
+                            {% elif position_standings.position_teams_are_competing_for == 3 %}
+                                🥉
+                            {% else %}
+                                #{{ position_standings.position_teams_are_competing_for }}
+                            {% endif %}
+
+                        {% when (false, CompetitionStageType::Cup) %}
+                            #{{ position_standings.position_teams_are_competing_for }}
+                        {% endmatch %}
                     </td>
 
                     {% let team_standings = teams_standings[team_index] %}

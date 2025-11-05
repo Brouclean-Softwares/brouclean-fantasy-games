@@ -40,18 +40,6 @@ pub struct CompetitionStage {
 }
 
 impl CompetitionStage {
-    pub fn schedule_and_standings(
-        &self,
-        team_list: &Vec<Option<TeamSummary>>,
-    ) -> (StageSchedule, StageStandings) {
-        match self.stage_type {
-            CompetitionStageType::Championship => {
-                stages::round_robin_schedule_and_standings(team_list, self)
-            }
-            CompetitionStageType::Cup => stages::cup_schedule_and_standings(team_list, self),
-        }
-    }
-
     pub async fn select_for_competition(
         state: &AppState,
         competition: &Competition,
@@ -81,6 +69,32 @@ impl CompetitionStage {
         }
 
         Ok(competition_stages)
+    }
+
+    pub async fn select_by_id(
+        state: &AppState,
+        id: i32,
+    ) -> Result<Option<CompetitionStage>, AppError> {
+        tracing::debug!("select_by_id for id={}", id);
+
+        let row: Option<CompetitionStageRow> = sqlx::query_as(
+            "SELECT id,
+                    stage_name,
+                    stage_type,
+                    rules
+            FROM bb_competitions_stages
+            WHERE id = $1
+            LIMIT 1",
+        )
+        .bind(id.clone())
+        .fetch_optional(&state.db)
+        .await?;
+
+        if let Some(row) = row {
+            Ok(Some(row.into_competition_stage().await?))
+        } else {
+            Ok(None)
+        }
     }
 
     pub async fn insert_for_competition(
@@ -119,6 +133,37 @@ impl CompetitionStage {
         Ok(())
     }
 
+    pub async fn update_for_competition(
+        &self,
+        state: &AppState,
+        connected_user: &User,
+        competition: &mut Competition,
+    ) -> Result<(), AppError> {
+        tracing::debug!(
+            "update for competition_id={} and stage_id={}",
+            competition.id,
+            self.id,
+        );
+
+        if connected_user.eq(&competition.director) && !competition.closed {
+            sqlx::query(
+                "UPDATE bb_competitions_stages 
+                    SET rules = $3
+                    WHERE id = $1
+                    AND competition_id = $2",
+            )
+            .bind(self.id.clone())
+            .bind(competition.id.clone())
+            .bind(serde_json::to_string(&self.rules)?.clone())
+            .execute(&state.db)
+            .await?;
+        }
+
+        competition.save(state, connected_user).await?;
+
+        Ok(())
+    }
+
     pub async fn delete_for_competition(
         state: &AppState,
         connected_user: &User,
@@ -145,6 +190,27 @@ impl CompetitionStage {
         }
 
         Ok(())
+    }
+
+    pub fn schedule_and_standings(
+        &self,
+        team_list: &Vec<Option<TeamSummary>>,
+    ) -> (StageSchedule, StageStandings) {
+        match self.stage_type {
+            CompetitionStageType::Championship => {
+                stages::round_robin_schedule_and_standings(team_list, self)
+            }
+            CompetitionStageType::Cup => stages::cup_schedule_and_standings(team_list, self),
+        }
+    }
+
+    pub fn available_rules(&self) -> Vec<CompetitionStageRule> {
+        self.stage_type
+            .available_rules()
+            .iter()
+            .filter(|&rule| !self.rules.contains(&rule))
+            .map(|rule| rule.clone())
+            .collect()
     }
 }
 
@@ -173,12 +239,30 @@ impl CompetitionStageType {
 
         list
     }
+
+    pub fn available_rules(&self) -> Vec<CompetitionStageRule> {
+        match self {
+            CompetitionStageType::Championship => vec![CompetitionStageRule::HomeAndAway],
+            CompetitionStageType::Cup => vec![CompetitionStageRule::WithRanking],
+        }
+    }
 }
 
-#[derive(Deserialize, Serialize, Clone, PartialEq)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub enum CompetitionStageRule {
     HomeAndAway,
     WithRanking,
+}
+
+impl Display for CompetitionStageRule {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let text = match self {
+            CompetitionStageRule::HomeAndAway => "Matchs aller-retour",
+            CompetitionStageRule::WithRanking => "Avec les matchs de classement",
+        };
+
+        write!(f, "{}", text)
+    }
 }
 
 pub fn round_robin_schedule_and_standings(
