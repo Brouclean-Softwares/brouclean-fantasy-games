@@ -1,5 +1,5 @@
 use crate::app::templates::blood_bowl::teams::TeamSelector;
-use crate::app::templates::{AlertMessage, NavigationBar};
+use crate::app::templates::{blood_bowl, AlertMessage, BreadCrumb, NavigationBar, UrlLink};
 use crate::data::blood_bowl::competitions::registrations::TeamRegistration;
 use crate::data::blood_bowl::competitions::schedule::StageSchedule;
 use crate::data::blood_bowl::competitions::stages::{CompetitionStage, CompetitionStageType};
@@ -15,10 +15,15 @@ use blood_bowl_rs::translation::TranslatedName;
 use blood_bowl_rs::translation::TypeName;
 use blood_bowl_rs::versions::Version;
 
+pub fn breadcrumb() -> BreadCrumb {
+    blood_bowl::breadcrumb().plus_link(UrlLink::from("Compétitions", "/blood_bowl/competitions"))
+}
+
 #[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/competitions/competitions_page.html")]
 pub struct CompetitionsPage {
     navigation_bar: NavigationBar,
+    breadcrumb: BreadCrumb,
     profile: Option<User>,
     competitions_in_progress: Vec<Competition>,
     competitions_closed: Vec<Competition>,
@@ -33,6 +38,7 @@ impl CompetitionsPage {
     ) -> Self {
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
+            breadcrumb: blood_bowl::breadcrumb(),
             profile,
             competitions_in_progress,
             competitions_closed,
@@ -45,6 +51,7 @@ impl CompetitionsPage {
 pub struct CompetitionPage {
     navigation_bar: NavigationBar,
     alert_message: Option<AlertMessage>,
+    breadcrumb: BreadCrumb,
     competition: Competition,
     editable: bool,
     edit_mode: bool,
@@ -78,6 +85,7 @@ impl CompetitionPage {
         Ok(Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
             alert_message,
+            breadcrumb: breadcrumb(),
             competition: competition.clone(),
             editable,
             edit_mode,

@@ -10,89 +10,89 @@
 {% endif %}
 {% endblock %}
 
+{% block breadcrumb %}
+{{ breadcrumb|escape("none") }}
+{% endblock %}
+
 {% block body %}
-<div class="uk-section">
-    <div class="uk-container">
-        <h2>
-            Nouveau match amical
-        </h2>
-        <form id="reload_teams_form" method="post" autocomplete="off">
-            <input id="first_team_id"
-                   name="first_team_id"
-                   type="hidden"
-                   value="{{ first_team_id }}"
-                   onchange="document.getElementById('reload_teams_form').submit()">
+<h2>
+    Nouveau match amical
+</h2>
+<form id="reload_teams_form" method="post" autocomplete="off">
+    <input id="first_team_id"
+           name="first_team_id"
+           type="hidden"
+           value="{{ first_team_id }}"
+           onchange="document.getElementById('reload_teams_form').submit()">
 
-            <input id="second_team_id"
-                   name="second_team_id"
-                   type="hidden"
-                   value="{{ second_team_id }}"
-                   onchange="document.getElementById('reload_teams_form').submit()">
-        </form>
+    <input id="second_team_id"
+           name="second_team_id"
+           type="hidden"
+           value="{{ second_team_id }}"
+           onchange="document.getElementById('reload_teams_form').submit()">
+</form>
 
-        <div class="uk-flex-middle" uk-grid>
-            {% if let Some(team_card) = first_team_card %}
+<div class="uk-flex-middle" uk-grid>
+    {% if let Some(team_card) = first_team_card %}
 
-            <div class="uk-width-expand@m">
-                {{ team_card|escape("none") }}
-            </div>
-
-            <div class="uk-width-1-5@m uk-text-center">
-                <h3>
-                    Contre
-                </h3>
-            </div>
-
-            <div class="uk-width-expand@m">
-                {% if let Some(team_card) = second_team_card %}
-                    {{ team_card|escape("none") }}
-                {% else %}
-                    {{ second_team_selector|escape("none") }}
-                {% endif %}
-            </div>
-
-            <div class="uk-width-1-5@m uk-text-center">
-                <form id="create_form" action="#" method="post" autocomplete="off">
-                    <input name="first_team_id"
-                           type="hidden"
-                           value="{{ first_team_id }}">
-
-                    {% if second_team_card.is_some() %}
-                    <input name="second_team_id"
-                           type="hidden"
-                           value="{{ second_team_id }}">
-
-                    <h3>
-                        Planifié le :
-                        <br>
-                        <input id="scheduled_at" name="scheduled_at" type="datetime-local">
-                    </h3>
-
-                    <button class="uk-button uk-button-primary"
-                            type="button"
-                            uk-toggle="target: #modal-create">Créer</button>
-
-                    <div id="modal-create" uk-modal>
-                        <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
-                            <h2 class="uk-modal-title">Création de match en cours</h2>
-                            <p>Confirmez-vous la création du match ?</p>
-                            <p class="uk-text-right">
-                                <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
-                                <button class="uk-button uk-button-primary"
-                                        onclick="document.getElementById('create_form').submit()">
-                                    Confirmer
-                                </button>
-                            </p>
-                        </div>
-                    </div>
-                    {% endif %}
-                </form>
-            </div>
-
-            {% else %}
-                {{ first_team_selector|escape("none") }}
-            {% endif %}
-        </div>
+    <div class="uk-width-expand@m">
+        {{ team_card|escape("none") }}
     </div>
+
+    <div class="uk-width-1-5@m uk-text-center">
+        <h3>
+            Contre
+        </h3>
+    </div>
+
+    <div class="uk-width-expand@m">
+        {% if let Some(team_card) = second_team_card %}
+            {{ team_card|escape("none") }}
+        {% else %}
+            {{ second_team_selector|escape("none") }}
+        {% endif %}
+    </div>
+
+    <div class="uk-width-1-5@m uk-text-center">
+        <form id="create_form" action="#" method="post" autocomplete="off">
+            <input name="first_team_id"
+                   type="hidden"
+                   value="{{ first_team_id }}">
+
+            {% if second_team_card.is_some() %}
+            <input name="second_team_id"
+                   type="hidden"
+                   value="{{ second_team_id }}">
+
+            <h3>
+                Planifié le :
+                <br>
+                <input id="scheduled_at" name="scheduled_at" type="datetime-local">
+            </h3>
+
+            <button class="uk-button uk-button-primary"
+                    type="button"
+                    uk-toggle="target: #modal-create">Créer</button>
+
+            <div id="modal-create" uk-modal>
+                <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                    <h2 class="uk-modal-title">Création de match en cours</h2>
+                    <p>Confirmez-vous la création du match ?</p>
+                    <p class="uk-text-right">
+                        <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                        <button class="uk-button uk-button-primary"
+                                onclick="document.getElementById('create_form').submit()">
+                            Confirmer
+                        </button>
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+
+    {% else %}
+        {{ first_team_selector|escape("none") }}
+    {% endif %}
 </div>
 {% endblock %}

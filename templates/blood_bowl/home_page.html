@@ -4,28 +4,28 @@
 {{ navigation_bar|escape("none") }}
 {% endblock %}
 
+{% block breadcrumb %}
+{{ breadcrumb|escape("none") }}
+{% endblock %}
+
 {% block body %}
-<div class="uk-section">
-    <div class="uk-container">
-        <h2>
-            Blood Bowl
-        </h2>
+<h2>
+    Blood Bowl
+</h2>
 
-        <h3 class="uk-heading-divider">
-            Derniers matchs
-        </h3>
-        <p>A venir...</p>
+<h3 class="uk-heading-divider">
+    Derniers matchs
+</h3>
+<p>A venir...</p>
 
-        <div class="uk-margin-top">
-            <a href="/blood_bowl/games/new" class="uk-button uk-button-primary">
-                Créer un match amical
-            </a>
-        </div>
-
-        <h3 class="uk-heading-divider">
-            Mes équipes
-        </h3>
-        {{ owned_teams_block|escape("none") }}
-    </div>
+<div class="uk-margin-top">
+    <a href="/blood_bowl/games/new" class="uk-button uk-button-primary">
+        Créer un match amical
+    </a>
 </div>
+
+<h3 class="uk-heading-divider">
+    Mes équipes
+</h3>
+{{ owned_teams_block|escape("none") }}
 {% endblock %}

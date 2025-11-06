@@ -4,126 +4,127 @@
 {{ navigation_bar|escape("none") }}
 {% endblock %}
 
+{% block breadcrumb %}
+{{ breadcrumb|escape("none") }}
+{% endblock %}
+
 {% block body %}
-<div class="uk-section">
-    <div class="uk-container">
 
-        {% if let Some(roster) = roster %}
-        {% if let Ok(roster_definition) = roster.definition(version.into()) %}
+{% if let Some(roster) = roster %}
+{% if let Ok(roster_definition) = roster.definition(version.into()) %}
 
-        <div class="uk-grid-small uk-flex-middle uk-margin-bottom" uk-grid>
-            <div class="uk-width-auto">
-                <img src="/assets/images/blood_bowl/{{ roster.type_name() }}Logo.webp" width="75" height="75" alt="">
-            </div>
-            <div class="uk-width-expand">
-                <h2 class="uk-margin-remove-bottom">
-                    {{ roster.name("fr") }} ({{ version.type_name() }})
-                </h2>
-                <p class="uk-margin-remove-top">
-                    Catégorie {{ roster_definition.tier }}
-                </p>
-            </div>
-        </div>
-
-        <div>
-            <img src="/assets/images/blood_bowl/{{ roster.type_name() }}Team.jpg" alt="">
-        </div>
-
-        <h3 class="uk-heading-divider">
-            Postes
-        </h3>
-        <div class="uk-overflow-auto">
-            <table class="uk-table uk-table-striped uk-table-small">
-                <thead>
-                <tr>
-                    <th>Qte</th>
-                    <th>Poste</th>
-                    <th>Coût</th>
-                    <th uk-tooltip="title: Mouvement">M</th>
-                    <th uk-tooltip="title: Force">F</th>
-                    <th uk-tooltip="title: Agilité">AG</th>
-                    <th uk-tooltip="title: Capacité de Passe">CP</th>
-                    <th uk-tooltip="title: Armure">AR</th>
-                    <th>Compétences<span class="uk-visible@m"> & Traits</span></th>
-                    <th uk-tooltip="title: Compétences Principales">P</th>
-                    <th uk-tooltip="title: Compétences Secondaires">S</th>
-                </tr>
-                </thead>
-
-                <tbody>
-                {% for position in roster_definition.positions %}
-
-                {% if let Ok(position_definition) = position.definition(roster_definition.version.into(), roster.clone()) %}
-                <tr>
-                    <td>0-{{ position_definition.maximum_quantity }}</td>
-                    <td>{{ position.name("fr") }}</td>
-                    <td>{{ position_definition.cost / 1000 }}k</td>
-                    <td>{{ position_definition.movement_allowance() }}</td>
-                    <td>{{ position_definition.strength() }}</td>
-                    <td>{{ position_definition.agility() }}+</td>
-
-                    {% if let Some(passing_ability) = position_definition.passing_ability() %}
-                    <td>{{ passing_ability }}+</td>
-                    {% else %}
-                    <td>-</td>
-                    {% endif %}
-
-                    <td>{{ position_definition.armour_value() }}+</td>
-                    <td>{{ position_definition.skills_names("fr") }}</td>
-                    <td>{{ position_definition.primary_skill_categories_first_letter("fr") }}</td>
-                    <td>{{ position_definition.secondary_skill_categories_first_letter("fr") }}</td>
-                </tr>
-                {% endif %}
-
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        <h3 class="uk-heading-divider">
-            Staff
-        </h3>
-        <ul>
-            {% for staff_information in roster_definition.staff_information_sorted_by_name("fr") %}
-            <li>{{ staff_information.staff.name("fr") }} : {{ staff_information.price(true) / 1000 }}k</li>
-            {% endfor %}
-        </ul>
-
-        <h3 class="uk-heading-divider">
-            Règles spéciales
-        </h3>
-        <ul>
-            {% for special_rule in roster_definition.special_rules %}
-            <li>{{ special_rule.name("fr") }}</li>
-            {% endfor %}
-        </ul>
-
-        {% if let Some(user_profile) = profile %}
-        <a href="../teams/new?version={{ roster_definition.version.type_name() }}&roster={{ roster.type_name() }}"
-           class="uk-button uk-button-primary">
-            Créer une nouvelle équipe
-        </a>
-        {% endif %}
-
-        {% else %}
-
-        <h2>
-            <img src="/assets/images/blood_bowl/{{ roster.type_name() }}Logo.webp" width="100" height="100" alt="">
-            {{ roster.name("fr") }}
+<div class="uk-grid-small uk-flex-middle uk-margin-bottom" uk-grid>
+    <div class="uk-width-auto">
+        <img src="/assets/images/blood_bowl/{{ roster.type_name() }}Logo.webp" width="75" height="75" alt="">
+    </div>
+    <div class="uk-width-expand">
+        <h2 class="uk-margin-remove-bottom">
+            {{ roster.name("fr") }} ({{ version.type_name() }})
         </h2>
-        <p>
-            Ce roster n'existe pas sur cette version des règles
+        <p class="uk-margin-remove-top">
+            Catégorie {{ roster_definition.tier }}
         </p>
-
-        {% endif %}
-
-        {% else %}
-
-        <h2>
-            Roster introuvable
-        </h2>
-
-        {% endif %}
     </div>
 </div>
+
+<div>
+    <img src="/assets/images/blood_bowl/{{ roster.type_name() }}Team.jpg" alt="">
+</div>
+
+<h3 class="uk-heading-divider">
+    Postes
+</h3>
+<div class="uk-overflow-auto">
+    <table class="uk-table uk-table-striped uk-table-small">
+        <thead>
+        <tr>
+            <th>Qte</th>
+            <th>Poste</th>
+            <th>Coût</th>
+            <th uk-tooltip="title: Mouvement">M</th>
+            <th uk-tooltip="title: Force">F</th>
+            <th uk-tooltip="title: Agilité">AG</th>
+            <th uk-tooltip="title: Capacité de Passe">CP</th>
+            <th uk-tooltip="title: Armure">AR</th>
+            <th>Compétences<span class="uk-visible@m"> & Traits</span></th>
+            <th uk-tooltip="title: Compétences Principales">P</th>
+            <th uk-tooltip="title: Compétences Secondaires">S</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        {% for position in roster_definition.positions %}
+
+        {% if let Ok(position_definition) = position.definition(roster_definition.version.into(), roster.clone()) %}
+        <tr>
+            <td>0-{{ position_definition.maximum_quantity }}</td>
+            <td>{{ position.name("fr") }}</td>
+            <td>{{ position_definition.cost / 1000 }}k</td>
+            <td>{{ position_definition.movement_allowance() }}</td>
+            <td>{{ position_definition.strength() }}</td>
+            <td>{{ position_definition.agility() }}+</td>
+
+            {% if let Some(passing_ability) = position_definition.passing_ability() %}
+            <td>{{ passing_ability }}+</td>
+            {% else %}
+            <td>-</td>
+            {% endif %}
+
+            <td>{{ position_definition.armour_value() }}+</td>
+            <td>{{ position_definition.skills_names("fr") }}</td>
+            <td>{{ position_definition.primary_skill_categories_first_letter("fr") }}</td>
+            <td>{{ position_definition.secondary_skill_categories_first_letter("fr") }}</td>
+        </tr>
+        {% endif %}
+
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<h3 class="uk-heading-divider">
+    Staff
+</h3>
+<ul>
+    {% for staff_information in roster_definition.staff_information_sorted_by_name("fr") %}
+    <li>{{ staff_information.staff.name("fr") }} : {{ staff_information.price(true) / 1000 }}k</li>
+    {% endfor %}
+</ul>
+
+<h3 class="uk-heading-divider">
+    Règles spéciales
+</h3>
+<ul>
+    {% for special_rule in roster_definition.special_rules %}
+    <li>{{ special_rule.name("fr") }}</li>
+    {% endfor %}
+</ul>
+
+{% if let Some(user_profile) = profile %}
+<a href="../teams/new?version={{ roster_definition.version.type_name() }}&roster={{ roster.type_name() }}"
+   class="uk-button uk-button-primary">
+    Créer une nouvelle équipe
+</a>
+{% endif %}
+
+{% else %}
+
+<h2>
+    <img src="/assets/images/blood_bowl/{{ roster.type_name() }}Logo.webp" width="100" height="100" alt="">
+    {{ roster.name("fr") }}
+</h2>
+<p>
+    Ce roster n'existe pas sur cette version des règles
+</p>
+
+{% endif %}
+
+{% else %}
+
+<h2>
+    Roster introuvable
+</h2>
+
+{% endif %}
+
 {% endblock %}

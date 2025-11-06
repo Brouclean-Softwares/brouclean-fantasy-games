@@ -1,4 +1,5 @@
-use crate::app::templates::{AlertMessage, NavigationBar};
+use crate::app::templates::blood_bowl::teams;
+use crate::app::templates::{AlertMessage, BreadCrumb, NavigationBar, UrlLink};
 use crate::data::blood_bowl::players::{PlayerAdvancement, PlayerStats};
 use crate::data::blood_bowl::teams::TeamLogo;
 use crate::data::users::User;
@@ -17,6 +18,7 @@ use std::vec;
 pub struct PlayerPage {
     navigation_bar: NavigationBar,
     alert_message: Option<AlertMessage>,
+    breadcrumb: BreadCrumb,
     link_url: String,
     number: i32,
     player: Player,
@@ -48,6 +50,10 @@ impl PlayerPage {
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
             alert_message,
+            breadcrumb: teams::breadcrumb().plus_link(UrlLink::from(
+                "Équipe",
+                &format!("/blood_bowl/teams/team?id={}", team.id),
+            )),
             link_url,
             number,
             player: player.clone(),

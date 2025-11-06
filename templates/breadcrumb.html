@@ -1,0 +1,7 @@
+<ul class="uk-breadcrumb uk-margin-medium-bottom">
+    <li><a href="/" uk-icon="icon: home"></a></li>
+
+    {% for url_link in url_links %}
+    <li><a href="{{ url_link.url }}">{{ url_link.name }}</a></li>
+    {% endfor %}
+</ul>

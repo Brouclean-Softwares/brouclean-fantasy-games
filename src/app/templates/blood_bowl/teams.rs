@@ -1,5 +1,5 @@
 use crate::app::templates::blood_bowl::games::GameCard;
-use crate::app::templates::{AlertMessage, NavigationBar};
+use crate::app::templates::{blood_bowl, AlertMessage, BreadCrumb, NavigationBar, UrlLink};
 use crate::data::blood_bowl::games::GameSummary;
 use crate::data::blood_bowl::teams::{TeamLogo, TeamSummary};
 use crate::data::users::User;
@@ -14,10 +14,15 @@ use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::translation::{TranslatedName, TypeName};
 use blood_bowl_rs::versions::Version;
 
+pub fn breadcrumb() -> BreadCrumb {
+    blood_bowl::breadcrumb().plus_link(UrlLink::from("Équipes", "/blood_bowl/teams"))
+}
+
 #[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/teams/teams_page.html")]
 pub struct TeamsPage {
     navigation_bar: NavigationBar,
+    breadcrumb: BreadCrumb,
     profile: Option<User>,
     teams: Vec<TeamSummary>,
 }
@@ -26,6 +31,7 @@ impl TeamsPage {
     pub fn get(app_state: AppState, profile: Option<User>, teams: Vec<TeamSummary>) -> Self {
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
+            breadcrumb: blood_bowl::breadcrumb(),
             profile,
             teams,
         }
@@ -36,6 +42,7 @@ impl TeamsPage {
 #[template(path = "blood_bowl/teams/new_team_page.html")]
 pub struct NewTeamPage {
     navigation_bar: NavigationBar,
+    breadcrumb: BreadCrumb,
     alert_message: Option<AlertMessage>,
     version: Version,
     roster: Roster,
@@ -57,6 +64,7 @@ impl NewTeamPage {
         Self {
             navigation_bar: NavigationBar::get(&app_state, &Some(profile)),
             alert_message: message,
+            breadcrumb: breadcrumb(),
             version,
             roster,
             initial_treasury: Team::initial_treasury(&version),
@@ -68,6 +76,7 @@ impl NewTeamPage {
 #[template(path = "blood_bowl/teams/team_page.html")]
 pub struct TeamPage {
     navigation_bar: NavigationBar,
+    breadcrumb: BreadCrumb,
     alert_message: Option<AlertMessage>,
     team: Team,
     editable: bool,
@@ -111,6 +120,7 @@ impl TeamPage {
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
             alert_message,
+            breadcrumb: breadcrumb(),
             team: team.clone(),
             editable,
             edit_mode,

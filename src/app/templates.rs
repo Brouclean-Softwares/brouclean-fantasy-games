@@ -26,6 +26,38 @@ impl HomePage {
     }
 }
 
+#[derive(Clone)]
+pub struct UrlLink {
+    pub name: String,
+    pub url: String,
+}
+
+impl UrlLink {
+    pub fn from(name: &str, url: &str) -> Self {
+        Self {
+            name: name.to_string(),
+            url: url.to_string(),
+        }
+    }
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "breadcrumb.html")]
+pub struct BreadCrumb {
+    url_links: Vec<UrlLink>,
+}
+
+impl BreadCrumb {
+    pub fn only_home() -> Self {
+        Self { url_links: vec![] }
+    }
+
+    pub fn plus_link(mut self, url_link: UrlLink) -> Self {
+        self.url_links.push(url_link);
+        self
+    }
+}
+
 #[derive(Template, WebTemplate)]
 #[template(path = "navigation_bar.html")]
 pub struct NavigationBar {

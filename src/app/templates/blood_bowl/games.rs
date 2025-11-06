@@ -1,6 +1,6 @@
 use crate::app::templates::blood_bowl::games::events::{EventsController, GameEvents};
 use crate::app::templates::blood_bowl::teams::{TeamCard, TeamSelector};
-use crate::app::templates::{AlertMessage, NavigationBar};
+use crate::app::templates::{blood_bowl, AlertMessage, BreadCrumb, NavigationBar, UrlLink};
 use crate::data::blood_bowl::games::GameSummary;
 use crate::data::blood_bowl::teams::TeamLogo;
 use crate::data::users::User;
@@ -17,10 +17,15 @@ use blood_bowl_rs::weather::Weather;
 
 pub mod events;
 
+pub fn breadcrumb() -> BreadCrumb {
+    blood_bowl::breadcrumb().plus_link(UrlLink::from("Matchs", "/blood_bowl/games"))
+}
+
 #[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/games/games_page.html")]
 pub struct GamesPage {
     navigation_bar: NavigationBar,
+    breadcrumb: BreadCrumb,
     games_playing: Vec<GameSummary>,
     games_played: Vec<GameSummary>,
     can_create: bool,
@@ -35,6 +40,7 @@ impl GamesPage {
     ) -> Result<Self, AppError> {
         Ok(Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
+            breadcrumb: blood_bowl::breadcrumb(),
             games_playing,
             games_played,
             can_create: profile.is_some(),
@@ -47,6 +53,7 @@ impl GamesPage {
 pub struct GamePage {
     navigation_bar: NavigationBar,
     alert_message: Option<AlertMessage>,
+    breadcrumb: BreadCrumb,
     tab_displayed: String,
     game: Game,
     editable: bool,
@@ -116,6 +123,7 @@ impl GamePage {
         Ok(Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
             alert_message,
+            breadcrumb: breadcrumb(),
             tab_displayed,
             game: game.clone(),
             editable,
@@ -146,6 +154,7 @@ struct TeamStatistics {
 pub struct NewGamePage {
     navigation_bar: NavigationBar,
     alert_message: Option<AlertMessage>,
+    breadcrumb: BreadCrumb,
     first_team_id: i32,
     second_team_id: i32,
     first_team_card: Option<TeamCard>,
@@ -190,6 +199,7 @@ impl NewGamePage {
         Self {
             navigation_bar: NavigationBar::get(&app_state, &Some(profile)),
             alert_message,
+            breadcrumb: breadcrumb(),
             first_team_id,
             second_team_id,
             first_team_card,

@@ -1,4 +1,4 @@
-use crate::app::templates::NavigationBar;
+use crate::app::templates::{blood_bowl, BreadCrumb, NavigationBar, UrlLink};
 use crate::data::users::User;
 use crate::AppState;
 use askama::Template;
@@ -8,10 +8,15 @@ use blood_bowl_rs::translation::TranslatedName;
 use blood_bowl_rs::translation::TypeName;
 use blood_bowl_rs::versions::Version;
 
+pub fn breadcrumb() -> BreadCrumb {
+    blood_bowl::breadcrumb().plus_link(UrlLink::from("Rosters", "/blood_bowl/rosters"))
+}
+
 #[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/rosters/rosters_page.html")]
 pub struct RostersPage {
     navigation_bar: NavigationBar,
+    breadcrumb: BreadCrumb,
     profile: Option<User>,
     rosters: Vec<Roster>,
     version: Version,
@@ -24,6 +29,7 @@ impl RostersPage {
 
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
+            breadcrumb: blood_bowl::breadcrumb(),
             profile,
             rosters: ordered_rosters,
             version,
@@ -35,6 +41,7 @@ impl RostersPage {
 #[template(path = "blood_bowl/rosters/roster_page.html")]
 pub struct RosterPage {
     navigation_bar: NavigationBar,
+    breadcrumb: BreadCrumb,
     profile: Option<User>,
     roster: Option<Roster>,
     version: Version,
@@ -49,6 +56,7 @@ impl RosterPage {
     ) -> Self {
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
+            breadcrumb: breadcrumb(),
             profile,
             roster,
             version,

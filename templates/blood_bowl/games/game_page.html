@@ -10,189 +10,191 @@
 {% endif %}
 {% endblock %}
 
+{% block breadcrumb %}
+{{ breadcrumb|escape("none") }}
+{% endblock %}
+
 {% block body %}
-<div class="uk-section" x-data="{ tab: '{{ tab_displayed }}' }">
-    <div class="uk-container">
+<div x-data="{ tab: '{{ tab_displayed }}' }">
 
-        <div class="uk-grid-small uk-flex-center uk-flex-middle uk-background-muted uk-margin" uk-grid>
+    <div class="uk-grid-small uk-flex-center uk-flex-middle uk-background-muted uk-margin" uk-grid>
 
-            <div class="uk-width-1-2@m uk-margin-medium-bottom">
-                <div class="uk-grid-small uk-flex-middle" uk-grid>
-                    <div class="uk-width-1-5">
-                        <img src="{{ TeamLogo::from(game.first_team).url }}" alt="">
-                    </div>
-                    <div class="uk-width-expand uk-text-center uk-text-right@m">
-                        <p class="uk-text-lead uk-margin-remove-bottom">
-                            <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ game.first_team.id }}">
-                                {{ game.first_team.name }}
-                            </a>
-                        </p>
-                        <p class="uk-margin-remove-top uk-margin-remove-bottom">{{ game.first_team.roster.name("fr") }}</p>
-                        <p class="uk-margin-remove-top">{{ game.first_team.coach.name }}</p>
-                    </div>
-                    <div class="uk-width-1-5 uk-text-center">
-                        <p class="uk-text-large uk-text-bold uk-background-secondary uk-text-muted">
-                            {% if game.started %}
-                            {{ score.0 }}
-                            {% else %}
-                            -
-                            {% endif %}
-                        </p>
-                        <p>
-                            {% if game.started %}
-                            {{ casualties.0 }}
-                            {% else %}
-                            -
-                            {% endif %}
+        <div class="uk-width-1-2@m uk-margin-medium-bottom">
+            <div class="uk-grid-small uk-flex-middle" uk-grid>
+                <div class="uk-width-1-5">
+                    <img src="{{ TeamLogo::from(game.first_team).url }}" alt="">
+                </div>
+                <div class="uk-width-expand uk-text-center uk-text-right@m">
+                    <p class="uk-text-lead uk-margin-remove-bottom">
+                        <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ game.first_team.id }}">
+                            {{ game.first_team.name }}
+                        </a>
+                    </p>
+                    <p class="uk-margin-remove-top uk-margin-remove-bottom">{{ game.first_team.roster.name("fr") }}</p>
+                    <p class="uk-margin-remove-top">{{ game.first_team.coach.name }}</p>
+                </div>
+                <div class="uk-width-1-5 uk-text-center">
+                    <p class="uk-text-large uk-text-bold uk-background-secondary uk-text-muted">
+                        {% if game.started %}
+                        {{ score.0 }}
+                        {% else %}
+                        -
+                        {% endif %}
+                    </p>
+                    <p>
+                        {% if game.started %}
+                        {{ casualties.0 }}
+                        {% else %}
+                        -
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="uk-width-1-2@m uk-margin-medium-bottom">
+            <div class="uk-grid-small uk-flex-middle" uk-grid>
+                <div class="uk-width-1-5 uk-flex-last@m">
+                    <img src="{{ TeamLogo::from(game.second_team).url }}" alt="">
+                </div>
+                <div class="uk-width-expand uk-text-center uk-text-left@m">
+                    <p class="uk-text-lead uk-margin-remove-bottom">
+                        <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ game.second_team.id }}">
+                            {{ game.second_team.name }}
+                        </a>
+                    </p>
+                    <p class="uk-margin-remove-top uk-margin-remove-bottom">{{ game.second_team.roster.name("fr") }}</p>
+                    <p class="uk-margin-remove-top">{{ game.second_team.coach.name }}</p>
+                </div>
+                <div class="uk-width-1-5 uk-flex-first@m uk-text-center">
+                    <p class="uk-text-large uk-text-bold uk-background-secondary uk-text-muted">
+                        {% if game.started %}
+                        {{ score.1 }}
+                        {% else %}
+                        -
+                        {% endif %}
+                    </p>
+                    <p>
+                        {% if game.started %}
+                        {{ casualties.1 }}
+                        {% else %}
+                        -
+                        {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="uk-width-1-1 uk-text-center uk-margin">
+            <span class="uk-text-large">Match amical</span>
+        </div>
+
+        {% if editable && !game.pre_game_sequence_is_finished() %}
+        <div class="uk-width-1-1 uk-text-center uk-margin">
+            <form id="delete_form" action="./delete" method="post" autocomplete="off">
+                <input id="id" name="id" type="hidden" value="{{ game.id }}">
+
+                <button class="uk-button uk-button-danger"
+                        type="button"
+                        uk-toggle="target: #modal-delete">Supprimer</button>
+
+                <div id="modal-delete" uk-modal>
+                    <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                        <h2 class="uk-modal-title">Suppression du match en cours</h2>
+                        <p>Confirmez-vous la suppression du match ?</p>
+                        <p class="uk-text-right">
+                            <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                            <button class="uk-button uk-button-danger"
+                                    onclick="document.getElementById('delete_form').submit()">
+                                Confirmer
+                            </button>
                         </p>
                     </div>
                 </div>
-            </div>
+            </form>
+        </div>
+        {% endif %}
 
-            <div class="uk-width-1-2@m uk-margin-medium-bottom">
-                <div class="uk-grid-small uk-flex-middle" uk-grid>
-                    <div class="uk-width-1-5 uk-flex-last@m">
-                        <img src="{{ TeamLogo::from(game.second_team).url }}" alt="">
-                    </div>
-                    <div class="uk-width-expand uk-text-center uk-text-left@m">
-                        <p class="uk-text-lead uk-margin-remove-bottom">
-                            <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ game.second_team.id }}">
-                                {{ game.second_team.name }}
-                            </a>
-                        </p>
-                        <p class="uk-margin-remove-top uk-margin-remove-bottom">{{ game.second_team.roster.name("fr") }}</p>
-                        <p class="uk-margin-remove-top">{{ game.second_team.coach.name }}</p>
-                    </div>
-                    <div class="uk-width-1-5 uk-flex-first@m uk-text-center">
-                        <p class="uk-text-large uk-text-bold uk-background-secondary uk-text-muted">
-                            {% if game.started %}
-                            {{ score.1 }}
-                            {% else %}
-                            -
-                            {% endif %}
-                        </p>
-                        <p>
-                            {% if game.started %}
-                            {{ casualties.1 }}
-                            {% else %}
-                            -
-                            {% endif %}
-                    </div>
-                </div>
-            </div>
+        <div class="uk-width-1-1 uk-text-center uk-text-large uk-margin">
+        {% match game.status() %}
+            {% when GameStatus::Scheduled %}
+                {% if editable && edit_mode %}
+                <form method="post" autocomplete="off">
+                    <input name="game_id"
+                           type="hidden"
+                           value="{{ game.id }}">
 
-            <div class="uk-width-1-1 uk-text-center uk-margin">
-                <span class="uk-text-large">Match amical</span>
-            </div>
-
-            {% if editable && !game.pre_game_sequence_is_finished() %}
-            <div class="uk-width-1-1 uk-text-center uk-margin">
-                <form id="delete_form" action="./delete" method="post" autocomplete="off">
-                    <input id="id" name="id" type="hidden" value="{{ game.id }}">
-
-                    <button class="uk-button uk-button-danger"
-                            type="button"
-                            uk-toggle="target: #modal-delete">Supprimer</button>
-
-                    <div id="modal-delete" uk-modal>
-                        <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
-                            <h2 class="uk-modal-title">Suppression du match en cours</h2>
-                            <p>Confirmez-vous la suppression du match ?</p>
-                            <p class="uk-text-right">
-                                <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
-                                <button class="uk-button uk-button-danger"
-                                        onclick="document.getElementById('delete_form').submit()">
-                                    Confirmer
-                                </button>
-                            </p>
-                        </div>
-                    </div>
+                    <input id="game_at"
+                           name="game_at"
+                           type="datetime-local"
+                           onchange="submit()"
+                           value="{{ game_date_input }}">
                 </form>
-            </div>
-            {% endif %}
-
-            <div class="uk-width-1-1 uk-text-center uk-text-large uk-margin">
-            {% match game.status() %}
-                {% when GameStatus::Scheduled %}
-                    {% if editable && edit_mode %}
-                    <form method="post" autocomplete="off">
-                        <input name="game_id"
-                               type="hidden"
-                               value="{{ game.id }}">
-
-                        <input id="game_at"
-                               name="game_at"
-                               type="datetime-local"
-                               onchange="submit()"
-                               value="{{ game_date_input }}">
-                    </form>
-                    {% elif editable %}
-                    <a class="uk-link-reset" href="./game?id={{ game.id }}&edit_mode=true" uk-icon="icon: pencil">
-                        {{ game_date }}
-                    </a>
-                    {% else %}
-                        {{ game_date }}
-                    {% endif %}
-
-                    {% if editable %}
-                    <form method="post" autocomplete="off">
-                        <input name="game_id"
-                               type="hidden"
-                               value="{{ game.id }}">
-
-                        <input name="started_at"
-                               type="hidden"
-                               value="{{ game_date_input }}">
-
-                        <br>
-
-                        <button class="uk-button uk-button-primary">
-                            Démarrer le match
-                        </button>
-                    </form>
-                    {% endif %}
-
+                {% elif editable %}
+                <a class="uk-link-reset" href="./game?id={{ game.id }}&edit_mode=true" uk-icon="icon: pencil">
+                    {{ game_date }}
+                </a>
                 {% else %}
                     {{ game_date }}
-            {% endmatch %}
-                <br>
-                <span class="uk-text-default">{{ game_status }}</span>
-            </div>
+                {% endif %}
 
+                {% if editable %}
+                <form method="post" autocomplete="off">
+                    <input name="game_id"
+                           type="hidden"
+                           value="{{ game.id }}">
+
+                    <input name="started_at"
+                           type="hidden"
+                           value="{{ game_date_input }}">
+
+                    <br>
+
+                    <button class="uk-button uk-button-primary">
+                        Démarrer le match
+                    </button>
+                </form>
+                {% endif %}
+
+            {% else %}
+                {{ game_date }}
+        {% endmatch %}
+            <br>
+            <span class="uk-text-default">{{ game_status }}</span>
         </div>
 
-        <div class="uk-width-1-1">
-            <ul  class="uk-child-width-expand" uk-tab>
-                <li x-bind:class="tab==='game' ? 'uk-active' : ''">
-                    <a href="#" uk-icon="icon: play-circle" x-on:click="tab='game'">
-                        <span class="uk-visible@m">Match</span>
-                    </a>
-                </li>
+    </div>
 
-                <li x-bind:class="tab==='stats' ? 'uk-active' : ''">
-                    <a href="#" uk-icon="icon: info" x-on:click="tab='stats'">
-                        <span class="uk-visible@m">Statistiques</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
+    <div class="uk-width-1-1">
+        <ul  class="uk-child-width-expand" uk-tab>
+            <li x-bind:class="tab==='game' ? 'uk-active' : ''">
+                <a href="#" uk-icon="icon: play-circle" x-on:click="tab='game'">
+                    <span class="uk-visible@m">Match</span>
+                </a>
+            </li>
 
-        <div class="uk-width-1-1" x-show="tab==='game'">
-            {% if editable %}
-            {{ events_controller|escape("none") }}
+            <li x-bind:class="tab==='stats' ? 'uk-active' : ''">
+                <a href="#" uk-icon="icon: info" x-on:click="tab='stats'">
+                    <span class="uk-visible@m">Statistiques</span>
+                </a>
+            </li>
+        </ul>
+    </div>
 
-            <h3 class="uk-margin-medium-top uk-heading-divider">
-                Déroulé du match
-            </h3>
-            {% endif %}
+    <div class="uk-width-1-1" x-show="tab==='game'">
+        {% if editable %}
+        {{ events_controller|escape("none") }}
 
-            {{ game_events|escape("none") }}
-        </div>
+        <h3 class="uk-margin-medium-top uk-heading-divider">
+            Déroulé du match
+        </h3>
+        {% endif %}
 
-        <div class="uk-width-1-1" x-show="tab==='stats'">
-            {{ first_team_statistics|escape("none") }}
-            {{ second_team_statistics|escape("none") }}
-        </div>
+        {{ game_events|escape("none") }}
+    </div>
+
+    <div class="uk-width-1-1" x-show="tab==='stats'">
+        {{ first_team_statistics|escape("none") }}
+        {{ second_team_statistics|escape("none") }}
     </div>
 </div>
 {% endblock %}

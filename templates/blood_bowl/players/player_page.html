@@ -10,271 +10,270 @@
 {% endif %}
 {% endblock %}
 
+{% block breadcrumb %}
+{{ breadcrumb|escape("none") }}
+{% endblock %}
+
 {% block body %}
-<div class="uk-section">
-    <div class="uk-container">
+<div class="uk-grid-small uk-flex-middle uk-margin-medium-bottom" uk-grid>
+    <div class="uk-width-auto">
+        <img src="{{ TeamLogo::from(team).url }}" width="75" height="75" alt="">
+    </div>
+    <div class="uk-width-expand">
+        <h2 class="uk-margin-remove-bottom">
 
-        <div class="uk-grid-small uk-flex-middle uk-margin-medium-bottom" uk-grid>
-            <div class="uk-width-auto">
-                <img src="{{ TeamLogo::from(team).url }}" width="75" height="75" alt="">
-            </div>
-            <div class="uk-width-expand">
-                <h2 class="uk-margin-remove-bottom">
+            {% if edit_mode %}
+            <form method="post" autocomplete="off">
+                <input class="uk-input uk-form-width-small"
+                           name="player_number"
+                           type="number"
+                           value="{{ number }}"
+                           onchange="submit()"
+                           aria-label="">
 
-                    {% if edit_mode %}
-                    <form method="post" autocomplete="off">
-                        <input class="uk-input uk-form-width-small"
-                                   name="player_number"
-                                   type="number"
-                                   value="{{ number }}"
-                                   onchange="submit()"
-                                   aria-label="">
+                {% if player.is_journeyman || player.is_star_player %}
+                    {{ player.name("fr") }}
+                {% else %}
+                <div class="uk-inline">
+                    <a href="{{ link_url }}" class="uk-form-icon uk-form-icon-flip" uk-icon="icon: pencil"></a>
+                    <input class="uk-input uk-form-width-large"
+                           name="player_name"
+                           type="text"
+                           value="{{ player.name("fr") }}"
+                           placeholder="Nom du joueur..."
+                           onchange="submit()"
+                           aria-label="">
+                </div>
+                {% endif %}
+            </form>
+            {% elif editable %}
+            <a class="uk-link-reset" href="{{ link_url }}&edit=true">
+                #{{ number }} - {{ player.name("fr") }}
+            </a>
+            <a href="{{ link_url }}&edit=true" uk-icon="icon: pencil"></a>
+            {% else %}
+                #{{ number }} - {{ player.name("fr") }}
+            {% endif %}
 
-                        {% if player.is_journeyman || player.is_star_player %}
-                            {{ player.name("fr") }}
-                        {% else %}
-                        <div class="uk-inline">
-                            <a href="{{ link_url }}" class="uk-form-icon uk-form-icon-flip" uk-icon="icon: pencil"></a>
-                            <input class="uk-input uk-form-width-large"
-                                   name="player_name"
-                                   type="text"
-                                   value="{{ player.name("fr") }}"
-                                   placeholder="Nom du joueur..."
-                                   onchange="submit()"
-                                   aria-label="">
-                        </div>
-                        {% endif %}
-                    </form>
-                    {% elif editable %}
-                    <a class="uk-link-reset" href="{{ link_url }}&edit=true">
-                        #{{ number }} - {{ player.name("fr") }}
-                    </a>
-                    <a href="{{ link_url }}&edit=true" uk-icon="icon: pencil"></a>
+        </h2>
+        <p class="uk-margin-remove-top">
+            <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ team.id }}">
+                {{ team.name }}
+            </a>
+        </p>
+    </div>
+</div>
+
+<div class="uk-margin-medium-bottom">
+    <h3 class="uk-heading-divider">
+        Informations générales
+    </h3>
+
+    <dl class="uk-description-list">
+        <dt>Coach</dt>
+        <dd>{{ team.coach.name }}</dd>
+
+        <dt>Valeur</dt>
+        <dd>{{ player.value()? / 1000 }}k</dd>
+
+        <dt>Poste</dt>
+        <dd>{{ player.position.name("fr") }}</dd>
+    </dl>
+
+    {% if ! player.is_star_player %}
+    <div class="uk-overflow-auto">
+        <table class="uk-table uk-table-divider uk-table-small">
+            <thead>
+            <tr>
+                <th uk-tooltip="title: Mouvement" class="uk-table-shrink">M</th>
+                <th uk-tooltip="title: Force" class="uk-table-shrink">F</th>
+                <th uk-tooltip="title: Agilité" class="uk-table-shrink">AG</th>
+                <th uk-tooltip="title: Capacité de Passe" class="uk-table-shrink">CP</th>
+                <th uk-tooltip="title: Armure" class="uk-table-shrink">AR</th>
+                <th>Compétences<span class="uk-visible@m"> & Traits</span></th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr>
+                <td>{{ crate::app::templates::blood_bowl::players::movement_allowance_html(player)?|escape("none") }}</td>
+                <td>{{ crate::app::templates::blood_bowl::players::strength_html(player)?|escape("none") }}</td>
+                <td>{{ crate::app::templates::blood_bowl::players::agility_html(player)?|escape("none") }}</td>
+                <td>{{ crate::app::templates::blood_bowl::players::passing_ability_html(player)?|escape("none") }}</td>
+                <td>{{ crate::app::templates::blood_bowl::players::armour_value_html(player)?|escape("none") }}</td>
+                <td>{{ crate::app::templates::blood_bowl::players::skills_names_html(player, "fr")?|escape("none") }}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+
+<div class="uk-margin-medium-bottom">
+    <h3 class="uk-heading-divider">
+        Statistiques
+    </h3>
+
+    {% if ! player.is_star_player %}
+    <dl class="uk-description-list">
+        <dt>Nombre de matches</dt>
+        <dd>{{ stats.games_number }}</dd>
+
+        <dt>Points de Star Player (PSP)</dt>
+        <dd>{{ stats.star_player_points }}</dd>
+    </dl>
+    {% endif %}
+
+    <div class="uk-overflow-auto">
+        <table class="uk-table uk-table-divider uk-table-small">
+            <thead>
+            <tr>
+                <th class="uk-table-shrink" uk-tooltip="title: Passe précise receptionnée">PAS</th>
+                <th class="uk-table-shrink" uk-tooltip="title: Lancer superbe d'un coéquipier qui a attérit sur ses pieds">LAN</th>
+                <th class="uk-table-shrink" uk-tooltip="title: Détournement de passe">DET</th>
+                <th class="uk-table-shrink" uk-tooltip="title: Interception">INT</th>
+                <th class="uk-table-shrink" uk-tooltip="title: Elimination lors d'un blocage">ELI</th>
+                <th class="uk-table-shrink" uk-tooltip="title: Touchdown">TD</th>
+                <th uk-tooltip="title: Joueur du match">JDM</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr>
+                <td>{{ stats.passing_completions }}</td>
+                <td>{{ stats.throwing_completions }}</td>
+                <td>{{ stats.deflections }}</td>
+                <td>{{ stats.interceptions }}</td>
+                <td>{{ stats.casualties }}</td>
+                <td>{{ stats.touchdowns }}</td>
+                <td>{{ stats.most_valuable_player }}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if ! player.is_star_player %}
+<div class="uk-margin-medium-bottom">
+    <h3 class="uk-heading-divider">
+        Blessures
+    </h3>
+
+    <div class="uk-overflow-auto">
+        <table class="uk-table uk-table-divider uk-table-small">
+            <thead>
+            <tr>
+                <th uk-tooltip="title: Rate le Prochain Match" class="uk-table-shrink">RPM</th>
+                <th uk-tooltip="title: Nombre de Blessures Persistantes" class="uk-table-shrink">BP</th>
+                <th>Blessures actuelles</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr>
+                <td>
+                    {% if player.miss_next_game %}
+                        Oui
                     {% else %}
-                        #{{ number }} - {{ player.name("fr") }}
+                        Non
                     {% endif %}
+                </td>
+                <td>{{ player.niggling_injuries_number() }}</td>
+                <td>
+                    {% if player.injuries.len() > 0 %}
+                        {{ player.injuries_names("fr")? }}
+                    {% else %}
+                        Aucune
+                    {% endif %}
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
 
-                </h2>
-                <p class="uk-margin-remove-top">
-                    <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ team.id }}">
-                        {{ team.name }}
-                    </a>
+{% if ! player.is_journeyman && ! player.is_star_player %}
+<div class="uk-margin-medium-bottom">
+    <h3 class="uk-heading-divider">
+        Améliorations
+    </h3>
+
+    <dl class="uk-description-list">
+        <dt>Points de Star Players (PSP) non utilisés</dt>
+        <dd>{{ player.star_player_points }}</dd>
+
+        <dt>1ère amélioration</dt>
+        <dd>{{ player_advancement_blocs[0]|escape("none") }}</dd>
+
+        <dt>2ème amélioration</dt>
+        <dd>{{ player_advancement_blocs[1]|escape("none") }}</dd>
+
+        <dt>3ème amélioration</dt>
+        <dd>{{ player_advancement_blocs[2]|escape("none") }}</dd>
+
+        <dt>4ème amélioration</dt>
+        <dd>{{ player_advancement_blocs[3]|escape("none") }}</dd>
+
+        <dt>5ème amélioration</dt>
+        <dd>{{ player_advancement_blocs[4]|escape("none") }}</dd>
+
+        <dt>6ème amélioration</dt>
+        <dd>{{ player_advancement_blocs[5]|escape("none") }}</dd>
+    </dl>
+</div>
+{% endif %}
+
+{% if player.is_journeyman && can_buy %}
+<div>
+    <form id="buy_journeyman_form" method="post" autocomplete="off">
+        <input name="journeyman_to_recruit_id_in_game" type="hidden" value="{{ player.id }}">
+
+        <button class="uk-button uk-button-primary"
+                type="button"
+                uk-toggle="target: #modal-buy-journeyman">Recruter</button>
+
+        <div id="modal-buy-journeyman" uk-modal>
+            <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                <h2 class="uk-modal-title">Signature de #{{ number }} - {{ player.position.name("fr") }}</h2>
+                <p>Vous êtes sur le point de recruter le journalier. Confirmez-vous la signature de son contrat ?</p>
+                <p class="uk-text-right">
+                    <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                    <button class="uk-button uk-button-primary"
+                            onclick="document.getElementById('buy_journeyman_form').submit()">
+                        Confirmer
+                    </button>
                 </p>
             </div>
         </div>
-
-        <div class="uk-margin-medium-bottom">
-            <h3 class="uk-heading-divider">
-                Informations générales
-            </h3>
-
-            <dl class="uk-description-list">
-                <dt>Coach</dt>
-                <dd>{{ team.coach.name }}</dd>
-
-                <dt>Valeur</dt>
-                <dd>{{ player.value()? / 1000 }}k</dd>
-
-                <dt>Poste</dt>
-                <dd>{{ player.position.name("fr") }}</dd>
-            </dl>
-
-            {% if ! player.is_star_player %}
-            <div class="uk-overflow-auto">
-                <table class="uk-table uk-table-divider uk-table-small">
-                    <thead>
-                    <tr>
-                        <th uk-tooltip="title: Mouvement" class="uk-table-shrink">M</th>
-                        <th uk-tooltip="title: Force" class="uk-table-shrink">F</th>
-                        <th uk-tooltip="title: Agilité" class="uk-table-shrink">AG</th>
-                        <th uk-tooltip="title: Capacité de Passe" class="uk-table-shrink">CP</th>
-                        <th uk-tooltip="title: Armure" class="uk-table-shrink">AR</th>
-                        <th>Compétences<span class="uk-visible@m"> & Traits</span></th>
-                    </tr>
-                    </thead>
-
-                    <tbody>
-                    <tr>
-                        <td>{{ crate::app::templates::blood_bowl::players::movement_allowance_html(player)?|escape("none") }}</td>
-                        <td>{{ crate::app::templates::blood_bowl::players::strength_html(player)?|escape("none") }}</td>
-                        <td>{{ crate::app::templates::blood_bowl::players::agility_html(player)?|escape("none") }}</td>
-                        <td>{{ crate::app::templates::blood_bowl::players::passing_ability_html(player)?|escape("none") }}</td>
-                        <td>{{ crate::app::templates::blood_bowl::players::armour_value_html(player)?|escape("none") }}</td>
-                        <td>{{ crate::app::templates::blood_bowl::players::skills_names_html(player, "fr")?|escape("none") }}</td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-            {% endif %}
-        </div>
-
-        <div class="uk-margin-medium-bottom">
-            <h3 class="uk-heading-divider">
-                Statistiques
-            </h3>
-
-            {% if ! player.is_star_player %}
-            <dl class="uk-description-list">
-                <dt>Nombre de matches</dt>
-                <dd>{{ stats.games_number }}</dd>
-
-                <dt>Points de Star Player (PSP)</dt>
-                <dd>{{ stats.star_player_points }}</dd>
-            </dl>
-            {% endif %}
-
-            <div class="uk-overflow-auto">
-                <table class="uk-table uk-table-divider uk-table-small">
-                    <thead>
-                    <tr>
-                        <th class="uk-table-shrink" uk-tooltip="title: Passe précise receptionnée">PAS</th>
-                        <th class="uk-table-shrink" uk-tooltip="title: Lancer superbe d'un coéquipier qui a attérit sur ses pieds">LAN</th>
-                        <th class="uk-table-shrink" uk-tooltip="title: Détournement de passe">DET</th>
-                        <th class="uk-table-shrink" uk-tooltip="title: Interception">INT</th>
-                        <th class="uk-table-shrink" uk-tooltip="title: Elimination lors d'un blocage">ELI</th>
-                        <th class="uk-table-shrink" uk-tooltip="title: Touchdown">TD</th>
-                        <th uk-tooltip="title: Joueur du match">JDM</th>
-                    </tr>
-                    </thead>
-
-                    <tbody>
-                    <tr>
-                        <td>{{ stats.passing_completions }}</td>
-                        <td>{{ stats.throwing_completions }}</td>
-                        <td>{{ stats.deflections }}</td>
-                        <td>{{ stats.interceptions }}</td>
-                        <td>{{ stats.casualties }}</td>
-                        <td>{{ stats.touchdowns }}</td>
-                        <td>{{ stats.most_valuable_player }}</td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        {% if ! player.is_star_player %}
-        <div class="uk-margin-medium-bottom">
-            <h3 class="uk-heading-divider">
-                Blessures
-            </h3>
-
-            <div class="uk-overflow-auto">
-                <table class="uk-table uk-table-divider uk-table-small">
-                    <thead>
-                    <tr>
-                        <th uk-tooltip="title: Rate le Prochain Match" class="uk-table-shrink">RPM</th>
-                        <th uk-tooltip="title: Nombre de Blessures Persistantes" class="uk-table-shrink">BP</th>
-                        <th>Blessures actuelles</th>
-                    </tr>
-                    </thead>
-
-                    <tbody>
-                    <tr>
-                        <td>
-                            {% if player.miss_next_game %}
-                                Oui
-                            {% else %}
-                                Non
-                            {% endif %}
-                        </td>
-                        <td>{{ player.niggling_injuries_number() }}</td>
-                        <td>
-                            {% if player.injuries.len() > 0 %}
-                                {{ player.injuries_names("fr")? }}
-                            {% else %}
-                                Aucune
-                            {% endif %}
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        {% endif %}
-
-        {% if ! player.is_journeyman && ! player.is_star_player %}
-        <div class="uk-margin-medium-bottom">
-            <h3 class="uk-heading-divider">
-                Améliorations
-            </h3>
-
-            <dl class="uk-description-list">
-                <dt>Points de Star Players (PSP) non utilisés</dt>
-                <dd>{{ player.star_player_points }}</dd>
-
-                <dt>1ère amélioration</dt>
-                <dd>{{ player_advancement_blocs[0]|escape("none") }}</dd>
-
-                <dt>2ème amélioration</dt>
-                <dd>{{ player_advancement_blocs[1]|escape("none") }}</dd>
-
-                <dt>3ème amélioration</dt>
-                <dd>{{ player_advancement_blocs[2]|escape("none") }}</dd>
-
-                <dt>4ème amélioration</dt>
-                <dd>{{ player_advancement_blocs[3]|escape("none") }}</dd>
-
-                <dt>5ème amélioration</dt>
-                <dd>{{ player_advancement_blocs[4]|escape("none") }}</dd>
-
-                <dt>6ème amélioration</dt>
-                <dd>{{ player_advancement_blocs[5]|escape("none") }}</dd>
-            </dl>
-        </div>
-        {% endif %}
-
-        {% if player.is_journeyman && can_buy %}
-        <div>
-            <form id="buy_journeyman_form" method="post" autocomplete="off">
-                <input name="journeyman_to_recruit_id_in_game" type="hidden" value="{{ player.id }}">
-
-                <button class="uk-button uk-button-primary"
-                        type="button"
-                        uk-toggle="target: #modal-buy-journeyman">Recruter</button>
-
-                <div id="modal-buy-journeyman" uk-modal>
-                    <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
-                        <h2 class="uk-modal-title">Signature de #{{ number }} - {{ player.position.name("fr") }}</h2>
-                        <p>Vous êtes sur le point de recruter le journalier. Confirmez-vous la signature de son contrat ?</p>
-                        <p class="uk-text-right">
-                            <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
-                            <button class="uk-button uk-button-primary"
-                                    onclick="document.getElementById('buy_journeyman_form').submit()">
-                                Confirmer
-                            </button>
-                        </p>
-                    </div>
-                </div>
-            </form>
-        </div>
-        {% endif %}
-
-        {% if can_buyout %}
-        <div>
-            <form id="buyout_form" action="../teams/team?id={{ team.id }}" method="post" autocomplete="off">
-                <input name="player_id_to_buyout" type="hidden" value="{{ player.id }}">
-
-                <button class="uk-button uk-button-danger"
-                        type="button"
-                        uk-toggle="target: #modal-buyout">Renvoyer</button>
-
-                <div id="modal-buyout" uk-modal>
-                    <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
-                        <h2 class="uk-modal-title">Renvoi de #{{ number }} {{ player.name }} - {{ player.position.name("fr") }}</h2>
-                        <p>Vous êtes sur le point de vous séparer du joueur. Confirmez-vous la fin de son contrat ?</p>
-                        <p class="uk-text-right">
-                            <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
-                            <button class="uk-button uk-button-danger"
-                                    onclick="document.getElementById('buyout_form').submit()">
-                                Confirmer
-                            </button>
-                        </p>
-                    </div>
-                </div>
-            </form>
-        </div>
-        {% endif %}
-
-    </div>
+    </form>
 </div>
+{% endif %}
+
+{% if can_buyout %}
+<div>
+    <form id="buyout_form" action="../teams/team?id={{ team.id }}" method="post" autocomplete="off">
+        <input name="player_id_to_buyout" type="hidden" value="{{ player.id }}">
+
+        <button class="uk-button uk-button-danger"
+                type="button"
+                uk-toggle="target: #modal-buyout">Renvoyer</button>
+
+        <div id="modal-buyout" uk-modal>
+            <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                <h2 class="uk-modal-title">Renvoi de #{{ number }} {{ player.name }} - {{ player.position.name("fr") }}</h2>
+                <p>Vous êtes sur le point de vous séparer du joueur. Confirmez-vous la fin de son contrat ?</p>
+                <p class="uk-text-right">
+                    <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                    <button class="uk-button uk-button-danger"
+                            onclick="document.getElementById('buyout_form').submit()">
+                        Confirmer
+                    </button>
+                </p>
+            </div>
+        </div>
+    </form>
+</div>
+{% endif %}
+
 {% endblock %}

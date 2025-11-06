@@ -4,106 +4,104 @@
 {{ navigation_bar|escape("none") }}
 {% endblock %}
 
+{% block breadcrumb %}
+{{ breadcrumb|escape("none") }}
+{% endblock %}
+
 {% block body %}
-<div class="uk-section">
-    <div class="uk-container">
+<h2>
+    Compétitions
+</h2>
 
-        <h2>
-            Compétitions
-        </h2>
+{% if competitions_in_progress.len() > 0 %}
+<h3 class="uk-heading-divider">
+    En cours
+</h3>
+<div class="uk-overflow-auto">
+    <table class="uk-table uk-table-striped uk-table-small uk-table-hover">
+        <thead>
+        <tr>
+            <th>Nom</th>
+            <th>Etape</th>
+            <th>Début</th>
+        </tr>
+        </thead>
 
-        {% if competitions_in_progress.len() > 0 %}
-        <h3 class="uk-heading-divider">
-            En cours
-        </h3>
-        <div class="uk-overflow-auto">
-            <table class="uk-table uk-table-striped uk-table-small uk-table-hover">
-                <thead>
-                <tr>
-                    <th>Nom</th>
-                    <th>Etape</th>
-                    <th>Début</th>
-                </tr>
-                </thead>
+        <tbody>
+        {% for competition in competitions_in_progress %}
 
-                <tbody>
-                {% for competition in competitions_in_progress %}
+        {% let competition_url = format!("competitions/competition?id={}", competition.id) %}
 
-                {% let competition_url = format!("competitions/competition?id={}", competition.id) %}
+        <tr>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="{{ competition_url }}">
+                    {{ competition.name() }}
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="{{ competition_url }}">
+                    A venir...
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="{{ competition_url }}">
+                    A venir...
+                </a>
+            </td>
+        </tr>
 
-                <tr>
-                    <td class="uk-table-link">
-                        <a class="uk-link-reset" href="{{ competition_url }}">
-                            {{ competition.name() }}
-                        </a>
-                    </td>
-                    <td class="uk-table-link">
-                        <a class="uk-link-reset" href="{{ competition_url }}">
-                            A venir...
-                        </a>
-                    </td>
-                    <td class="uk-table-link">
-                        <a class="uk-link-reset" href="{{ competition_url }}">
-                            A venir...
-                        </a>
-                    </td>
-                </tr>
-
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% endif %}
-
-        {% if let Some(user_profile) = profile %}
-        <a href="/blood_bowl/competitions/new" class="uk-button uk-button-primary uk-margin-medium-top">
-            Créer une nouvelle compétition
-        </a>
-        {% endif %}
-
-        {% if competitions_closed.len() > 0 %}
-        <h3 class="uk-heading-divider">
-            Passées
-        </h3>
-        <div class="uk-overflow-auto">
-            <table class="uk-table uk-table-striped uk-table-small uk-table-hover">
-                <thead>
-                <tr>
-                    <th>Nom</th>
-                    <th>Vainqueur</th>
-                    <th>Fin</th>
-                </tr>
-                </thead>
-
-                <tbody>
-                {% for competition in competitions_closed %}
-
-                {% let competition_url = format!("competitions/competition?id={}", competition.id) %}
-
-                <tr>
-                    <td class="uk-table-link">
-                        <a class="uk-link-reset" href="{{ competition_url }}">
-                            {{ competition.name }} {{ competition.edition_number }}
-                        </a>
-                    </td>
-                    <td class="uk-table-link">
-                        <a class="uk-link-reset" href="{{ competition_url }}">
-                            A venir...
-                        </a>
-                    </td>
-                    <td class="uk-table-link">
-                        <a class="uk-link-reset" href="{{ competition_url }}">
-                            A venir...
-                        </a>
-                    </td>
-                </tr>
-
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% endif %}
-
-    </div>
+        {% endfor %}
+        </tbody>
+    </table>
 </div>
+{% endif %}
+
+{% if let Some(user_profile) = profile %}
+<a href="/blood_bowl/competitions/new" class="uk-button uk-button-primary uk-margin-medium-top">
+    Créer une nouvelle compétition
+</a>
+{% endif %}
+
+{% if competitions_closed.len() > 0 %}
+<h3 class="uk-heading-divider">
+    Passées
+</h3>
+<div class="uk-overflow-auto">
+    <table class="uk-table uk-table-striped uk-table-small uk-table-hover">
+        <thead>
+        <tr>
+            <th>Nom</th>
+            <th>Vainqueur</th>
+            <th>Fin</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        {% for competition in competitions_closed %}
+
+        {% let competition_url = format!("competitions/competition?id={}", competition.id) %}
+
+        <tr>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="{{ competition_url }}">
+                    {{ competition.name }} {{ competition.edition_number }}
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="{{ competition_url }}">
+                    A venir...
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="{{ competition_url }}">
+                    A venir...
+                </a>
+            </td>
+        </tr>
+
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
 {% endblock %}

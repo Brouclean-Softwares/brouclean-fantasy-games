@@ -4,73 +4,72 @@
 {{ navigation_bar|escape("none") }}
 {% endblock %}
 
+{% block breadcrumb %}
+{{ breadcrumb|escape("none") }}
+{% endblock %}
+
 {% block body %}
-<div class="uk-section">
-    <div class="uk-container">
+<h2>
+    Équipes
+</h2>
 
-        <h2>
-            Equipes
-        </h2>
+<div class="uk-overflow-auto">
+    <table class="uk-table uk-table-striped uk-table-small uk-table-hover">
+        <thead>
+        <tr>
+            <th>Nom</th>
+            <th>Roster</th>
+            <th uk-tooltip="Valeur d'Equipe">VE</th>
+            <th uk-tooltip="Valeur d'Equipe Actuelle">VEA</th>
+            <th>Coach</th>
+        </tr>
+        </thead>
 
-        <div class="uk-overflow-auto">
-            <table class="uk-table uk-table-striped uk-table-small uk-table-hover">
-                <thead>
-                <tr>
-                    <th>Nom</th>
-                    <th>Roster</th>
-                    <th uk-tooltip="Valeur d'Equipe">VE</th>
-                    <th uk-tooltip="Valeur d'Equipe Actuelle">VEA</th>
-                    <th>Coach</th>
-                </tr>
-                </thead>
+        <tbody>
+        {% for team in teams %}
+        <tr>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ team.id }}">
+                    <img src="{{ TeamLogo::from(*team).url }}" width="25" height="25" alt="">
+                    {{ team.name }}
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ team.id }}">
+                    {{ team.roster.name("fr") }}
 
-                <tbody>
-                {% for team in teams %}
-                <tr>
-                    <td class="uk-table-link">
-                        <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ team.id }}">
-                            <img src="{{ TeamLogo::from(*team).url }}" width="25" height="25" alt="">
-                            {{ team.name }}
-                        </a>
-                    </td>
-                    <td class="uk-table-link">
-                        <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ team.id }}">
-                            {{ team.roster.name("fr") }}
-
-                            {% if team.version.ne(&Version::LAST_VERSION) %}
-                            <span> ({{ team.version.type_name() }})</span>
-                            {% endif %}
-                        </a>
-                    </td>
-                    <td class="uk-table-link">
-                        <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ team.id }}">
-                            {{ team.value / 1000 }}k
-                        </a>
-                    </td>
-                    <td class="uk-table-link">
-                        <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ team.id }}">
-                            {{ team.current_value / 1000 }}k
-                        </a>
-                    </td>
-                    <td>
-                        <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ team.id }}">
-                            {{ team.coach_name }}
-                        </a>
-                    </td>
-                </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        {% if let Some(user_profile) = profile %}
-        <div class="uk-margin-top">
-            <a href="/blood_bowl/rosters" class="uk-button uk-button-primary">
-                Créer une nouvelle équipe
-            </a>
-        </div>
-        {% endif %}
-
-    </div>
+                    {% if team.version.ne(&Version::LAST_VERSION) %}
+                    <span> ({{ team.version.type_name() }})</span>
+                    {% endif %}
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ team.id }}">
+                    {{ team.value / 1000 }}k
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ team.id }}">
+                    {{ team.current_value / 1000 }}k
+                </a>
+            </td>
+            <td>
+                <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ team.id }}">
+                    {{ team.coach_name }}
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
 </div>
+
+{% if let Some(user_profile) = profile %}
+<div class="uk-margin-top">
+    <a href="/blood_bowl/rosters" class="uk-button uk-button-primary">
+        Créer une nouvelle équipe
+    </a>
+</div>
+{% endif %}
+
 {% endblock %}

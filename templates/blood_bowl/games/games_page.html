@@ -4,40 +4,40 @@
 {{ navigation_bar|escape("none") }}
 {% endblock %}
 
+{% block breadcrumb %}
+{{ breadcrumb|escape("none") }}
+{% endblock %}
+
 {% block body %}
-<div class="uk-section" x-data="{ tab: 'sheet' }">
-    <div class="uk-container">
 
-        <h2>
-            Matchs
-        </h2>
+<h2>
+    Matchs
+</h2>
 
-        {% if games_playing.len() > 0 %}
-        <h3 class="uk-heading-divider">
-            Matchs en cours
-        </h3>
-        <div class="uk-grid-divider uk-child-width-1-1" uk-grid>
-            {% for game in games_playing %}
-            {{ GameCard::get(game.clone())|escape("none") }}
-            {% endfor %}
-        </div>
-        {% endif %}
-
-        {% if can_create %}
-        <a href="/blood_bowl/games/new" class="uk-button uk-button-primary uk-margin-medium-top">
-            Créer un match amical
-        </a>
-        {% endif %}
-
-        <h3 class="uk-heading-divider">
-            Matchs passés
-        </h3>
-        <div class="uk-grid-divider uk-child-width-1-1" uk-grid>
-            {% for game in games_played %}
-            {{ GameCard::get(game.clone())|escape("none") }}
-            {% endfor %}
-        </div>
-
-    </div>
+{% if games_playing.len() > 0 %}
+<h3 class="uk-heading-divider">
+    Matchs en cours
+</h3>
+<div class="uk-grid-divider uk-child-width-1-1" uk-grid>
+    {% for game in games_playing %}
+    {{ GameCard::get(game.clone())|escape("none") }}
+    {% endfor %}
 </div>
+{% endif %}
+
+{% if can_create %}
+<a href="/blood_bowl/games/new" class="uk-button uk-button-primary uk-margin-medium-top">
+    Créer un match amical
+</a>
+{% endif %}
+
+<h3 class="uk-heading-divider">
+    Matchs passés
+</h3>
+<div class="uk-grid-divider uk-child-width-1-1" uk-grid>
+    {% for game in games_played %}
+    {{ GameCard::get(game.clone())|escape("none") }}
+    {% endfor %}
+</div>
+
 {% endblock %}

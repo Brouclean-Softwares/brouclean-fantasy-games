@@ -5,20 +5,18 @@
 {% endblock %}
 
 {% block body %}
-<div class="uk-section">
-    <div class="uk-container">
-        {% if let Some(user_profile) = profile %}
 
-        <h2>
-            Bienvenue {{ user_profile.given_name }}
-        </h2>
-        <p>
-            A venir...
-        </p>
+{% if let Some(user_profile) = profile %}
 
-        {% else %}
-        {% include "welcome.html" %}
-        {% endif %}
-    </div>
-</div>
+<h2>
+    Bienvenue {{ user_profile.given_name }}
+</h2>
+<p>
+    A venir...
+</p>
+
+{% else %}
+{% include "welcome.html" %}
+{% endif %}
+
 {% endblock %}
