@@ -76,12 +76,16 @@
 
                     {% let team_standings = teams_standings[team_index] %}
 
-                    <td>
-                        {% if let Some(team_standings) = team_standings %}
-                        <img src="{{ TeamLogo::from(team_standings.team).url }}" width="25" height="25" alt="">
-                        {{ team_standings.team.name }}
-                        {% endif %}
+                    {% if let Some(team_standings) = team_standings %}
+                    <td class="uk-table-link">
+                        <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ team_standings.team.id }}">
+                            <img src="{{ TeamLogo::from(team_standings.team).url }}" width="25" height="25" alt="">
+                            {{ team_standings.team.name }}
+                        </a>
                     </td>
+                    {% else %}
+                    <td></td>
+                    {% endif %}
 
                     {% match stage_standings.stage.stage_type %}
                     {% when CompetitionStageType::Championship %}

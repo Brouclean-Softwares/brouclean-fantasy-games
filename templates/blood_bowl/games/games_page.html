@@ -58,7 +58,7 @@
         {% let game_url = format!("./games/game?id={}", game.id) %}
 
         <tr>
-            <td class="uk-table-link">
+            <td class="uk-table-link uk-text-truncate">
                 <a class="uk-link-reset" href="{{ game_url }}">
                     <img src="{{ TeamLogo::from(game.first_team).url }}" width="25" height="25" alt="">
                     {{ game.first_team.name }}
@@ -73,7 +73,7 @@
                     {% endif %}
                 </a>
             </td>
-            <td class="uk-table-link">
+            <td class="uk-table-link uk-text-truncate">
                 <a class="uk-link-reset" href="{{ game_url }}">
                     <img src="{{ TeamLogo::from(game.second_team).url }}" width="25" height="25" alt="">
                     {{ game.second_team.name }}

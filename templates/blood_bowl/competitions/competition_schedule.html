@@ -27,7 +27,7 @@
                 <tbody>
                 {% for game in round_schedule.games_schedule %}
                 <tr>
-                    <td>
+                    <td class="uk-text-truncate">
                         {% if let Some(ranking_number) = game.home_ranking_number %}
                         <span>#{{ ranking_number }} </span>
                         {% endif %}
@@ -42,7 +42,7 @@
                         <span>{{ score.0 }} - {{ score.1 }}</span>
                         {% endif %}
                     </td>
-                    <td>
+                    <td class="uk-text-truncate">
                         {% if let Some(ranking_number) = game.away_ranking_number %}
                         <span>#{{ ranking_number }} </span>
                         {% endif %}
