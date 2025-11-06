@@ -31,9 +31,16 @@ pub async fn games(
     profile: Option<User>,
 ) -> Result<GamesPage, AppError> {
     let games_playing = games::select_all_playing(&app_state).await?;
+    let games_scheduled = games::select_all_scheduled(&app_state).await?;
     let games_played = games::select_all_played(&app_state).await?;
 
-    GamesPage::get(app_state, profile, games_playing, games_played)
+    GamesPage::get(
+        app_state,
+        profile,
+        games_playing,
+        games_scheduled,
+        games_played,
+    )
 }
 
 #[derive(Deserialize)]

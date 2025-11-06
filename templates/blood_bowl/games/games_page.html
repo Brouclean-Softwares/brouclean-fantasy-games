@@ -16,8 +16,9 @@
 
 {% if games_playing.len() > 0 %}
 <h3 class="uk-heading-divider">
-    Matchs en cours
+    En cours
 </h3>
+
 <div class="uk-grid-divider uk-child-width-1-1" uk-grid>
     {% for game in games_playing %}
     {{ GameCard::get(game.clone())|escape("none") }}
@@ -25,19 +26,65 @@
 </div>
 {% endif %}
 
+<h3 class="uk-heading-divider">
+    Calendrier
+</h3>
+
 {% if can_create %}
-<a href="/blood_bowl/games/new" class="uk-button uk-button-primary uk-margin-medium-top">
+<a href="/blood_bowl/games/new" class="uk-button uk-button-primary">
     Créer un match amical
 </a>
 {% endif %}
 
-<h3 class="uk-heading-divider">
-    Matchs passés
-</h3>
-<div class="uk-grid-divider uk-child-width-1-1" uk-grid>
-    {% for game in games_played %}
-    {{ GameCard::get(game.clone())|escape("none") }}
-    {% endfor %}
+{% for (year, month, games) in games_played_by_year_and_month %}
+<h4 class="uk-heading-divider">
+    {{ crate::app::templates::month_to_fr(month.clone()) }} {{ year }}
+</h4>
+
+<div class="uk-overflow-auto">
+    <table class="uk-table uk-table-striped uk-table-small uk-table-hover uk-table-middle">
+        <thead>
+        <tr>
+            <th class="uk-width-2-5">Domicile</th>
+            <th class="uk-width-1-5">Score</th>
+            <th class="uk-width-2-5">Extérieur</th>
+        </tr>
+        </thead>
+
+        <tbody>
+
+        {% for game in games %}
+
+        {% let game_url = format!("./games/game?id={}", game.id) %}
+
+        <tr>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="{{ game_url }}">
+                    <img src="{{ TeamLogo::from(game.first_team).url }}" width="25" height="25" alt="">
+                    {{ game.first_team.name }}
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="{{ game_url }}">
+                    {% if game.started %}
+                    <span>{{ game.first_team_score }}</span>
+                    <span> - </span>
+                    <span>{{ game.second_team_score }}</span>
+                    {% endif %}
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="{{ game_url }}">
+                    <img src="{{ TeamLogo::from(game.second_team).url }}" width="25" height="25" alt="">
+                    {{ game.second_team.name }}
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+
+        </tbody>
+    </table>
 </div>
+{% endfor %}
 
 {% endblock %}

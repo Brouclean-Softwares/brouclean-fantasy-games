@@ -5,34 +5,32 @@
 {% endblock %}
 
 {% block body %}
-<div class="uk-section">
-    <div class="uk-container">
-        {% if let Some(user_profile) = profile %}
-        <div class="uk-grid-small uk-flex-middle" uk-grid>
-            <div class="uk-width-auto">
-                <img src="{{ user_profile.picture }}" class="uk-border-pill" width="75" height="75" alt="{{ user_profile.name }}">
-            </div>
-            <div class="uk-width-expand">
-                <h2 class="uk-margin-remove-bottom">
-                    {% if is_admin %}
-                        (Administrateur)
-                    {% else %}
-                        {{ user_profile.name }}
-                    {% endif %}
-                </h2>
 
-                <p class="uk-margin-remove-top">
-                    {{ user_profile.email }}
-                </p>
-            </div>
-        </div>
-
-        {% else %}
-
-        <h2>
-            Utilisateur introuvable
+{% if let Some(user_profile) = profile %}
+<div class="uk-grid-small uk-flex-middle" uk-grid>
+    <div class="uk-width-auto">
+        <img src="{{ user_profile.picture }}" class="uk-border-pill" width="75" height="75" alt="{{ user_profile.name }}">
+    </div>
+    <div class="uk-width-expand">
+        <h2 class="uk-margin-remove-bottom">
+            {% if is_admin %}
+                (Administrateur)
+            {% else %}
+                {{ user_profile.name }}
+            {% endif %}
         </h2>
-        {% endif %}
+
+        <p class="uk-margin-remove-top">
+            {{ user_profile.email }}
+        </p>
     </div>
 </div>
+
+{% else %}
+
+<h2>
+    Utilisateur introuvable
+</h2>
+{% endif %}
+
 {% endblock %}

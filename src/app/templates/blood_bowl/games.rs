@@ -14,6 +14,7 @@ use blood_bowl_rs::players::{Player, PlayerStatistics};
 use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::translation::TranslatedName;
 use blood_bowl_rs::weather::Weather;
+use chrono::Datelike;
 
 pub mod events;
 
@@ -27,7 +28,7 @@ pub struct GamesPage {
     navigation_bar: NavigationBar,
     breadcrumb: BreadCrumb,
     games_playing: Vec<GameSummary>,
-    games_played: Vec<GameSummary>,
+    games_played_by_year_and_month: Vec<(i32, u32, Vec<GameSummary>)>,
     can_create: bool,
 }
 
@@ -36,13 +37,43 @@ impl GamesPage {
         app_state: AppState,
         profile: Option<User>,
         games_playing: Vec<GameSummary>,
+        games_scheduled: Vec<GameSummary>,
         games_played: Vec<GameSummary>,
     ) -> Result<Self, AppError> {
+        let mut other_games = games_scheduled;
+        other_games.extend(games_played);
+
+        let mut games_played_by_year_and_month = Vec::new();
+
+        if other_games.len() > 0 {
+            let mut games_in_same_month = (
+                other_games[0].game_at.year(),
+                other_games[0].game_at.month(),
+                Vec::new(),
+            );
+
+            for game in other_games {
+                if game.game_at.year().ne(&games_in_same_month.0)
+                    || game.game_at.month().ne(&games_in_same_month.1)
+                {
+                    if games_in_same_month.2.len() > 0 {
+                        games_played_by_year_and_month.push(games_in_same_month);
+                    }
+
+                    games_in_same_month = (game.game_at.year(), game.game_at.month(), Vec::new());
+                }
+
+                games_in_same_month.2.push(game);
+            }
+
+            games_played_by_year_and_month.push(games_in_same_month);
+        }
+
         Ok(Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
             breadcrumb: blood_bowl::breadcrumb(),
             games_playing,
-            games_played,
+            games_played_by_year_and_month,
             can_create: profile.is_some(),
         })
     }

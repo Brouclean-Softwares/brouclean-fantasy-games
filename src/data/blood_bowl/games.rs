@@ -144,6 +144,43 @@ impl GameRow {
     }
 }
 
+pub async fn select_all_scheduled(state: &AppState) -> Result<Vec<GameSummary>, AppError> {
+    tracing::debug!("select_all_scheduled");
+
+    let game_rows: Vec<GameRow> = sqlx::query_as(
+        "SELECT id,
+                    version,
+                    created_by,
+                    game_at,
+                    started_at IS NOT NULL AS started,
+                    closed_at IS NOT NULL AS closed,
+                    first_team_id,
+                    first_team_score,
+                    first_team_casualties,
+                    first_team_is_winner,
+                    second_team_id,
+                    second_team_score,
+                    second_team_casualties,
+                    second_team_is_winner,
+                    events,
+                    playing_players
+            FROM bb_games
+            WHERE closed_at IS NULL
+            AND started_at IS NULL
+            ORDER BY game_at DESC",
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    let mut games = Vec::with_capacity(game_rows.len());
+
+    for game in game_rows {
+        games.push(game.into_game_summary(state).await?);
+    }
+
+    Ok(games)
+}
+
 pub async fn select_all_played(state: &AppState) -> Result<Vec<GameSummary>, AppError> {
     tracing::debug!("select_all_played");
 
