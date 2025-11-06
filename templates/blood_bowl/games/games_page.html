@@ -46,8 +46,8 @@
         <thead>
         <tr>
             <th class="uk-width-2-5">Domicile</th>
-            <th class="uk-width-1-5">Score</th>
-            <th class="uk-width-2-5">Extérieur</th>
+            <th class="uk-width-1-5 uk-text-center">Score</th>
+            <th class="uk-width-2-5 uk-text-right">Extérieur</th>
         </tr>
         </thead>
 
@@ -64,7 +64,7 @@
                     {{ game.first_team.name }}
                 </a>
             </td>
-            <td class="uk-table-link">
+            <td class="uk-table-link uk-text-center">
                 <a class="uk-link-reset" href="{{ game_url }}">
                     {% if game.started %}
                     <span>{{ game.first_team_score }}</span>
@@ -73,7 +73,7 @@
                     {% endif %}
                 </a>
             </td>
-            <td class="uk-table-link uk-text-truncate">
+            <td class="uk-table-link uk-text-truncate uk-text-right">
                 <a class="uk-link-reset" href="{{ game_url }}">
                     <img src="{{ TeamLogo::from(game.second_team).url }}" width="25" height="25" alt="">
                     {{ game.second_team.name }}
