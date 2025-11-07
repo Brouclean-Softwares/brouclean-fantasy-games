@@ -46,7 +46,10 @@
         <thead>
         <tr>
             <th class="uk-width-2-5">Domicile</th>
-            <th class="uk-width-1-5 uk-text-center">Score</th>
+            <th class="uk-width-1-5 uk-text-center">
+                <span>Score</span>
+                <span class="uk-visible@m"> & ELI</span>
+            </th>
             <th class="uk-width-2-5 uk-text-right">Extérieur</th>
         </tr>
         </thead>
@@ -67,9 +70,9 @@
             <td class="uk-table-link uk-text-center">
                 <a class="uk-link-reset" href="{{ game_url }}">
                     {% if game.started %}
-                    <span>{{ game.first_team_score }}</span>
-                    <span> - </span>
-                    <span>{{ game.second_team_score }}</span>
+                    <span>{{ game.first_team_score }} - {{ game.second_team_score }}</span>
+                    <br class="uk-text-meta uk-text-small">
+                    <span class="uk-text-meta uk-text-small">({{ game.first_team_casualties }} - {{ game.second_team_casualties }})</span>
                     {% endif %}
                 </a>
             </td>

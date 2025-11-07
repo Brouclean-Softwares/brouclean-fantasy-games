@@ -116,6 +116,17 @@ impl GameSchedule {
         }
     }
 
+    pub fn casualties(&self) -> Option<(usize, usize)> {
+        if let Some(game_summary) = &self.game_summary {
+            Some((
+                game_summary.first_team_casualties as usize,
+                game_summary.second_team_casualties as usize,
+            ))
+        } else {
+            None
+        }
+    }
+
     pub fn winner(&self) -> Option<TeamSummary> {
         if let Some(game_summary) = &self.game_summary {
             game_summary.winner()
