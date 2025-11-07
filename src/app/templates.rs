@@ -1,5 +1,6 @@
 use crate::app::templates::blood_bowl::games::GameCard;
 use crate::app::templates::blood_bowl::games::GamesScheduleTable;
+use crate::app::templates::blood_bowl::teams::OwnedTeamsBlock;
 use crate::data::blood_bowl::games::GameSummary;
 use crate::data::users::User;
 use crate::AppState;
@@ -19,6 +20,7 @@ pub struct HomePage {
     google_connection_url: String,
     bb_playing_games: Vec<GameSummary>,
     bb_scheduled_games: Vec<GameSummary>,
+    bb_owned_teams_block: Option<OwnedTeamsBlock>,
 }
 
 impl HomePage {
@@ -45,12 +47,19 @@ impl HomePage {
             Vec::new()
         };
 
+        let bb_owned_teams_block = if let Some(connected_user) = &profile {
+            OwnedTeamsBlock::get(&app_state, connected_user).await.ok()
+        } else {
+            None
+        };
+
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
             profile,
             google_connection_url: crate::auth::google::connection_url(app_state),
             bb_playing_games,
             bb_scheduled_games,
+            bb_owned_teams_block,
         }
     }
 }
