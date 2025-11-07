@@ -88,7 +88,7 @@
             <span class="uk-text-large">{{ game.title.clone().unwrap_or("Match amical".to_string()) }}</span>
         </div>
 
-        {% if editable && !game.pre_game_sequence_is_finished() %}
+        {% if deletable && !game.pre_game_sequence_is_finished() %}
         <div class="uk-width-1-1 uk-text-center uk-margin">
             <form id="delete_form" action="./delete" method="post" autocomplete="off">
                 <input id="id" name="id" type="hidden" value="{{ game.id }}">
@@ -157,6 +157,24 @@
 
             {% else %}
                 {{ game_date }}
+
+                {% if editable && !game.closed && game.events.len() <= 0 %}
+                <form method="post" autocomplete="off">
+                    <input name="game_id"
+                           type="hidden"
+                           value="{{ game.id }}">
+
+                    <input name="cancel_start"
+                           type="hidden"
+                           value="true">
+
+                    <br>
+
+                    <button class="uk-button uk-button-danger">
+                        Annuler le démarrage
+                    </button>
+                </form>
+                {% endif %}
         {% endmatch %}
             <br>
             <span class="uk-text-default">{{ game_status }}</span>

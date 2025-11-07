@@ -66,6 +66,7 @@ pub struct GameForm {
     pub game_id: i32,
     pub game_at: Option<String>,
     pub started_at: Option<String>,
+    pub cancel_start: Option<bool>,
     pub cancel_last_event: Option<bool>,
     pub auto: Option<bool>,
     pub first_team_fan_factor: Option<String>,
@@ -156,6 +157,15 @@ pub async fn update(
         game.start();
 
         games::update_start(&app_state, &profile, &game)
+            .await
+            .map_err(|err| {
+                redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())
+            })?;
+    }
+
+    // Cancel start
+    if form.cancel_start.is_some() {
+        games::cancel_start(&app_state, &profile, &game)
             .await
             .map_err(|err| {
                 redirect_when_update_ko(&app_state, &profile, Some(&game), err.to_string())

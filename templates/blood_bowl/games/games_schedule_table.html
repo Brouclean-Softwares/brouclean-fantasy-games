@@ -17,7 +17,7 @@
         <tr>
             <td class="uk-text-truncate">
                 {% if let Some(game_summary) = game.game_summary %}
-                {% let game_url = format!("./games/game?id={}", game_summary.id) %}
+                {% let game_url = format!("/blood_bowl/games/game?id={}", game_summary.id) %}
                 <a class="uk-link-reset" href="{{ game_url }}">
                 {% endif %}
                     
@@ -36,23 +36,23 @@
             </td>
             <td class=" uk-text-center">
                 {% if let Some(game_summary) = game.game_summary %}
-                {% let game_url = format!("./games/game?id={}", game_summary.id) %}
+                {% let game_url = format!("/blood_bowl/games/game?id={}", game_summary.id) %}
                 <a class="uk-link-reset" href="{{ game_url }}">
-                {% endif %}
                     
-                    {% if let (Some(score), Some(casualties)) = (game.score(), game.casualties()) %}
-                    <span>{{ score.0 }} - {{ score.1 }}</span>
-                    <br class="uk-text-meta uk-text-small">
-                    <span class="uk-text-meta uk-text-small">{{ casualties.0 }} - {{ casualties.1 }}</span>
+                    {% if game_summary.started %}
+                    <span>{{ game_summary.first_team_score }} - {{ game_summary.second_team_score }}</span>
+                    <br class="uk-text-meta">
+                    <span class="uk-text-meta">{{ game_summary.first_team_casualties }} - {{ game_summary.second_team_casualties }}</span>
+                    {% else %}
+                    <span class="uk-text-meta">{{ game_summary.game_at.format("%d/%m/%Y à %H:%M").to_string() }}</span>
                     {% endif %}
                 
-                {% if let Some(game_summary) = game.game_summary %}
                 </a>
                 {% endif %}
             </td>
             <td class="uk-text-truncate uk-text-right">
                 {% if let Some(game_summary) = game.game_summary %}
-                {% let game_url = format!("./games/game?id={}", game_summary.id) %}
+                {% let game_url = format!("/blood_bowl/games/game?id={}", game_summary.id) %}
                 <a class="uk-link-reset" href="{{ game_url }}">
                 {% endif %}
                     

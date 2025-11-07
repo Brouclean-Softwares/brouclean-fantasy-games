@@ -120,10 +120,14 @@ impl GameSchedule {
 
     pub fn score(&self) -> Option<(usize, usize)> {
         if let Some(game_summary) = &self.game_summary {
-            Some((
-                game_summary.first_team_score as usize,
-                game_summary.second_team_score as usize,
-            ))
+            if game_summary.started {
+                Some((
+                    game_summary.first_team_score as usize,
+                    game_summary.second_team_score as usize,
+                ))
+            } else {
+                None
+            }
         } else {
             None
         }
@@ -131,10 +135,14 @@ impl GameSchedule {
 
     pub fn casualties(&self) -> Option<(usize, usize)> {
         if let Some(game_summary) = &self.game_summary {
-            Some((
-                game_summary.first_team_casualties as usize,
-                game_summary.second_team_casualties as usize,
-            ))
+            if game_summary.started {
+                Some((
+                    game_summary.first_team_casualties as usize,
+                    game_summary.second_team_casualties as usize,
+                ))
+            } else {
+                None
+            }
         } else {
             None
         }

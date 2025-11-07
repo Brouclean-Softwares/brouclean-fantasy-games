@@ -31,18 +31,11 @@
 </h3>
 
 {% if can_create %}
-<a href="/blood_bowl/games/new" class="uk-button uk-button-primary">
+<a href="/blood_bowl/games/new" class="uk-button uk-button-primary uk-margin-medium-bottom">
     Créer un match amical
 </a>
 {% endif %}
 
-{% for (year, month, games) in games_played_by_year_and_month %}
-<h4 class="uk-heading-divider">
-    {{ crate::app::templates::month_to_fr(month.clone()) }} {{ year }}
-</h4>
-
-{{ GamesScheduleTable::from_games_summary(games.clone())|escape("none") }}
-
-{% endfor %}
+{{ GamesByYearAndMonth::from_games_summary(other_games.clone())|escape("none") }}
 
 {% endblock %}

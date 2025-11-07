@@ -1,3 +1,6 @@
+use crate::app::templates::blood_bowl::games::GameCard;
+use crate::app::templates::blood_bowl::games::GamesScheduleTable;
+use crate::data::blood_bowl::games::GameSummary;
 use crate::data::users::User;
 use crate::AppState;
 use askama::Template;
@@ -14,14 +17,40 @@ pub struct HomePage {
     navigation_bar: NavigationBar,
     profile: Option<User>,
     google_connection_url: String,
+    bb_playing_games: Vec<GameSummary>,
+    bb_scheduled_games: Vec<GameSummary>,
 }
 
 impl HomePage {
-    pub fn get(app_state: AppState, profile: Option<User>) -> Self {
+    pub async fn get(app_state: AppState, profile: Option<User>) -> Self {
+        let bb_playing_games = if let Ok(games) =
+            crate::data::blood_bowl::games::select_all_playing(&app_state).await
+        {
+            games
+        } else {
+            Vec::new()
+        };
+
+        let bb_scheduled_games = if let Some(coach_id) = profile.clone().and_then(|coach| coach.id)
+        {
+            if let Ok(games) =
+                crate::data::blood_bowl::games::select_scheduled_for_coach(&app_state, &coach_id)
+                    .await
+            {
+                games
+            } else {
+                Vec::new()
+            }
+        } else {
+            Vec::new()
+        };
+
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
             profile,
             google_connection_url: crate::auth::google::connection_url(app_state),
+            bb_playing_games,
+            bb_scheduled_games,
         }
     }
 }

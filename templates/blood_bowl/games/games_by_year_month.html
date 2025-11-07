@@ -1,0 +1,10 @@
+<div>
+    {% for (year, month, games) in games_by_year_and_month %}
+    <h4 class="uk-heading-divider">
+        {{ crate::app::templates::month_to_fr(month.clone()) }} {{ year }}
+    </h4>
+    
+    {{ GamesScheduleTable::from_games_summary(games.clone())|escape("none") }}
+    
+    {% endfor %}
+</div>

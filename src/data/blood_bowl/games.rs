@@ -401,6 +401,96 @@ pub async fn select_playing_by_team(
     }
 }
 
+pub async fn select_scheduled_for_coach(
+    state: &AppState,
+    coach_id: &i32,
+) -> Result<Vec<GameSummary>, AppError> {
+    tracing::debug!("select_scheduled_for_coach for coach_id={:?}", coach_id);
+
+    let game_rows: Vec<GameRow> = sqlx::query_as(
+        "SELECT bb_games.id,
+                    bb_competitions_stages_schedule.game_title as title,
+                    bb_games.version,
+                    bb_games.created_by,
+                    bb_games.game_at,
+                    bb_games.started_at IS NOT NULL AS started,
+                    bb_games.closed_at IS NOT NULL AS closed,
+                    bb_games.first_team_id,
+                    bb_games.first_team_score,
+                    bb_games.first_team_casualties,
+                    bb_games.first_team_is_winner,
+                    bb_games.second_team_id,
+                    bb_games.second_team_score,
+                    bb_games.second_team_casualties,
+                    bb_games.second_team_is_winner,
+                    bb_games.events,
+                    bb_games.playing_players
+            FROM bb_games
+            LEFT JOIN bb_competitions_stages_schedule
+            ON bb_competitions_stages_schedule.game_id = bb_games.id
+            WHERE bb_games.closed_at IS NULL
+            AND bb_games.started_at IS NULL
+            AND (bb_games.first_coach_id = $1 OR bb_games.second_coach_id = $1)
+            ORDER BY bb_games.game_at ASC",
+    )
+    .bind(coach_id.clone())
+    .fetch_all(&state.db)
+    .await?;
+
+    let mut games = Vec::with_capacity(game_rows.len());
+
+    for game in game_rows {
+        games.push(game.into_game_summary(state).await?);
+    }
+
+    Ok(games)
+}
+
+pub async fn select_playing_by_coach(
+    state: &AppState,
+    coach_id: i32,
+) -> Result<Option<GameSummary>, AppError> {
+    tracing::debug!("select_playing_by_coach for coach_id={:?}", coach_id);
+
+    let game_row: Option<GameRow> = sqlx::query_as(
+        "SELECT bb_games.id,
+                    bb_competitions_stages_schedule.game_title as title,
+                    bb_games.version,
+                    bb_games.created_by,
+                    bb_games.game_at,
+                    bb_games.started_at IS NOT NULL AS started,
+                    bb_games.closed_at IS NOT NULL AS closed,
+                    bb_games.first_team_id,
+                    bb_games.first_team_score,
+                    bb_games.first_team_casualties,
+                    bb_games.first_team_is_winner,
+                    bb_games.second_team_id,
+                    bb_games.second_team_score,
+                    bb_games.second_team_casualties,
+                    bb_games.second_team_is_winner,
+                    bb_games.events,
+                    bb_games.playing_players
+            FROM bb_games
+            LEFT JOIN bb_competitions_stages_schedule
+            ON bb_competitions_stages_schedule.game_id = bb_games.id
+            WHERE bb_games.closed_at IS NULL
+            AND bb_games.started_at IS NOT NULL
+            AND (bb_games.first_coach_id = $1 OR bb_games.second_coach_id = $1)
+            ORDER BY bb_games.started_at
+            LIMIT 1",
+    )
+    .bind(coach_id.clone())
+    .fetch_optional(&state.db)
+    .await?;
+
+    if let Some(game_summary) = game_row {
+        let game = game_summary.into_game_summary(state).await?;
+        Ok(Some(game))
+    } else {
+        Ok(None)
+    }
+}
+
 pub async fn is_last_for_team(
     state: &AppState,
     game_id: &i32,
@@ -810,6 +900,30 @@ pub async fn update_start(state: &AppState, profile: &User, game: &Game) -> Resu
     Ok(())
 }
 
+pub async fn cancel_start(state: &AppState, profile: &User, game: &Game) -> Result<(), AppError> {
+    tracing::debug!(
+        "cancel_start by coach_id={:?} for game_id {}",
+        profile.id,
+        game.id
+    );
+
+    let _ = can_be_saved(state, profile, &game).await?;
+
+    sqlx::query(
+        "UPDATE bb_games
+            SET started_at = NULL,
+                playing_players = NULL
+            WHERE id = $1
+            AND (created_by = $2 OR first_coach_id = $2 OR second_coach_id = $2)",
+    )
+    .bind(game.id.clone())
+    .bind(profile.id.unwrap_or(-1).clone())
+    .execute(&state.db)
+    .await?;
+
+    Ok(())
+}
+
 pub async fn update_after_event(
     state: &AppState,
     profile: &User,
@@ -1117,12 +1231,9 @@ pub async fn delete(state: &AppState, profile: &User, game_id: i32) -> Result<()
 
     let mut game = select_by_id(state, game_id).await?;
 
-    if profile.ne(&game.first_team.coach)
-        && profile.ne(&game.second_team.coach)
-        && profile.ne(&game.created_by)
-    {
+    if profile.ne(&game.created_by) {
         return Err(BloodBowlAppError(
-            "Seuls les coachs des équipes ou le créateur du match peuvent supprimer !".to_string(),
+            "Seul le créateur du match peut supprimer !".to_string(),
         ));
     }
 

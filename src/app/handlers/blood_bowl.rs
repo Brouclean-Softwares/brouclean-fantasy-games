@@ -27,7 +27,7 @@ pub async fn home(
     profile: Option<User>,
 ) -> Result<blood_bowl::HomePage, Redirect> {
     if let Some(connected_user) = profile {
-        let home_page = blood_bowl::HomePage::get(app_state, connected_user)
+        let home_page = blood_bowl::HomePage::get(&app_state, &connected_user)
             .await
             .or_else(|_| Err(Redirect::to("/")))?;
 

@@ -69,7 +69,7 @@ pub async fn callback(
 
     Ok((
         jar.add(cookie),
-        HomePage::get(app_state, Some(user_profile)),
+        HomePage::get(app_state, Some(user_profile)).await,
     ))
 }
 

@@ -11,9 +11,30 @@
 <h2>
     Bienvenue {{ user_profile.given_name }}
 </h2>
-<p>
-    A venir...
-</p>
+
+<h3>
+    <a class="uk-link-reset" href="/blood_bowl">
+        Blood Bowl
+    </a>
+</h3>
+
+{% if bb_playing_games.len() > 0 %}
+<h4 class="uk-heading-divider">
+    Matchs en cours
+</h4>
+
+<div class="uk-grid-divider uk-child-width-1-1" uk-grid>
+    {% for game in bb_playing_games %}
+    {{ GameCard::get(game.clone())|escape("none") }}
+    {% endfor %}
+</div>
+{% endif %}
+
+<h4 class="uk-heading-divider">
+    Mes matchs à venir
+</h4>
+
+{{ GamesScheduleTable::from_games_summary(bb_scheduled_games.clone())|escape("none") }}
 
 {% else %}
 {% include "welcome.html" %}

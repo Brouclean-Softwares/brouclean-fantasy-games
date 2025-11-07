@@ -13,10 +13,23 @@
     Blood Bowl
 </h2>
 
+{% if playing_games.len() > 0 %}
 <h3 class="uk-heading-divider">
-    Derniers matchs
+    Matchs en cours
 </h3>
-<p>A venir...</p>
+
+<div class="uk-grid-divider uk-child-width-1-1" uk-grid>
+    {% for game in playing_games %}
+    {{ GameCard::get(game.clone())|escape("none") }}
+    {% endfor %}
+</div>
+{% endif %}
+
+<h3 class="uk-heading-divider">
+    Mes matchs à venir
+</h3>
+
+{{ GamesScheduleTable::from_games_summary(scheduled_games.clone())|escape("none") }}
 
 <div class="uk-margin-top">
     <a href="/blood_bowl/games/new" class="uk-button uk-button-primary">
@@ -27,5 +40,7 @@
 <h3 class="uk-heading-divider">
     Mes équipes
 </h3>
+
 {{ owned_teams_block|escape("none") }}
+
 {% endblock %}

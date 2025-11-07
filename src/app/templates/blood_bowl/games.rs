@@ -29,7 +29,7 @@ pub struct GamesPage {
     navigation_bar: NavigationBar,
     breadcrumb: BreadCrumb,
     games_playing: Vec<GameSummary>,
-    games_played_by_year_and_month: Vec<(i32, u32, Vec<GameSummary>)>,
+    other_games: Vec<GameSummary>,
     can_create: bool,
 }
 
@@ -44,37 +44,11 @@ impl GamesPage {
         let mut other_games = games_scheduled;
         other_games.extend(games_played);
 
-        let mut games_played_by_year_and_month = Vec::new();
-
-        if other_games.len() > 0 {
-            let mut games_in_same_month = (
-                other_games[0].game_at.year(),
-                other_games[0].game_at.month(),
-                Vec::new(),
-            );
-
-            for game in other_games {
-                if game.game_at.year().ne(&games_in_same_month.0)
-                    || game.game_at.month().ne(&games_in_same_month.1)
-                {
-                    if games_in_same_month.2.len() > 0 {
-                        games_played_by_year_and_month.push(games_in_same_month);
-                    }
-
-                    games_in_same_month = (game.game_at.year(), game.game_at.month(), Vec::new());
-                }
-
-                games_in_same_month.2.push(game);
-            }
-
-            games_played_by_year_and_month.push(games_in_same_month);
-        }
-
         Ok(Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
             breadcrumb: blood_bowl::breadcrumb(),
             games_playing,
-            games_played_by_year_and_month,
+            other_games,
             can_create: profile.is_some(),
         })
     }
@@ -88,6 +62,7 @@ pub struct GamePage {
     breadcrumb: BreadCrumb,
     tab_displayed: String,
     game: Game,
+    deletable: bool,
     editable: bool,
     edit_mode: bool,
     score: (usize, usize),
@@ -119,11 +94,14 @@ impl GamePage {
         edit_mode: bool,
     ) -> Result<Self, AppError> {
         let mut editable = false;
+        let mut deletable = false;
 
         if let Some(connected_user) = profile.clone() {
             editable = connected_user.is_option_coach(&game.created_by)
                 || connected_user.is_coach(&game.first_team.coach)
                 || connected_user.is_coach(&game.second_team.coach);
+
+            deletable = connected_user.is_option_coach(&game.created_by);
         }
 
         let tab_displayed: String = "game".to_string();
@@ -158,6 +136,7 @@ impl GamePage {
             breadcrumb: breadcrumb(),
             tab_displayed,
             game: game.clone(),
+            deletable,
             editable,
             edit_mode,
             score,
@@ -273,5 +252,45 @@ impl GamesScheduleTable {
         }
 
         Self { games }
+    }
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "blood_bowl/games/games_by_year_month.html")]
+pub struct GamesByYearAndMonth {
+    games_by_year_and_month: Vec<(i32, u32, Vec<GameSummary>)>,
+}
+
+impl GamesByYearAndMonth {
+    pub fn from_games_summary(games_summary: Vec<GameSummary>) -> Self {
+        let mut games_by_year_and_month = Vec::new();
+
+        if games_summary.len() > 0 {
+            let mut games_in_same_month = (
+                games_summary[0].game_at.year(),
+                games_summary[0].game_at.month(),
+                Vec::new(),
+            );
+
+            for game in games_summary {
+                if game.game_at.year().ne(&games_in_same_month.0)
+                    || game.game_at.month().ne(&games_in_same_month.1)
+                {
+                    if games_in_same_month.2.len() > 0 {
+                        games_by_year_and_month.push(games_in_same_month);
+                    }
+
+                    games_in_same_month = (game.game_at.year(), game.game_at.month(), Vec::new());
+                }
+
+                games_in_same_month.2.push(game);
+            }
+
+            games_by_year_and_month.push(games_in_same_month);
+        }
+
+        Self {
+            games_by_year_and_month,
+        }
     }
 }
