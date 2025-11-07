@@ -41,53 +41,8 @@
     {{ crate::app::templates::month_to_fr(month.clone()) }} {{ year }}
 </h4>
 
-<div class="uk-overflow-auto">
-    <table class="uk-table uk-table-striped uk-table-small uk-table-hover uk-table-middle">
-        <thead>
-        <tr>
-            <th class="uk-width-2-5">Domicile</th>
-            <th class="uk-width-1-5 uk-text-center">
-                <span>Score</span>
-                <span class="uk-visible@m"> & ELI</span>
-            </th>
-            <th class="uk-width-2-5 uk-text-right">Extérieur</th>
-        </tr>
-        </thead>
+{{ GamesScheduleTable::from_games_summary(games.clone())|escape("none") }}
 
-        <tbody>
-
-        {% for game in games %}
-
-        {% let game_url = format!("./games/game?id={}", game.id) %}
-
-        <tr>
-            <td class="uk-table-link uk-text-truncate">
-                <a class="uk-link-reset" href="{{ game_url }}">
-                    <img src="{{ TeamLogo::from(game.first_team).url }}" width="25" height="25" alt="">
-                    {{ game.first_team.name }}
-                </a>
-            </td>
-            <td class="uk-table-link uk-text-center">
-                <a class="uk-link-reset" href="{{ game_url }}">
-                    {% if game.started %}
-                    <span>{{ game.first_team_score }} - {{ game.second_team_score }}</span>
-                    <br class="uk-text-meta uk-text-small">
-                    <span class="uk-text-meta uk-text-small">({{ game.first_team_casualties }} - {{ game.second_team_casualties }})</span>
-                    {% endif %}
-                </a>
-            </td>
-            <td class="uk-table-link uk-text-truncate uk-text-right">
-                <a class="uk-link-reset" href="{{ game_url }}">
-                    <img src="{{ TeamLogo::from(game.second_team).url }}" width="25" height="25" alt="">
-                    {{ game.second_team.name }}
-                </a>
-            </td>
-        </tr>
-        {% endfor %}
-
-        </tbody>
-    </table>
-</div>
 {% endfor %}
 
 {% endblock %}

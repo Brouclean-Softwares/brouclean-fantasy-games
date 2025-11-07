@@ -1,3 +1,4 @@
+use crate::app::templates::blood_bowl::games::GamesScheduleTable;
 use crate::app::templates::blood_bowl::teams::TeamSelector;
 use crate::app::templates::{blood_bowl, AlertMessage, BreadCrumb, NavigationBar, UrlLink};
 use crate::data::blood_bowl::competitions::registrations::TeamRegistration;

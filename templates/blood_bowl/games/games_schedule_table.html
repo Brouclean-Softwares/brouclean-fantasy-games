@@ -1,0 +1,77 @@
+<div class="uk-overflow-auto">
+    <table class="uk-table uk-table-striped uk-table-small uk-table-hover uk-table-middle">
+        <thead>
+        <tr>
+            <th class="uk-width-2-5">Domicile</th>
+            <th class="uk-width-1-5 uk-text-center">
+                <span>Score</span>
+                <span class="uk-visible@m"> & ELI</span>
+            </th>
+            <th class="uk-width-2-5 uk-text-right">Extérieur</th>
+        </tr>
+        </thead>
+
+        <tbody>
+
+        {% for game in games %}
+        <tr>
+            <td class="uk-text-truncate">
+                {% if let Some(game_summary) = game.game_summary %}
+                {% let game_url = format!("./games/game?id={}", game_summary.id) %}
+                <a class="uk-link-reset" href="{{ game_url }}">
+                {% endif %}
+                    
+                    {% if let Some(ranking_number) = game.home_ranking_number %}
+                    <span class="uk-text-meta">#{{ ranking_number }} </span>
+                    {% endif %}
+    
+                    {% if let Some(team) = game.home_team %}
+                    <img src="{{ TeamLogo::from(*team).url }}" width="25" height="25" alt="">
+                    {{ team.name }}
+                    {% endif %}
+                    
+                {% if let Some(game_summary) = game.game_summary %}
+                </a>
+                {% endif %}
+            </td>
+            <td class=" uk-text-center">
+                {% if let Some(game_summary) = game.game_summary %}
+                {% let game_url = format!("./games/game?id={}", game_summary.id) %}
+                <a class="uk-link-reset" href="{{ game_url }}">
+                {% endif %}
+                    
+                    {% if let (Some(score), Some(casualties)) = (game.score(), game.casualties()) %}
+                    <span>{{ score.0 }} - {{ score.1 }}</span>
+                    <br class="uk-text-meta uk-text-small">
+                    <span class="uk-text-meta uk-text-small">{{ casualties.0 }} - {{ casualties.1 }}</span>
+                    {% endif %}
+                
+                {% if let Some(game_summary) = game.game_summary %}
+                </a>
+                {% endif %}
+            </td>
+            <td class="uk-text-truncate uk-text-right">
+                {% if let Some(game_summary) = game.game_summary %}
+                {% let game_url = format!("./games/game?id={}", game_summary.id) %}
+                <a class="uk-link-reset" href="{{ game_url }}">
+                {% endif %}
+                    
+                    {% if let Some(ranking_number) = game.away_ranking_number %}
+                    <span class="uk-text-meta">#{{ ranking_number }} </span>
+                    {% endif %}
+    
+                    {% if let Some(team) = game.away_team %}
+                    <img src="{{ TeamLogo::from(*team).url }}" width="25" height="25" alt="">
+                    {{ team.name }}
+                    {% endif %}
+
+                {% if let Some(game_summary) = game.game_summary %}
+                </a>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+
+        </tbody>
+    </table>
+</div>

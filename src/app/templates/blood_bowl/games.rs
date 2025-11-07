@@ -1,6 +1,7 @@
 use crate::app::templates::blood_bowl::games::events::{EventsController, GameEvents};
 use crate::app::templates::blood_bowl::teams::{TeamCard, TeamSelector};
 use crate::app::templates::{blood_bowl, AlertMessage, BreadCrumb, NavigationBar, UrlLink};
+use crate::data::blood_bowl::competitions::schedule::GameSchedule;
 use crate::data::blood_bowl::games::GameSummary;
 use crate::data::blood_bowl::teams::TeamLogo;
 use crate::data::users::User;
@@ -250,5 +251,27 @@ pub struct GameCard {
 impl GameCard {
     pub fn get(game: GameSummary) -> Self {
         Self { game }
+    }
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "blood_bowl/games/games_schedule_table.html")]
+pub struct GamesScheduleTable {
+    games: Vec<GameSchedule>,
+}
+
+impl GamesScheduleTable {
+    pub fn from_games_schedule(games: Vec<GameSchedule>) -> Self {
+        Self { games }
+    }
+
+    pub fn from_games_summary(games_summary: Vec<GameSummary>) -> Self {
+        let mut games = Vec::with_capacity(games_summary.len());
+
+        for game_summary in games_summary {
+            games.push(game_summary.into());
+        }
+
+        Self { games }
     }
 }

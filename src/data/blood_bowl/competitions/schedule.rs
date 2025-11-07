@@ -88,12 +88,25 @@ lazy_static::lazy_static! {
     };
 }
 
+#[derive(Clone)]
 pub struct GameSchedule {
     pub home_team: Option<TeamSummary>,
     pub home_ranking_number: Option<usize>,
     pub away_team: Option<TeamSummary>,
     pub away_ranking_number: Option<usize>,
     pub game_summary: Option<GameSummary>,
+}
+
+impl From<GameSummary> for GameSchedule {
+    fn from(game_summary: GameSummary) -> Self {
+        Self {
+            home_team: Some(game_summary.first_team.clone()),
+            home_ranking_number: None,
+            away_team: Some(game_summary.second_team.clone()),
+            away_ranking_number: None,
+            game_summary: Some(game_summary),
+        }
+    }
 }
 
 impl GameSchedule {
