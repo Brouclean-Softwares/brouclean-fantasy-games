@@ -124,10 +124,12 @@ impl PostGameSequence {
         let (first_team_dedicated_fans_delta, second_team_dedicated_fans_delta) =
             game.dedicated_fans_updates();
 
-        let is_a_friendly_game = true;
+        let is_a_competition_game = game.title.is_some();
+
         let (first_team_mvps, second_team_mvps) = game.most_valuable_players();
+
         let most_valuable_players_should_be_nominated =
-            (first_team_mvps.len() + second_team_mvps.len()) < 2 && !is_a_friendly_game;
+            (first_team_mvps.len() + second_team_mvps.len()) < 2 && is_a_competition_game;
 
         let (first_team_expensive_mistakes, second_team_expensive_mistakes) =
             game.expensive_mistakes();

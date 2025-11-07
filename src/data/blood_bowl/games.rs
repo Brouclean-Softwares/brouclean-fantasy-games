@@ -18,6 +18,7 @@ use serde::Deserialize;
 #[derive(Deserialize, Clone)]
 pub struct GameSummary {
     pub id: i32,
+    pub title: Option<String>,
     pub game_at: NaiveDateTime,
     pub started: bool,
     pub finished: bool,
@@ -57,6 +58,7 @@ impl GameSummary {
 #[derive(Deserialize, sqlx::FromRow, Clone)]
 struct GameRow {
     id: i32,
+    title: Option<String>,
     version: Version,
     created_by: Option<i32>,
     game_at: NaiveDateTime,
@@ -83,6 +85,7 @@ impl GameRow {
 
         let game_summary = GameSummary {
             id: self.id,
+            title: self.title,
             game_at: self.game_at,
             started: self.started,
             finished,
@@ -114,6 +117,7 @@ impl GameRow {
 
         let mut game = Game {
             id: self.id,
+            title: self.title,
             version: self.version,
             created_by,
             game_at: self.game_at,
@@ -148,26 +152,29 @@ pub async fn select_all_scheduled(state: &AppState) -> Result<Vec<GameSummary>, 
     tracing::debug!("select_all_scheduled");
 
     let game_rows: Vec<GameRow> = sqlx::query_as(
-        "SELECT id,
-                    version,
-                    created_by,
-                    game_at,
-                    started_at IS NOT NULL AS started,
-                    closed_at IS NOT NULL AS closed,
-                    first_team_id,
-                    first_team_score,
-                    first_team_casualties,
-                    first_team_is_winner,
-                    second_team_id,
-                    second_team_score,
-                    second_team_casualties,
-                    second_team_is_winner,
-                    events,
-                    playing_players
+        "SELECT bb_games.id,
+                    bb_competitions_stages_schedule.game_title as title,
+                    bb_games.version,
+                    bb_games.created_by,
+                    bb_games.game_at,
+                    bb_games.started_at IS NOT NULL AS started,
+                    bb_games.closed_at IS NOT NULL AS closed,
+                    bb_games.first_team_id,
+                    bb_games.first_team_score,
+                    bb_games.first_team_casualties,
+                    bb_games.first_team_is_winner,
+                    bb_games.second_team_id,
+                    bb_games.second_team_score,
+                    bb_games.second_team_casualties,
+                    bb_games.second_team_is_winner,
+                    bb_games.events,
+                    bb_games.playing_players
             FROM bb_games
-            WHERE closed_at IS NULL
-            AND started_at IS NULL
-            ORDER BY game_at DESC",
+            LEFT JOIN bb_competitions_stages_schedule
+            ON bb_competitions_stages_schedule.game_id = bb_games.id
+            WHERE bb_games.closed_at IS NULL
+            AND bb_games.started_at IS NULL
+            ORDER BY bb_games.game_at DESC",
     )
     .fetch_all(&state.db)
     .await?;
@@ -185,25 +192,28 @@ pub async fn select_all_played(state: &AppState) -> Result<Vec<GameSummary>, App
     tracing::debug!("select_all_played");
 
     let game_rows: Vec<GameRow> = sqlx::query_as(
-        "SELECT id,
-                    version,
-                    created_by,
-                    game_at,
-                    started_at IS NOT NULL AS started,
-                    closed_at IS NOT NULL AS closed,
-                    first_team_id,
-                    first_team_score,
-                    first_team_casualties,
-                    first_team_is_winner,
-                    second_team_id,
-                    second_team_score,
-                    second_team_casualties,
-                    second_team_is_winner,
-                    events,
-                    playing_players
+        "SELECT bb_games.id,
+                    bb_competitions_stages_schedule.game_title as title,
+                    bb_games.version,
+                    bb_games.created_by,
+                    bb_games.game_at,
+                    bb_games.started_at IS NOT NULL AS started,
+                    bb_games.closed_at IS NOT NULL AS closed,
+                    bb_games.first_team_id,
+                    bb_games.first_team_score,
+                    bb_games.first_team_casualties,
+                    bb_games.first_team_is_winner,
+                    bb_games.second_team_id,
+                    bb_games.second_team_score,
+                    bb_games.second_team_casualties,
+                    bb_games.second_team_is_winner,
+                    bb_games.events,
+                    bb_games.playing_players
             FROM bb_games
-            WHERE closed_at IS NOT NULL
-            ORDER BY started_at DESC",
+            LEFT JOIN bb_competitions_stages_schedule
+            ON bb_competitions_stages_schedule.game_id = bb_games.id
+            WHERE bb_games.closed_at IS NOT NULL
+            ORDER BY bb_games.started_at DESC",
     )
     .fetch_all(&state.db)
     .await?;
@@ -221,26 +231,29 @@ pub async fn select_all_playing(state: &AppState) -> Result<Vec<GameSummary>, Ap
     tracing::debug!("select_all_playing");
 
     let game_rows: Vec<GameRow> = sqlx::query_as(
-        "SELECT id,
-                    version,
-                    created_by,
-                    game_at,
-                    started_at IS NOT NULL AS started,
-                    closed_at IS NOT NULL AS closed,
-                    first_team_id,
-                    first_team_score,
-                    first_team_casualties,
-                    first_team_is_winner,
-                    second_team_id,
-                    second_team_score,
-                    second_team_casualties,
-                    second_team_is_winner,
-                    events,
-                    playing_players
+        "SELECT bb_games.id,
+                    bb_competitions_stages_schedule.game_title as title,
+                    bb_games.version,
+                    bb_games.created_by,
+                    bb_games.game_at,
+                    bb_games.started_at IS NOT NULL AS started,
+                    bb_games.closed_at IS NOT NULL AS closed,
+                    bb_games.first_team_id,
+                    bb_games.first_team_score,
+                    bb_games.first_team_casualties,
+                    bb_games.first_team_is_winner,
+                    bb_games.second_team_id,
+                    bb_games.second_team_score,
+                    bb_games.second_team_casualties,
+                    bb_games.second_team_is_winner,
+                    bb_games.events,
+                    bb_games.playing_players
             FROM bb_games
-            WHERE closed_at IS NULL
-            AND started_at IS NOT NULL
-            ORDER BY started_at ASC",
+            LEFT JOIN bb_competitions_stages_schedule
+            ON bb_competitions_stages_schedule.game_id = bb_games.id
+            WHERE bb_games.closed_at IS NULL
+            AND bb_games.started_at IS NOT NULL
+            ORDER BY bb_games.started_at ASC",
     )
     .fetch_all(&state.db)
     .await?;
@@ -261,26 +274,29 @@ pub async fn select_played_by_team(
     tracing::debug!("select_played_by_team for team_id={:?}", team_id);
 
     let game_rows: Vec<GameRow> = sqlx::query_as(
-        "SELECT id,
-                    version,
-                    created_by,
-                    game_at,
-                    started_at IS NOT NULL AS started,
-                    closed_at IS NOT NULL AS closed,
-                    first_team_id,
-                    first_team_score,
-                    first_team_casualties,
-                    first_team_is_winner,
-                    second_team_id,
-                    second_team_score,
-                    second_team_casualties,
-                    second_team_is_winner,
-                    events,
-                    playing_players
+        "SELECT bb_games.id,
+                    bb_competitions_stages_schedule.game_title as title,
+                    bb_games.version,
+                    bb_games.created_by,
+                    bb_games.game_at,
+                    bb_games.started_at IS NOT NULL AS started,
+                    bb_games.closed_at IS NOT NULL AS closed,
+                    bb_games.first_team_id,
+                    bb_games.first_team_score,
+                    bb_games.first_team_casualties,
+                    bb_games.first_team_is_winner,
+                    bb_games.second_team_id,
+                    bb_games.second_team_score,
+                    bb_games.second_team_casualties,
+                    bb_games.second_team_is_winner,
+                    bb_games.events,
+                    bb_games.playing_players
             FROM bb_games
-            WHERE closed_at IS NOT NULL
-            AND (first_team_id = $1 OR second_team_id = $1)
-            ORDER BY closed_at DESC",
+            LEFT JOIN bb_competitions_stages_schedule
+            ON bb_competitions_stages_schedule.game_id = bb_games.id
+            WHERE bb_games.closed_at IS NOT NULL
+            AND (bb_games.first_team_id = $1 OR bb_games.second_team_id = $1)
+            ORDER BY bb_games.closed_at DESC",
     )
     .bind(team_id.clone())
     .fetch_all(&state.db)
@@ -302,27 +318,30 @@ pub async fn select_scheduled_for_team(
     tracing::debug!("select_scheduled_for_team for team_id={:?}", team_id);
 
     let game_rows: Vec<GameRow> = sqlx::query_as(
-        "SELECT id,
-                    version,
-                    created_by,
-                    game_at,
-                    started_at IS NOT NULL AS started,
-                    closed_at IS NOT NULL AS closed,
-                    first_team_id,
-                    first_team_score,
-                    first_team_casualties,
-                    first_team_is_winner,
-                    second_team_id,
-                    second_team_score,
-                    second_team_casualties,
-                    second_team_is_winner,
-                    events,
-                    playing_players
+        "SELECT bb_games.id,
+                    bb_competitions_stages_schedule.game_title as title,
+                    bb_games.version,
+                    bb_games.created_by,
+                    bb_games.game_at,
+                    bb_games.started_at IS NOT NULL AS started,
+                    bb_games.closed_at IS NOT NULL AS closed,
+                    bb_games.first_team_id,
+                    bb_games.first_team_score,
+                    bb_games.first_team_casualties,
+                    bb_games.first_team_is_winner,
+                    bb_games.second_team_id,
+                    bb_games.second_team_score,
+                    bb_games.second_team_casualties,
+                    bb_games.second_team_is_winner,
+                    bb_games.events,
+                    bb_games.playing_players
             FROM bb_games
-            WHERE closed_at IS NULL
-            AND started_at IS NULL
-            AND (first_team_id = $1 OR second_team_id = $1)
-            ORDER BY game_at ASC",
+            LEFT JOIN bb_competitions_stages_schedule
+            ON bb_competitions_stages_schedule.game_id = bb_games.id
+            WHERE bb_games.closed_at IS NULL
+            AND bb_games.started_at IS NULL
+            AND (bb_games.first_team_id = $1 OR bb_games.second_team_id = $1)
+            ORDER BY bb_games.game_at ASC",
     )
     .bind(team_id.clone())
     .fetch_all(&state.db)
@@ -344,27 +363,30 @@ pub async fn select_playing_by_team(
     tracing::debug!("select_playing_by_team for team_id={:?}", team_id);
 
     let game_row: Option<GameRow> = sqlx::query_as(
-        "SELECT id,
-                    version,
-                    created_by,
-                    game_at,
-                    started_at IS NOT NULL AS started,
-                    closed_at IS NOT NULL AS closed,
-                    first_team_id,
-                    first_team_score,
-                    first_team_casualties,
-                    first_team_is_winner,
-                    second_team_id,
-                    second_team_score,
-                    second_team_casualties,
-                    second_team_is_winner,
-                    events,
-                    playing_players
+        "SELECT bb_games.id,
+                    bb_competitions_stages_schedule.game_title as title,
+                    bb_games.version,
+                    bb_games.created_by,
+                    bb_games.game_at,
+                    bb_games.started_at IS NOT NULL AS started,
+                    bb_games.closed_at IS NOT NULL AS closed,
+                    bb_games.first_team_id,
+                    bb_games.first_team_score,
+                    bb_games.first_team_casualties,
+                    bb_games.first_team_is_winner,
+                    bb_games.second_team_id,
+                    bb_games.second_team_score,
+                    bb_games.second_team_casualties,
+                    bb_games.second_team_is_winner,
+                    bb_games.events,
+                    bb_games.playing_players
             FROM bb_games
-            WHERE closed_at IS NULL
-            AND started_at IS NOT NULL
-            AND (first_team_id = $1 OR second_team_id = $1)
-            ORDER BY started_at
+            LEFT JOIN bb_competitions_stages_schedule
+            ON bb_competitions_stages_schedule.game_id = bb_games.id
+            WHERE bb_games.closed_at IS NULL
+            AND bb_games.started_at IS NOT NULL
+            AND (bb_games.first_team_id = $1 OR bb_games.second_team_id = $1)
+            ORDER BY bb_games.started_at
             LIMIT 1",
     )
     .bind(team_id.clone())
@@ -413,24 +435,27 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<Game, AppError> {
     tracing::debug!("select_by_id with id={}", id);
 
     let game_row: GameRow = sqlx::query_as(
-        "SELECT id,
-                    version,
-                    created_by,
-                    game_at,
-                    started_at IS NOT NULL AS started,
-                    closed_at IS NOT NULL AS closed,
-                    first_team_id,
-                    first_team_score,
-                    first_team_casualties,
-                    first_team_is_winner,
-                    second_team_id,
-                    second_team_score,
-                    second_team_casualties,
-                    second_team_is_winner,
-                    events,
-                    playing_players
+        "SELECT bb_games.id,
+                    bb_competitions_stages_schedule.game_title as title,
+                    bb_games.version,
+                    bb_games.created_by,
+                    bb_games.game_at,
+                    bb_games.started_at IS NOT NULL AS started,
+                    bb_games.closed_at IS NOT NULL AS closed,
+                    bb_games.first_team_id,
+                    bb_games.first_team_score,
+                    bb_games.first_team_casualties,
+                    bb_games.first_team_is_winner,
+                    bb_games.second_team_id,
+                    bb_games.second_team_score,
+                    bb_games.second_team_casualties,
+                    bb_games.second_team_is_winner,
+                    bb_games.events,
+                    bb_games.playing_players
             FROM bb_games
-            WHERE id = $1
+            LEFT JOIN bb_competitions_stages_schedule
+            ON bb_competitions_stages_schedule.game_id = bb_games.id
+            WHERE bb_games.id = $1
             LIMIT 1",
     )
     .bind(id.clone())
@@ -449,24 +474,27 @@ pub async fn select_summary_by_id(
     tracing::debug!("select_summary_by_id with id={}", id);
 
     let game_row: Option<GameRow> = sqlx::query_as(
-        "SELECT id,
-                    version,
-                    created_by,
-                    game_at,
-                    started_at IS NOT NULL AS started,
-                    closed_at IS NOT NULL AS closed,
-                    first_team_id,
-                    first_team_score,
-                    first_team_casualties,
-                    first_team_is_winner,
-                    second_team_id,
-                    second_team_score,
-                    second_team_casualties,
-                    second_team_is_winner,
-                    events,
-                    playing_players
+        "SELECT bb_games.id,
+                    bb_competitions_stages_schedule.game_title as title,
+                    bb_games.version,
+                    bb_games.created_by,
+                    bb_games.game_at,
+                    bb_games.started_at IS NOT NULL AS started,
+                    bb_games.closed_at IS NOT NULL AS closed,
+                    bb_games.first_team_id,
+                    bb_games.first_team_score,
+                    bb_games.first_team_casualties,
+                    bb_games.first_team_is_winner,
+                    bb_games.second_team_id,
+                    bb_games.second_team_score,
+                    bb_games.second_team_casualties,
+                    bb_games.second_team_is_winner,
+                    bb_games.events,
+                    bb_games.playing_players
             FROM bb_games
-            WHERE id = $1
+            LEFT JOIN bb_competitions_stages_schedule
+            ON bb_competitions_stages_schedule.game_id = bb_games.id
+            WHERE bb_games.id = $1
             LIMIT 1",
     )
     .bind(id.clone())

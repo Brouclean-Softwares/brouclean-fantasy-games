@@ -4,7 +4,7 @@
 
             <div class="uk-width-1-1 uk-text-center uk-text-meta uk-margin-remove-bottom">
                 {{ game.game_at.format("%d/%m/%Y à %H:%M").to_string() }}
-                - Match amical
+                - {{ game.title.clone().unwrap_or("Match amical".to_string()) }}
             </div>
 
             <div class="uk-width-1-2@m">

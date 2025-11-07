@@ -85,7 +85,7 @@
         </div>
 
         <div class="uk-width-1-1 uk-text-center uk-margin">
-            <span class="uk-text-large">Match amical</span>
+            <span class="uk-text-large">{{ game.title.clone().unwrap_or("Match amical".to_string()) }}</span>
         </div>
 
         {% if editable && !game.pre_game_sequence_is_finished() %}
