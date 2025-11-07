@@ -112,8 +112,15 @@ impl Competition {
                                 director = $3,
                                 version = $4,
                                 description = $5,
-                                last_updated = CURRENT_TIMESTAMP
-                            WHERE id = $6",
+                                last_updated = CURRENT_TIMESTAMP,
+                                started_at = (
+                                    SELECT MIN(bb_games.started_at)
+                                    FROM bb_competitions_stages_schedule
+                                    INNER JOIN bb_games
+                                    ON bb_games.id = bb_competitions_stages_schedule.game_id
+                                    WHERE bb_competitions_stages_schedule.competition_id = bb_competitions.id
+                                )
+                            WHERE bb_competitions.id = $6",
                     )
                     .bind(self.name.clone())
                     .bind(edition_number.clone())
@@ -224,6 +231,35 @@ impl Competition {
         }
     }
 
+    pub async fn select_all_preparing(state: &AppState) -> Result<Vec<Self>, AppError> {
+        tracing::debug!("select_all_preparing");
+
+        let rows: Vec<CompetitionRow> = sqlx::query_as(
+            "SELECT id,
+                    name,
+                    edition_number,
+                    director,
+                    version,
+                    description,
+                    started_at IS NOT NULL as started,
+                    closed_at IS NOT NULL as closed
+            FROM bb_competitions
+            WHERE started_at IS NULL
+            AND closed_at IS NULL
+            ORDER BY last_updated DESC",
+        )
+        .fetch_all(&state.db)
+        .await?;
+
+        let mut competitions: Vec<Competition> = Vec::with_capacity(rows.len());
+
+        for competition_row in rows {
+            competitions.push(competition_row.into_competition(state).await?);
+        }
+
+        Ok(competitions)
+    }
+
     pub async fn select_all_in_progress(state: &AppState) -> Result<Vec<Self>, AppError> {
         tracing::debug!("select_all_in_progress");
 
@@ -237,8 +273,9 @@ impl Competition {
                     started_at IS NOT NULL as started,
                     closed_at IS NOT NULL as closed
             FROM bb_competitions
-            WHERE closed_at IS NULL
-            ORDER BY last_updated DESC",
+            WHERE started_at IS NOT NULL
+            AND closed_at IS NULL
+            ORDER BY started_at DESC",
         )
         .fetch_all(&state.db)
         .await?;

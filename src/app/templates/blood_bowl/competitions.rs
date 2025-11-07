@@ -26,6 +26,7 @@ pub struct CompetitionsPage {
     navigation_bar: NavigationBar,
     breadcrumb: BreadCrumb,
     profile: Option<User>,
+    competitions_preparing: Vec<Competition>,
     competitions_in_progress: Vec<Competition>,
     competitions_closed: Vec<Competition>,
 }
@@ -34,6 +35,7 @@ impl CompetitionsPage {
     pub fn get(
         app_state: AppState,
         profile: Option<User>,
+        competitions_preparing: Vec<Competition>,
         competitions_in_progress: Vec<Competition>,
         competitions_closed: Vec<Competition>,
     ) -> Self {
@@ -41,6 +43,7 @@ impl CompetitionsPage {
             navigation_bar: NavigationBar::get(&app_state, &profile),
             breadcrumb: blood_bowl::breadcrumb(),
             profile,
+            competitions_preparing,
             competitions_in_progress,
             competitions_closed,
         }
@@ -73,7 +76,6 @@ impl CompetitionPage {
         let competition_id = competition.id;
         let editable = User::optional_user_eq_other(&profile, &competition.director);
         let competition_not_started = !competition.started;
-        let deletable = editable && competition_not_started;
         let edit_mode = edit_mode && editable;
         let link_url = format!("competition?id={}", competition.id);
 
@@ -102,13 +104,16 @@ impl CompetitionPage {
                 stage_types: CompetitionStageType::available_list(),
                 teams_registrations,
                 profile,
-                deletable,
                 editable,
                 edit_mode,
                 link_url,
                 team_selector: TeamSelector::get("team_to_registered_id".to_string()),
             },
-            schedule: CompetitionSchedule { schedule },
+            schedule: CompetitionSchedule {
+                schedule,
+                competition_id,
+                editable,
+            },
             standings: CompetitionStandings { standings },
         })
     }
@@ -122,7 +127,6 @@ pub struct CompetitionInformation {
     stage_types: Vec<CompetitionStageType>,
     teams_registrations: Vec<TeamRegistration>,
     profile: Option<User>,
-    deletable: bool,
     editable: bool,
     edit_mode: bool,
     link_url: String,
@@ -148,4 +152,6 @@ pub struct CompetitionStandings {
 #[template(path = "blood_bowl/competitions/competition_schedule.html")]
 pub struct CompetitionSchedule {
     schedule: Vec<StageSchedule>,
+    competition_id: i32,
+    editable: bool,
 }

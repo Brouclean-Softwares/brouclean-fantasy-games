@@ -56,8 +56,47 @@
 </div>
 {% endif %}
 
+{% if competitions_preparing.len() > 0 %}
+<h3 class="uk-heading-divider">
+    En préparation
+</h3>
+<div class="uk-overflow-auto">
+    <table class="uk-table uk-table-striped uk-table-small uk-table-hover">
+        <thead>
+        <tr>
+            <th>Nom</th>
+            <th uk-tooltip="title: Organisateur">Orga<span class="uk-visible@m">nisateur</span></th>
+        </tr>
+        </thead>
+
+        <tbody>
+        {% for competition in competitions_preparing %}
+
+        {% let competition_url = format!("competitions/competition?id={}", competition.id) %}
+
+        <tr>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="{{ competition_url }}">
+                    {{ competition.name() }}
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="{{ competition_url }}">
+                    {% if let Some(director) = competition.director %}
+                    {{ director.name }}
+                    {% endif %}
+                </a>
+            </td>
+        </tr>
+
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
 {% if let Some(user_profile) = profile %}
-<a href="/blood_bowl/competitions/new" class="uk-button uk-button-primary uk-margin-medium-top">
+<a href="/blood_bowl/competitions/new" class="uk-button uk-button-primary uk-margin-top">
     Créer une nouvelle compétition
 </a>
 {% endif %}

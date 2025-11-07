@@ -37,6 +37,7 @@ impl StageSchedule {
 pub struct RoundSchedule {
     pub name: String,
     pub games_schedule: Vec<GameSchedule>,
+    pub all_games_created: bool,
     pub finished: bool,
 }
 
@@ -45,6 +46,7 @@ impl RoundSchedule {
         Self {
             name,
             games_schedule: Vec::new(),
+            all_games_created: true,
             finished: true,
         }
     }
@@ -53,6 +55,7 @@ impl RoundSchedule {
         Self {
             name,
             games_schedule: Vec::with_capacity(capacity),
+            all_games_created: true,
             finished: true,
         }
     }
@@ -65,7 +68,9 @@ impl RoundSchedule {
         if game_schedule.home_team.ne(&Some(BYE.clone()))
             && game_schedule.away_team.ne(&Some(BYE.clone()))
         {
+            self.all_games_created = self.all_games_created && game_schedule.created();
             self.finished = self.finished && game_schedule.finished();
+
             self.games_schedule.push(game_schedule);
         }
     }
@@ -110,6 +115,10 @@ impl From<GameSummary> for GameSchedule {
 }
 
 impl GameSchedule {
+    pub fn created(&self) -> bool {
+        self.game_summary.is_some()
+    }
+
     pub fn finished(&self) -> bool {
         if let Some(game) = &self.game_summary {
             game.finished

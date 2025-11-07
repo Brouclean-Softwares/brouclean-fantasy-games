@@ -37,6 +37,10 @@ pub async fn competitions(
         Redirect::to("..")
     };
 
+    let competitions_preparing = Competition::select_all_preparing(&app_state)
+        .await
+        .map_err(error_handler)?;
+
     let competitions_in_progress = Competition::select_all_in_progress(&app_state)
         .await
         .map_err(error_handler)?;
@@ -48,6 +52,7 @@ pub async fn competitions(
     Ok(CompetitionsPage::get(
         app_state,
         profile,
+        competitions_preparing,
         competitions_in_progress,
         competitions_closed,
     ))
@@ -187,7 +192,7 @@ pub async fn delete(
             )))
         })?;
 
-    Ok(Redirect::to("/blood_bowl"))
+    Ok(Redirect::to("/blood_bowl/competitions"))
 }
 
 #[derive(Deserialize)]

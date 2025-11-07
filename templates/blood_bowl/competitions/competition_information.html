@@ -221,42 +221,42 @@
                 </tbody>
             </table>
         </div>
-    </div>
 
-    {% if ! competition.started %}
-    {% if let Some(user_profile) = profile %}
-    <div class="uk-margin-medium-bottom">
-        <form id="register_team_form" action="./register_team" method="post" autocomplete="off">
-            <input name="competition_id" type="hidden" value="{{ competition.id }}">
-            <input id="team_to_registered_id" name="team_to_registered_id" type="hidden">
+        {% if ! competition.started %}
+        {% if let Some(user_profile) = profile %}
+        <div class="uk-margin-top">
+            <form id="register_team_form" action="./register_team" method="post" autocomplete="off">
+                <input name="competition_id" type="hidden" value="{{ competition.id }}">
+                <input id="team_to_registered_id" name="team_to_registered_id" type="hidden">
 
-            <button class="uk-button uk-button-primary"
-                    type="button"
-                    uk-toggle="target: #modal-register-team">Inscrire une équipe</button>
+                <button class="uk-button uk-button-primary"
+                        type="button"
+                        uk-toggle="target: #modal-register-team">Inscrire une équipe</button>
 
-            <div id="modal-register-team" uk-modal>
-                <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
-                    <h2 class="uk-modal-title">Inscription d'une équipe</h2>
-                    <p>Quelle équipe souhaitez-vous inscrire ?</p>
-                    <p>{{ team_selector|escape("none") }}</p>
-                    <p class="uk-text-right">
-                        <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
-                        <button class="uk-button uk-button-danger"
-                                onclick="document.getElementById('register_team_form').submit()">
-                            Inscrire
-                        </button>
-                    </p>
+                <div id="modal-register-team" uk-modal>
+                    <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                        <h2 class="uk-modal-title">Inscription d'une équipe</h2>
+                        <p>Quelle équipe souhaitez-vous inscrire ?</p>
+                        <p>{{ team_selector|escape("none") }}</p>
+                        <p class="uk-text-right">
+                            <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                            <button class="uk-button uk-button-danger"
+                                    onclick="document.getElementById('register_team_form').submit()">
+                                Inscrire
+                            </button>
+                        </p>
+                    </div>
                 </div>
-            </div>
-        </form>
+            </form>
+        </div>
+        {% endif %}
+        {% endif %}
     </div>
-    {% endif %}
-    {% endif %}
 
-    {% if deletable %}
+    {% if editable && ! competition.started %}
     <div>
         <form id="delete_form" action="./delete" method="post" autocomplete="off">
-            <input id="id" name="id" type="hidden" value="{{ competition.id }}">
+            <input name="id" type="hidden" value="{{ competition.id }}">
 
             <button class="uk-button uk-button-danger"
                     type="button"
