@@ -16,6 +16,12 @@ pub mod stages;
 pub mod standings;
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
+struct CompetitionProgressRow {
+    stage_name: String,
+    round_name: String,
+}
+
+#[derive(Deserialize, sqlx::FromRow, Clone)]
 struct CompetitionRow {
     id: i32,
     name: String,
@@ -30,6 +36,13 @@ struct CompetitionRow {
 impl CompetitionRow {
     async fn into_competition(self, state: &AppState) -> Result<Competition, AppError> {
         let director = User::select_by_id(state, self.director).await?;
+        let mut playing_stage_name = None;
+        let mut playing_round_name = None;
+
+        if let Some(progress) = Competition::select_progress_for_id(state, self.id).await? {
+            playing_stage_name = Some(progress.stage_name);
+            playing_round_name = Some(progress.round_name);
+        }
 
         Ok(Competition {
             id: self.id,
@@ -40,6 +53,8 @@ impl CompetitionRow {
             description: self.description,
             started: self.started,
             closed: self.closed,
+            playing_stage_name,
+            playing_round_name,
         })
     }
 }
@@ -54,6 +69,8 @@ pub struct Competition {
     pub description: String,
     pub started: bool,
     pub closed: bool,
+    pub playing_stage_name: Option<String>,
+    pub playing_round_name: Option<String>,
 }
 
 impl Competition {
@@ -85,6 +102,8 @@ impl Competition {
             description: "".to_string(),
             started: false,
             closed: false,
+            playing_stage_name: None,
+            playing_round_name: None,
         }
     }
 
@@ -114,7 +133,7 @@ impl Competition {
                                 description = $5,
                                 last_updated = CURRENT_TIMESTAMP,
                                 started_at = (
-                                    SELECT MIN(bb_games.started_at)
+                                    SELECT MIN(bb_games.game_at)
                                     FROM bb_competitions_stages_schedule
                                     INNER JOIN bb_games
                                     ON bb_games.id = bb_competitions_stages_schedule.game_id
@@ -231,6 +250,37 @@ impl Competition {
         }
     }
 
+    pub async fn select_for_game_id(
+        state: &AppState,
+        game_id: i32,
+    ) -> Result<Option<Self>, AppError> {
+        tracing::debug!("select_for_game_id with game_id={}", game_id);
+
+        let row: Option<CompetitionRow> = sqlx::query_as(
+            "SELECT bb_competitions.id,
+                        bb_competitions.name,
+                        bb_competitions.edition_number,
+                        bb_competitions.director,
+                        bb_competitions.version,
+                        bb_competitions.description,
+                        bb_competitions.started_at IS NOT NULL as started,
+                        bb_competitions.closed_at IS NOT NULL as closed
+                FROM bb_competitions
+                INNER JOIN bb_competitions_stages_schedule
+                ON bb_competitions_stages_schedule.competition_id = bb_competitions.id
+                WHERE bb_competitions_stages_schedule.game_id = $1",
+        )
+        .bind(game_id.clone())
+        .fetch_optional(&state.db)
+        .await?;
+
+        if let Some(competition_row) = row {
+            Ok(Some(competition_row.into_competition(state).await?))
+        } else {
+            Ok(None)
+        }
+    }
+
     pub async fn select_all_preparing(state: &AppState) -> Result<Vec<Self>, AppError> {
         tracing::debug!("select_all_preparing");
 
@@ -315,6 +365,31 @@ impl Competition {
         }
 
         Ok(competitions)
+    }
+
+    async fn select_progress_for_id(
+        state: &AppState,
+        competition_id: i32,
+    ) -> Result<Option<CompetitionProgressRow>, AppError> {
+        tracing::debug!("select_progress for competition_id={}", competition_id);
+
+        let progress: Option<CompetitionProgressRow> = sqlx::query_as(
+            "SELECT bb_competitions_stages.stage_name,
+                        bb_competitions_stages_schedule.round_name
+                FROM bb_competitions_stages_schedule
+                INNER JOIN bb_games
+                ON bb_games.id = bb_competitions_stages_schedule.game_id
+                INNER JOIN bb_competitions_stages
+                ON bb_competitions_stages.id = bb_competitions_stages_schedule.stage_id
+                WHERE bb_competitions_stages_schedule.competition_id = $1
+                ORDER BY bb_games.game_at DESC
+                LIMIT 1",
+        )
+        .bind(competition_id.clone())
+        .fetch_optional(&state.db)
+        .await?;
+
+        Ok(progress)
     }
 
     pub async fn select_stages(&self, state: &AppState) -> Result<Vec<CompetitionStage>, AppError> {

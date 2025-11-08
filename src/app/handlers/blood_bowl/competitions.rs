@@ -69,7 +69,7 @@ pub async fn new(
         let competition = Competition::new(profile.clone());
 
         Ok(
-            CompetitionPage::get(app_state, profile, None, competition, true)
+            CompetitionPage::get(app_state, profile, None, competition, true, None)
                 .await
                 .map_err(|error| {
                     tracing::debug!("competition: Error: {}", error);
@@ -86,6 +86,7 @@ pub struct CompetitionQueryParams {
     pub id: Option<i32>,
     pub edit: Option<bool>,
     pub alert_message: Option<String>,
+    pub tab: Option<String>,
 }
 
 pub async fn competition(
@@ -117,6 +118,7 @@ pub async fn competition(
             alert_message,
             competition,
             params.edit.unwrap_or(false),
+            params.tab,
         )
         .await
         .map_err(error_handler)?)
@@ -513,7 +515,7 @@ pub async fn insert_games(
 ) -> Result<Redirect, Redirect> {
     let error_handler = |error: AppError| {
         Redirect::to(&format!(
-            "./competition?id={}&alert_message={}",
+            "./competition?id={}&tab=schedule&alert_message={}",
             form.competition_id,
             error.to_string()
         ))
@@ -522,7 +524,7 @@ pub async fn insert_games(
     let scheduled_at = NaiveDateTime::parse_from_str(&*form.scheduled_at, "%Y-%m-%dT%H:%M")
         .map_err(|_| {
             Redirect::to(&format!(
-                "./competition?id={}&alert_message=Veuillez remplir la date et l'heure des matchs.",
+                "./competition?id={}&tab=schedule&alert_message=Veuillez remplir la date et l'heure des matchs.",
                 form.competition_id
             ))
         })?;
@@ -552,7 +554,7 @@ pub async fn insert_games(
     }
 
     Ok(Redirect::to(&format!(
-        "./competition?id={}",
+        "./competition?id={}&tab=schedule",
         form.competition_id
     )))
 }

@@ -2,6 +2,7 @@ use crate::app::templates::blood_bowl::games::events::{EventsController, GameEve
 use crate::app::templates::blood_bowl::teams::{TeamCard, TeamSelector};
 use crate::app::templates::{blood_bowl, AlertMessage, BreadCrumb, NavigationBar, UrlLink};
 use crate::data::blood_bowl::competitions::schedule::GameSchedule;
+use crate::data::blood_bowl::competitions::Competition;
 use crate::data::blood_bowl::games::GameSummary;
 use crate::data::blood_bowl::teams::TeamLogo;
 use crate::data::users::User;
@@ -62,6 +63,7 @@ pub struct GamePage {
     breadcrumb: BreadCrumb,
     tab_displayed: String,
     game: Game,
+    competition: Option<Competition>,
     deletable: bool,
     editable: bool,
     edit_mode: bool,
@@ -80,17 +82,19 @@ impl GamePage {
     pub fn get(
         app_state: AppState,
         profile: Option<User>,
-        game: &Game,
+        game: Game,
+        competition: Option<Competition>,
         edit_mode: bool,
     ) -> Result<Self, AppError> {
-        Self::get_with_message(app_state, profile, None, game, edit_mode)
+        Self::get_with_message(app_state, profile, None, game, competition, edit_mode)
     }
 
     pub fn get_with_message(
         app_state: AppState,
         profile: Option<User>,
         alert_message: Option<AlertMessage>,
-        game: &Game,
+        game: Game,
+        competition: Option<Competition>,
         edit_mode: bool,
     ) -> Result<Self, AppError> {
         let mut editable = false;
@@ -116,7 +120,7 @@ impl GamePage {
 
         let game_date = game.game_at.format("%d/%m/%Y à %H:%M").to_string();
 
-        let game_events = GameEvents::from_game(game);
+        let game_events = GameEvents::from_game(&game);
 
         let first_team_statistics = TeamStatistics {
             game: game.clone(),
@@ -136,6 +140,7 @@ impl GamePage {
             breadcrumb: breadcrumb(),
             tab_displayed,
             game: game.clone(),
+            competition,
             deletable,
             editable,
             edit_mode,
@@ -144,7 +149,7 @@ impl GamePage {
             game_date_input,
             game_date,
             game_status,
-            events_controller: EventsController::try_from_game(game)?,
+            events_controller: EventsController::try_from_game(&game)?,
             game_events,
             first_team_statistics,
             second_team_statistics,

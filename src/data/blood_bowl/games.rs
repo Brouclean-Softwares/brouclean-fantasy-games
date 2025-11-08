@@ -1049,7 +1049,7 @@ pub async fn create(
             "UPDATE bb_competitions
                 SET last_updated = CURRENT_TIMESTAMP,
                     started_at = (
-                        SELECT MIN(bb_games.started_at)
+                        SELECT MIN(bb_games.game_at)
                         FROM bb_competitions_stages_schedule
                         INNER JOIN bb_games
                         ON bb_games.id = bb_competitions_stages_schedule.game_id
@@ -1500,6 +1500,34 @@ pub async fn delete(state: &AppState, profile: &User, game_id: i32) -> Result<()
         .bind(profile.id.unwrap_or(-1).clone())
         .execute(&mut *transaction)
         .await?;
+
+    let competition_id: Option<Id> = sqlx::query_as(
+        "DELETE
+            FROM bb_competitions_stages_schedule
+            WHERE game_id = $1
+            RETURNING competition_id as id",
+    )
+    .bind(game.id.clone())
+    .fetch_optional(&mut *transaction)
+    .await?;
+
+    if let Some(competition_id) = competition_id {
+        sqlx::query(
+            "UPDATE bb_competitions
+                    SET last_updated = CURRENT_TIMESTAMP,
+                        started_at = (
+                            SELECT MIN(bb_games.game_at)
+                            FROM bb_competitions_stages_schedule
+                            INNER JOIN bb_games
+                            ON bb_games.id = bb_competitions_stages_schedule.game_id
+                            WHERE bb_competitions_stages_schedule.competition_id = bb_competitions.id
+                        )
+                    WHERE bb_competitions.id = $1",
+        )
+            .bind(competition_id.id.clone())
+            .execute(&mut *transaction)
+            .await?;
+    }
 
     sqlx::query(
         "DELETE

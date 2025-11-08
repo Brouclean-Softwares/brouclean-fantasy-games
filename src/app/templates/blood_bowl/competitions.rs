@@ -59,6 +59,7 @@ pub struct CompetitionPage {
     competition: Competition,
     editable: bool,
     edit_mode: bool,
+    tab: Option<String>,
     link_url: String,
     information: CompetitionInformation,
     standings: CompetitionStandingsBloc,
@@ -72,6 +73,7 @@ impl CompetitionPage {
         alert_message: Option<AlertMessage>,
         competition: Competition,
         edit_mode: bool,
+        tab: Option<String>,
     ) -> Result<Self, AppError> {
         let competition_id = competition.id;
         let editable = User::optional_user_eq_other(&profile, &competition.director);
@@ -92,6 +94,7 @@ impl CompetitionPage {
             competition: competition.clone(),
             editable,
             edit_mode,
+            tab,
             link_url: link_url.clone(),
             information: CompetitionInformation {
                 competition,

@@ -21,9 +21,8 @@
     <table class="uk-table uk-table-striped uk-table-small uk-table-hover">
         <thead>
         <tr>
-            <th>Nom</th>
-            <th>Étape</th>
-            <th>Début</th>
+            <th class="uk-width-1-2">Nom</th>
+            <th class="uk-width-1-2">Phase</th>
         </tr>
         </thead>
 
@@ -40,12 +39,11 @@
             </td>
             <td class="uk-table-link">
                 <a class="uk-link-reset" href="{{ competition_url }}">
-                    A venir...
-                </a>
-            </td>
-            <td class="uk-table-link">
-                <a class="uk-link-reset" href="{{ competition_url }}">
-                    A venir...
+                    {% if let (Some(playing_stage_name), Some(playing_round_name)) = (competition.playing_stage_name.clone(), competition.playing_round_name.clone()) %}
+                    <span>{{ playing_stage_name }} - {{ playing_round_name }}</span>
+                    {% else %}
+                    <span>Pas encore démarré</span>
+                    {% endif %}
                 </a>
             </td>
         </tr>
@@ -64,8 +62,8 @@
     <table class="uk-table uk-table-striped uk-table-small uk-table-hover">
         <thead>
         <tr>
-            <th>Nom</th>
-            <th uk-tooltip="title: Organisateur">Orga<span class="uk-visible@m">nisateur</span></th>
+            <th class="uk-width-1-2">Nom</th>
+            <th class="uk-width-1-2">Organisateur</th>
         </tr>
         </thead>
 
@@ -109,9 +107,8 @@
     <table class="uk-table uk-table-striped uk-table-small uk-table-hover">
         <thead>
         <tr>
-            <th>Nom</th>
-            <th>Vainqueur</th>
-            <th>Fin</th>
+            <th class="uk-width-1-2">Nom</th>
+            <th class="uk-width-1-2">Vainqueur</th>
         </tr>
         </thead>
 
@@ -124,11 +121,6 @@
             <td class="uk-table-link">
                 <a class="uk-link-reset" href="{{ competition_url }}">
                     {{ competition.name }} {{ competition.edition_number }}
-                </a>
-            </td>
-            <td class="uk-table-link">
-                <a class="uk-link-reset" href="{{ competition_url }}">
-                    A venir...
                 </a>
             </td>
             <td class="uk-table-link">

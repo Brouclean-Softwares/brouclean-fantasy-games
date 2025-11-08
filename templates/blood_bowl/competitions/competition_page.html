@@ -15,7 +15,10 @@
 {% endblock %}
 
 {% block body %}
-<div x-data="{ tab: 'info' }">
+
+{% let tab_name = tab.clone().unwrap_or("info".to_string()) %}
+
+<div x-data="{ tab: '{{ tab_name }}' }">
 
     <h2 class="uk-margin-medium-bottom">
         {% if edit_mode %}
@@ -45,27 +48,27 @@
 
     <div class="uk-margin-medium-bottom">
         <ul class="uk-child-width-expand" uk-tab>
-            <li class="uk-active">
+            <li {% if tab_name.eq("info") %}class="uk-active"{% endif %}>
                 <a href="#" uk-icon="icon: file-text" x-on:click="tab='info'">
                     <span class="uk-visible@m">Informations</span>
                 </a>
             </li>
-            <li>
+            <li {% if tab_name.eq("standings") %}class="uk-active"{% endif %}>
                 <a href="#" uk-icon="icon: list" x-on:click="tab='standings'">
                     <span class="uk-visible@m">Classements</span>
                 </a>
             </li>
-            <li>
+            <li {% if tab_name.eq("schedule") %}class="uk-active"{% endif %}>
                 <a href="#" uk-icon="icon: calendar" x-on:click="tab='schedule'">
                     <span class="uk-visible@m">Calendrier</span>
                 </a>
             </li>
-            <li>
+            <li {% if tab_name.eq("stats") %}class="uk-active"{% endif %}>
                 <a href="#" uk-icon="icon: info" x-on:click="tab='stats'">
                     <span class="uk-visible@m">Statistiques</span>
                 </a>
             </li>
-            <li>
+            <li {% if tab_name.eq("history") %}class="uk-active"{% endif %}>
                 <a href="#" uk-icon="icon: history" x-on:click="tab='history'">
                     <span class="uk-visible@m">Historique</span>
                 </a>

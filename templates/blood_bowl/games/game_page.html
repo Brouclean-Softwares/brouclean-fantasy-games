@@ -85,7 +85,13 @@
         </div>
 
         <div class="uk-width-1-1 uk-text-center uk-margin">
-            <span class="uk-text-large">{{ game.title.clone().unwrap_or("Match amical".to_string()) }}</span>
+            {% if let Some(competition) = competition %}
+            <a class="uk-link-reset" href="/blood_bowl/competitions/competition?id={{ competition.id }}&tab=standings">
+                <span class="uk-text-large">{{ competition.name }}</span>
+            </a>
+            {% else %}
+            <span class="uk-text-large">Match amical</span>
+            {% endif %}
         </div>
 
         {% if deletable && !game.pre_game_sequence_is_finished() %}
