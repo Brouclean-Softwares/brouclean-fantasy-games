@@ -1,7 +1,7 @@
 use crate::data::blood_bowl::competitions::registrations::TeamRegistration;
-use crate::data::blood_bowl::competitions::schedule::StageSchedule;
+use crate::data::blood_bowl::competitions::schedule::{CompetitionSchedule, StageSchedule};
 use crate::data::blood_bowl::competitions::stages::{CompetitionStage, CompetitionStageType};
-use crate::data::blood_bowl::competitions::standings::StageStandings;
+use crate::data::blood_bowl::competitions::standings::{CompetitionStandings, StageStandings};
 use crate::data::blood_bowl::teams::TeamSummary;
 use crate::data::users::User;
 use crate::data::Id;
@@ -44,7 +44,7 @@ impl CompetitionRow {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Competition {
     pub id: i32,
     pub name: String,
@@ -385,7 +385,7 @@ impl Competition {
     pub async fn schedule_and_standings(
         &self,
         state: &AppState,
-    ) -> Result<(Vec<StageSchedule>, Vec<StageStandings>), AppError> {
+    ) -> Result<(CompetitionSchedule, CompetitionStandings), AppError> {
         let mut teams_entering_next_stage =
             TeamSummary::list_into_list_with_option(&self.select_playing_teams(state).await?);
 
@@ -395,8 +395,9 @@ impl Competition {
         let mut stages_standings: Vec<StageStandings> = Vec::with_capacity(stages.len());
 
         for stage in stages.iter() {
-            let (stage_schedule, stage_standings) =
-                stage.schedule_and_standings(&teams_entering_next_stage);
+            let (stage_schedule, stage_standings) = stage
+                .schedule_and_standings(state, &teams_entering_next_stage)
+                .await?;
 
             let stage_is_finished = stage_schedule.finished;
 
@@ -410,6 +411,6 @@ impl Competition {
             }
         }
 
-        Ok((stages_schedules, stages_standings))
+        Ok((stages_schedules.into(), stages_standings.into()))
     }
 }

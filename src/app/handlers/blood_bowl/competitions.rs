@@ -4,6 +4,7 @@ use crate::data::blood_bowl::competitions::stages::{
     CompetitionStage, CompetitionStageRule, CompetitionStageType,
 };
 use crate::data::blood_bowl::competitions::Competition;
+use crate::data::blood_bowl::games;
 use crate::data::users::User;
 use crate::errors::AppError;
 use crate::AppState;
@@ -11,6 +12,7 @@ use axum::extract::{Query, State};
 use axum::response::Redirect;
 use axum::routing::{get, post};
 use axum::{Form, Router};
+use chrono::NaiveDateTime;
 use serde::Deserialize;
 
 pub fn init_router() -> Router<AppState> {
@@ -26,6 +28,7 @@ pub fn init_router() -> Router<AppState> {
         .route("/register_team", post(register_team))
         .route("/unregister_team", post(unregister_team))
         .route("/update_team_validation", post(update_team_validation))
+        .route("/insert_games", post(insert_games))
 }
 
 pub async fn competitions(
@@ -487,6 +490,65 @@ pub async fn update_team_validation(
             .update_team_validation(&app_state, &connected_user, form.team_id, form.validation)
             .await
             .map_err(error_handler)?;
+    }
+
+    Ok(Redirect::to(&format!(
+        "./competition?id={}",
+        form.competition_id
+    )))
+}
+
+#[derive(Deserialize)]
+pub struct InsertGamesForm {
+    pub competition_id: i32,
+    pub stage_id: i32,
+    pub round_index: usize,
+    pub scheduled_at: String,
+}
+
+pub async fn insert_games(
+    State(app_state): State<AppState>,
+    profile: Option<User>,
+    Form(form): Form<InsertGamesForm>,
+) -> Result<Redirect, Redirect> {
+    let error_handler = |error: AppError| {
+        Redirect::to(&format!(
+            "./competition?id={}&alert_message={}",
+            form.competition_id,
+            error.to_string()
+        ))
+    };
+
+    let scheduled_at = NaiveDateTime::parse_from_str(&*form.scheduled_at, "%Y-%m-%dT%H:%M")
+        .map_err(|_| {
+            Redirect::to(&format!(
+                "./competition?id={}&alert_message=Veuillez remplir la date et l'heure des matchs.",
+                form.competition_id
+            ))
+        })?;
+
+    let competition = Competition::select_by_id(&app_state, form.competition_id)
+        .await
+        .map_err(error_handler)?;
+
+    if let (Some(competition), Some(connected_user)) = (competition, profile) {
+        let (schedule, _) = competition
+            .schedule_and_standings(&app_state)
+            .await
+            .map_err(error_handler)?;
+
+        if let Some(round_schedule) = schedule.get_stage_round(form.stage_id, form.round_index) {
+            games::create_for_competition_stage_round(
+                &app_state,
+                &connected_user,
+                competition.id,
+                form.stage_id,
+                round_schedule,
+                scheduled_at,
+            )
+            .await
+            .map_err(error_handler)?;
+        }
     }
 
     Ok(Redirect::to(&format!(

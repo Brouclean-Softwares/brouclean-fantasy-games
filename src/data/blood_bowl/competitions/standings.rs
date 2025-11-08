@@ -6,6 +6,29 @@ use std::cmp::Ordering;
 use std::ops::Index;
 
 #[derive(Clone)]
+pub struct CompetitionStandings {
+    pub stages_standings: Vec<StageStandings>,
+}
+
+impl From<Vec<StageStandings>> for CompetitionStandings {
+    fn from(stages_standings: Vec<StageStandings>) -> Self {
+        Self { stages_standings }
+    }
+}
+
+impl CompetitionStandings {
+    pub fn standings(&self) -> Vec<CompetingForPositionStandings> {
+        let last_stage_standings = self.stages_standings.last();
+
+        if let Some(last_stage_standings) = last_stage_standings {
+            last_stage_standings.standings()
+        } else {
+            Vec::new()
+        }
+    }
+}
+
+#[derive(Clone)]
 pub struct StageStandings {
     pub stage: CompetitionStage,
     positions_standings: Vec<CompetingForPositionStandings>,
@@ -179,13 +202,13 @@ impl CompetingForPositionStandings {
         standings.sort_by(|a, b| match (a, b) {
             (Some(a), Some(b)) => {
                 if a.points.ne(&b.points) {
-                    a.points.cmp(&b.points)
+                    b.points.cmp(&a.points)
                 } else if a.victories.ne(&b.victories) {
-                    a.victories.cmp(&b.victories)
+                    b.victories.cmp(&a.victories)
                 } else if a.touchdowns.ne(&b.touchdowns) {
-                    a.touchdowns.cmp(&b.touchdowns)
+                    b.touchdowns.cmp(&a.touchdowns)
                 } else {
-                    a.casualties.cmp(&b.casualties)
+                    b.casualties.cmp(&a.casualties)
                 }
             }
 
@@ -262,50 +285,59 @@ impl TeamStandings {
 
     fn from_game_summary(game_summary: &GameSummary) -> Vec<Option<Self>> {
         if game_summary.finished {
+            let first_team_touchdowns = game_summary.first_team_score as usize;
+            let second_team_touchdowns = game_summary.second_team_score as usize;
+            let first_team_casualties = game_summary.first_team_casualties as usize;
+            let second_team_casualties = game_summary.second_team_casualties as usize;
+
+            let (victories, draws, losses) = match (
+                game_summary.first_team_is_winner,
+                game_summary.second_team_is_winner,
+            ) {
+                (true, false) => (1, 0, 0),
+                (false, true) => (0, 0, 1),
+                (_, _) => (0, 1, 0),
+            };
+
+            let points = (victories * 3)
+                + draws
+                + if first_team_touchdowns >= 3 { 1 } else { 0 }
+                + if second_team_touchdowns == 0 { 1 } else { 0 }
+                + if first_team_casualties >= 3 { 1 } else { 0 };
+
             let first_team_standings = Self {
                 team: game_summary.first_team.clone(),
-                points: 0,
-                victories: if game_summary.first_team_is_winner {
-                    1
-                } else {
-                    0
-                },
-                draws: if !game_summary.first_team_is_winner && !game_summary.second_team_is_winner
-                {
-                    1
-                } else {
-                    0
-                },
-                losses: if game_summary.second_team_is_winner {
-                    1
-                } else {
-                    0
-                },
-                touchdowns: game_summary.first_team_score as usize,
-                casualties: game_summary.first_team_casualties as usize,
+                points,
+                victories,
+                draws,
+                losses,
+                touchdowns: first_team_touchdowns,
+                casualties: first_team_casualties,
             };
+
+            let (victories, draws, losses) = match (
+                game_summary.first_team_is_winner,
+                game_summary.second_team_is_winner,
+            ) {
+                (true, false) => (0, 0, 1),
+                (false, true) => (1, 0, 0),
+                (_, _) => (0, 1, 0),
+            };
+
+            let points = (victories * 3)
+                + draws
+                + if second_team_touchdowns >= 3 { 1 } else { 0 }
+                + if first_team_touchdowns == 0 { 1 } else { 0 }
+                + if second_team_casualties >= 3 { 1 } else { 0 };
 
             let second_team_standings = Self {
                 team: game_summary.second_team.clone(),
-                points: 0,
-                victories: if game_summary.second_team_is_winner {
-                    1
-                } else {
-                    0
-                },
-                draws: if !game_summary.first_team_is_winner && !game_summary.second_team_is_winner
-                {
-                    1
-                } else {
-                    0
-                },
-                losses: if game_summary.first_team_is_winner {
-                    1
-                } else {
-                    0
-                },
-                touchdowns: game_summary.second_team_score as usize,
-                casualties: game_summary.second_team_casualties as usize,
+                points,
+                victories,
+                draws,
+                losses,
+                touchdowns: second_team_touchdowns,
+                casualties: second_team_casualties,
             };
 
             vec![Some(first_team_standings), Some(second_team_standings)]

@@ -5,6 +5,7 @@ use crate::data::blood_bowl::competitions::standings::{
     CompetingForPositionStandings, StageStandings,
 };
 use crate::data::blood_bowl::competitions::{stages, Competition};
+use crate::data::blood_bowl::games;
 use crate::data::blood_bowl::teams::TeamSummary;
 use crate::data::users::User;
 use crate::errors::AppError;
@@ -192,15 +193,18 @@ impl CompetitionStage {
         Ok(())
     }
 
-    pub fn schedule_and_standings(
+    pub async fn schedule_and_standings(
         &self,
+        state: &AppState,
         team_list: &Vec<Option<TeamSummary>>,
-    ) -> (StageSchedule, StageStandings) {
+    ) -> Result<(StageSchedule, StageStandings), AppError> {
         match self.stage_type {
             CompetitionStageType::Championship => {
-                stages::round_robin_schedule_and_standings(team_list, self)
+                stages::round_robin_schedule_and_standings(state, team_list, self).await
             }
-            CompetitionStageType::Cup => stages::cup_schedule_and_standings(team_list, self),
+            CompetitionStageType::Cup => {
+                stages::cup_schedule_and_standings(state, team_list, self).await
+            }
         }
     }
 
@@ -265,10 +269,13 @@ impl Display for CompetitionStageRule {
     }
 }
 
-pub fn round_robin_schedule_and_standings(
+pub async fn round_robin_schedule_and_standings(
+    state: &AppState,
     team_list: &Vec<Option<TeamSummary>>,
     stage: &CompetitionStage,
-) -> (StageSchedule, StageStandings) {
+) -> Result<(StageSchedule, StageStandings), AppError> {
+    let mut existing_games = games::select_all_for_competition_stage(state, stage.id).await?;
+
     let mut home_schedule = StageSchedule::from(stage);
     let mut away_schedule = StageSchedule::from(stage);
     let mut standings = StageStandings::from_stage_with_teams(stage, team_list);
@@ -307,29 +314,29 @@ pub fn round_robin_schedule_and_standings(
                 }
 
                 if home_team.ne(&Some(BYE.clone())) && away_team.ne(&Some(BYE.clone())) {
-                    let home_game_summary = None;
-
-                    let home_game = GameSchedule {
+                    let mut home_game = GameSchedule {
                         home_team: home_team.clone(),
                         home_ranking_number: None,
                         away_team: away_team.clone(),
                         away_ranking_number: None,
-                        game_summary: home_game_summary,
+                        game_summary: None,
                     };
+
+                    home_game.pick_game_summary_from_list(&mut existing_games);
 
                     standings.process_game_for_position(&home_game, 1);
                     home_round_schedule.push(home_game);
 
                     if home_and_away {
-                        let away_game_summary = None;
-
-                        let away_game = GameSchedule {
+                        let mut away_game = GameSchedule {
                             home_team: away_team.clone(),
                             home_ranking_number: None,
                             away_team: home_team.clone(),
                             away_ranking_number: None,
-                            game_summary: away_game_summary,
+                            game_summary: None,
                         };
+
+                        away_game.pick_game_summary_from_list(&mut existing_games);
 
                         standings.process_game_for_position(&away_game, 1);
                         away_round_schedule.push(away_game);
@@ -353,13 +360,16 @@ pub fn round_robin_schedule_and_standings(
         }
     }
 
-    (home_schedule, standings)
+    Ok((home_schedule, standings))
 }
 
-pub fn cup_schedule_and_standings(
+pub async fn cup_schedule_and_standings(
+    state: &AppState,
     team_list: &Vec<Option<TeamSummary>>,
     stage: &CompetitionStage,
-) -> (StageSchedule, StageStandings) {
+) -> Result<(StageSchedule, StageStandings), AppError> {
+    let mut existing_games = games::select_all_for_competition_stage(state, stage.id).await?;
+
     let mut stage_schedule = StageSchedule::from(stage);
     let mut stage_standings = StageStandings::from_stage_with_teams(stage, team_list);
 
@@ -427,7 +437,7 @@ pub fn cup_schedule_and_standings(
                     );
 
                     while first_team_index < second_team_index {
-                        let game = GameSchedule {
+                        let mut game = GameSchedule {
                             home_team: position_standings.team_at_index(first_team_index),
                             home_ranking_number: Some(
                                 first_team_index + position_teams_are_competing_for,
@@ -438,6 +448,8 @@ pub fn cup_schedule_and_standings(
                             ),
                             game_summary: None,
                         };
+
+                        game.pick_game_summary_from_list(&mut existing_games);
 
                         winners.push_team(game.winner());
                         losers.push_team(game.loser());
@@ -457,5 +469,5 @@ pub fn cup_schedule_and_standings(
         }
     }
 
-    (stage_schedule, stage_standings)
+    Ok((stage_schedule, stage_standings))
 }

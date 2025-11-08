@@ -663,7 +663,7 @@ pub async fn create(
                     )
                 })?;
 
-            let game_id = games::create(
+            let game_id = games::create_friendly(
                 &app_state,
                 &profile,
                 &first_team,

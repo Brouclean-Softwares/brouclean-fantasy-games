@@ -4,9 +4,9 @@
             Classements
         </h3>
 
-        {% for stage_index in 0..standings.len() %}
+        {% for stage_index in 0..standings.stages_standings.len() %}
 
-        {% let stage_standings = standings[stage_index] %}
+        {% let stage_standings = standings.stages_standings[stage_index] %}
 
         <h4 class="uk-heading-divider">
             {{ stage_standings.stage.stage_name }}
@@ -41,7 +41,7 @@
                 {% for team_index in 0..teams_standings.len() %}
                 <tr>
                     <td>
-                        {% let is_last_stage = stage_index == standings.len() - 1 %}
+                        {% let is_last_stage = stage_index == standings.stages_standings.len() - 1 %}
 
                         {% match (is_last_stage, stage_standings.stage.stage_type.clone()) %}
                         {% when (true, CompetitionStageType::Championship) %}

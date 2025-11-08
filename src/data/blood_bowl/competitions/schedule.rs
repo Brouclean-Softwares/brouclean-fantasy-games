@@ -4,9 +4,42 @@ use crate::data::blood_bowl::teams::TeamSummary;
 use blood_bowl_rs::rosters::Roster;
 use blood_bowl_rs::versions::Version;
 
+pub struct CompetitionSchedule {
+    pub stages_schedule: Vec<StageSchedule>,
+}
+
+impl From<Vec<StageSchedule>> for CompetitionSchedule {
+    fn from(stages_schedule: Vec<StageSchedule>) -> Self {
+        Self { stages_schedule }
+    }
+}
+
+impl CompetitionSchedule {
+    pub fn get_stage_round(&self, stage_id: i32, round_index: usize) -> Option<RoundSchedule> {
+        let stage_index = self
+            .stages_schedule
+            .iter()
+            .position(|stage_schedule| stage_schedule.stage.id.eq(&stage_id));
+
+        if let Some(stage_index) = stage_index {
+            if let Some(round_schedule) = self.stages_schedule[stage_index]
+                .rounds_schedule
+                .get(round_index)
+            {
+                Some(round_schedule.clone())
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
+}
+
 pub struct StageSchedule {
     pub stage: CompetitionStage,
     pub rounds_schedule: Vec<RoundSchedule>,
+    pub all_games_created: bool,
     pub finished: bool,
 }
 
@@ -15,6 +48,7 @@ impl From<&CompetitionStage> for StageSchedule {
         Self {
             stage: stage.clone(),
             rounds_schedule: Vec::new(),
+            all_games_created: true,
             finished: true,
         }
     }
@@ -23,17 +57,22 @@ impl From<&CompetitionStage> for StageSchedule {
 impl StageSchedule {
     pub fn push(&mut self, round_schedule: RoundSchedule) {
         if !round_schedule.is_empty() {
+            self.all_games_created = self.all_games_created && round_schedule.all_games_created;
             self.finished = self.finished && round_schedule.finished;
+
             self.rounds_schedule.push(round_schedule);
         }
     }
 
     pub fn extend(&mut self, other: Self) {
+        self.all_games_created = self.all_games_created && other.all_games_created;
         self.finished = self.finished && other.finished;
+
         self.rounds_schedule.extend(other.rounds_schedule);
     }
 }
 
+#[derive(Clone)]
 pub struct RoundSchedule {
     pub name: String,
     pub games_schedule: Vec<GameSchedule>,
@@ -73,6 +112,22 @@ impl RoundSchedule {
 
             self.games_schedule.push(game_schedule);
         }
+    }
+
+    pub fn games_that_can_be_created(&self) -> Vec<GameSchedule> {
+        self.games_schedule
+            .iter()
+            .map(|game_schedule| game_schedule.clone())
+            .filter(|game_schedule| game_schedule.can_be_created())
+            .collect()
+    }
+
+    pub fn games_can_be_created(&self) -> bool {
+        self.games_schedule
+            .iter()
+            .filter(|&game_schedule| game_schedule.can_be_created())
+            .count()
+            > 0
     }
 }
 
@@ -117,6 +172,14 @@ impl From<GameSummary> for GameSchedule {
 impl GameSchedule {
     pub fn created(&self) -> bool {
         self.game_summary.is_some()
+    }
+
+    pub fn can_be_created(&self) -> bool {
+        self.game_summary.is_none()
+            && self.home_team.is_some()
+            && self.home_team.ne(&Some(BYE.clone()))
+            && self.away_team.is_some()
+            && self.away_team.ne(&Some(BYE.clone()))
     }
 
     pub fn finished(&self) -> bool {
@@ -178,6 +241,19 @@ impl GameSchedule {
             self.away_team.clone()
         } else {
             None
+        }
+    }
+
+    pub fn pick_game_summary_from_list(&mut self, games: &mut Vec<GameSummary>) {
+        if self.game_summary.is_none() {
+            let game_position = games.iter().position(|game_summary| {
+                game_summary.first_team.eq(&self.home_team)
+                    && game_summary.second_team.eq(&self.away_team)
+            });
+
+            if let Some(game_position) = game_position {
+                self.game_summary = Some(games.remove(game_position));
+            }
         }
     }
 }

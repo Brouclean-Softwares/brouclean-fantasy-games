@@ -4,50 +4,51 @@
             Calendrier
         </h3>
 
-        {% for stage_schedule in schedule %}
+        {% for stage_schedule in schedule.stages_schedule %}
         <h4 class="uk-heading-divider">
             {{ stage_schedule.stage.stage_name }}
         </h4>
 
-        {% for round_schedule in stage_schedule.rounds_schedule %}
+        {% for round_index in 0..stage_schedule.rounds_schedule.len() %}
+            {% let round_schedule = stage_schedule.rounds_schedule[round_index] %}
+
         <h5>
             {{ round_schedule.name }}
         </h5>
 
         {{ GamesScheduleTable::from_games_schedule(round_schedule.games_schedule.clone())|escape("none") }}
 
-        {% if editable && ! round_schedule.all_games_created %}
+        {% if editable && round_schedule.games_can_be_created() %}
         <div class="uk-margin-top">
-            <form id="insert_games_form" action="./insert_games" method="post" autocomplete="off">
-                <input name="competition_id" type="hidden" value="{{ competition_id }}">
-                <input name="stage_id" type="hidden" value="{{ stage_schedule.stage.id }}">
-
                 <button class="uk-button uk-button-primary"
                         type="button"
-                        uk-toggle="target: #modal-insert_games">Créer les matchs</button>
+                        uk-toggle="target: #modal-insert_games-{{ stage_schedule.stage.id }}-{{ round_index }}">Créer les matchs</button>
 
-                <div id="modal-insert_games" uk-modal>
+                <div id="modal-insert_games-{{ stage_schedule.stage.id }}-{{ round_index }}" uk-modal>
                     <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
                         <h2 class="uk-modal-title">Création de matchs en cours</h2>
                         <p>A quelle date souhaitez-vous créer les matchs du tour : {{ round_schedule.name }} ?</p>
                         <p>
-                            <input id="scheduled_at" name="scheduled_at" type="datetime-local">
+                            <form id="insert_games_form_{{ stage_schedule.stage.id }}_{{ round_index }}" action="./insert_games" method="post" autocomplete="off">
+                                <input name="competition_id" type="hidden" value="{{ competition_id }}">
+                                <input name="stage_id" type="hidden" value="{{ stage_schedule.stage.id }}">
+                                <input name="round_index" type="hidden" value="{{ round_index }}">
+                                <input name="scheduled_at" type="datetime-local" required>
+                            </form>
                         </p>
                         <p class="uk-text-right">
                             <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
                             <button class="uk-button uk-button-primary"
-                                    onclick="document.getElementById('insert_games_form').submit()">
+                                    onclick="document.getElementById('insert_games_form_{{ stage_schedule.stage.id }}_{{ round_index }}').submit()">
                                 Créer
                             </button>
                         </p>
                     </div>
                 </div>
-            </form>
         </div>
         {% endif %}
 
         {% endfor %}
-
         {% endfor %}
     </div>
 </div>

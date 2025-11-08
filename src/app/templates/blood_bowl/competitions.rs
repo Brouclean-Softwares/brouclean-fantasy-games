@@ -2,9 +2,9 @@ use crate::app::templates::blood_bowl::games::GamesScheduleTable;
 use crate::app::templates::blood_bowl::teams::TeamSelector;
 use crate::app::templates::{blood_bowl, AlertMessage, BreadCrumb, NavigationBar, UrlLink};
 use crate::data::blood_bowl::competitions::registrations::TeamRegistration;
-use crate::data::blood_bowl::competitions::schedule::StageSchedule;
+use crate::data::blood_bowl::competitions::schedule::CompetitionSchedule;
 use crate::data::blood_bowl::competitions::stages::{CompetitionStage, CompetitionStageType};
-use crate::data::blood_bowl::competitions::standings::StageStandings;
+use crate::data::blood_bowl::competitions::standings::CompetitionStandings;
 use crate::data::blood_bowl::competitions::Competition;
 use crate::data::blood_bowl::teams::TeamLogo;
 use crate::data::users::User;
@@ -61,8 +61,8 @@ pub struct CompetitionPage {
     edit_mode: bool,
     link_url: String,
     information: CompetitionInformation,
-    standings: CompetitionStandings,
-    schedule: CompetitionSchedule,
+    standings: CompetitionStandingsBloc,
+    schedule: CompetitionScheduleBloc,
 }
 
 impl CompetitionPage {
@@ -95,7 +95,7 @@ impl CompetitionPage {
             link_url: link_url.clone(),
             information: CompetitionInformation {
                 competition,
-                competition_stages: CompetitionStages {
+                competition_stages: CompetitionStagesBloc {
                     stages: stages.clone(),
                     competition_id,
                     editable,
@@ -109,12 +109,12 @@ impl CompetitionPage {
                 link_url,
                 team_selector: TeamSelector::get("team_to_registered_id".to_string()),
             },
-            schedule: CompetitionSchedule {
+            schedule: CompetitionScheduleBloc {
                 schedule,
                 competition_id,
                 editable,
             },
-            standings: CompetitionStandings { standings },
+            standings: CompetitionStandingsBloc { standings },
         })
     }
 }
@@ -123,7 +123,7 @@ impl CompetitionPage {
 #[template(path = "blood_bowl/competitions/competition_information.html")]
 pub struct CompetitionInformation {
     competition: Competition,
-    competition_stages: CompetitionStages,
+    competition_stages: CompetitionStagesBloc,
     stage_types: Vec<CompetitionStageType>,
     teams_registrations: Vec<TeamRegistration>,
     profile: Option<User>,
@@ -135,7 +135,7 @@ pub struct CompetitionInformation {
 
 #[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/competitions/competition_stages.html")]
-pub struct CompetitionStages {
+pub struct CompetitionStagesBloc {
     stages: Vec<CompetitionStage>,
     competition_id: i32,
     editable: bool,
@@ -144,14 +144,14 @@ pub struct CompetitionStages {
 
 #[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/competitions/competition_standings.html")]
-pub struct CompetitionStandings {
-    standings: Vec<StageStandings>,
+pub struct CompetitionStandingsBloc {
+    standings: CompetitionStandings,
 }
 
 #[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/competitions/competition_schedule.html")]
-pub struct CompetitionSchedule {
-    schedule: Vec<StageSchedule>,
+pub struct CompetitionScheduleBloc {
+    schedule: CompetitionSchedule,
     competition_id: i32,
     editable: bool,
 }

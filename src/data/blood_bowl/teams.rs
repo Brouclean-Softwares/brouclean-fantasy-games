@@ -1,3 +1,4 @@
+use crate::data::blood_bowl::competitions::schedule::BYE;
 use crate::data::blood_bowl::{games, players, staff, teams};
 use crate::data::users::User;
 use crate::data::Id;
@@ -76,6 +77,22 @@ pub struct TeamSummary {
 impl PartialEq<Self> for TeamSummary {
     fn eq(&self, other: &Self) -> bool {
         self.id.eq(&other.id)
+    }
+}
+
+impl PartialEq<BYE> for TeamSummary {
+    fn eq(&self, bye: &BYE) -> bool {
+        self.id.eq(&bye.id)
+    }
+}
+
+impl PartialEq<Option<Self>> for TeamSummary {
+    fn eq(&self, other: &Option<Self>) -> bool {
+        if let Some(other) = other {
+            self.id.eq(&other.id)
+        } else {
+            false
+        }
     }
 }
 
