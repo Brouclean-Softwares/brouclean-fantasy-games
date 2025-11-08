@@ -111,17 +111,15 @@ impl User {
 
         if let Some(user_id) = id {
             let user: Option<User> = sqlx::query_as(
-                "SELECT users.id,
-                    users.email,
-                    users.name,
-                    users.given_name,
-                    users.family_name,
-                    users.picture
-            FROM users
-            INNER JOIN bb_teams
-            ON users.id = bb_teams.coach_id
-            WHERE users.id = $1
-            LIMIT 1",
+                "SELECT id,
+                            email,
+                            name,
+                            given_name,
+                            family_name,
+                            picture
+                    FROM users
+                    WHERE id = $1
+                    LIMIT 1",
             )
             .bind(user_id.clone())
             .fetch_optional(&state.db)
@@ -133,27 +131,67 @@ impl User {
         }
     }
 
-    pub async fn upsert(&self, state: &AppState) -> Result<Self, AppError> {
-        let upserted_user: User = sqlx::query_as(
-            "INSERT INTO users (email, name, given_name, family_name, picture)
-                VALUES ($1, $2, $3, $4, $5)
-                ON CONFLICT (email) DO UPDATE SET
-                    name = excluded.name,
-                    given_name = excluded.given_name,
-                    family_name = excluded.family_name,
-                    picture = excluded.picture,
-                    last_updated = CURRENT_TIMESTAMP
-                RETURNING users.id, users.email, users.name, given_name, family_name, users.picture",
+    pub async fn select_by_mail(state: &AppState, mail: &String) -> Result<Option<Self>, AppError> {
+        tracing::debug!("select_by_mail with id={}", mail);
+
+        let user: Option<User> = sqlx::query_as(
+            "SELECT id,
+                        email,
+                        name,
+                        given_name,
+                        family_name,
+                        picture
+                FROM users
+                WHERE email = $1
+                LIMIT 1",
         )
-        .bind(self.email.clone())
-        .bind(self.name.clone())
-        .bind(self.given_name.clone())
-        .bind(self.family_name.clone())
-        .bind(self.picture.clone())
-        .fetch_one(&state.db)
+        .bind(mail.clone())
+        .fetch_optional(&state.db)
         .await?;
 
-        Ok(upserted_user)
+        Ok(user)
+    }
+
+    pub async fn upsert(&self, state: &AppState) -> Result<Self, AppError> {
+        let existing_user = Self::select_by_mail(state, &self.email).await?;
+
+        if let Some(user_id) = existing_user.and_then(|user| user.id) {
+            let updated_user: User = sqlx::query_as(
+                "UPDATE users
+                    SET name = $2,
+                        given_name = $3,
+                        family_name = $4,
+                        picture = $5,
+                        last_updated = CURRENT_TIMESTAMP
+                    WHERE id = $1
+                    RETURNING users.id, users.email, users.name, given_name, family_name, users.picture",
+            )
+                .bind(user_id.clone())
+                .bind(self.name.clone())
+                .bind(self.given_name.clone())
+                .bind(self.family_name.clone())
+                .bind(self.picture.clone())
+                .fetch_one(&state.db)
+                .await?;
+
+            Ok(updated_user)
+        } else {
+            let inserted_user: User = sqlx::query_as(
+                "INSERT INTO users (email, name, given_name, family_name, picture)
+                VALUES ($1, $2, $3, $4, $5)
+                ON CONFLICT (email) DO NOTHING
+                RETURNING users.id, users.email, users.name, given_name, family_name, users.picture",
+            )
+                .bind(self.email.clone())
+                .bind(self.name.clone())
+                .bind(self.given_name.clone())
+                .bind(self.family_name.clone())
+                .bind(self.picture.clone())
+                .fetch_one(&state.db)
+                .await?;
+
+            Ok(inserted_user)
+        }
     }
 }
 
