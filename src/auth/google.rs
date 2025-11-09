@@ -8,14 +8,12 @@ use axum::extract::{Query, State};
 use axum::response::IntoResponse;
 use axum_extra::extract::cookie::{Cookie, SameSite};
 use axum_extra::extract::PrivateCookieJar;
-use chrono::{Duration, Local};
 use oauth2::{
     basic::BasicClient, reqwest::async_http_client, AuthUrl, AuthorizationCode, ClientId,
     ClientSecret, RedirectUrl, TokenResponse, TokenUrl,
 };
 use serde::Deserialize;
 use shuttle_runtime::SecretStore;
-use time::Duration as TimeDuration;
 
 #[derive(Debug, Deserialize)]
 pub struct AuthRequest {
@@ -33,29 +31,23 @@ pub async fn callback(
         .request_async(async_http_client)
         .await?;
 
+    let access_token = token.access_token().secret();
+    let _refresh_token = token.refresh_token().and_then(|token| Some(token.secret()));
+
     let profile = app_state
         .http_requester
         .get("https://openidconnect.googleapis.com/v1/userinfo")
-        .bearer_auth(token.access_token().secret().to_owned())
+        .bearer_auth(access_token.to_owned())
         .send()
         .await?;
 
     let profile = profile.json::<User>().await?;
 
-    let Some(secs) = token.expires_in() else {
-        return Err(AppError::OptionError);
-    };
-
-    let secs: i64 = secs.as_secs().try_into()?;
-
-    let max_age = Local::now().naive_local() + Duration::try_seconds(secs).unwrap();
-
-    let cookie = Cookie::build((SESSION_ID, token.access_token().secret().to_owned()))
+    let cookie = Cookie::build((SESSION_ID, access_token.to_owned()))
         .same_site(SameSite::Strict)
         .path("/")
         .secure(true)
-        .http_only(true)
-        .max_age(TimeDuration::seconds(secs));
+        .http_only(true);
 
     let user_profile: User = profile.upsert(&app_state).await?;
 
@@ -63,7 +55,6 @@ pub async fn callback(
         &app_state,
         profile.email,
         token.access_token().secret().to_owned(),
-        max_age,
     )
     .await?;
 
@@ -83,7 +74,7 @@ pub fn build_oauth_client(secrets: &SecretStore) -> BasicClient {
     let auth_url = AuthUrl::new("https://accounts.google.com/o/oauth2/v2/auth".to_string())
         .expect("Invalid authorization endpoint URL");
 
-    let token_url = TokenUrl::new("https://www.googleapis.com/oauth2/v3/token".to_string())
+    let token_url = TokenUrl::new("https://oauth2.googleapis.com/token".to_string())
         .expect("Invalid token endpoint URL");
 
     BasicClient::new(
@@ -99,7 +90,7 @@ pub fn connection_url(app_state: AppState) -> String {
     let oauth_client = app_state.google_oauth_client;
 
     format!(
-        "{}?scope=openid%20profile%20email&client_id={}&response_type=code&redirect_uri={}",
+        "{}?scope=openid%20profile%20email&client_id={}&response_type=code&access_type=offline&redirect_uri={}",
         oauth_client.auth_url().to_string(),
         oauth_client.client_id().to_string(),
         oauth_client.redirect_url().unwrap().to_string()

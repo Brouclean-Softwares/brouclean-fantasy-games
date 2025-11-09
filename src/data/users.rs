@@ -37,9 +37,13 @@ impl FromRequestParts<AppState> for User {
             return Err(AppError::Unauthorized);
         };
 
-        let connected_user = User::select_connected_user(&state, cookie).await?;
+        if let Some(connected_user) = User::select_connected_user(&state, &cookie).await? {
+            connected_user.extend_session(&state, &cookie).await?;
 
-        Ok(connected_user)
+            Ok(connected_user)
+        } else {
+            Err(AppError::Unauthorized)
+        }
     }
 }
 
@@ -86,8 +90,11 @@ impl User {
         }
     }
 
-    pub async fn select_connected_user(state: &AppState, cookie: String) -> Result<Self, AppError> {
-        let connected_user: User = sqlx::query_as(
+    pub async fn select_connected_user(
+        state: &AppState,
+        cookie: &String,
+    ) -> Result<Option<Self>, AppError> {
+        let connected_user: Option<User> = sqlx::query_as(
             "SELECT users.id,
                         users.email,
                         users.name,
@@ -95,15 +102,33 @@ impl User {
                         users.family_name,
                         users.picture
                 FROM sessions
-                LEFT JOIN USERS ON sessions.user_id = users.id
+                LEFT JOIN USERS
+                ON sessions.user_id = users.id
                 WHERE sessions.session_id = $1
+                AND sessions.expires_at > CURRENT_TIMESTAMP
                 LIMIT 1",
         )
-        .bind(cookie)
-        .fetch_one(&state.db)
+        .bind(cookie.clone())
+        .fetch_optional(&state.db)
         .await?;
 
         Ok(connected_user)
+    }
+
+    async fn extend_session(&self, state: &AppState, cookie: &String) -> Result<(), AppError> {
+        sqlx::query(
+            "UPDATE sessions
+                SET expires_at = CURRENT_TIMESTAMP + interval '4 hours'
+                WHERE session_id = $1
+                AND user_id = $2
+                AND expires_at > CURRENT_TIMESTAMP",
+        )
+        .bind(cookie.clone())
+        .bind(self.id)
+        .execute(&state.db)
+        .await?;
+
+        Ok(())
     }
 
     pub async fn select_by_id(state: &AppState, id: Option<i32>) -> Result<Option<Self>, AppError> {
