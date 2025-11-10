@@ -1,5 +1,5 @@
 use crate::app::templates::{BreadCrumb, NavigationBar};
-use crate::data::blood_bowl::statistics::TeamStatisticRow;
+use crate::data::blood_bowl::statistics::{StatisticElement, Statistics};
 use crate::data::blood_bowl::teams::TeamLogo;
 use askama::Template;
 use askama_web::WebTemplate;
@@ -9,36 +9,45 @@ use askama_web::WebTemplate;
 pub struct StatisticsPage {
     pub navigation_bar: NavigationBar,
     pub breadcrumb: BreadCrumb,
-    pub teams_top_victories: TeamsStatisticList,
-    pub teams_top_games: TeamsStatisticList,
-    pub teams_top_values: TeamsStatisticList,
-    pub teams_top_star_player_points: TeamsStatisticList,
-    pub teams_top_touchdowns: TeamsStatisticList,
-    pub teams_top_casualties: TeamsStatisticList,
-    pub teams_top_interceptions: TeamsStatisticList,
-    pub teams_top_deflections: TeamsStatisticList,
-    pub teams_top_passing_completions: TeamsStatisticList,
-    pub teams_top_throwing_completions: TeamsStatisticList,
+    pub teams_top_victories: StatisticList,
+    pub teams_top_games: StatisticList,
+    pub teams_top_star_player_points: StatisticList,
+    pub teams_top_touchdowns: StatisticList,
+    pub teams_top_casualties: StatisticList,
+    pub teams_top_injuries: StatisticList,
+    pub teams_top_interceptions: StatisticList,
+    pub teams_top_deflections: StatisticList,
+    pub teams_top_passing_completions: StatisticList,
+    pub teams_top_throwing_completions: StatisticList,
+    pub players_top_star_player_points: StatisticList,
+    pub players_top_touchdowns: StatisticList,
+    pub players_top_casualties: StatisticList,
+    pub players_top_injuries: StatisticList,
+    pub players_top_interceptions: StatisticList,
+    pub players_top_deflections: StatisticList,
+    pub players_top_passing_completions: StatisticList,
+    pub players_top_throwing_completions: StatisticList,
 }
 
 #[derive(Template, WebTemplate)]
-#[template(path = "blood_bowl/statistics/teams_statistic_list.html")]
-pub struct TeamsStatisticList {
+#[template(path = "blood_bowl/statistics/statistic_list.html")]
+pub struct StatisticList {
     statistic_name: String,
-    list_length: usize,
-    teams_totals: Vec<TeamStatisticRow>,
+    statistics: Statistics,
+    element_url: String,
 }
 
-impl TeamsStatisticList {
-    pub fn from(
-        statistic_name: String,
-        list_length: usize,
-        teams_totals: Vec<TeamStatisticRow>,
-    ) -> Self {
+impl StatisticList {
+    pub fn from(statistic_name: String, statistics: Statistics) -> Self {
+        let element_url = match statistics.statistic_element {
+            StatisticElement::Team => String::from("/blood_bowl/teams/team?id"),
+            StatisticElement::Player => String::from("/blood_bowl/players/player?player_id"),
+        };
+
         Self {
             statistic_name,
-            list_length,
-            teams_totals,
+            statistics,
+            element_url,
         }
     }
 }

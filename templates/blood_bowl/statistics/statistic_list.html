@@ -8,32 +8,32 @@
             <thead>
             <tr>
                 <th class="uk-table-shrink">#</th>
-                <th class="uk-table-expand">Équipe</th>
+                <th class="uk-table-expand">Nom</th>
                 <th class="uk-table-shrink">Stat</th>
             </tr>
             </thead>
 
             <tbody>
 
-            {% for team_index in 0..list_length %}
+            {% for statistic_index in 0..5 %}
             <tr>
                 <td>
-                    <span class="uk-text-meta">#{{ team_index + 1 }}</span>
+                    <span class="uk-text-meta">#{{ statistic_index + 1 }}</span>
                 </td>
 
-                {% if let Some(team_total) = teams_totals.get(team_index.clone()) %}
+                {% if let Some(statistic) = statistics.statistics_rows.get(statistic_index.clone()) %}
 
-                {% let team_url = format!("/blood_bowl/teams/team?id={}", team_total.id) %}
-                {% let team_logo_url = TeamLogo::from_url_or_roster(team_total.external_logo_url.clone(), team_total.roster.clone()).url %}
+                {% let url = format!("{}={}&team_id={}", self.element_url, statistic.id, statistic.team_id) %}
+                {% let logo_url = TeamLogo::from_url_or_roster(statistic.external_logo_url.clone(), statistic.roster.clone()).url %}
 
                 <td class="uk-text-truncate">
-                    <a class="uk-link-reset" href="{{ team_url }}">
-                        <img src="{{ team_logo_url }}" width="25" height="25" alt="">
-                        {{ team_total.name }}
+                    <a class="uk-link-reset" href="{{ url }}">
+                        <img src="{{ logo_url }}" width="25" height="25" alt="">
+                        {{ statistic.name }}
                     </a>
                 </td>
                 <td>
-                    {{ team_total.statistic_value }}
+                    {{ statistic.statistic_value }}
                 </td>
 
                 {% else %}
