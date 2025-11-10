@@ -9,8 +9,8 @@ use askama_web::WebTemplate;
 pub struct StatisticsPage {
     pub navigation_bar: NavigationBar,
     pub breadcrumb: BreadCrumb,
-    pub teams_top_games: TeamsStatisticList,
     pub teams_top_victories: TeamsStatisticList,
+    pub teams_top_games: TeamsStatisticList,
     pub teams_top_values: TeamsStatisticList,
     pub teams_top_star_player_points: TeamsStatisticList,
     pub teams_top_touchdowns: TeamsStatisticList,

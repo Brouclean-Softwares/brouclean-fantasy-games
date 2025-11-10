@@ -23,11 +23,11 @@ pub async fn statistics(
 
     let lists_length = 5;
 
-    let teams_top_games = statistics::select_teams_games_top_5(&app_state)
+    let teams_top_victories = statistics::select_teams_victories_top_5(&app_state)
         .await
         .or_else(error_redirect)?;
 
-    let teams_top_victories = statistics::select_teams_victories_top_5(&app_state)
+    let teams_top_games = statistics::select_teams_games_top_5(&app_state)
         .await
         .or_else(error_redirect)?;
 
@@ -69,15 +69,15 @@ pub async fn statistics(
     Ok(StatisticsPage {
         navigation_bar: NavigationBar::get(&app_state, &profile),
         breadcrumb: blood_bowl::breadcrumb(),
-        teams_top_games: TeamsStatisticList::from(
-            String::from("Nombre de matchs"),
-            lists_length,
-            teams_top_games,
-        ),
         teams_top_victories: TeamsStatisticList::from(
             String::from("Victoires"),
             lists_length,
             teams_top_victories,
+        ),
+        teams_top_games: TeamsStatisticList::from(
+            String::from("Nombre de matchs"),
+            lists_length,
+            teams_top_games,
         ),
         teams_top_values: TeamsStatisticList::from(
             String::from("Valeur d'équipe (VE)"),

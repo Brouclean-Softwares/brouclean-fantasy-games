@@ -12,28 +12,6 @@ pub struct TeamStatisticRow {
     pub statistic_value: String,
 }
 
-pub async fn select_teams_games_top_5(state: &AppState) -> Result<Vec<TeamStatisticRow>, AppError> {
-    tracing::debug!("select_teams_victories_top_5");
-
-    let stats: Vec<TeamStatisticRow> = sqlx::query_as(
-        "SELECT bb_teams.id,
-                    bb_teams.external_logo_url,
-                    bb_teams.roster,
-                    bb_teams.name,
-                    CAST(COUNT(bb_games.id) as VARCHAR) as statistic_value
-            FROM bb_teams
-            INNER JOIN bb_games
-            ON (bb_games.first_team_id = bb_teams.id OR bb_games.second_team_id = bb_teams.id)
-            GROUP BY bb_teams.id
-            ORDER BY COUNT(bb_games.id) DESC
-            LIMIT 5",
-    )
-    .fetch_all(&state.db)
-    .await?;
-
-    Ok(stats)
-}
-
 pub async fn select_teams_victories_top_5(
     state: &AppState,
 ) -> Result<Vec<TeamStatisticRow>, AppError> {
@@ -58,6 +36,28 @@ pub async fn select_teams_victories_top_5(
     )
     .fetch_all(&state.db)
     .await?;
+
+    Ok(stats)
+}
+
+pub async fn select_teams_games_top_5(state: &AppState) -> Result<Vec<TeamStatisticRow>, AppError> {
+    tracing::debug!("select_teams_victories_top_5");
+
+    let stats: Vec<TeamStatisticRow> = sqlx::query_as(
+        "SELECT bb_teams.id,
+                    bb_teams.external_logo_url,
+                    bb_teams.roster,
+                    bb_teams.name,
+                    CAST(COUNT(bb_games.id) as VARCHAR) as statistic_value
+            FROM bb_teams
+            INNER JOIN bb_games
+            ON (bb_games.first_team_id = bb_teams.id OR bb_games.second_team_id = bb_teams.id)
+            GROUP BY bb_teams.id
+            ORDER BY COUNT(bb_games.id) DESC
+            LIMIT 5",
+    )
+        .fetch_all(&state.db)
+        .await?;
 
     Ok(stats)
 }
