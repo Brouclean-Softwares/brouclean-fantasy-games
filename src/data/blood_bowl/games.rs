@@ -346,7 +346,7 @@ pub async fn select_all_for_competition_stage(
 
 pub async fn select_played_by_team(
     state: &AppState,
-    team_id: &i32,
+    team_id: i32,
 ) -> Result<Vec<GameSummary>, AppError> {
     tracing::debug!("select_played_by_team for team_id={:?}", team_id);
 
@@ -396,7 +396,7 @@ pub async fn select_played_by_team(
 
 pub async fn select_scheduled_for_team(
     state: &AppState,
-    team_id: &i32,
+    team_id: i32,
 ) -> Result<Vec<GameSummary>, AppError> {
     tracing::debug!("select_scheduled_for_team for team_id={:?}", team_id);
 
@@ -447,7 +447,7 @@ pub async fn select_scheduled_for_team(
 
 pub async fn select_playing_by_team(
     state: &AppState,
-    team_id: &i32,
+    team_id: i32,
 ) -> Result<Option<GameSummary>, AppError> {
     tracing::debug!("select_playing_by_team for team_id={:?}", team_id);
 

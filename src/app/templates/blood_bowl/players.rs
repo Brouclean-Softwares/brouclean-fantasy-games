@@ -1,6 +1,7 @@
 use crate::app::templates::blood_bowl::teams;
 use crate::app::templates::{AlertMessage, BreadCrumb, NavigationBar, UrlLink};
-use crate::data::blood_bowl::players::{PlayerAdvancement, PlayerStats};
+use crate::data::blood_bowl::players::PlayerAdvancement;
+use crate::data::blood_bowl::statistics::players::PlayerStatistics;
 use crate::data::blood_bowl::teams::TeamLogo;
 use crate::data::users::User;
 use crate::errors::AppError;
@@ -27,7 +28,7 @@ pub struct PlayerPage {
     edit_mode: bool,
     can_buy: bool,
     can_buyout: bool,
-    stats: PlayerStats,
+    statistics: PlayerStatistics,
     player_advancement_blocs: Vec<PlayerAdvancementBloc>,
 }
 
@@ -45,7 +46,7 @@ impl PlayerPage {
         edit_mode: bool,
         can_buy: bool,
         can_buyout: bool,
-        stats: PlayerStats,
+        statistics: PlayerStatistics,
     ) -> Self {
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
@@ -62,7 +63,7 @@ impl PlayerPage {
             edit_mode,
             can_buy,
             can_buyout,
-            stats,
+            statistics,
             player_advancement_blocs: vec![
                 PlayerAdvancementBloc::get(&player, player_advancements.get(0), 1, editable)
                     .unwrap_or_else(|error| PlayerAdvancementBloc::get_error(error.to_string())),

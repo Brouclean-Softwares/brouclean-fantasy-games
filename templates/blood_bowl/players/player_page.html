@@ -117,10 +117,10 @@
     {% if ! player.is_star_player %}
     <dl class="uk-description-list">
         <dt>Nombre de matches</dt>
-        <dd>{{ stats.games_number }}</dd>
+        <dd>{{ statistics.games_number }}</dd>
 
         <dt>Points de Star Player (PSP)</dt>
-        <dd>{{ stats.star_player_points }}</dd>
+        <dd>{{ statistics.star_player_points }}</dd>
     </dl>
     {% endif %}
 
@@ -128,25 +128,25 @@
         <table class="uk-table uk-table-divider uk-table-small">
             <thead>
             <tr>
-                <th class="uk-table-shrink" uk-tooltip="title: Passe précise receptionnée">PAS</th>
-                <th class="uk-table-shrink" uk-tooltip="title: Lancer superbe d'un coéquipier qui a attérit sur ses pieds">LAN</th>
-                <th class="uk-table-shrink" uk-tooltip="title: Détournement de passe">DET</th>
-                <th class="uk-table-shrink" uk-tooltip="title: Interception">INT</th>
-                <th class="uk-table-shrink" uk-tooltip="title: Elimination lors d'un blocage">ELI</th>
+                <th class="uk-table-shrink" uk-tooltip="title: Joueur du match">JDM</th>
                 <th class="uk-table-shrink" uk-tooltip="title: Touchdown">TD</th>
-                <th uk-tooltip="title: Joueur du match">JDM</th>
+                <th class="uk-table-shrink" uk-tooltip="title: Elimination lors d'un blocage">ELI</th>
+                <th class="uk-table-shrink" uk-tooltip="title: Interception">INT</th>
+                <th class="uk-table-shrink" uk-tooltip="title: Détournement de passe">DET</th>
+                <th class="uk-table-shrink" uk-tooltip="title: Passe précise receptionnée">PAS</th>
+                <th uk-tooltip="title: Lancer superbe d'un coéquipier qui a attérit sur ses pieds">LAN</th>
             </tr>
             </thead>
 
             <tbody>
             <tr>
-                <td>{{ stats.passing_completions }}</td>
-                <td>{{ stats.throwing_completions }}</td>
-                <td>{{ stats.deflections }}</td>
-                <td>{{ stats.interceptions }}</td>
-                <td>{{ stats.casualties }}</td>
-                <td>{{ stats.touchdowns }}</td>
-                <td>{{ stats.most_valuable_player }}</td>
+                <td>{{ statistics.most_valuable_player }}</td>
+                <td>{{ statistics.touchdowns }}</td>
+                <td>{{ statistics.casualties }}</td>
+                <td>{{ statistics.interceptions }}</td>
+                <td>{{ statistics.deflections }}</td>
+                <td>{{ statistics.passing_completions }}</td>
+                <td>{{ statistics.throwing_completions }}</td>
             </tr>
             </tbody>
         </table>

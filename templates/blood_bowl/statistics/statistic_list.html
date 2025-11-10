@@ -30,6 +30,10 @@
                     <a class="uk-link-reset" href="{{ url }}">
                         <img src="{{ logo_url }}" width="25" height="25" alt="">
                         {{ statistic.name }}
+
+                        {% if let Some(position) = statistic.position %}
+                        <span class="uk-text-meta"> ({{ position.name("fr") }})</span>
+                        {% endif %}
                     </a>
                 </td>
                 <td>

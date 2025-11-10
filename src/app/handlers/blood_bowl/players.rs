@@ -1,7 +1,7 @@
 use crate::app::templates::blood_bowl::players::PlayerPage;
 use crate::app::templates::{AlertMessage, AlertType};
-use crate::data::blood_bowl::players::PlayerStats;
-use crate::data::blood_bowl::{games, players, teams};
+use crate::data::blood_bowl::statistics::players::PlayerStatistics;
+use crate::data::blood_bowl::{games, players, statistics, teams};
 use crate::data::users::User;
 use crate::AppState;
 use axum::extract::{Query, State};
@@ -39,7 +39,7 @@ pub async fn player(
         .map_err(error_handler)?;
 
     let mut is_playing_game = false;
-    if let Some(game) = games::select_playing_by_team(&app_state, &team.id)
+    if let Some(game) = games::select_playing_by_team(&app_state, team.id)
         .await
         .map_err(error_handler)?
     {
@@ -75,7 +75,7 @@ pub async fn player(
             .await
             .map_err(error_handler)?;
 
-    let stats = players::select_statistics(&app_state, params.player_id)
+    let stats = statistics::players::select_statistics(&app_state, params.player_id)
         .await
         .map_err(error_handler)?;
 
@@ -306,7 +306,7 @@ pub async fn added_player(
 
     let player_statistics = game.player_statistics(params.team_id, params.player_id_in_game);
 
-    let stats = PlayerStats {
+    let stats = PlayerStatistics {
         games_number: 1,
         passing_completions: player_statistics.passing_completions as i64,
         throwing_completions: player_statistics.throwing_completions as i64,

@@ -1,7 +1,7 @@
 use crate::data::blood_bowl::games::select_playing_team_player_for_game;
 use crate::data::blood_bowl::{coaches, games, teams};
 use crate::data::users::User;
-use crate::data::{Id, IsTrue, Sum};
+use crate::data::{Id, IsTrue, Total};
 use crate::errors::AppError;
 use crate::AppState;
 use blood_bowl_rs::advancements::{Advancement, AdvancementChoice};
@@ -191,62 +191,6 @@ pub async fn select_former_for_team(
     }
 
     Ok(players)
-}
-
-#[derive(Deserialize, sqlx::FromRow, Clone)]
-pub struct PlayerStats {
-    pub games_number: i64,
-    pub passing_completions: i64,
-    pub throwing_completions: i64,
-    pub deflections: i64,
-    pub interceptions: i64,
-    pub casualties: i64,
-    pub touchdowns: i64,
-    pub most_valuable_player: i64,
-    pub star_player_points: i64,
-}
-
-impl PlayerStats {
-    pub fn new() -> Self {
-        Self {
-            games_number: 0,
-            passing_completions: 0,
-            throwing_completions: 0,
-            deflections: 0,
-            interceptions: 0,
-            casualties: 0,
-            touchdowns: 0,
-            most_valuable_player: 0,
-            star_player_points: 0,
-        }
-    }
-}
-
-pub async fn select_statistics(state: &AppState, player_id: i32) -> Result<PlayerStats, AppError> {
-    tracing::debug!("select_statistics for player_id={}", player_id);
-
-    let statistics: Option<PlayerStats> = sqlx::query_as(
-        "SELECT COUNT(game_id) as games_number,
-                    COALESCE(SUM(passing_completions), 0) as passing_completions,
-                    COALESCE(SUM(throwing_completions), 0) as throwing_completions,
-                    COALESCE(SUM(deflections), 0) as deflections,
-                    COALESCE(SUM(interceptions), 0) as interceptions,
-                    COALESCE(SUM(casualties), 0) as casualties,
-                    COALESCE(SUM(touchdowns), 0) as touchdowns,
-                    COALESCE(SUM(most_valuable_player), 0) as most_valuable_player,
-                    COALESCE(SUM(star_player_points), 0) as star_player_points
-            FROM bb_games_teams_players
-            WHERE player_id = $1",
-    )
-    .bind(player_id.clone())
-    .fetch_optional(&state.db)
-    .await?;
-
-    if let Some(statistics) = statistics {
-        Ok(statistics.into())
-    } else {
-        Ok(PlayerStats::new())
-    }
 }
 
 pub async fn update_name(
@@ -621,8 +565,8 @@ async fn select_remaining_star_player_points(
 ) -> Result<i32, AppError> {
     tracing::debug!("select_remaining_star_player_points with id={}", player_id);
 
-    let points_won: Sum = sqlx::query_as(
-        "SELECT SUM(star_player_points) as sum
+    let points_won: Total = sqlx::query_as(
+        "SELECT SUM(star_player_points) as total
             FROM bb_games_teams_players
             WHERE player_id = $1",
     )
@@ -630,8 +574,8 @@ async fn select_remaining_star_player_points(
     .fetch_one(&state.db)
     .await?;
 
-    let points_spent: Sum = sqlx::query_as(
-        "SELECT SUM(star_player_points) as sum
+    let points_spent: Total = sqlx::query_as(
+        "SELECT SUM(star_player_points) as total
             FROM bb_players_advancements
             WHERE player_id = $1",
     )
@@ -639,7 +583,7 @@ async fn select_remaining_star_player_points(
     .fetch_one(&state.db)
     .await?;
 
-    Ok((points_won.sum.unwrap_or(0) - points_spent.sum.unwrap_or(0)) as i32)
+    Ok((points_won.total.unwrap_or(0) - points_spent.total.unwrap_or(0)) as i32)
 }
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]

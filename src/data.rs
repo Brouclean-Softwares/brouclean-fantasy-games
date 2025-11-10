@@ -20,6 +20,6 @@ pub struct IsOptionalTrue {
 }
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
-pub struct Sum {
-    pub sum: Option<i64>,
+pub struct Total {
+    pub total: Option<i64>,
 }

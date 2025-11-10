@@ -1,6 +1,9 @@
 use crate::app::templates::blood_bowl::games::GameCard;
+use crate::app::templates::blood_bowl::statistics::PlayersTopStatisticsLists;
 use crate::app::templates::{blood_bowl, AlertMessage, BreadCrumb, NavigationBar, UrlLink};
 use crate::data::blood_bowl::games::GameSummary;
+use crate::data::blood_bowl::statistics::players::PlayersTopStatistics;
+use crate::data::blood_bowl::statistics::teams::TeamStatistics;
 use crate::data::blood_bowl::teams::{TeamLogo, TeamSummary};
 use crate::data::users::User;
 use crate::errors::AppError;
@@ -82,9 +85,10 @@ pub struct TeamPage {
     editable: bool,
     edit_mode: bool,
     focus: Option<String>,
-    sheet: TeamSheet,
-    results: TeamResults,
-    former_players: FormerPlayers,
+    sheet: TeamSheetTab,
+    results: TeamResultsTab,
+    statistics: TeamStatisticsTab,
+    former_players: FormerPlayersTab,
 }
 
 impl TeamPage {
@@ -100,6 +104,11 @@ impl TeamPage {
         edit_mode: bool,
         focus: Option<String>,
         positions_buyable: Vec<(Position, u32, bool)>,
+        victories: usize,
+        draws: usize,
+        losses: usize,
+        team_statistics: TeamStatistics,
+        players_top_statistics: PlayersTopStatistics,
         former_players: Vec<(i32, Player)>,
     ) -> Self {
         let mut is_playing_game = false;
@@ -125,7 +134,7 @@ impl TeamPage {
             editable,
             edit_mode,
             focus: focus.clone(),
-            sheet: TeamSheet {
+            sheet: TeamSheetTab {
                 team: team.clone(),
                 roster_definition,
                 deletable,
@@ -133,14 +142,21 @@ impl TeamPage {
                 edit_mode,
                 positions_buyable,
             },
-            results: TeamResults {
+            results: TeamResultsTab {
                 team: team.clone(),
                 editable,
                 games_scheduled,
                 game_playing,
                 games_played,
             },
-            former_players: FormerPlayers {
+            statistics: TeamStatisticsTab {
+                victories,
+                draws,
+                losses,
+                team_statistics,
+                players_top_statistics: players_top_statistics.into(),
+            },
+            former_players: FormerPlayersTab {
                 team,
                 former_players,
             },
@@ -150,7 +166,7 @@ impl TeamPage {
 
 #[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/teams/team_sheet.html")]
-struct TeamSheet {
+struct TeamSheetTab {
     team: Team,
     roster_definition: RosterDefinition,
     deletable: bool,
@@ -161,7 +177,7 @@ struct TeamSheet {
 
 #[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/teams/team_results.html")]
-struct TeamResults {
+struct TeamResultsTab {
     team: Team,
     editable: bool,
     games_scheduled: Vec<GameSummary>,
@@ -170,8 +186,18 @@ struct TeamResults {
 }
 
 #[derive(Template, WebTemplate)]
+#[template(path = "blood_bowl/teams/team_statistics.html")]
+struct TeamStatisticsTab {
+    victories: usize,
+    draws: usize,
+    losses: usize,
+    team_statistics: TeamStatistics,
+    players_top_statistics: PlayersTopStatisticsLists,
+}
+
+#[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/teams/former_players.html")]
-struct FormerPlayers {
+struct FormerPlayersTab {
     team: Team,
     former_players: Vec<(i32, Player)>,
 }

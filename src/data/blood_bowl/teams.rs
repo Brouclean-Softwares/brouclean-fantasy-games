@@ -407,7 +407,7 @@ pub async fn update_values(
 pub async fn update_name(
     state: &AppState,
     connected_user: &User,
-    team_id: &i32,
+    team_id: i32,
     name: &String,
 ) -> Result<(), AppError> {
     tracing::debug!(
@@ -438,7 +438,7 @@ pub async fn update_name(
 pub async fn delete(
     state: &AppState,
     connected_user: &User,
-    team_id: &i32,
+    team_id: i32,
 ) -> Result<bool, AppError> {
     tracing::debug!(
         "delete by user={:?} for team_id={}",

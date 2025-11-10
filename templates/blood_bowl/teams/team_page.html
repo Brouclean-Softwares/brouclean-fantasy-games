@@ -94,7 +94,7 @@
     </div>
 
     <div x-show="tab==='stats'">
-        A venir...
+        {{ statistics|escape("none") }}
     </div>
 
     <div x-show="tab==='former_players'">

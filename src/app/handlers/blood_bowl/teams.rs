@@ -2,6 +2,8 @@ use crate::app::templates::blood_bowl::teams::{
     NewTeamPage, TeamFilteredList, TeamPage, TeamsPage,
 };
 use crate::app::templates::{AlertMessage, AlertType};
+use crate::data::blood_bowl::statistics;
+use crate::data::blood_bowl::statistics::players::PlayersTopStatistics;
 use crate::data::blood_bowl::{games, players, staff, teams};
 use crate::data::users::User;
 use crate::AppState;
@@ -197,15 +199,39 @@ pub async fn team(
 
     let positions_buyable = team.positions_buyable().or(Err(Redirect::to("../teams")))?;
 
-    let games_scheduled = games::select_scheduled_for_team(&app_state, &team.id)
+    let games_scheduled = games::select_scheduled_for_team(&app_state, team.id)
         .await
         .map_err(error_handler)?;
 
-    let game_playing = games::select_playing_by_team(&app_state, &team.id)
+    let game_playing = games::select_playing_by_team(&app_state, team.id)
         .await
         .map_err(error_handler)?;
 
-    let games_played = games::select_played_by_team(&app_state, &team.id)
+    let games_played = games::select_played_by_team(&app_state, team.id)
+        .await
+        .map_err(error_handler)?;
+
+    let mut victories = 0;
+    let mut draws = 0;
+    let mut losses = 0;
+
+    for game in games_played.iter() {
+        if let (Some(winner), Some(_)) = (&game.winner(), &game.loser()) {
+            if winner.id.eq(&team.id) {
+                victories += 1;
+            } else {
+                losses += 1;
+            }
+        } else {
+            draws += 1;
+        }
+    }
+
+    let team_statistics = statistics::teams::select_statistics(&app_state, team.id)
+        .await
+        .map_err(error_handler)?;
+
+    let players_top_statistics = PlayersTopStatistics::for_team_id(&app_state, team.id)
         .await
         .map_err(error_handler)?;
 
@@ -225,6 +251,11 @@ pub async fn team(
         edit_mode,
         params.focus,
         positions_buyable,
+        victories,
+        draws,
+        losses,
+        team_statistics,
+        players_top_statistics,
         former_players,
     ))
 }
@@ -247,7 +278,7 @@ pub async fn update(
 ) -> Result<Redirect, Redirect> {
     // Team name
     if let (Some(profile), Some(team_name)) = (profile.clone(), form.team_name) {
-        teams::update_name(&app_state, &profile, &params.id, &team_name)
+        teams::update_name(&app_state, &profile, params.id, &team_name)
             .await
             .or_else(|app_error| {
                 Err(Redirect::to(&format!(
@@ -341,7 +372,7 @@ pub async fn delete(
     profile: User,
     Form(form): Form<DeleteTeamForm>,
 ) -> Result<Redirect, Redirect> {
-    teams::delete(&app_state, &profile, &form.id)
+    teams::delete(&app_state, &profile, form.id)
         .await
         .or_else(|app_error| {
             Err(Redirect::to(&format!(

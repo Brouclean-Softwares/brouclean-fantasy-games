@@ -1,0 +1,371 @@
+use crate::data::blood_bowl::statistics::{StatisticElement, StatisticRow, Statistics};
+use crate::errors::AppError;
+use crate::AppState;
+use serde::Deserialize;
+
+#[derive(Deserialize, sqlx::FromRow, Clone)]
+pub struct TeamStatistics {
+    pub passing_completions: i64,
+    pub throwing_completions: i64,
+    pub deflections: i64,
+    pub interceptions: i64,
+    pub casualties: i64,
+    pub touchdowns: i64,
+    pub star_player_points: i64,
+}
+
+impl TeamStatistics {
+    pub fn new() -> Self {
+        Self {
+            passing_completions: 0,
+            throwing_completions: 0,
+            deflections: 0,
+            interceptions: 0,
+            casualties: 0,
+            touchdowns: 0,
+            star_player_points: 0,
+        }
+    }
+}
+
+pub struct TeamsTopStatistics {
+    pub teams_top_victories: Statistics,
+    pub teams_top_games: Statistics,
+    pub teams_top_star_player_points: Statistics,
+    pub teams_top_touchdowns: Statistics,
+    pub teams_top_casualties: Statistics,
+    pub teams_top_injuries: Statistics,
+    pub teams_top_interceptions: Statistics,
+    pub teams_top_deflections: Statistics,
+    pub teams_top_passing_completions: Statistics,
+    pub teams_top_throwing_completions: Statistics,
+}
+
+impl TeamsTopStatistics {
+    pub async fn global(state: &AppState) -> Result<Self, AppError> {
+        Ok(Self {
+            teams_top_victories: select_teams_victories_top(state).await?,
+            teams_top_games: select_teams_games_top(state).await?,
+            teams_top_star_player_points: select_teams_star_player_points_top(state).await?,
+            teams_top_touchdowns: select_teams_touchdowns_top(state).await?,
+            teams_top_casualties: select_teams_casualties_top(state).await?,
+            teams_top_injuries: select_teams_injuries_top(state).await?,
+            teams_top_interceptions: select_teams_interceptions_top(state).await?,
+            teams_top_deflections: select_teams_deflections_top(state).await?,
+            teams_top_passing_completions: select_teams_passing_completions_top(state).await?,
+            teams_top_throwing_completions: select_teams_throwing_completions_top(state).await?,
+        })
+    }
+}
+
+pub async fn select_statistics(state: &AppState, team_id: i32) -> Result<TeamStatistics, AppError> {
+    tracing::debug!("select_statistics for team_id={}", team_id);
+
+    let statistics: Option<TeamStatistics> = sqlx::query_as(
+        "SELECT COALESCE(SUM(passing_completions), 0) as passing_completions,
+                    COALESCE(SUM(throwing_completions), 0) as throwing_completions,
+                    COALESCE(SUM(deflections), 0) as deflections,
+                    COALESCE(SUM(interceptions), 0) as interceptions,
+                    COALESCE(SUM(casualties), 0) as casualties,
+                    COALESCE(SUM(touchdowns), 0) as touchdowns,
+                    COALESCE(SUM(star_player_points), 0) as star_player_points
+            FROM bb_games_teams_players
+            WHERE team_id = $1",
+    )
+    .bind(team_id.clone())
+    .fetch_optional(&state.db)
+    .await?;
+
+    if let Some(statistics) = statistics {
+        Ok(statistics.into())
+    } else {
+        Ok(TeamStatistics::new())
+    }
+}
+
+pub async fn select_teams_victories_top(state: &AppState) -> Result<Statistics, AppError> {
+    tracing::debug!("select_teams_victories_top");
+
+    let stats: Vec<StatisticRow> = sqlx::query_as(
+        "SELECT bb_teams.id,
+                    bb_teams.id as team_id,
+                    bb_teams.external_logo_url,
+                    bb_teams.roster,
+                    bb_teams.name,
+                    NULL as position,
+                    CAST(COUNT(bb_games.id) as VARCHAR) as statistic_value
+            FROM bb_teams
+            INNER JOIN bb_games
+            ON (
+                (bb_games.first_team_id = bb_teams.id AND bb_games.first_team_is_winner)
+                OR
+                (bb_games.second_team_id = bb_teams.id AND bb_games.second_team_is_winner)
+            )
+            GROUP BY bb_teams.id
+            ORDER BY COUNT(bb_games.id) DESC
+            LIMIT 5",
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    Ok(Statistics {
+        statistic_element: StatisticElement::Team,
+        statistics_rows: stats,
+    })
+}
+
+pub async fn select_teams_games_top(state: &AppState) -> Result<Statistics, AppError> {
+    tracing::debug!("select_teams_games_top");
+
+    let stats: Vec<StatisticRow> = sqlx::query_as(
+        "SELECT bb_teams.id,
+                    bb_teams.id as team_id,
+                    bb_teams.external_logo_url,
+                    bb_teams.roster,
+                    bb_teams.name,
+                    NULL as position,
+                    CAST(COUNT(bb_games.id) as VARCHAR) as statistic_value
+            FROM bb_teams
+            INNER JOIN bb_games
+            ON (bb_games.first_team_id = bb_teams.id OR bb_games.second_team_id = bb_teams.id)
+            GROUP BY bb_teams.id
+            ORDER BY COUNT(bb_games.id) DESC
+            LIMIT 5",
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    Ok(Statistics {
+        statistic_element: StatisticElement::Team,
+        statistics_rows: stats,
+    })
+}
+
+pub async fn select_teams_star_player_points_top(state: &AppState) -> Result<Statistics, AppError> {
+    tracing::debug!("select_teams_star_player_points_top");
+
+    let stats: Vec<StatisticRow> = sqlx::query_as(
+        "SELECT bb_teams.id,
+                    bb_teams.id as team_id,
+                    bb_teams.external_logo_url,
+                    bb_teams.roster,
+                    bb_teams.name,
+                    NULL as position,
+                    CAST(SUM(bb_games_teams_players.star_player_points) as VARCHAR) as statistic_value
+            FROM bb_teams
+            INNER JOIN bb_games_teams_players
+            ON bb_games_teams_players.team_id = bb_teams.id
+            GROUP BY bb_teams.id
+            HAVING SUM(bb_games_teams_players.star_player_points) > 0
+            ORDER BY SUM(bb_games_teams_players.star_player_points) DESC
+            LIMIT 5",
+    )
+        .fetch_all(&state.db)
+        .await?;
+
+    Ok(Statistics {
+        statistic_element: StatisticElement::Team,
+        statistics_rows: stats,
+    })
+}
+
+pub async fn select_teams_touchdowns_top(state: &AppState) -> Result<Statistics, AppError> {
+    tracing::debug!("select_teams_touchdowns_top");
+
+    let stats: Vec<StatisticRow> = sqlx::query_as(
+        "SELECT bb_teams.id,
+                    bb_teams.id as team_id,
+                    bb_teams.external_logo_url,
+                    bb_teams.roster,
+                    bb_teams.name,
+                    NULL as position,
+                    CAST(SUM(bb_games_teams_players.touchdowns) as VARCHAR) as statistic_value
+            FROM bb_teams
+            INNER JOIN bb_games_teams_players
+            ON bb_games_teams_players.team_id = bb_teams.id
+            GROUP BY bb_teams.id
+            HAVING SUM(bb_games_teams_players.touchdowns) > 0
+            ORDER BY SUM(bb_games_teams_players.touchdowns) DESC
+            LIMIT 5",
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    Ok(Statistics {
+        statistic_element: StatisticElement::Team,
+        statistics_rows: stats,
+    })
+}
+
+pub async fn select_teams_casualties_top(state: &AppState) -> Result<Statistics, AppError> {
+    tracing::debug!("select_teams_casualties_top");
+
+    let stats: Vec<StatisticRow> = sqlx::query_as(
+        "SELECT bb_teams.id,
+                    bb_teams.id as team_id,
+                    bb_teams.external_logo_url,
+                    bb_teams.roster,
+                    bb_teams.name,
+                    NULL as position,
+                    CAST(SUM(bb_games_teams_players.casualties) as VARCHAR) as statistic_value
+            FROM bb_teams
+            INNER JOIN bb_games_teams_players
+            ON bb_games_teams_players.team_id = bb_teams.id
+            GROUP BY bb_teams.id
+            HAVING SUM(bb_games_teams_players.casualties) > 0
+            ORDER BY SUM(bb_games_teams_players.casualties) DESC
+            LIMIT 5",
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    Ok(Statistics {
+        statistic_element: StatisticElement::Team,
+        statistics_rows: stats,
+    })
+}
+
+pub async fn select_teams_injuries_top(state: &AppState) -> Result<Statistics, AppError> {
+    tracing::debug!("select_teams_injuries_top");
+
+    let stats: Vec<StatisticRow> = sqlx::query_as(
+        "SELECT bb_teams.id,
+                    bb_teams.id as team_id,
+                    bb_teams.external_logo_url,
+                    bb_teams.roster,
+                    bb_teams.name,
+                    NULL as position,
+                    CAST(COUNT(bb_players_injuries.injury) as VARCHAR) as statistic_value
+            FROM bb_teams
+            INNER JOIN bb_teams_players
+            ON bb_teams_players.team_id = bb_teams.id
+            INNER JOIN bb_players_injuries
+            ON bb_players_injuries.player_id = bb_teams_players.player_id
+            GROUP BY bb_teams.id
+            ORDER BY COUNT(bb_players_injuries.injury) DESC
+            LIMIT 5",
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    Ok(Statistics {
+        statistic_element: StatisticElement::Team,
+        statistics_rows: stats,
+    })
+}
+
+pub async fn select_teams_interceptions_top(state: &AppState) -> Result<Statistics, AppError> {
+    tracing::debug!("select_teams_interceptions_top");
+
+    let stats: Vec<StatisticRow> = sqlx::query_as(
+        "SELECT bb_teams.id,
+                    bb_teams.id as team_id,
+                    bb_teams.external_logo_url,
+                    bb_teams.roster,
+                    bb_teams.name,
+                    NULL as position,
+                    CAST(SUM(bb_games_teams_players.interceptions) as VARCHAR) as statistic_value
+            FROM bb_teams
+            INNER JOIN bb_games_teams_players
+            ON bb_games_teams_players.team_id = bb_teams.id
+            GROUP BY bb_teams.id
+            HAVING SUM(bb_games_teams_players.interceptions) > 0
+            ORDER BY SUM(bb_games_teams_players.interceptions) DESC
+            LIMIT 5",
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    Ok(Statistics {
+        statistic_element: StatisticElement::Team,
+        statistics_rows: stats,
+    })
+}
+
+pub async fn select_teams_deflections_top(state: &AppState) -> Result<Statistics, AppError> {
+    tracing::debug!("select_teams_deflections_top");
+
+    let stats: Vec<StatisticRow> = sqlx::query_as(
+        "SELECT bb_teams.id,
+                    bb_teams.id as team_id,
+                    bb_teams.external_logo_url,
+                    bb_teams.roster,
+                    bb_teams.name,
+                    NULL as position,
+                    CAST(SUM(bb_games_teams_players.deflections) as VARCHAR) as statistic_value
+            FROM bb_teams
+            INNER JOIN bb_games_teams_players
+            ON bb_games_teams_players.team_id = bb_teams.id
+            GROUP BY bb_teams.id
+            HAVING SUM(bb_games_teams_players.deflections) > 0
+            ORDER BY SUM(bb_games_teams_players.deflections) DESC
+            LIMIT 5",
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    Ok(Statistics {
+        statistic_element: StatisticElement::Team,
+        statistics_rows: stats,
+    })
+}
+
+pub async fn select_teams_passing_completions_top(
+    state: &AppState,
+) -> Result<Statistics, AppError> {
+    tracing::debug!("select_teams_passing_completions_top");
+
+    let stats: Vec<StatisticRow> = sqlx::query_as(
+        "SELECT bb_teams.id,
+                    bb_teams.id as team_id,
+                    bb_teams.external_logo_url,
+                    bb_teams.roster,
+                    bb_teams.name,
+                    NULL as position,
+                    CAST(SUM(bb_games_teams_players.passing_completions) as VARCHAR) as statistic_value
+            FROM bb_teams
+            INNER JOIN bb_games_teams_players
+            ON bb_games_teams_players.team_id = bb_teams.id
+            GROUP BY bb_teams.id
+            HAVING SUM(bb_games_teams_players.passing_completions) > 0
+            ORDER BY SUM(bb_games_teams_players.passing_completions) DESC
+            LIMIT 5",
+    )
+        .fetch_all(&state.db)
+        .await?;
+
+    Ok(Statistics {
+        statistic_element: StatisticElement::Team,
+        statistics_rows: stats,
+    })
+}
+
+pub async fn select_teams_throwing_completions_top(
+    state: &AppState,
+) -> Result<Statistics, AppError> {
+    tracing::debug!("select_teams_throwing_completions_top");
+
+    let stats: Vec<StatisticRow> = sqlx::query_as(
+        "SELECT bb_teams.id,
+                    bb_teams.id as team_id,
+                    bb_teams.external_logo_url,
+                    bb_teams.roster,
+                    bb_teams.name,
+                    NULL as position,
+                    CAST(SUM(bb_games_teams_players.throwing_completions) as VARCHAR) as statistic_value
+            FROM bb_teams
+            INNER JOIN bb_games_teams_players
+            ON bb_games_teams_players.team_id = bb_teams.id
+            GROUP BY bb_teams.id
+            HAVING SUM(bb_games_teams_players.throwing_completions) > 0
+            ORDER BY SUM(bb_games_teams_players.throwing_completions) DESC
+            LIMIT 5",
+    )
+        .fetch_all(&state.db)
+        .await?;
+
+    Ok(Statistics {
+        statistic_element: StatisticElement::Team,
+        statistics_rows: stats,
+    })
+}
