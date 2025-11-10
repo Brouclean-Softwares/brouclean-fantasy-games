@@ -1,0 +1,26 @@
+<div x-data="{ element: 'teams' }">
+    <div class="uk-margin-medium-bottom">
+        <h3>
+            Statistiques
+        </h3>
+    </div>
+
+    <div class="uk-margin-medium-bottom">
+        <ul class="uk-child-width-expand" uk-tab>
+            <li class="uk-active">
+                <a href="#" x-on:click="element='teams'">Équipes</a>
+            </li>
+            <li>
+                <a href="#" x-on:click="element='players'">Joueurs</a>
+            </li>
+        </ul>
+    </div>
+
+    <div x-show="element==='teams'" class="uk-child-width-1-2@m" uk-grid>
+        {{ teams_top_statistics|escape("none") }}
+    </div>
+
+    <div x-show="element==='players'" class="uk-child-width-1-2@m" uk-grid>
+        {{ players_top_statistics|escape("none") }}
+    </div>
+</div>

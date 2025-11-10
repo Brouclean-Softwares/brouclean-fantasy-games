@@ -1,4 +1,7 @@
 use crate::app::templates::blood_bowl::games::GamesScheduleTable;
+use crate::app::templates::blood_bowl::statistics::{
+    PlayersTopStatisticsLists, TeamsTopStatisticsLists,
+};
 use crate::app::templates::blood_bowl::teams::TeamSelector;
 use crate::app::templates::{blood_bowl, AlertMessage, BreadCrumb, NavigationBar, UrlLink};
 use crate::data::blood_bowl::competitions::registrations::TeamRegistration;
@@ -61,9 +64,10 @@ pub struct CompetitionPage {
     edit_mode: bool,
     tab: Option<String>,
     link_url: String,
-    information: CompetitionInformation,
-    standings: CompetitionStandingsBloc,
-    schedule: CompetitionScheduleBloc,
+    information: CompetitionInformationTab,
+    standings: CompetitionStandingsTab,
+    schedule: CompetitionScheduleTab,
+    statistics: CompetitionStatisticsTab,
 }
 
 impl CompetitionPage {
@@ -72,6 +76,8 @@ impl CompetitionPage {
         profile: Option<User>,
         alert_message: Option<AlertMessage>,
         competition: Competition,
+        teams_top_statistics: TeamsTopStatisticsLists,
+        players_top_statistics: PlayersTopStatisticsLists,
         edit_mode: bool,
         tab: Option<String>,
     ) -> Result<Self, AppError> {
@@ -96,7 +102,7 @@ impl CompetitionPage {
             edit_mode,
             tab,
             link_url: link_url.clone(),
-            information: CompetitionInformation {
+            information: CompetitionInformationTab {
                 competition,
                 competition_stages: CompetitionStagesBloc {
                     stages: stages.clone(),
@@ -112,19 +118,23 @@ impl CompetitionPage {
                 link_url,
                 team_selector: TeamSelector::get("team_to_registered_id".to_string()),
             },
-            schedule: CompetitionScheduleBloc {
+            schedule: CompetitionScheduleTab {
                 schedule,
                 competition_id,
                 editable,
             },
-            standings: CompetitionStandingsBloc { standings },
+            standings: CompetitionStandingsTab { standings },
+            statistics: CompetitionStatisticsTab {
+                teams_top_statistics,
+                players_top_statistics,
+            },
         })
     }
 }
 
 #[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/competitions/competition_information.html")]
-pub struct CompetitionInformation {
+pub struct CompetitionInformationTab {
     competition: Competition,
     competition_stages: CompetitionStagesBloc,
     stage_types: Vec<CompetitionStageType>,
@@ -147,14 +157,21 @@ pub struct CompetitionStagesBloc {
 
 #[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/competitions/competition_standings.html")]
-pub struct CompetitionStandingsBloc {
+pub struct CompetitionStandingsTab {
     standings: CompetitionStandings,
 }
 
 #[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/competitions/competition_schedule.html")]
-pub struct CompetitionScheduleBloc {
+pub struct CompetitionScheduleTab {
     schedule: CompetitionSchedule,
     competition_id: i32,
     editable: bool,
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "blood_bowl/competitions/competition_statistics.html")]
+pub struct CompetitionStatisticsTab {
+    pub teams_top_statistics: TeamsTopStatisticsLists,
+    pub players_top_statistics: PlayersTopStatisticsLists,
 }

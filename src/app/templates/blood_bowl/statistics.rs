@@ -55,7 +55,7 @@ impl From<TeamsTopStatistics> for TeamsTopStatisticsLists {
                 teams_top_statistics.teams_top_casualties,
             ),
             teams_top_injuries: StatisticList::from(
-                String::from("Blessures"),
+                String::from("Blessures avec match raté (RPM)"),
                 teams_top_statistics.teams_top_injuries,
             ),
             teams_top_interceptions: StatisticList::from(
@@ -107,7 +107,7 @@ impl From<PlayersTopStatistics> for PlayersTopStatisticsLists {
                 players_top_statistics.players_top_casualties,
             ),
             players_top_injuries: StatisticList::from(
-                String::from("Blessures"),
+                String::from("Blessures avec match raté (RPM)"),
                 players_top_statistics.players_top_injuries,
             ),
             players_top_interceptions: StatisticList::from(

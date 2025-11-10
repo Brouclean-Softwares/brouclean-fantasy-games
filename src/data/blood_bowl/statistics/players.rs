@@ -44,6 +44,19 @@ pub struct PlayersTopStatistics {
 }
 
 impl PlayersTopStatistics {
+    pub fn empty() -> Self {
+        Self {
+            players_top_star_player_points: Statistics::empty(),
+            players_top_touchdowns: Statistics::empty(),
+            players_top_casualties: Statistics::empty(),
+            players_top_injuries: Statistics::empty(),
+            players_top_interceptions: Statistics::empty(),
+            players_top_deflections: Statistics::empty(),
+            players_top_passing_completions: Statistics::empty(),
+            players_top_throwing_completions: Statistics::empty(),
+        }
+    }
+
     pub async fn global(state: &AppState) -> Result<Self, AppError> {
         Ok(Self {
             players_top_star_player_points: select_players_star_player_points_top(state).await?,
@@ -81,6 +94,48 @@ impl PlayersTopStatistics {
                 state, team_id,
             )
             .await?,
+        })
+    }
+
+    pub async fn for_competition_id(
+        state: &AppState,
+        competition_id: i32,
+    ) -> Result<Self, AppError> {
+        Ok(Self {
+            players_top_star_player_points:
+                select_players_star_player_points_top_for_competition_id(state, competition_id)
+                    .await?,
+            players_top_touchdowns: select_players_touchdowns_top_for_competition_id(
+                state,
+                competition_id,
+            )
+            .await?,
+            players_top_casualties: select_players_casualties_top_for_competition_id(
+                state,
+                competition_id,
+            )
+            .await?,
+            players_top_injuries: select_players_injuries_top_for_competition_id(
+                state,
+                competition_id,
+            )
+            .await?,
+            players_top_interceptions: select_players_interceptions_top_for_competition_id(
+                state,
+                competition_id,
+            )
+            .await?,
+            players_top_deflections: select_players_deflections_top_for_competition_id(
+                state,
+                competition_id,
+            )
+            .await?,
+            players_top_passing_completions:
+                select_players_passing_completions_top_for_competition_id(state, competition_id)
+                    .await?,
+            players_top_throwing_completions:
+                select_players_throwing_completions_top_for_competition_id(state, competition_id)
+                    .await?,
         })
     }
 }
@@ -189,6 +244,48 @@ pub async fn select_players_star_player_points_top_for_team_id(
     })
 }
 
+pub async fn select_players_star_player_points_top_for_competition_id(
+    state: &AppState,
+    competition_id: i32,
+) -> Result<Statistics, AppError> {
+    tracing::debug!(
+        "select_players_star_player_points_top_for_competition_id with competition_id={}",
+        competition_id
+    );
+
+    let stats: Vec<StatisticRow> = sqlx::query_as(
+        "SELECT bb_players.id,
+                    bb_teams.id as team_id,
+                    bb_teams.external_logo_url,
+                    bb_teams.roster,
+                    bb_players.name,
+                    bb_players.position,
+                    CAST(SUM(bb_games_teams_players.star_player_points) as VARCHAR) as statistic_value
+            FROM bb_players
+            INNER JOIN bb_teams_players
+            ON bb_teams_players.player_id = bb_players.id
+            INNER JOIN bb_teams
+            ON bb_teams.id = bb_teams_players.team_id
+            INNER JOIN bb_games_teams_players
+            ON bb_games_teams_players.player_id = bb_players.id
+            INNER JOIN bb_competitions_stages_schedule
+            ON bb_competitions_stages_schedule.game_id = bb_games_teams_players.game_id
+            WHERE bb_competitions_stages_schedule.competition_id = $1
+            GROUP BY bb_players.id, bb_teams.id
+            HAVING SUM(bb_games_teams_players.star_player_points) > 0
+            ORDER BY SUM(bb_games_teams_players.star_player_points) DESC
+            LIMIT 5",
+    )
+        .bind(competition_id.clone())
+        .fetch_all(&state.db)
+        .await?;
+
+    Ok(Statistics {
+        statistic_element: StatisticElement::Player,
+        statistics_rows: stats,
+    })
+}
+
 pub async fn select_players_touchdowns_top(state: &AppState) -> Result<Statistics, AppError> {
     tracing::debug!("select_players_touchdowns_top");
 
@@ -252,6 +349,48 @@ pub async fn select_players_touchdowns_top_for_team_id(
             LIMIT 5",
     )
     .bind(team_id.clone())
+    .fetch_all(&state.db)
+    .await?;
+
+    Ok(Statistics {
+        statistic_element: StatisticElement::Player,
+        statistics_rows: stats,
+    })
+}
+
+pub async fn select_players_touchdowns_top_for_competition_id(
+    state: &AppState,
+    competition_id: i32,
+) -> Result<Statistics, AppError> {
+    tracing::debug!(
+        "select_players_touchdowns_top_for_competition_id with competition_id={}",
+        competition_id
+    );
+
+    let stats: Vec<StatisticRow> = sqlx::query_as(
+        "SELECT bb_players.id,
+                    bb_teams.id as team_id,
+                    bb_teams.external_logo_url,
+                    bb_teams.roster,
+                    bb_players.name,
+                    bb_players.position,
+                    CAST(SUM(bb_games_teams_players.touchdowns) as VARCHAR) as statistic_value
+            FROM bb_players
+            INNER JOIN bb_teams_players
+            ON bb_teams_players.player_id = bb_players.id
+            INNER JOIN bb_teams
+            ON bb_teams.id = bb_teams_players.team_id
+            INNER JOIN bb_games_teams_players
+            ON bb_games_teams_players.player_id = bb_players.id
+            INNER JOIN bb_competitions_stages_schedule
+            ON bb_competitions_stages_schedule.game_id = bb_games_teams_players.game_id
+            WHERE bb_competitions_stages_schedule.competition_id = $1
+            GROUP BY bb_players.id, bb_teams.id
+            HAVING SUM(bb_games_teams_players.touchdowns) > 0
+            ORDER BY SUM(bb_games_teams_players.touchdowns) DESC
+            LIMIT 5",
+    )
+    .bind(competition_id.clone())
     .fetch_all(&state.db)
     .await?;
 
@@ -333,6 +472,48 @@ pub async fn select_players_casualties_top_for_team_id(
     })
 }
 
+pub async fn select_players_casualties_top_for_competition_id(
+    state: &AppState,
+    competition_id: i32,
+) -> Result<Statistics, AppError> {
+    tracing::debug!(
+        "select_players_casualties_top_for_competition_id with competition_id={}",
+        competition_id
+    );
+
+    let stats: Vec<StatisticRow> = sqlx::query_as(
+        "SELECT bb_players.id,
+                    bb_teams.id as team_id,
+                    bb_teams.external_logo_url,
+                    bb_teams.roster,
+                    bb_players.name,
+                    bb_players.position,
+                    CAST(SUM(bb_games_teams_players.casualties) as VARCHAR) as statistic_value
+            FROM bb_players
+            INNER JOIN bb_teams_players
+            ON bb_teams_players.player_id = bb_players.id
+            INNER JOIN bb_teams
+            ON bb_teams.id = bb_teams_players.team_id
+            INNER JOIN bb_games_teams_players
+            ON bb_games_teams_players.player_id = bb_players.id
+            INNER JOIN bb_competitions_stages_schedule
+            ON bb_competitions_stages_schedule.game_id = bb_games_teams_players.game_id
+            WHERE bb_competitions_stages_schedule.competition_id = $1
+            GROUP BY bb_players.id, bb_teams.id
+            HAVING SUM(bb_games_teams_players.casualties) > 0
+            ORDER BY SUM(bb_games_teams_players.casualties) DESC
+            LIMIT 5",
+    )
+    .bind(competition_id.clone())
+    .fetch_all(&state.db)
+    .await?;
+
+    Ok(Statistics {
+        statistic_element: StatisticElement::Player,
+        statistics_rows: stats,
+    })
+}
+
 pub async fn select_players_injuries_top(state: &AppState) -> Result<Statistics, AppError> {
     tracing::debug!("select_players_injuries_top");
 
@@ -394,6 +575,47 @@ pub async fn select_players_injuries_top_for_team_id(
             LIMIT 5",
     )
     .bind(team_id.clone())
+    .fetch_all(&state.db)
+    .await?;
+
+    Ok(Statistics {
+        statistic_element: StatisticElement::Player,
+        statistics_rows: stats,
+    })
+}
+
+pub async fn select_players_injuries_top_for_competition_id(
+    state: &AppState,
+    competition_id: i32,
+) -> Result<Statistics, AppError> {
+    tracing::debug!(
+        "select_players_injuries_top_for_competition_id with competition_id={}",
+        competition_id
+    );
+
+    let stats: Vec<StatisticRow> = sqlx::query_as(
+        "SELECT bb_players.id,
+                    bb_teams.id as team_id,
+                    bb_teams.external_logo_url,
+                    bb_teams.roster,
+                    bb_players.name,
+                    bb_players.position,
+                    CAST(COUNT(bb_players_injuries.injury) as VARCHAR) as statistic_value
+            FROM bb_players
+            INNER JOIN bb_teams_players
+            ON bb_teams_players.player_id = bb_players.id
+            INNER JOIN bb_teams
+            ON bb_teams.id = bb_teams_players.team_id
+            INNER JOIN bb_players_injuries
+            ON bb_players_injuries.player_id = bb_teams_players.player_id
+            INNER JOIN bb_competitions_stages_schedule
+            ON bb_competitions_stages_schedule.game_id = bb_players_injuries.game_id
+            WHERE bb_competitions_stages_schedule.competition_id = $1
+            GROUP BY bb_players.id, bb_teams.id
+            ORDER BY COUNT(bb_players_injuries.injury) DESC
+            LIMIT 5",
+    )
+    .bind(competition_id.clone())
     .fetch_all(&state.db)
     .await?;
 
@@ -475,6 +697,48 @@ pub async fn select_players_interceptions_top_for_team_id(
     })
 }
 
+pub async fn select_players_interceptions_top_for_competition_id(
+    state: &AppState,
+    competition_id: i32,
+) -> Result<Statistics, AppError> {
+    tracing::debug!(
+        "select_players_interceptions_top_for_competition_id with competition_id={}",
+        competition_id
+    );
+
+    let stats: Vec<StatisticRow> = sqlx::query_as(
+        "SELECT bb_players.id,
+                    bb_teams.id as team_id,
+                    bb_teams.external_logo_url,
+                    bb_teams.roster,
+                    bb_players.name,
+                    bb_players.position,
+                    CAST(SUM(bb_games_teams_players.interceptions) as VARCHAR) as statistic_value
+            FROM bb_players
+            INNER JOIN bb_teams_players
+            ON bb_teams_players.player_id = bb_players.id
+            INNER JOIN bb_teams
+            ON bb_teams.id = bb_teams_players.team_id
+            INNER JOIN bb_games_teams_players
+            ON bb_games_teams_players.player_id = bb_players.id
+            INNER JOIN bb_competitions_stages_schedule
+            ON bb_competitions_stages_schedule.game_id = bb_games_teams_players.game_id
+            WHERE bb_competitions_stages_schedule.competition_id = $1
+            GROUP BY bb_players.id, bb_teams.id
+            HAVING SUM(bb_games_teams_players.interceptions) > 0
+            ORDER BY SUM(bb_games_teams_players.interceptions) DESC
+            LIMIT 5",
+    )
+    .bind(competition_id.clone())
+    .fetch_all(&state.db)
+    .await?;
+
+    Ok(Statistics {
+        statistic_element: StatisticElement::Player,
+        statistics_rows: stats,
+    })
+}
+
 pub async fn select_players_deflections_top(state: &AppState) -> Result<Statistics, AppError> {
     tracing::debug!("select_players_deflections_top");
 
@@ -538,6 +802,48 @@ pub async fn select_players_deflections_top_for_team_id(
             LIMIT 5",
     )
     .bind(team_id.clone())
+    .fetch_all(&state.db)
+    .await?;
+
+    Ok(Statistics {
+        statistic_element: StatisticElement::Player,
+        statistics_rows: stats,
+    })
+}
+
+pub async fn select_players_deflections_top_for_competition_id(
+    state: &AppState,
+    competition_id: i32,
+) -> Result<Statistics, AppError> {
+    tracing::debug!(
+        "select_players_deflections_top_for_competition_id with competition_id={}",
+        competition_id
+    );
+
+    let stats: Vec<StatisticRow> = sqlx::query_as(
+        "SELECT bb_players.id,
+                    bb_teams.id as team_id,
+                    bb_teams.external_logo_url,
+                    bb_teams.roster,
+                    bb_players.name,
+                    bb_players.position,
+                    CAST(SUM(bb_games_teams_players.deflections) as VARCHAR) as statistic_value
+            FROM bb_players
+            INNER JOIN bb_teams_players
+            ON bb_teams_players.player_id = bb_players.id
+            INNER JOIN bb_teams
+            ON bb_teams.id = bb_teams_players.team_id
+            INNER JOIN bb_games_teams_players
+            ON bb_games_teams_players.player_id = bb_players.id
+            INNER JOIN bb_competitions_stages_schedule
+            ON bb_competitions_stages_schedule.game_id = bb_games_teams_players.game_id
+            WHERE bb_competitions_stages_schedule.competition_id = $1
+            GROUP BY bb_players.id, bb_teams.id
+            HAVING SUM(bb_games_teams_players.deflections) > 0
+            ORDER BY SUM(bb_games_teams_players.deflections) DESC
+            LIMIT 5",
+    )
+    .bind(competition_id.clone())
     .fetch_all(&state.db)
     .await?;
 
@@ -621,6 +927,48 @@ pub async fn select_players_passing_completions_top_for_team_id(
     })
 }
 
+pub async fn select_players_passing_completions_top_for_competition_id(
+    state: &AppState,
+    competition_id: i32,
+) -> Result<Statistics, AppError> {
+    tracing::debug!(
+        "select_players_passing_completions_top_for_competition_id with competition_id={}",
+        competition_id
+    );
+
+    let stats: Vec<StatisticRow> = sqlx::query_as(
+        "SELECT bb_players.id,
+                    bb_teams.id as team_id,
+                    bb_teams.external_logo_url,
+                    bb_teams.roster,
+                    bb_players.name,
+                    bb_players.position,
+                    CAST(SUM(bb_games_teams_players.passing_completions) as VARCHAR) as statistic_value
+            FROM bb_players
+            INNER JOIN bb_teams_players
+            ON bb_teams_players.player_id = bb_players.id
+            INNER JOIN bb_teams
+            ON bb_teams.id = bb_teams_players.team_id
+            INNER JOIN bb_games_teams_players
+            ON bb_games_teams_players.player_id = bb_players.id
+            INNER JOIN bb_competitions_stages_schedule
+            ON bb_competitions_stages_schedule.game_id = bb_games_teams_players.game_id
+            WHERE bb_competitions_stages_schedule.competition_id = $1
+            GROUP BY bb_players.id, bb_teams.id
+            HAVING SUM(bb_games_teams_players.passing_completions) > 0
+            ORDER BY SUM(bb_games_teams_players.passing_completions) DESC
+            LIMIT 5",
+    )
+        .bind(competition_id.clone())
+        .fetch_all(&state.db)
+        .await?;
+
+    Ok(Statistics {
+        statistic_element: StatisticElement::Player,
+        statistics_rows: stats,
+    })
+}
+
 pub async fn select_players_throwing_completions_top(
     state: &AppState,
 ) -> Result<Statistics, AppError> {
@@ -686,6 +1034,48 @@ pub async fn select_players_throwing_completions_top_for_team_id(
             LIMIT 5",
     )
         .bind(team_id.clone())
+        .fetch_all(&state.db)
+        .await?;
+
+    Ok(Statistics {
+        statistic_element: StatisticElement::Player,
+        statistics_rows: stats,
+    })
+}
+
+pub async fn select_players_throwing_completions_top_for_competition_id(
+    state: &AppState,
+    competition_id: i32,
+) -> Result<Statistics, AppError> {
+    tracing::debug!(
+        "select_players_throwing_completions_top_for_competition_id with competition_id={}",
+        competition_id
+    );
+
+    let stats: Vec<StatisticRow> = sqlx::query_as(
+        "SELECT bb_players.id,
+                    bb_teams.id as team_id,
+                    bb_teams.external_logo_url,
+                    bb_teams.roster,
+                    bb_players.name,
+                    bb_players.position,
+                    CAST(SUM(bb_games_teams_players.throwing_completions) as VARCHAR) as statistic_value
+            FROM bb_players
+            INNER JOIN bb_teams_players
+            ON bb_teams_players.player_id = bb_players.id
+            INNER JOIN bb_teams
+            ON bb_teams.id = bb_teams_players.team_id
+            INNER JOIN bb_games_teams_players
+            ON bb_games_teams_players.player_id = bb_players.id
+            INNER JOIN bb_competitions_stages_schedule
+            ON bb_competitions_stages_schedule.game_id = bb_games_teams_players.game_id
+            WHERE bb_competitions_stages_schedule.competition_id = $1
+            GROUP BY bb_players.id, bb_teams.id
+            HAVING SUM(bb_games_teams_players.throwing_completions) > 0
+            ORDER BY SUM(bb_games_teams_players.throwing_completions) DESC
+            LIMIT 5",
+    )
+        .bind(competition_id.clone())
         .fetch_all(&state.db)
         .await?;
 

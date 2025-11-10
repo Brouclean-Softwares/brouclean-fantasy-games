@@ -64,7 +64,7 @@
                 </a>
             </li>
             <li {% if tab_name.eq("stats") %}class="uk-active"{% endif %}>
-                <a href="#" uk-icon="icon: info" x-on:click="tab='stats'">
+                <a href="#" uk-icon="icon: info" x-on:click="tab='statistics'">
                     <span class="uk-visible@m">Statistiques</span>
                 </a>
             </li>
@@ -88,8 +88,8 @@
         {{ schedule|escape("none") }}
     </div>
 
-    <div x-show="tab==='stats'">
-        A venir...
+    <div x-show="tab==='statistics'">
+        {{ statistics|escape("none") }}
     </div>
 
     <div x-show="tab==='history'">

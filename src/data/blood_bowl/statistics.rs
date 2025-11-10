@@ -10,6 +10,15 @@ pub struct Statistics {
     pub statistics_rows: Vec<StatisticRow>,
 }
 
+impl Statistics {
+    pub fn empty() -> Self {
+        Self {
+            statistic_element: StatisticElement::Team,
+            statistics_rows: vec![],
+        }
+    }
+}
+
 pub enum StatisticElement {
     Team,
     Player,

@@ -5,6 +5,8 @@ use crate::data::blood_bowl::competitions::stages::{
 };
 use crate::data::blood_bowl::competitions::Competition;
 use crate::data::blood_bowl::games;
+use crate::data::blood_bowl::statistics::players::PlayersTopStatistics;
+use crate::data::blood_bowl::statistics::teams::TeamsTopStatistics;
 use crate::data::users::User;
 use crate::errors::AppError;
 use crate::AppState;
@@ -68,14 +70,21 @@ pub async fn new(
     if profile.is_some() {
         let competition = Competition::new(profile.clone());
 
-        Ok(
-            CompetitionPage::get(app_state, profile, None, competition, true, None)
-                .await
-                .map_err(|error| {
-                    tracing::debug!("competition: Error: {}", error);
-                    Redirect::to("../competitions")
-                })?,
+        Ok(CompetitionPage::get(
+            app_state,
+            profile,
+            None,
+            competition,
+            TeamsTopStatistics::empty().into(),
+            PlayersTopStatistics::empty().into(),
+            true,
+            None,
         )
+        .await
+        .map_err(|error| {
+            tracing::debug!("competition: Error: {}", error);
+            Redirect::to("../competitions")
+        })?)
     } else {
         Err(Redirect::to("../competitions"))
     }
@@ -112,11 +121,23 @@ pub async fn competition(
             .map_err(error_handler)?
             .ok_or(Redirect::to("../competitions"))?;
 
+        let teams_top_statistics =
+            TeamsTopStatistics::for_competition_id(&app_state, competition.id)
+                .await
+                .map_err(error_handler)?;
+
+        let players_top_statistics =
+            PlayersTopStatistics::for_competition_id(&app_state, competition.id)
+                .await
+                .map_err(error_handler)?;
+
         Ok(CompetitionPage::get(
             app_state,
             profile,
             alert_message,
             competition,
+            teams_top_statistics.into(),
+            players_top_statistics.into(),
             params.edit.unwrap_or(false),
             params.tab,
         )
