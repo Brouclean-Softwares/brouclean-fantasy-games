@@ -3,4 +3,5 @@ pub mod competitions;
 pub mod games;
 pub mod players;
 pub mod staff;
+pub mod statistics;
 pub mod teams;

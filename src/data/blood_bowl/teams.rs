@@ -16,18 +16,21 @@ pub struct TeamLogo {
     pub url: String,
 }
 
-impl From<&Team> for TeamLogo {
-    fn from(team: &Team) -> Self {
-        if let Some(url) = team.external_logo_url.clone() {
+impl TeamLogo {
+    pub fn from_url_or_roster(external_logo_url: Option<String>, roster: Roster) -> Self {
+        if let Some(url) = external_logo_url {
             Self { url }
         } else {
             Self {
-                url: format!(
-                    "/assets/images/blood_bowl/{}Logo.webp",
-                    team.roster.type_name()
-                ),
+                url: format!("/assets/images/blood_bowl/{}Logo.webp", roster.type_name()),
             }
         }
+    }
+}
+
+impl From<&Team> for TeamLogo {
+    fn from(team: &Team) -> Self {
+        Self::from_url_or_roster(team.external_logo_url.clone(), team.roster.clone())
     }
 }
 
@@ -39,16 +42,7 @@ impl From<TeamSummary> for TeamLogo {
 
 impl From<&TeamSummary> for TeamLogo {
     fn from(team: &TeamSummary) -> Self {
-        if let Some(url) = team.external_logo_url.clone() {
-            Self { url }
-        } else {
-            Self {
-                url: format!(
-                    "/assets/images/blood_bowl/{}Logo.webp",
-                    team.roster.type_name()
-                ),
-            }
-        }
+        Self::from_url_or_roster(team.external_logo_url.clone(), team.roster.clone())
     }
 }
 

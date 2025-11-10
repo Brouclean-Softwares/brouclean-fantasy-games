@@ -1,0 +1,49 @@
+<div>
+    <h5>
+        {{ statistic_name }}
+    </h5>
+
+    <div class="uk-overflow-auto">
+        <table class="uk-table uk-table-striped uk-table-small uk-table-hover uk-table-middle">
+            <thead>
+            <tr>
+                <th class="uk-table-shrink">#</th>
+                <th class="uk-table-expand">Équipe</th>
+                <th class="uk-table-shrink">Stat</th>
+            </tr>
+            </thead>
+
+            <tbody>
+
+            {% for team_index in 0..list_length %}
+            <tr>
+                <td>
+                    <span class="uk-text-meta">#{{ team_index + 1 }}</span>
+                </td>
+
+                {% if let Some(team_total) = teams_totals.get(team_index.clone()) %}
+
+                {% let team_url = format!("/blood_bowl/teams/team?id={}", team_total.id) %}
+                {% let team_logo_url = TeamLogo::from_url_or_roster(team_total.external_logo_url.clone(), team_total.roster.clone()).url %}
+
+                <td class="uk-text-truncate">
+                    <a class="uk-link-reset" href="{{ team_url }}">
+                        <img src="{{ team_logo_url }}" width="25" height="25" alt="">
+                        {{ team_total.name }}
+                    </a>
+                </td>
+                <td>
+                    {{ team_total.statistic_value }}
+                </td>
+
+                {% else %}
+                <td></td>
+                <td></td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+
+            </tbody>
+        </table>
+    </div>
+</div>

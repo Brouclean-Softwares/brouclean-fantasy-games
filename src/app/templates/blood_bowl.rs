@@ -13,6 +13,7 @@ pub mod competitions;
 pub mod games;
 pub mod players;
 pub mod rosters;
+pub mod statistics;
 pub mod teams;
 
 pub fn breadcrumb() -> BreadCrumb {
