@@ -23,15 +23,24 @@
                 <tr>
                     <td>
                         <span>{{ victories }}</span>
+
+                        {% if victories + draws + losses > 0 %}
                         <span class="uk-text-meta"> ({{ 100 * victories / (victories + draws + losses) }}%)</span>
+                        {% endif %}
                     </td>
                     <td>
                         <span>{{ draws }}</span>
+
+                        {% if victories + draws + losses > 0 %}
                         <span class="uk-text-meta"> ({{ 100 * draws / (victories + draws + losses) }}%)</span>
+                        {% endif %}
                     </td>
                     <td>
                         <span>{{ losses }}</span>
+
+                        {% if victories + draws + losses > 0 %}
                         <span class="uk-text-meta"> ({{ 100 * losses / (victories + draws + losses) }}%)</span>
+                        {% endif %}
                     </td>
                 </tr>
                 </tbody>
