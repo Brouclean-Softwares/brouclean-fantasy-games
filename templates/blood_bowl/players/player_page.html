@@ -77,7 +77,13 @@
         <dd>{{ player.value()? / 1000 }}k</dd>
 
         <dt>Poste</dt>
-        <dd>{{ player.position.name("fr") }}</dd>
+        <dd>
+            {{ player.position.name("fr") }}
+
+            {% if player.version.ne(&Version::LAST_VERSION) %}
+            <span class="uk-text-meta"> ({{ player.version.name("fr") }})</span>
+            {% endif %}
+        </dd>
     </dl>
 
     {% if ! player.is_star_player %}

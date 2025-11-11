@@ -186,16 +186,25 @@ pub async fn team(
         .await
         .map_err(error_handler)?;
 
-    let roster_definition = team.roster_definition().or(Err(Redirect::to("../teams")))?;
+    let mut alert_message: Option<AlertMessage> = None;
 
-    let edit_mode = params.edit.unwrap_or(false);
+    if let Err(team_not_compliant_error) = team.check_if_rules_compliant() {
+        alert_message = Some(AlertMessage {
+            alert_type: AlertType::Warning,
+            message: team_not_compliant_error.name("fr"),
+        })
+    };
 
-    let alert_message: Option<AlertMessage> = params.alert_message.and_then(|message| {
-        Some(AlertMessage {
+    if let Some(message) = params.alert_message {
+        alert_message = Some(AlertMessage {
             alert_type: AlertType::Danger,
             message,
         })
-    });
+    };
+
+    let roster_definition = team.roster_definition().or(Err(Redirect::to("../teams")))?;
+
+    let edit_mode = params.edit.unwrap_or(false);
 
     let positions_buyable = team.positions_buyable().or(Err(Redirect::to("../teams")))?;
 

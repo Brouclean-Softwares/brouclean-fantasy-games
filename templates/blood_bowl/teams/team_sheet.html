@@ -36,7 +36,10 @@
 
         <dl class="uk-description-list">
             {% for staff_information in roster_definition.staff_information_sorted_by_name("fr") %}
-            <dt>{{ staff_information.staff.name("fr") }} ({{ staff_information.price(team.under_creation.clone()) / 1000 }}k)</dt>
+            <dt>
+                <span>{{ staff_information.staff.name("fr") }}</span>
+                <span class="uk-text-meta"> ({{ staff_information.price(team.under_creation.clone()) / 1000 }}k)</span>
+            </dt>
             <dd>
                 <form id="buy_{{ staff_information.staff.type_name() }}_form" method="post" autocomplete="off">
                     <input name="staff_to_buy" type="hidden" value="{{ staff_information.staff.type_name() }}">
