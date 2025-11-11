@@ -77,6 +77,15 @@
         <h3 class="uk-heading-divider">
             Joueurs
         </h3>
+
+        <dl class="uk-description-list uk-margin-medium-bottom">
+            <dt>Nombre de joueurs</dt>
+            <dd>{{ team.number_of_players() }}</dd>
+
+            <dt>Nombre de joueurs disponibles pour le prochain match</dt>
+            <dd>{{ team.number_of_available_players() }}</dd>
+        </dl>
+
         <div class="uk-overflow-auto">
             <table class="uk-table uk-table-striped uk-table-small uk-table-hover">
                 <thead>
@@ -147,7 +156,7 @@
                     </td>
                     <td class="uk-table-link">
                         <a class="uk-link-reset" href="{{ player_url }}">
-                            {{ player.position.name("fr") }}
+                            <span class="uk-text-meta">{{ player.position.name("fr") }}</span>
                         </a>
                     </td>
                     <td class="uk-table-link">
@@ -203,7 +212,7 @@
                     </td>
                     <td class="uk-table-link">
                         <a class="uk-link-reset" href="{{ player_url }}">
-                            {{ player.value()? / 1000 }}k
+                            <span class="uk-text-meta">{{ player.value()? / 1000 }}k</span>
                         </a>
                     </td>
 
@@ -240,15 +249,6 @@
                 
                 </tbody>
             </table>
-        </div>
-        <div class="uk-margin-top">
-            <dl class="uk-description-list">
-                <dt>Nombre de joueurs</dt>
-                <dd>{{ team.number_of_players() }}</dd>
-
-                <dt>Nombre de joueurs disponibles pour le prochain match</dt>
-                <dd>{{ team.number_of_available_players() }}</dd>
-            </dl>
         </div>
     </div>
 

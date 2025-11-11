@@ -60,6 +60,16 @@
         </div>
     </div>
 
+    {% if editable %}
+    {% if let Some(next_version) = team.version.next() %}
+    <div class="uk-margin-medium-bottom">
+        <button class="uk-button uk-button-danger" type="button">
+            Passer en {{ next_version.name("fr") }}
+        </button>
+    </div>
+    {% endif %}
+    {% endif %}
+
     <div class="uk-margin-medium-bottom">
         <ul class="uk-child-width-expand" uk-tab>
             <li class="uk-active">
