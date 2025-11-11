@@ -14,7 +14,6 @@
                 <th>Blessures</th>
                 <th uk-tooltip="title: Passe précise receptionnée">PAS</th>
                 <th uk-tooltip="title: Lancer superbe d'un coéquipier qui a attérit sur ses pieds">LAN</th>
-                <th uk-tooltip="title: Détournement de passe">DET</th>
                 <th uk-tooltip="title: Interception">INT</th>
                 <th uk-tooltip="title: Elimination lors d'un blocage">ELI</th>
                 <th uk-tooltip="title: Touchdown">TD</th>
@@ -59,13 +58,6 @@
                 <td class="uk-table-link">
                     <a class="uk-link-reset" href="{{ added_player_url }}">
                         {% if thr > 0 %}{{ thr }}{% endif %}
-                    </a>
-                </td>
-
-                {% let defl = player_statistics.deflections.clone() %}
-                <td class="uk-table-link">
-                    <a class="uk-link-reset" href="{{ added_player_url }}">
-                        {% if defl > 0 %}{{ defl }}{% endif %}
                     </a>
                 </td>
 

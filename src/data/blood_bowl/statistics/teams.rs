@@ -7,7 +7,6 @@ use serde::Deserialize;
 pub struct TeamStatistics {
     pub passing_completions: i64,
     pub throwing_completions: i64,
-    pub deflections: i64,
     pub interceptions: i64,
     pub casualties: i64,
     pub touchdowns: i64,
@@ -19,7 +18,6 @@ impl TeamStatistics {
         Self {
             passing_completions: 0,
             throwing_completions: 0,
-            deflections: 0,
             interceptions: 0,
             casualties: 0,
             touchdowns: 0,
@@ -36,7 +34,6 @@ pub struct TeamsTopStatistics {
     pub teams_top_casualties: Statistics,
     pub teams_top_injuries: Statistics,
     pub teams_top_interceptions: Statistics,
-    pub teams_top_deflections: Statistics,
     pub teams_top_passing_completions: Statistics,
     pub teams_top_throwing_completions: Statistics,
 }
@@ -51,7 +48,6 @@ impl TeamsTopStatistics {
             teams_top_casualties: Statistics::empty(),
             teams_top_injuries: Statistics::empty(),
             teams_top_interceptions: Statistics::empty(),
-            teams_top_deflections: Statistics::empty(),
             teams_top_passing_completions: Statistics::empty(),
             teams_top_throwing_completions: Statistics::empty(),
         }
@@ -66,7 +62,6 @@ impl TeamsTopStatistics {
             teams_top_casualties: select_teams_casualties_top(state).await?,
             teams_top_injuries: select_teams_injuries_top(state).await?,
             teams_top_interceptions: select_teams_interceptions_top(state).await?,
-            teams_top_deflections: select_teams_deflections_top(state).await?,
             teams_top_passing_completions: select_teams_passing_completions_top(state).await?,
             teams_top_throwing_completions: select_teams_throwing_completions_top(state).await?,
         })
@@ -106,11 +101,6 @@ impl TeamsTopStatistics {
                 competition_id,
             )
             .await?,
-            teams_top_deflections: select_teams_deflections_top_for_competition_id(
-                state,
-                competition_id,
-            )
-            .await?,
             teams_top_passing_completions: select_teams_passing_completions_top_for_competition_id(
                 state,
                 competition_id,
@@ -129,7 +119,6 @@ pub async fn select_statistics(state: &AppState, team_id: i32) -> Result<TeamSta
     let statistics: Option<TeamStatistics> = sqlx::query_as(
         "SELECT COALESCE(SUM(passing_completions), 0) as passing_completions,
                     COALESCE(SUM(throwing_completions), 0) as throwing_completions,
-                    COALESCE(SUM(deflections), 0) as deflections,
                     COALESCE(SUM(interceptions), 0) as interceptions,
                     COALESCE(SUM(casualties), 0) as casualties,
                     COALESCE(SUM(touchdowns), 0) as touchdowns,
@@ -604,72 +593,6 @@ pub async fn select_teams_interceptions_top_for_competition_id(
             GROUP BY bb_teams.id
             HAVING SUM(bb_games_teams_players.interceptions) > 0
             ORDER BY SUM(bb_games_teams_players.interceptions) DESC
-            LIMIT 5",
-    )
-    .bind(competition_id.clone())
-    .fetch_all(&state.db)
-    .await?;
-
-    Ok(Statistics {
-        statistic_element: StatisticElement::Team,
-        statistics_rows: stats,
-    })
-}
-
-pub async fn select_teams_deflections_top(state: &AppState) -> Result<Statistics, AppError> {
-    tracing::debug!("select_teams_deflections_top");
-
-    let stats: Vec<StatisticRow> = sqlx::query_as(
-        "SELECT bb_teams.id,
-                    bb_teams.id as team_id,
-                    bb_teams.external_logo_url,
-                    bb_teams.roster,
-                    bb_teams.name,
-                    NULL as position,
-                    CAST(SUM(bb_games_teams_players.deflections) as VARCHAR) as statistic_value
-            FROM bb_teams
-            INNER JOIN bb_games_teams_players
-            ON bb_games_teams_players.team_id = bb_teams.id
-            GROUP BY bb_teams.id
-            HAVING SUM(bb_games_teams_players.deflections) > 0
-            ORDER BY SUM(bb_games_teams_players.deflections) DESC
-            LIMIT 5",
-    )
-    .fetch_all(&state.db)
-    .await?;
-
-    Ok(Statistics {
-        statistic_element: StatisticElement::Team,
-        statistics_rows: stats,
-    })
-}
-
-pub async fn select_teams_deflections_top_for_competition_id(
-    state: &AppState,
-    competition_id: i32,
-) -> Result<Statistics, AppError> {
-    tracing::debug!(
-        "select_teams_deflections_top_for_competition_id with competition_id={}",
-        competition_id
-    );
-
-    let stats: Vec<StatisticRow> = sqlx::query_as(
-        "SELECT bb_teams.id,
-                    bb_teams.id as team_id,
-                    bb_teams.external_logo_url,
-                    bb_teams.roster,
-                    bb_teams.name,
-                    NULL as position,
-                    CAST(SUM(bb_games_teams_players.deflections) as VARCHAR) as statistic_value
-            FROM bb_teams
-            INNER JOIN bb_games_teams_players
-            ON bb_games_teams_players.team_id = bb_teams.id
-            INNER JOIN bb_competitions_stages_schedule
-            ON bb_competitions_stages_schedule.game_id = bb_games_teams_players.game_id
-            WHERE bb_competitions_stages_schedule.competition_id = $1
-            GROUP BY bb_teams.id
-            HAVING SUM(bb_games_teams_players.deflections) > 0
-            ORDER BY SUM(bb_games_teams_players.deflections) DESC
             LIMIT 5",
     )
     .bind(competition_id.clone())

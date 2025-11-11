@@ -18,7 +18,7 @@
             </dd>
 
             <dt>Version des règles</dt>
-            <dd>{{ competition.version.type_name() }}</dd>
+            <dd>{{ competition.version.name("fr") }}</dd>
 
             <dt>Description</dt>
             <dd>
@@ -146,7 +146,7 @@
                             {{ team.roster.name("fr") }}
 
                             {% if team.version.ne(&Version::LAST_VERSION) %}
-                            <span> ({{ team.version.type_name() }})</span>
+                            <span> ({{ team.version.name("fr") }})</span>
                             {% endif %}
                         </a>
                     </td>

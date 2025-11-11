@@ -24,7 +24,7 @@ pub async fn rosters(
     profile: Option<User>,
     Query(params): Query<RostersQueryParams>,
 ) -> RostersPage {
-    RostersPage::get(app_state, profile, params.version.unwrap_or(Version::V5))
+    RostersPage::get(app_state, profile, params.version.unwrap_or(Version::V5S3))
 }
 
 #[derive(Deserialize)]

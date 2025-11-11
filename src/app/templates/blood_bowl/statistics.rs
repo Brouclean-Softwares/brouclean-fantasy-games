@@ -26,7 +26,6 @@ pub struct TeamsTopStatisticsLists {
     pub teams_top_casualties: StatisticList,
     pub teams_top_injuries: StatisticList,
     pub teams_top_interceptions: StatisticList,
-    pub teams_top_deflections: StatisticList,
     pub teams_top_passing_completions: StatisticList,
     pub teams_top_throwing_completions: StatisticList,
 }
@@ -62,10 +61,6 @@ impl From<TeamsTopStatistics> for TeamsTopStatisticsLists {
                 String::from("Interceptions (INT)"),
                 teams_top_statistics.teams_top_interceptions,
             ),
-            teams_top_deflections: StatisticList::from(
-                String::from("Détournements (DET)"),
-                teams_top_statistics.teams_top_deflections,
-            ),
             teams_top_passing_completions: StatisticList::from(
                 String::from("Passes (PAS)"),
                 teams_top_statistics.teams_top_passing_completions,
@@ -86,7 +81,6 @@ pub struct PlayersTopStatisticsLists {
     pub players_top_casualties: StatisticList,
     pub players_top_injuries: StatisticList,
     pub players_top_interceptions: StatisticList,
-    pub players_top_deflections: StatisticList,
     pub players_top_passing_completions: StatisticList,
     pub players_top_throwing_completions: StatisticList,
 }
@@ -113,10 +107,6 @@ impl From<PlayersTopStatistics> for PlayersTopStatisticsLists {
             players_top_interceptions: StatisticList::from(
                 String::from("Interceptions (INT)"),
                 players_top_statistics.players_top_interceptions,
-            ),
-            players_top_deflections: StatisticList::from(
-                String::from("Détournements (DET)"),
-                players_top_statistics.players_top_deflections,
             ),
             players_top_passing_completions: StatisticList::from(
                 String::from("Passes (PAS)"),

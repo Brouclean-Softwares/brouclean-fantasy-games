@@ -11,7 +11,7 @@
                         {{ team.roster.name("fr") }}
 
                         {% if team.version.ne(&Version::LAST_VERSION) %}
-                        <span> ({{ team.version.type_name() }})</span>
+                        <span> ({{ team.version.name("fr") }})</span>
                         {% endif %}
                     </p>
                 </div>

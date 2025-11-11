@@ -310,7 +310,6 @@ pub async fn added_player(
         games_number: 1,
         passing_completions: player_statistics.passing_completions as i64,
         throwing_completions: player_statistics.throwing_completions as i64,
-        deflections: player_statistics.deflections as i64,
         interceptions: player_statistics.interceptions as i64,
         casualties: player_statistics.casualties as i64,
         touchdowns: player_statistics.touchdowns as i64,

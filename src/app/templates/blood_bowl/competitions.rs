@@ -16,7 +16,6 @@ use crate::AppState;
 use askama::Template;
 use askama_web::WebTemplate;
 use blood_bowl_rs::translation::TranslatedName;
-use blood_bowl_rs::translation::TypeName;
 use blood_bowl_rs::versions::Version;
 
 pub fn breadcrumb() -> BreadCrumb {
