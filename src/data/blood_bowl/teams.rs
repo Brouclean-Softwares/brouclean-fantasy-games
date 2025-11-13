@@ -513,3 +513,208 @@ pub async fn delete(
 
     Ok(true)
 }
+
+pub async fn upgrade(
+    state: &AppState,
+    connected_user: &User,
+    current_team: Team,
+) -> Result<bool, AppError> {
+    tracing::debug!(
+        "delete by user={:?} for team_id={}",
+        connected_user,
+        current_team.id,
+    );
+
+    let game_playing = games::select_playing_by_team(state, current_team.id).await?;
+
+    if game_playing.is_some() {
+        return Ok(false);
+    }
+
+    if current_team.coach.eq(&connected_user.clone().into()) {
+        let Some(new_version) = current_team.version.next() else {
+            return Ok(false);
+        };
+
+        let Some(new_roster) = current_team.roster_for_next_version() else {
+            return Ok(false);
+        };
+
+        let Some(current_roster_definition) = current_team.roster_definition() else {
+            return Ok(false);
+        };
+
+        let Some(new_roster_definition) = new_roster.definition(new_version) else {
+            return Ok(false);
+        };
+
+        let mut new_team = current_team.clone();
+        new_team.version = new_version;
+        new_team.roster = new_roster;
+
+        let mut transaction = state.db.begin().await?;
+
+        for (staff, current_quantity) in current_team.staff {
+            if current_quantity > 0 {
+                match (
+                    current_roster_definition.get_staff_information(&staff),
+                    new_roster_definition.get_staff_information(&staff),
+                ) {
+                    (Some(current_staff_information), Some(new_staff_information)) => {
+                        let new_quantity = if current_quantity > new_staff_information.maximum {
+                            new_staff_information.maximum
+                        } else {
+                            current_quantity
+                        };
+
+                        sqlx::query(
+                            "UPDATE bb_teams_staff
+                                SET number = $3
+                                WHERE team_id = $1
+                                AND staff = $2",
+                        )
+                        .bind(new_team.id.clone())
+                        .bind(staff.clone())
+                        .bind(new_quantity.clone() as i32)
+                        .execute(&mut *transaction)
+                        .await?;
+
+                        new_team.staff.insert(staff, new_quantity);
+                        new_team.treasury += new_quantity as i32
+                            * (current_staff_information.price as i32
+                                - new_staff_information.price as i32);
+                        new_team.treasury += current_staff_information.price as i32
+                            * (current_quantity as i32 - new_quantity as i32);
+                    }
+
+                    (Some(current_staff_information), None) => {
+                        sqlx::query(
+                            "UPDATE bb_teams_staff
+                                SET number = 0
+                                WHERE team_id = $1
+                                AND staff = $2",
+                        )
+                        .bind(new_team.id.clone())
+                        .bind(staff.clone())
+                        .execute(&mut *transaction)
+                        .await?;
+
+                        new_team.staff.remove(&staff);
+                        new_team.treasury +=
+                            current_staff_information.price as i32 * current_quantity as i32;
+                    }
+
+                    (_, _) => {}
+                }
+            }
+        }
+
+        new_team.players = Vec::with_capacity(current_team.players.len());
+
+        for (player_number, current_player) in current_team.players.iter() {
+            if let Some(new_position) = current_player.position_for_next_version() {
+                let mut new_player = current_player.clone();
+                new_player.version = new_version;
+                new_player.roster = new_roster;
+                new_player.position = new_position;
+
+                match (
+                    current_player.position_definition(),
+                    new_player.position_definition(),
+                ) {
+                    (Some(current_position_definition), Some(new_position_definition)) => {
+                        sqlx::query(
+                            "UPDATE bb_players
+                            SET version = $2,
+                                position = $3,
+                                last_updated = CURRENT_TIMESTAMP
+                            WHERE id = $1",
+                        )
+                        .bind(new_player.id.clone())
+                        .bind(new_player.version.clone())
+                        .bind(new_player.position.clone())
+                        .execute(&mut *transaction)
+                        .await?;
+
+                        new_team.treasury += current_position_definition.cost as i32
+                            - new_position_definition.cost as i32;
+
+                        sqlx::query(
+                            "DELETE FROM bb_players_advancements
+                                WHERE player_id = $1",
+                        )
+                        .bind(new_player.id.clone())
+                        .execute(&mut *transaction)
+                        .await?;
+
+                        new_player.advancements = Vec::new();
+
+                        new_team.players.push((player_number.clone(), new_player));
+                    }
+
+                    (Some(current_position_definition), None) => {
+                        sqlx::query(
+                            "UPDATE bb_teams_players
+                            SET contract_end = CURRENT_TIMESTAMP
+                            WHERE team_id = $1
+                            AND player_id = $2",
+                        )
+                        .bind(new_team.id.clone())
+                        .bind(current_player.id.clone())
+                        .execute(&mut *transaction)
+                        .await?;
+
+                        new_team.treasury += current_position_definition.cost as i32;
+                    }
+
+                    _ => {
+                        return Err(AppError::BloodBowlAppError(String::from(
+                            "Un joueur actuel n'a pas de poste connu",
+                        )))
+                    }
+                }
+            }
+        }
+
+        for position in new_roster_definition.positions.iter() {
+            if let Some(position_definition) = position.definition(new_version, new_roster) {
+                if new_team.position_number_under_contract(&position)
+                    > position_definition.maximum_quantity
+                {
+                    new_team.treasury += position_definition.cost as i32
+                        * (new_team.position_number_under_contract(&position) as i32
+                            - position_definition.maximum_quantity as i32);
+                }
+            }
+        }
+
+        if current_team.dedicated_fans > new_roster_definition.dedicated_fans_information.maximum {
+            new_team.dedicated_fans = new_roster_definition.dedicated_fans_information.maximum;
+        }
+
+        sqlx::query(
+            "UPDATE bb_teams
+                    SET version = $2,
+                        treasury = $3,
+                        value = $4,
+                        current_value = $5,
+                        dedicated_fans = $6,
+                        roster = $7,
+                        last_updated = CURRENT_TIMESTAMP
+                    WHERE id = $1",
+        )
+        .bind(new_team.id.clone())
+        .bind(new_team.version.clone())
+        .bind(new_team.treasury.clone())
+        .bind(new_team.value()?.clone() as i32)
+        .bind(new_team.current_value()?.clone() as i32)
+        .bind(new_team.dedicated_fans.clone() as i32)
+        .bind(new_team.roster.clone())
+        .execute(&mut *transaction)
+        .await?;
+
+        transaction.commit().await?;
+    }
+
+    Ok(true)
+}

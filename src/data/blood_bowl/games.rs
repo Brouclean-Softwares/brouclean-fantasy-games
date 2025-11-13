@@ -19,6 +19,7 @@ use serde::Deserialize;
 #[derive(Deserialize, Clone)]
 pub struct GameSummary {
     pub id: i32,
+    pub version: Version,
     pub title: Option<String>,
     pub game_at: NaiveDateTime,
     pub started: bool,
@@ -95,6 +96,7 @@ impl GameRow {
 
         let game_summary = GameSummary {
             id: self.id,
+            version: self.version,
             title: self.game_title(),
             game_at: self.game_at,
             started: self.started,

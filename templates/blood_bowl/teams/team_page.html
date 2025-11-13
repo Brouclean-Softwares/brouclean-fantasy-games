@@ -60,12 +60,39 @@
         </div>
     </div>
 
+    {% if upgradable %}
     {% if let Some(next_version) = team.version.next() %}
-    {% if editable && team.roster.definition(next_version.clone()).is_some() %}
     <div class="uk-margin-medium-bottom">
-        <button class="uk-button uk-button-danger" type="button">
+        <button class="uk-button uk-button-danger" uk-toggle="target: #modal-upgrade" type="button">
             Passer en {{ next_version.name("fr") }}
         </button>
+
+        <div id="modal-upgrade" uk-modal>
+            <form id="upgrade_form" action="./upgrade" method="post" autocomplete="off">
+                <input id="id" name="id" type="hidden" value="{{ team.id }}">
+            </form>
+
+            <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                <h2 class="uk-modal-title">Montée de version de l'équipe en cours</h2>
+                <p>Si vous changez de version, vous pourrez alors jouer contre d'autres équipes de cette même version, mais plus contre celles de l'ancienne.</p>
+                <p>Si c'est bien ce que vous souhaitez, alors :
+                    <ul>
+                        <li>Votre trésorerie sera revue par rapport aux changements de prix des postes et des staffs</li>
+                        <li>Si certains postes n'ont plus la même limite maximum, alors votre trésorerie sera créditée du prix des postes en trop</li>
+                        <li>Ce sera alors à vous d'enlever manuellement les joueurs en trop</li>
+                        <li>Les améliorations des joueurs seront enlevées et à re-choisir</li>
+                    </ul>
+                </p>
+                <p>Confirmez-vous le passage de l'équipe en version : <span class="uk-text-bold">{{ next_version.name("fr") }} ?</span></p>
+                <p class="uk-text-right">
+                    <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                    <button class="uk-button uk-button-danger"
+                            onclick="document.getElementById('upgrade_form').submit()">
+                        Confirmer
+                    </button>
+                </p>
+            </div>
+        </div>
     </div>
     {% endif %}
     {% endif %}

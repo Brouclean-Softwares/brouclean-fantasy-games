@@ -83,6 +83,7 @@ pub struct TeamPage {
     alert_message: Option<AlertMessage>,
     team: Team,
     editable: bool,
+    upgradable: bool,
     edit_mode: bool,
     focus: Option<String>,
     sheet: TeamSheetTab,
@@ -126,12 +127,25 @@ impl TeamPage {
 
         let deletable = editable && games_played.len() == 0 && games_scheduled.len() == 0;
 
+        let upgradable = if let Some(next_version) = team.version.next() {
+            editable
+                && team.roster.definition(next_version.clone()).is_some()
+                && games_scheduled
+                    .iter()
+                    .filter(|&game| game.version.ne(&next_version))
+                    .count()
+                    == 0
+        } else {
+            false
+        };
+
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
             alert_message,
             breadcrumb: breadcrumb(),
             team: team.clone(),
             editable,
+            upgradable,
             edit_mode,
             focus: focus.clone(),
             sheet: TeamSheetTab {

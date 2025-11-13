@@ -27,6 +27,7 @@ pub fn init_router() -> Router<AppState> {
         .route("/new", get(new).post(create))
         .route("/team", get(team).post(update))
         .route("/delete", post(delete))
+        .route("/upgrade", post(upgrade))
 }
 
 pub async fn teams(
@@ -384,6 +385,8 @@ pub async fn delete(
     teams::delete(&app_state, &profile, form.id)
         .await
         .or_else(|app_error| {
+            tracing::debug!("delete_team: Error: {}", app_error);
+
             Err(Redirect::to(&format!(
                 "./team?id={}&message={}",
                 form.id, app_error
@@ -391,4 +394,39 @@ pub async fn delete(
         })?;
 
     Ok(Redirect::to("/blood_bowl"))
+}
+
+#[derive(Deserialize)]
+pub struct UpgradeTeamForm {
+    pub id: i32,
+}
+
+pub async fn upgrade(
+    State(app_state): State<AppState>,
+    profile: User,
+    Form(form): Form<UpgradeTeamForm>,
+) -> Result<Redirect, Redirect> {
+    let error_handler = |error| {
+        tracing::debug!("upgrade_team: Error: {}", error);
+        Redirect::to("../teams")
+    };
+
+    let team = teams::select_by_id_with_staff_and_players(&app_state, form.id)
+        .await
+        .map_err(error_handler)?;
+
+    if team.coach.eq(&profile.clone().into()) {
+        teams::upgrade(&app_state, &profile, team)
+            .await
+            .or_else(|app_error| {
+                tracing::debug!("upgrade_team: Error: {}", app_error);
+
+                Err(Redirect::to(&format!(
+                    "./team?id={}&message={}",
+                    form.id, app_error
+                )))
+            })?;
+    }
+
+    Ok(Redirect::to(&format!("./team?id={}", form.id)))
 }
