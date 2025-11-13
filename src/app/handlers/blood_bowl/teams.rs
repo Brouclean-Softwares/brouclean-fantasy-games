@@ -202,11 +202,11 @@ pub async fn team(
         })
     };
 
-    let roster_definition = team.roster_definition().or(Err(Redirect::to("../teams")))?;
+    let roster_definition = team.roster_definition().ok_or(Redirect::to("../teams"))?;
 
     let edit_mode = params.edit.unwrap_or(false);
 
-    let positions_buyable = team.positions_buyable().or(Err(Redirect::to("../teams")))?;
+    let positions_buyable = team.positions_buyable();
 
     let games_scheduled = games::select_scheduled_for_team(&app_state, team.id)
         .await

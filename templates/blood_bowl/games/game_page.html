@@ -17,7 +17,7 @@
 {% block body %}
 <div x-data="{ tab: '{{ tab_displayed }}' }">
 
-    <div class="uk-grid-small uk-flex-center uk-flex-middle uk-background-muted uk-margin" uk-grid>
+    <div class="uk-grid-small uk-flex-center uk-flex-middle uk-margin" uk-grid>
 
         <div class="uk-width-1-2@m uk-margin-medium-bottom">
             <div class="uk-grid-small uk-flex-middle" uk-grid>
@@ -30,8 +30,8 @@
                             {{ game.first_team.name }}
                         </a>
                     </p>
-                    <p class="uk-margin-remove-top uk-margin-remove-bottom">{{ game.first_team.roster.name("fr") }}</p>
-                    <p class="uk-margin-remove-top">{{ game.first_team.coach.name }}</p>
+                    <p class="uk-margin-remove-top uk-margin-remove-bottom uk-text-meta">{{ game.first_team.roster.name("fr") }}</p>
+                    <p class="uk-margin-remove-top uk-text-meta">{{ game.first_team.coach.name }}</p>
                 </div>
                 <div class="uk-width-1-5 uk-text-center">
                     <p class="uk-text-large uk-text-bold uk-background-secondary uk-text-muted">
@@ -63,8 +63,8 @@
                             {{ game.second_team.name }}
                         </a>
                     </p>
-                    <p class="uk-margin-remove-top uk-margin-remove-bottom">{{ game.second_team.roster.name("fr") }}</p>
-                    <p class="uk-margin-remove-top">{{ game.second_team.coach.name }}</p>
+                    <p class="uk-margin-remove-top uk-margin-remove-bottom uk-text-meta">{{ game.second_team.roster.name("fr") }}</p>
+                    <p class="uk-margin-remove-top uk-text-meta">{{ game.second_team.coach.name }}</p>
                 </div>
                 <div class="uk-width-1-5 uk-flex-first@m uk-text-center">
                     <p class="uk-text-large uk-text-bold uk-background-secondary uk-text-muted">
@@ -87,10 +87,10 @@
         <div class="uk-width-1-1 uk-text-center uk-margin">
             {% if let Some(competition) = competition %}
             <a class="uk-link-reset" href="/blood_bowl/competitions/competition?id={{ competition.id }}&tab=standings">
-                <span class="uk-text-large">{{ competition.name }}</span>
+                <span class="uk-text-lead">{{ competition.name }}</span>
             </a>
             {% else %}
-            <span class="uk-text-large">Match amical</span>
+            <span class="uk-text-lead">Match amical</span>
             {% endif %}
         </div>
 
@@ -120,7 +120,7 @@
         </div>
         {% endif %}
 
-        <div class="uk-width-1-1 uk-text-center uk-text-large uk-margin">
+        <div class="uk-width-1-1 uk-text-center uk-text-lead uk-margin">
         {% match game.status() %}
             {% when GameStatus::Scheduled %}
                 {% if editable && edit_mode %}

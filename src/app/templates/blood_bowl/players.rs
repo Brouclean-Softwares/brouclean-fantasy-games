@@ -123,7 +123,7 @@ impl PlayerAdvancementBloc {
             let mut choices_available = vec![];
 
             if advancement_number == player.advancements.len() + 1 {
-                for choice in AdvancementChoice::list_could_be_available_for_player(player)? {
+                for choice in AdvancementChoice::list_could_be_available_for_player(player) {
                     choices_available.push((choice.clone(), choice.is_buyable_for_player(player)));
                 }
             }
@@ -155,75 +155,86 @@ impl PlayerAdvancementBloc {
     }
 }
 
-pub fn movement_allowance_html(player: &Player) -> Result<String, AppError> {
-    let value = player.movement_allowance()?;
-    let initial_value = player.movement_allowance_from_position()?;
-
-    if value == initial_value {
-        Ok(value.to_string())
-    } else {
-        Ok(format!("<span class=\"uk-text-bold\">{}</span>", value))
-    }
-}
-
-pub fn strength_html(player: &Player) -> Result<String, AppError> {
-    let value = player.strength()?;
-    let initial_value = player.strength_from_position()?;
-
-    if value == initial_value {
-        Ok(value.to_string())
-    } else {
-        Ok(format!("<span class=\"uk-text-bold\">{}</span>", value))
-    }
-}
-
-pub fn agility_html(player: &Player) -> Result<String, AppError> {
-    let value = player.agility()?;
-    let initial_value = player.agility_from_position()?;
-
-    if value == initial_value {
-        Ok(format!("{}+", value))
-    } else {
-        Ok(format!("<span class=\"uk-text-bold\">{}+</span>", value))
-    }
-}
-
-pub fn passing_ability_html(player: &Player) -> Result<String, AppError> {
-    let value = player.passing_ability()?;
-    let initial_value = player.passing_ability_from_position()?;
-
-    match (value, initial_value) {
+pub fn movement_allowance_html(player: &Player) -> String {
+    match (
+        player.movement_allowance(),
+        player.movement_allowance_from_position(),
+    ) {
         (Some(value), Some(initial_value)) => {
             if value == initial_value {
-                Ok(format!("{}+", value))
+                format!("{}", value)
             } else {
-                Ok(format!("<span class=\"uk-text-bold\">{}+</span>", value))
+                format!("<span class=\"uk-text-bold\">{}</span>", value)
             }
         }
-        (_, _) => Ok("-".to_string()),
+        (_, _) => "-".to_string(),
     }
 }
 
-pub fn armour_value_html(player: &Player) -> Result<String, AppError> {
-    let value = player.armour_value()?;
-    let initial_value = player.armour_value_from_position()?;
-
-    if value == initial_value {
-        Ok(format!("{}+", value))
-    } else {
-        Ok(format!("<span class=\"uk-text-bold\">{}+</span>", value))
+pub fn strength_html(player: &Player) -> String {
+    match (player.strength(), player.strength_from_position()) {
+        (Some(value), Some(initial_value)) => {
+            if value == initial_value {
+                format!("{}", value)
+            } else {
+                format!("<span class=\"uk-text-bold\">{}</span>", value)
+            }
+        }
+        (_, _) => "-".to_string(),
     }
 }
 
-pub fn skills_names_html(player: &Player, lang_id: &str) -> Result<String, AppError> {
+pub fn agility_html(player: &Player) -> String {
+    match (player.agility(), player.agility_from_position()) {
+        (Some(value), Some(initial_value)) => {
+            if value == initial_value {
+                format!("{}+", value)
+            } else {
+                format!("<span class=\"uk-text-bold\">{}+</span>", value)
+            }
+        }
+        (_, _) => "-".to_string(),
+    }
+}
+
+pub fn passing_ability_html(player: &Player) -> String {
+    match (
+        player.passing_ability(),
+        player.passing_ability_from_position(),
+    ) {
+        (Some(value), Some(initial_value)) => {
+            if value == initial_value {
+                format!("{}+", value)
+            } else {
+                format!("<span class=\"uk-text-bold\">{}+</span>", value)
+            }
+        }
+        (_, _) => "-".to_string(),
+    }
+}
+
+pub fn armour_value_html(player: &Player) -> String {
+    match (player.armour_value(), player.armour_value_from_position()) {
+        (Some(value), Some(initial_value)) => {
+            if value == initial_value {
+                format!("{}+", value)
+            } else {
+                format!("<span class=\"uk-text-bold\">{}+</span>", value)
+            }
+        }
+        (_, _) => "-".to_string(),
+    }
+}
+
+pub fn skills_names_html(player: &Player, lang_id: &str) -> String {
     let initial_values: Vec<String> = player
-        .skills_from_position()?
+        .skills_from_position()
         .iter()
         .map(|skill| skill.name(lang_id))
         .collect();
 
     let added_values: Vec<String> = player
-        .added_skills()?
+        .added_skills()
         .iter()
         .map(|skill| {
             format!(
@@ -233,5 +244,5 @@ pub fn skills_names_html(player: &Player, lang_id: &str) -> Result<String, AppEr
         })
         .collect();
 
-    Ok(vec![initial_values, added_values].concat().join(", "))
+    vec![initial_values, added_values].concat().join(", ")
 }

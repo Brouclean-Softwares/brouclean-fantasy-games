@@ -291,14 +291,10 @@ pub async fn added_player(
             .await
             .map_err(error_handler)?;
 
-    let can_buy_journeyman = team
-        .can_buy_journeyman()
-        .map_err(|_| Redirect::to(&format!("../games/game?id={}", params.game_id)))?;
-
     let can_buy = player.is_journeyman
         && game.game_finished()
         && is_last_game_for_team
-        && can_buy_journeyman
+        && team.can_buy_journeyman()
         && match profile.clone() {
             Some(user) => team.coach.eq(&user.into()),
             None => false,

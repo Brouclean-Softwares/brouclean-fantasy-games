@@ -13,7 +13,7 @@
                         <img src="{{ TeamLogo::from(game.first_team).url }}" width="50" height="50" alt="">
                     </div>
                     <div class="uk-width-expand uk-text-center uk-text-right@m">
-                        <p class="uk-margin-remove-bottom uk-text-bold">{{ game.first_team.name }}</p>
+                        <h4 class="uk-margin-remove">{{ game.first_team.name }}</h4>
                         <p class="uk-text-meta uk-margin-remove-top uk-margin-remove-bottom">{{ game.first_team.roster.name("fr") }}</p>
                         <p class="uk-text-meta uk-margin-remove-top">{{ game.first_team.coach_name }}</p>
                     </div>
@@ -42,7 +42,7 @@
                         <img src="{{ TeamLogo::from(game.second_team).url }}" width="50" height="50" alt="">
                     </div>
                     <div class="uk-width-expand uk-text-center uk-text-left@m">
-                        <p class="uk-margin-remove-bottom uk-text-bold">{{ game.second_team.name }}</p>
+                        <h4 class="uk-margin-remove">{{ game.second_team.name }}</h4>
                         <p class="uk-text-meta uk-margin-remove-top uk-margin-remove-bottom">{{ game.second_team.roster.name("fr") }}</p>
                         <p class="uk-text-meta uk-margin-remove-top">{{ game.second_team.coach_name }}</p>
                     </div>

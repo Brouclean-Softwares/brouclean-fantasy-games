@@ -102,12 +102,12 @@
 
             <tbody>
             <tr>
-                <td>{{ crate::app::templates::blood_bowl::players::movement_allowance_html(player)?|escape("none") }}</td>
-                <td>{{ crate::app::templates::blood_bowl::players::strength_html(player)?|escape("none") }}</td>
-                <td>{{ crate::app::templates::blood_bowl::players::agility_html(player)?|escape("none") }}</td>
-                <td>{{ crate::app::templates::blood_bowl::players::passing_ability_html(player)?|escape("none") }}</td>
-                <td>{{ crate::app::templates::blood_bowl::players::armour_value_html(player)?|escape("none") }}</td>
-                <td>{{ crate::app::templates::blood_bowl::players::skills_names_html(player, "fr")?|escape("none") }}</td>
+                <td>{{ crate::app::templates::blood_bowl::players::movement_allowance_html(player)|escape("none") }}</td>
+                <td>{{ crate::app::templates::blood_bowl::players::strength_html(player)|escape("none") }}</td>
+                <td>{{ crate::app::templates::blood_bowl::players::agility_html(player)|escape("none") }}</td>
+                <td>{{ crate::app::templates::blood_bowl::players::passing_ability_html(player)|escape("none") }}</td>
+                <td>{{ crate::app::templates::blood_bowl::players::armour_value_html(player)|escape("none") }}</td>
+                <td>{{ crate::app::templates::blood_bowl::players::skills_names_html(player, "fr")|escape("none") }}</td>
             </tr>
             </tbody>
         </table>
@@ -185,7 +185,7 @@
                 <td>{{ player.niggling_injuries_number() }}</td>
                 <td>
                     {% if player.injuries.len() > 0 %}
-                        {{ player.injuries_names("fr")? }}
+                        {{ player.injuries_names("fr") }}
                     {% else %}
                         Aucune
                     {% endif %}

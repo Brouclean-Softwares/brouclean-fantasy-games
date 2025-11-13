@@ -60,8 +60,8 @@
         </div>
     </div>
 
-    {% if editable %}
     {% if let Some(next_version) = team.version.next() %}
+    {% if editable && team.roster.definition(next_version.clone()).is_some() %}
     <div class="uk-margin-medium-bottom">
         <button class="uk-button uk-button-danger" type="button">
             Passer en {{ next_version.name("fr") }}

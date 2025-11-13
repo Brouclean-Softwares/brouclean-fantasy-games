@@ -11,7 +11,7 @@
 {% block body %}
 
 {% if let Some(roster) = roster %}
-{% if let Ok(roster_definition) = roster.definition(version.into()) %}
+{% if let Some(roster_definition) = roster.definition(version.into()) %}
 
 <div class="uk-grid-small uk-flex-middle uk-margin-bottom" uk-grid>
     <div class="uk-width-auto">
@@ -55,7 +55,7 @@
         <tbody>
         {% for position in roster_definition.positions %}
 
-        {% if let Ok(position_definition) = position.definition(roster_definition.version.into(), roster.clone()) %}
+        {% if let Some(position_definition) = position.definition(roster_definition.version.into(), roster.clone()) %}
         <tr>
             <td>0-{{ position_definition.maximum_quantity }}</td>
             <td>{{ position.name("fr") }}</td>

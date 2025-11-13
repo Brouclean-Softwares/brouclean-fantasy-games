@@ -46,7 +46,7 @@
 
                     <span>{{ team.staff_quantity(staff_information.staff) }}</span>
 
-                    {% if editable && team.can_buy_staff(staff_information.staff)? %}
+                    {% if editable && team.can_buy_staff(staff_information.staff) %}
                     <button class="uk-button uk-button-link uk-margin-left"
                             type="button"
                             uk-toggle="target: #modal-{{ staff_information.staff.type_name() }}">
@@ -161,32 +161,32 @@
                     </td>
                     <td class="uk-table-link">
                         <a class="uk-link-reset" href="{{ player_url }}">
-                            {{ crate::app::templates::blood_bowl::players::movement_allowance_html(player)?|escape("none") }}
+                            {{ crate::app::templates::blood_bowl::players::movement_allowance_html(player)|escape("none") }}
                         </a>
                     </td>
                     <td class="uk-table-link">
                         <a class="uk-link-reset" href="{{ player_url }}">
-                            {{ crate::app::templates::blood_bowl::players::strength_html(player)?|escape("none") }}
+                            {{ crate::app::templates::blood_bowl::players::strength_html(player)|escape("none") }}
                         </a>
                     </td>
                     <td class="uk-table-link">
                         <a class="uk-link-reset" href="{{ player_url }}">
-                            {{ crate::app::templates::blood_bowl::players::agility_html(player)?|escape("none") }}
+                            {{ crate::app::templates::blood_bowl::players::agility_html(player)|escape("none") }}
                         </a>
                     </td>
                     <td class="uk-table-link">
                         <a class="uk-link-reset" href="{{ player_url }}">
-                            {{ crate::app::templates::blood_bowl::players::passing_ability_html(player)?|escape("none") }}
+                            {{ crate::app::templates::blood_bowl::players::passing_ability_html(player)|escape("none") }}
                         </a>
                     </td>
                     <td class="uk-table-link">
                         <a class="uk-link-reset" href="{{ player_url }}">
-                            {{ crate::app::templates::blood_bowl::players::armour_value_html(player)?|escape("none") }}
+                            {{ crate::app::templates::blood_bowl::players::armour_value_html(player)|escape("none") }}
                         </a>
                     </td>
                     <td class="uk-table-link">
                         <a class="uk-link-reset" href="{{ player_url }}">
-                            {{ crate::app::templates::blood_bowl::players::skills_names_html(player, "fr")?|escape("none") }}
+                            {{ crate::app::templates::blood_bowl::players::skills_names_html(player, "fr")|escape("none") }}
                         </a>
                     </td>
                     <td class="uk-table-link">
@@ -276,7 +276,7 @@
 
                 </select>
 
-                {% if team.can_buy_player()? %}
+                {% if team.can_buy_player() %}
                 <button class="uk-button uk-button-link uk-margin-left"
                         type="button"
                         uk-toggle="target: #modal-buy-player">

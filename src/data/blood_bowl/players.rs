@@ -718,7 +718,7 @@ pub async fn add_advancement_choice(
                         .clone() as i32,
                 )
                 .bind(serde_json::to_string(
-                    &advancement_choice.roll_advancements_to_choose_for_player(&player)?,
+                    &advancement_choice.roll_advancements_to_choose_for_player(&player),
                 )?)
                 .execute(&state.db)
                 .await?;
