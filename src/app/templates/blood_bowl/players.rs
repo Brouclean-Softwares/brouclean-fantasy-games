@@ -155,75 +155,56 @@ impl PlayerAdvancementBloc {
     }
 }
 
-pub fn movement_allowance_html(player: &Player) -> String {
-    match (
-        player.movement_allowance(),
-        player.movement_allowance_from_position(),
-    ) {
+fn characteristic_value_into_html(
+    value: Option<u8>,
+    value_from_position: Option<u8>,
+    str_after_value: &str,
+) -> String {
+    match (value, value_from_position) {
         (Some(value), Some(initial_value)) => {
             if value == initial_value {
-                format!("{}", value)
+                format!("{}{}", value, str_after_value)
             } else {
-                format!("<span class=\"uk-text-bold\">{}</span>", value)
+                format!(
+                    "<span class=\"uk-text-bold\">{}{}</span>",
+                    value, str_after_value
+                )
             }
         }
         (_, _) => "-".to_string(),
     }
+}
+
+pub fn movement_allowance_html(player: &Player) -> String {
+    characteristic_value_into_html(
+        player.movement_allowance(),
+        player.movement_allowance_from_position(),
+        "",
+    )
 }
 
 pub fn strength_html(player: &Player) -> String {
-    match (player.strength(), player.strength_from_position()) {
-        (Some(value), Some(initial_value)) => {
-            if value == initial_value {
-                format!("{}", value)
-            } else {
-                format!("<span class=\"uk-text-bold\">{}</span>", value)
-            }
-        }
-        (_, _) => "-".to_string(),
-    }
+    characteristic_value_into_html(player.strength(), player.strength_from_position(), "")
 }
 
 pub fn agility_html(player: &Player) -> String {
-    match (player.agility(), player.agility_from_position()) {
-        (Some(value), Some(initial_value)) => {
-            if value == initial_value {
-                format!("{}+", value)
-            } else {
-                format!("<span class=\"uk-text-bold\">{}+</span>", value)
-            }
-        }
-        (_, _) => "-".to_string(),
-    }
+    characteristic_value_into_html(player.agility(), player.agility_from_position(), "+")
 }
 
 pub fn passing_ability_html(player: &Player) -> String {
-    match (
+    characteristic_value_into_html(
         player.passing_ability(),
         player.passing_ability_from_position(),
-    ) {
-        (Some(value), Some(initial_value)) => {
-            if value == initial_value {
-                format!("{}+", value)
-            } else {
-                format!("<span class=\"uk-text-bold\">{}+</span>", value)
-            }
-        }
-        (_, _) => "-".to_string(),
-    }
+        "+",
+    )
 }
 
 pub fn armour_value_html(player: &Player) -> String {
-    match (player.armour_value(), player.armour_value_from_position()) {
-        (Some(value), Some(initial_value)) => {
-            if value == initial_value {
-                format!("{}+", value)
-            } else {
-                format!("<span class=\"uk-text-bold\">{}+</span>", value)
-            }
-        }
-        (_, _) => "-".to_string(),
-    }
+    characteristic_value_into_html(
+        player.armour_value(),
+        player.armour_value_from_position(),
+        "+",
+    )
 }
 
 pub fn skills_names_html(player: &Player, lang_id: &str) -> String {

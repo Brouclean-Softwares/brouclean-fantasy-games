@@ -60,17 +60,11 @@
             <td>0-{{ position_definition.maximum_quantity }}</td>
             <td>{{ position.name("fr") }}</td>
             <td>{{ position_definition.cost / 1000 }}k</td>
-            <td>{{ position_definition.movement_allowance() }}</td>
-            <td>{{ position_definition.strength() }}</td>
-            <td>{{ position_definition.agility() }}+</td>
-
-            {% if let Some(passing_ability) = position_definition.passing_ability() %}
-            <td>{{ passing_ability }}+</td>
-            {% else %}
-            <td>-</td>
-            {% endif %}
-
-            <td>{{ position_definition.armour_value() }}+</td>
+            <td>{{ crate::app::templates::blood_bowl::rosters::movement_allowance_html(position_definition)|escape("none") }}</td>
+            <td>{{ crate::app::templates::blood_bowl::rosters::strength_html(position_definition)|escape("none") }}</td>
+            <td>{{ crate::app::templates::blood_bowl::rosters::agility_html(position_definition)|escape("none") }}</td>
+            <td>{{ crate::app::templates::blood_bowl::rosters::passing_ability_html(position_definition)|escape("none") }}</td>
+            <td>{{ crate::app::templates::blood_bowl::rosters::armour_value_html(position_definition)|escape("none") }}</td>
             <td>{{ position_definition.skills_names("fr") }}</td>
             <td>{{ position_definition.primary_skill_categories_first_letter("fr") }}</td>
             <td>{{ position_definition.secondary_skill_categories_first_letter("fr") }}</td>
@@ -91,6 +85,18 @@
     {% endfor %}
 </ul>
 
+{% if roster_definition.special_leagues.len() > 0 %}
+<h3 class="uk-heading-divider">
+    Ligues spéciales
+</h3>
+<ul>
+    {% for special_league in roster_definition.special_leagues %}
+    <li>{{ special_league.name("fr") }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+{% if roster_definition.special_rules.len() > 0 %}
 <h3 class="uk-heading-divider">
     Règles spéciales
 </h3>
@@ -99,10 +105,11 @@
     <li>{{ special_rule.name("fr") }}</li>
     {% endfor %}
 </ul>
+{% endif %}
 
 {% if let Some(user_profile) = profile %}
 <a href="../teams/new?version={{ roster_definition.version.type_name() }}&roster={{ roster.type_name() }}"
-   class="uk-button uk-button-primary">
+   class="uk-button uk-button-primary uk-margin-medium-top">
     Créer une nouvelle équipe
 </a>
 {% endif %}

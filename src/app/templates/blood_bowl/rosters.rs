@@ -3,6 +3,8 @@ use crate::data::users::User;
 use crate::AppState;
 use askama::Template;
 use askama_web::WebTemplate;
+use blood_bowl_rs::characteristics::Characteristic;
+use blood_bowl_rs::positions::PositionDefinition;
 use blood_bowl_rs::rosters::Roster;
 use blood_bowl_rs::translation::TranslatedName;
 use blood_bowl_rs::translation::TypeName;
@@ -62,4 +64,47 @@ impl RosterPage {
             version,
         }
     }
+}
+
+fn characteristic_value_into_html(value: Option<u8>, str_after_value: &str) -> String {
+    if let Some(value) = value {
+        format!("{}{}", value, str_after_value)
+    } else {
+        "-".to_string()
+    }
+}
+
+pub fn movement_allowance_html(position_definition: &PositionDefinition) -> String {
+    characteristic_value_into_html(
+        position_definition.characteristic_value(Characteristic::MovementAllowance),
+        "",
+    )
+}
+
+pub fn strength_html(position_definition: &PositionDefinition) -> String {
+    characteristic_value_into_html(
+        position_definition.characteristic_value(Characteristic::Strength),
+        "",
+    )
+}
+
+pub fn agility_html(position_definition: &PositionDefinition) -> String {
+    characteristic_value_into_html(
+        position_definition.characteristic_value(Characteristic::Agility),
+        "+",
+    )
+}
+
+pub fn passing_ability_html(position_definition: &PositionDefinition) -> String {
+    characteristic_value_into_html(
+        position_definition.characteristic_value(Characteristic::PassingAbility),
+        "+",
+    )
+}
+
+pub fn armour_value_html(position_definition: &PositionDefinition) -> String {
+    characteristic_value_into_html(
+        position_definition.characteristic_value(Characteristic::ArmourValue),
+        "+",
+    )
 }
