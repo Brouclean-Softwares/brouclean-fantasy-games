@@ -14,17 +14,8 @@ pub fn init_router() -> Router<AppState> {
         .route("/roster", get(roster))
 }
 
-#[derive(Deserialize)]
-pub struct RostersQueryParams {
-    pub version: Option<Version>,
-}
-
-pub async fn rosters(
-    State(app_state): State<AppState>,
-    profile: Option<User>,
-    Query(params): Query<RostersQueryParams>,
-) -> RostersPage {
-    RostersPage::get(app_state, profile, params.version.unwrap_or(Version::V5S3))
+pub async fn rosters(State(app_state): State<AppState>, profile: Option<User>) -> RostersPage {
+    RostersPage::get(app_state, profile)
 }
 
 #[derive(Deserialize)]

@@ -129,7 +129,7 @@ impl TeamPage {
 
         let upgradable = if let Some(next_version) = team.version.next() {
             editable
-                && team.roster.definition(next_version.clone()).is_some()
+                && team.roster_definition_for_next_version().is_some()
                 && games_scheduled
                     .iter()
                     .filter(|&game| game.version.ne(&next_version))

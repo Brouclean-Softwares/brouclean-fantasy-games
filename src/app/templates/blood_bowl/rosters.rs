@@ -9,6 +9,7 @@ use blood_bowl_rs::rosters::Roster;
 use blood_bowl_rs::translation::TranslatedName;
 use blood_bowl_rs::translation::TypeName;
 use blood_bowl_rs::versions::Version;
+use std::collections::HashMap;
 
 pub fn breadcrumb() -> BreadCrumb {
     blood_bowl::breadcrumb().plus_link(UrlLink::from("Rosters", "/blood_bowl/rosters"))
@@ -19,22 +20,29 @@ pub fn breadcrumb() -> BreadCrumb {
 pub struct RostersPage {
     navigation_bar: NavigationBar,
     breadcrumb: BreadCrumb,
-    profile: Option<User>,
-    rosters: Vec<Roster>,
-    version: Version,
+    versions: Vec<Version>,
+    rosters_by_version: HashMap<Version, Vec<Roster>>,
 }
 
 impl RostersPage {
-    pub fn get(app_state: AppState, profile: Option<User>, version: Version) -> Self {
-        let mut ordered_rosters = Roster::list(version);
-        ordered_rosters.sort_by(|a, b| a.name("fr").cmp(&b.name("fr")));
+    pub fn get(app_state: AppState, profile: Option<User>) -> Self {
+        let mut versions = Version::list();
+        versions.reverse();
+
+        let mut rosters_by_version = HashMap::with_capacity(versions.len());
+
+        for version in versions.iter() {
+            let mut ordered_rosters = Roster::list(version.clone());
+            ordered_rosters.sort_by(|a, b| a.name("fr").cmp(&b.name("fr")));
+
+            rosters_by_version.insert(version.clone(), ordered_rosters);
+        }
 
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
             breadcrumb: blood_bowl::breadcrumb(),
-            profile,
-            rosters: ordered_rosters,
-            version,
+            versions,
+            rosters_by_version,
         }
     }
 }
