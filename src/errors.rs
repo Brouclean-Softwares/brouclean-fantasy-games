@@ -84,7 +84,7 @@ impl Display for AppError {
                 )
             }
             AppError::BloodBowlAppError(error) => {
-                write!(f, "Oups ! {}", error)
+                write!(f, "Règles de blood bowl non respectées : {}", error)
             }
         }
     }
