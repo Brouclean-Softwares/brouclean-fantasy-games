@@ -33,7 +33,7 @@
                             <input name="player_id" type="hidden" value="{{ player.id }}">
                             <div class="uk-flex-inline">
                                 <select class="uk-select uk-width-small" name="injury" aria-label="">
-                                    {% for injury in Injury::list() %}
+                                    {% for injury in Injury::list(team.version) %}
                                     <option value="{{ injury.type_name() }}">
                                         {{ injury.name("fr") }}
                                     </option>
