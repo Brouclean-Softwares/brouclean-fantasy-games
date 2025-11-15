@@ -1,4 +1,5 @@
 use crate::data::blood_bowl::competitions::schedule::RoundSchedule;
+use crate::data::blood_bowl::competitions::stages::{CompetitionStage, CompetitionStageType};
 use crate::data::blood_bowl::teams::TeamSummary;
 use crate::data::blood_bowl::{coaches, players, teams};
 use crate::data::users::User;
@@ -8,7 +9,7 @@ use crate::errors::AppError::BloodBowlAppError;
 use crate::AppState;
 use blood_bowl_rs::events::GameEvent;
 use blood_bowl_rs::games::Game;
-use blood_bowl_rs::players::Player;
+use blood_bowl_rs::players::{Player, PlayerType};
 use blood_bowl_rs::positions::Position;
 use blood_bowl_rs::rosters::Roster;
 use blood_bowl_rs::teams::Team;
@@ -124,6 +125,7 @@ impl GameRow {
 
         let first_team =
             teams::select_by_id_with_staff_and_players(state, self.first_team_id).await?;
+
         let second_team =
             teams::select_by_id_with_staff_and_players(state, self.second_team_id).await?;
 
@@ -743,8 +745,7 @@ impl GameTeamPlayer {
                 roster: self.player_roster,
                 name: self.name.unwrap_or("".to_string()),
                 star_player_points: 0,
-                is_journeyman: self.player_position.is_journeyman(),
-                is_star_player: self.player_position.is_star(),
+                player_type: self.player_position.player_type(&game.version),
                 miss_next_game: false,
                 advancements: vec![],
                 injuries: vec![],
@@ -1160,6 +1161,20 @@ pub async fn update_after_event(
         game.id
     );
 
+    if matches!(event, GameEvent::GameEnd | GameEvent::GameClosure) {
+        if let Some(competition_stage) =
+            CompetitionStage::select_for_game_id(state, game.id).await?
+        {
+            if matches!(competition_stage.stage_type, CompetitionStageType::Cup)
+                && game.winning_team().is_none()
+            {
+                return Err(BloodBowlAppError(String::from(
+                    "Le match doit avoir un gagnant",
+                )));
+            }
+        }
+    }
+
     let _ = can_be_saved(state, profile, &game).await?;
 
     let score = game.score();
@@ -1312,10 +1327,10 @@ pub async fn update_after_event(
             for (number, player) in team_players {
                 let statistics = game.player_statistics(team_id.clone(), player.id.clone());
 
-                let player_id = if player.is_star_player || player.is_journeyman {
-                    None
-                } else {
+                let player_id = if matches!(player.player_type, PlayerType::FromRoster) {
                     Some(player.id.clone())
+                } else {
+                    None
                 };
 
                 sqlx::query(

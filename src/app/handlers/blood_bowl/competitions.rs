@@ -14,6 +14,7 @@ use axum::extract::{Query, State};
 use axum::response::Redirect;
 use axum::routing::{get, post};
 use axum::{Form, Router};
+use blood_bowl_rs::versions::Version;
 use chrono::NaiveDateTime;
 use serde::Deserialize;
 
@@ -152,6 +153,7 @@ pub async fn competition(
 pub struct CompetitionForm {
     pub competition_name: Option<String>,
     pub competition_description: Option<String>,
+    pub competition_version: Option<Version>,
 }
 
 pub async fn save(
@@ -186,6 +188,11 @@ pub async fn save(
     // Description
     if let Some(competition_description) = form.competition_description {
         competition.description = competition_description;
+    }
+
+    // Version
+    if let Some(competition_version) = form.competition_version {
+        competition.version = competition_version;
     }
 
     competition

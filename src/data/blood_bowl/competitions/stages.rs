@@ -98,6 +98,34 @@ impl CompetitionStage {
         }
     }
 
+    pub async fn select_for_game_id(
+        state: &AppState,
+        game_id: i32,
+    ) -> Result<Option<CompetitionStage>, AppError> {
+        tracing::debug!("select_for_game_id for game_id={}", game_id);
+
+        let row: Option<CompetitionStageRow> = sqlx::query_as(
+            "SELECT bb_competitions_stages.id,
+                    bb_competitions_stages.stage_name,
+                    bb_competitions_stages.stage_type,
+                    bb_competitions_stages.rules
+            FROM bb_competitions_stages
+            INNER JOIN bb_competitions_stages_schedule
+            ON bb_competitions_stages_schedule.stage_id = bb_competitions_stages.id
+            WHERE bb_competitions_stages_schedule.game_id = $1
+            LIMIT 1",
+        )
+        .bind(game_id.clone())
+        .fetch_optional(&state.db)
+        .await?;
+
+        if let Some(row) = row {
+            Ok(Some(row.into_competition_stage().await?))
+        } else {
+            Ok(None)
+        }
+    }
+
     pub async fn insert_for_competition(
         state: &AppState,
         connected_user: &User,

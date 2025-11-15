@@ -124,10 +124,18 @@
                     <div class="uk-form-controls">
                         <select class="uk-select" name="first_team_mvp" aria-label="">
                             {% for (number, player) in game.first_team.players %}
-                            {% if ! player.is_star_player && ! player.is_journeyman && ! game.suffered_injuries(game.first_team.id.clone(), player.id.clone()).contains(&Injury::Dead) %}
+                            
+                            {% if ! game.suffered_injuries(game.first_team.id.clone(), player.id.clone()).contains(&Injury::Dead) %}
+                            
+                            {% match player.player_type %}
+                            {% when PlayerType::FromRoster %}
                             <option value="{{ player.id }}">#{{ number }} - {{ player.position.name("fr") }}</option>
-                            {% endif %}}
-                            {% endfor %}}
+                            {% else %}
+                            {% endmatch %}
+                            
+                            {% endif %}
+                            
+                            {% endfor %}
                         </select>
                     </div>
 
@@ -151,10 +159,18 @@
                     <div class="uk-form-controls">
                         <select class="uk-select" name="second_team_mvp" aria-label="">
                             {% for (number, player) in game.second_team.players %}
-                            {% if ! player.is_star_player && ! player.is_journeyman && ! game.suffered_injuries(game.second_team.id.clone(), player.id.clone()).contains(&Injury::Dead) %}
+                            
+                            {% if ! game.suffered_injuries(game.second_team.id.clone(), player.id.clone()).contains(&Injury::Dead) %}
+
+                            {% match player.player_type %}
+                            {% when PlayerType::FromRoster %}
                             <option value="{{ player.id }}">#{{ number }} - {{ player.position.name("fr") }}</option>
-                            {% endif %}}
-                            {% endfor %}}
+                            {% else %}
+                            {% endmatch %}
+                            
+                            {% endif %}
+                            
+                            {% endfor %}
                         </select>
                     </div>
 

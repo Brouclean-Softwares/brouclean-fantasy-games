@@ -10,6 +10,7 @@ use askama::Template;
 use askama_web::WebTemplate;
 use blood_bowl_rs::advancements::{Advancement, AdvancementChoice};
 use blood_bowl_rs::players::Player;
+use blood_bowl_rs::players::PlayerType;
 use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::translation::TranslatedName;
 use blood_bowl_rs::versions::Version;

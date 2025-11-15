@@ -6,7 +6,7 @@ use crate::errors::AppError;
 use crate::AppState;
 use blood_bowl_rs::advancements::{Advancement, AdvancementChoice};
 use blood_bowl_rs::injuries::Injury;
-use blood_bowl_rs::players::Player;
+use blood_bowl_rs::players::{Player, PlayerType};
 use blood_bowl_rs::positions::Position;
 use blood_bowl_rs::rosters::Roster;
 use blood_bowl_rs::translation::TypeName;
@@ -36,8 +36,7 @@ impl PlayerDetail {
             roster: self.roster,
             name: self.name,
             star_player_points,
-            is_journeyman: false,
-            is_star_player: false,
+            player_type: PlayerType::FromRoster,
             miss_next_game: PlayerInjury::extract_miss_next_game(&player_injuries),
             advancements,
             injuries: PlayerInjury::extract_current_injuries(&player_injuries),

@@ -8,6 +8,7 @@ use axum::extract::{Query, State};
 use axum::response::Redirect;
 use axum::routing::get;
 use axum::{Form, Router};
+use blood_bowl_rs::players::PlayerType;
 use serde::Deserialize;
 
 pub fn init_router() -> Router<AppState> {
@@ -245,7 +246,10 @@ pub async fn added_player(
 
     let game = games::select_by_id(&app_state, params.game_id)
         .await
-        .map_err(|_| Redirect::to("../games"))?;
+        .map_err(|error| {
+            tracing::debug!("journeyman: Error: {}", error);
+            Redirect::to("../games")
+        })?;
 
     let (number, player) = games::select_playing_team_player_for_game(
         &app_state,
@@ -260,7 +264,7 @@ pub async fn added_player(
         params.game_id
     )))?;
 
-    if !player.is_journeyman && !player.is_star_player {
+    if matches!(player.player_type, PlayerType::FromRoster) {
         return Err(Redirect::to(&format!(
             "../players/player?player_id={}&team_id={}",
             player.id, params.team_id
@@ -278,7 +282,7 @@ pub async fn added_player(
         .await
         .map_err(error_handler)?;
 
-    let editable = player.is_journeyman
+    let editable = matches!(player.player_type, PlayerType::Journeyman)
         && game.started
         && !game.game_finished()
         && match profile.clone() {
@@ -291,7 +295,7 @@ pub async fn added_player(
             .await
             .map_err(error_handler)?;
 
-    let can_buy = player.is_journeyman
+    let can_buy = matches!(player.player_type, PlayerType::Journeyman)
         && game.game_finished()
         && is_last_game_for_team
         && team.can_buy_journeyman()

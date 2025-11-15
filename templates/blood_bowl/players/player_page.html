@@ -31,20 +31,21 @@
                            onchange="submit()"
                            aria-label="">
 
-                {% if player.is_journeyman || player.is_star_player %}
-                    {{ player.name("fr") }}
-                {% else %}
+                {% match player.player_type %}
+                {% when PlayerType::FromRoster %}
                 <div class="uk-inline">
                     <a href="{{ link_url }}" class="uk-form-icon uk-form-icon-flip" uk-icon="icon: pencil"></a>
                     <input class="uk-input uk-form-width-large"
                            name="player_name"
                            type="text"
                            value="{{ player.name("fr") }}"
-                           placeholder="Nom du joueur..."
-                           onchange="submit()"
-                           aria-label="">
+                    placeholder="Nom du joueur..."
+                    onchange="submit()"
+                    aria-label="">
                 </div>
-                {% endif %}
+                {% else %}
+                {{ player.name("fr") }}
+                {% endmatch %}
             </form>
             {% elif editable %}
             <a class="uk-link-reset" href="{{ link_url }}&edit=true">
@@ -86,7 +87,8 @@
         </dd>
     </dl>
 
-    {% if ! player.is_star_player %}
+    {% match player.player_type %}
+    {% when PlayerType::FromRoster | PlayerType::Journeyman %}
     <div class="uk-overflow-auto">
         <table class="uk-table uk-table-divider uk-table-small">
             <thead>
@@ -112,7 +114,8 @@
             </tbody>
         </table>
     </div>
-    {% endif %}
+    {% else %}
+    {% endmatch %}
 </div>
 
 <div class="uk-margin-medium-bottom">
@@ -120,7 +123,8 @@
         Statistiques
     </h3>
 
-    {% if ! player.is_star_player %}
+    {% match player.player_type %}
+    {% when PlayerType::FromRoster | PlayerType::Journeyman %}
     <dl class="uk-description-list">
         <dt>Nombre de matches</dt>
         <dd>{{ statistics.games_number }}</dd>
@@ -128,7 +132,8 @@
         <dt>Points de Star Player (PSP)</dt>
         <dd>{{ statistics.star_player_points }}</dd>
     </dl>
-    {% endif %}
+    {% else %}
+    {% endmatch %}
 
     <div class="uk-overflow-auto">
         <table class="uk-table uk-table-divider uk-table-small">
@@ -157,7 +162,8 @@
     </div>
 </div>
 
-{% if ! player.is_star_player %}
+{% match player.player_type %}
+{% when PlayerType::FromRoster | PlayerType::Journeyman %}
 <div class="uk-margin-medium-bottom">
     <h3 class="uk-heading-divider">
         Blessures
@@ -195,9 +201,11 @@
         </table>
     </div>
 </div>
-{% endif %}
+{% else %}
+{% endmatch %}
 
-{% if ! player.is_journeyman && ! player.is_star_player %}
+{% match player.player_type %}
+{% when PlayerType::FromRoster %}
 <div class="uk-margin-medium-bottom">
     <h3 class="uk-heading-divider">
         Améliorations
@@ -226,9 +234,13 @@
         <dd>{{ player_advancement_blocs[5]|escape("none") }}</dd>
     </dl>
 </div>
-{% endif %}
+{% else %}
+{% endmatch %}
 
-{% if player.is_journeyman && can_buy %}
+{% if can_buy %}
+
+{% match player.player_type %}
+{% when PlayerType::Journeyman %}
 <div>
     <form id="buy_journeyman_form" method="post" autocomplete="off">
         <input name="journeyman_to_recruit_id_in_game" type="hidden" value="{{ player.id }}">
@@ -252,6 +264,9 @@
         </div>
     </form>
 </div>
+{% else %}
+{% endmatch %}
+
 {% endif %}
 
 {% if can_buyout %}

@@ -18,7 +18,32 @@
             </dd>
 
             <dt>Version des règles</dt>
-            <dd>{{ competition.version.name("fr") }}</dd>
+            <dd>
+                {% if edit_mode %}
+                <form method="post" autocomplete="off">
+                    <select name="competition_version"
+                            class="uk-select uk-form-width-large"
+                            onchange="submit()"
+                            aria-label="Select">
+
+                        {% for version in Version::list() %}
+                        <option value="{{ version.type_name() }}" {% if competition.version.eq(version) %}selected{% endif %}>
+                            {{ version.name("fr") }}
+                        </option>
+                        {% endfor %}
+
+                    </select>
+                </form>
+
+                {% elif editable %}
+                <a class="uk-link-reset" href="{{ link_url }}&edit=true">
+                    {{ competition.version.name("fr") }}
+                </a>
+                <a href="{{ link_url }}&edit=true" uk-icon="icon: pencil"></a>
+
+                {% else %}
+                    {{ competition.version.name("fr") }}</dd>
+                {% endif %}
 
             <dt>Description</dt>
             <dd>

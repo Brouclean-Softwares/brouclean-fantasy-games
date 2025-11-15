@@ -9,6 +9,7 @@ use blood_bowl_rs::events::GameEvent;
 use blood_bowl_rs::games::Game;
 use blood_bowl_rs::inducements::{Inducement, TreasuryAndPettyCash};
 use blood_bowl_rs::injuries::Injury;
+use blood_bowl_rs::players::PlayerType;
 use blood_bowl_rs::prayers::PrayerToNuffle;
 use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::translation::TranslatedName;
@@ -71,23 +72,27 @@ pub struct EventsController {
 }
 
 impl EventsController {
-    pub fn try_from_game(game: &Game) -> Result<Self, AppError> {
-        let pre_game_sequence = PreGameSequence::try_from_game(game)?;
-        let post_game_sequence = PostGameSequence::try_from_game(game)?;
+    pub fn try_from_game(game: &Game) -> Result<Option<Self>, AppError> {
+        if !game.closed {
+            let pre_game_sequence = PreGameSequence::try_from_game(game)?;
+            let post_game_sequence = PostGameSequence::try_from_game(game)?;
 
-        Ok(Self {
-            game: game.clone(),
-            pre_game_sequence,
-            post_game_sequence,
-            first_team_event_controller: TeamEventController::from_team_game(
-                game.clone(),
-                game.first_team.clone(),
-            ),
-            second_team_event_controller: TeamEventController::from_team_game(
-                game.clone(),
-                game.second_team.clone(),
-            ),
-        })
+            Ok(Some(Self {
+                game: game.clone(),
+                pre_game_sequence,
+                post_game_sequence,
+                first_team_event_controller: TeamEventController::from_team_game(
+                    game.clone(),
+                    game.first_team.clone(),
+                ),
+                second_team_event_controller: TeamEventController::from_team_game(
+                    game.clone(),
+                    game.second_team.clone(),
+                ),
+            }))
+        } else {
+            Ok(None)
+        }
     }
 }
 

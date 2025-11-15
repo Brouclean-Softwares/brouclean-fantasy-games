@@ -72,7 +72,7 @@ pub struct GamePage {
     game_date_input: String,
     game_date: String,
     game_status: String,
-    events_controller: EventsController,
+    events_controller: Option<EventsController>,
     game_events: GameEvents,
     first_team_statistics: TeamStatistics,
     second_team_statistics: TeamStatistics,

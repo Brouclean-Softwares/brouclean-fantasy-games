@@ -206,7 +206,10 @@
 
     <div class="uk-width-1-1" x-show="tab==='game'">
         {% if editable %}
+        
+        {% if let Some(events_controller) = events_controller %}
         {{ events_controller|escape("none") }}
+        {% endif %}
 
         <h3 class="uk-margin-medium-top uk-heading-divider">
             Déroulé du match

@@ -371,7 +371,10 @@ impl Competition {
         state: &AppState,
         competition_id: i32,
     ) -> Result<Option<CompetitionProgressRow>, AppError> {
-        tracing::debug!("select_progress for competition_id={}", competition_id);
+        tracing::debug!(
+            "select_progress_for_id for competition_id={}",
+            competition_id
+        );
 
         let progress: Option<CompetitionProgressRow> = sqlx::query_as(
             "SELECT bb_competitions_stages.stage_name,
