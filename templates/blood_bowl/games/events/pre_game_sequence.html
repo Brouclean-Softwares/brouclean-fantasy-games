@@ -234,7 +234,7 @@
                     </label>
                     <div class="uk-form-controls">
                         <select class="uk-select" name="first_team_prayer" aria-label="">
-                            {% for prayer in PrayerToNuffle::list() %}
+                            {% for prayer in PrayerToNuffle::list(game.version) %}
                             <option value="{{ prayer.type_name() }}">
                                 {{ prayer.name("fr") }}
                             </option>
@@ -266,7 +266,7 @@
                     </label>
                     <div class="uk-form-controls">
                         <select class="uk-select" name="second_team_prayer" aria-label="">
-                            {% for prayer in PrayerToNuffle::list() %}
+                            {% for prayer in PrayerToNuffle::list(game.version) %}
                             <option value="{{ prayer.type_name() }}">
                                 {{ prayer.name("fr") }}
                             </option>

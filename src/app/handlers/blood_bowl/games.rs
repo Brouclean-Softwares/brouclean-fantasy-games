@@ -401,7 +401,7 @@ pub async fn update(
     // Prayers
     if let Some(mut prayer) = form.first_team_prayer {
         if form.auto.is_some() {
-            prayer = PrayerToNuffle::roll();
+            prayer = PrayerToNuffle::roll(&game_to_update.version);
         }
 
         game_to_update
@@ -423,7 +423,7 @@ pub async fn update(
 
     if let Some(mut prayer) = form.second_team_prayer {
         if form.auto.is_some() {
-            prayer = PrayerToNuffle::roll();
+            prayer = PrayerToNuffle::roll(&game_to_update.version);
         }
 
         game_to_update
