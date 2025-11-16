@@ -5,6 +5,7 @@ use axum::extract::{Query, State};
 use axum::routing::get;
 use axum::Router;
 use blood_bowl_rs::rosters::Roster;
+use blood_bowl_rs::translation::TranslatedName;
 use blood_bowl_rs::versions::Version;
 use serde::Deserialize;
 
@@ -29,10 +30,32 @@ pub async fn roster(
     profile: Option<User>,
     Query(params): Query<RosterQueryParams>,
 ) -> RosterPage {
+    let version = params.version.unwrap_or(Version::LAST_VERSION);
+
+    let mut stars_available = blood_bowl_rs::stars::star_position_list(&version);
+
+    let mut mega_stars_available = blood_bowl_rs::stars::mega_star_position_list(&version);
+
+    if let Some(roster) = &params.roster {
+        stars_available.retain(|star| {
+            blood_bowl_rs::stars::star_maximum_for_roster(star, roster, &version) > 0
+        });
+
+        stars_available.sort_by(|a, b| a.name("fr").cmp(&b.name("fr")));
+
+        mega_stars_available.retain(|star| {
+            blood_bowl_rs::stars::star_maximum_for_roster(star, roster, &version) > 0
+        });
+
+        mega_stars_available.sort_by(|a, b| a.name("fr").cmp(&b.name("fr")));
+    }
+
     RosterPage::get(
         app_state,
         profile,
-        params.version.unwrap_or(Version::V5),
+        version,
         params.roster,
+        stars_available,
+        mega_stars_available,
     )
 }

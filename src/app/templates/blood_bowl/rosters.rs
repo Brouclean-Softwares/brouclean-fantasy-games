@@ -4,7 +4,7 @@ use crate::AppState;
 use askama::Template;
 use askama_web::WebTemplate;
 use blood_bowl_rs::characteristics::Characteristic;
-use blood_bowl_rs::positions::PositionDefinition;
+use blood_bowl_rs::positions::{Position, PositionDefinition};
 use blood_bowl_rs::rosters::Roster;
 use blood_bowl_rs::translation::TranslatedName;
 use blood_bowl_rs::translation::TypeName;
@@ -55,6 +55,8 @@ pub struct RosterPage {
     profile: Option<User>,
     roster: Option<Roster>,
     version: Version,
+    stars_available: Vec<Position>,
+    mega_stars_available: Vec<Position>,
 }
 
 impl RosterPage {
@@ -63,6 +65,8 @@ impl RosterPage {
         profile: Option<User>,
         version: Version,
         roster: Option<Roster>,
+        stars_available: Vec<Position>,
+        mega_stars_available: Vec<Position>,
     ) -> Self {
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
@@ -70,6 +74,8 @@ impl RosterPage {
             profile,
             roster,
             version,
+            stars_available,
+            mega_stars_available,
         }
     }
 }

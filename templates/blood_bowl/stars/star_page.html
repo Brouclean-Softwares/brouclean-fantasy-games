@@ -1,0 +1,94 @@
+{% extends "page_base.html" %}
+
+{% block navbar %}
+{{ navigation_bar|escape("none") }}
+{% endblock %}
+
+{% block breadcrumb %}
+{{ breadcrumb|escape("none") }}
+{% endblock %}
+
+{% block body %}
+
+{% if let Some(star) = star %}
+
+<div class="uk-flex-middle uk-margin-bottom">
+    <h2 class="uk-margin-remove-bottom">
+        {{ star.name("fr") }}
+    </h2>
+    <p class="uk-margin-remove-top">
+        <span class="uk-text-meta"> ({{ version.name("fr") }})</span>
+    </p>
+</div>
+
+<div class="uk-margin-medium-bottom">
+    <img src="/assets/images/blood_bowl/stars/{{ star.type_name() }}.jpg" alt="">
+</div>
+
+{% for position in star.positions_for_players() %}
+<div class="uk-margin-medium-bottom">
+    <h3 class="uk-heading-divider">
+        {% if star.positions_for_players().len() > 1 %}
+        <span>{{ position.name("fr") }}</span>
+        {% else %}
+        <span>Informations générales</span>
+        {% endif %}
+    </h3>
+
+    {% if let Some(position_definition) = blood_bowl_rs::stars::star_player_position_definition(position, version) %}
+    <div class="uk-overflow-auto">
+        <table class="uk-table uk-table-divider uk-table-small">
+            <thead>
+            <tr>
+                <th uk-tooltip="title: Mouvement" class="uk-table-shrink">M</th>
+                <th uk-tooltip="title: Force" class="uk-table-shrink">F</th>
+                <th uk-tooltip="title: Agilité" class="uk-table-shrink">AG</th>
+                <th uk-tooltip="title: Capacité de Passe" class="uk-table-shrink">CP</th>
+                <th uk-tooltip="title: Armure" class="uk-table-shrink">AR</th>
+                <th>Compétences<span class="uk-visible@m"> & Traits</span></th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr>
+                <td>{{ crate::app::templates::blood_bowl::rosters::movement_allowance_html(position_definition)|escape("none") }}</td>
+                <td>{{ crate::app::templates::blood_bowl::rosters::strength_html(position_definition)|escape("none") }}</td>
+                <td>{{ crate::app::templates::blood_bowl::rosters::agility_html(position_definition)|escape("none") }}</td>
+                <td>{{ crate::app::templates::blood_bowl::rosters::passing_ability_html(position_definition)|escape("none") }}</td>
+                <td>{{ crate::app::templates::blood_bowl::rosters::armour_value_html(position_definition)|escape("none") }}</td>
+                <td>{{ position_definition.skills_names("fr") }}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+{% endfor %}
+
+{% if rosters_available.len() > 0 %}
+<div class="uk-margin-medium-bottom">
+    <h3 class="uk-heading-divider">
+        Rosters acceptés
+    </h3>
+    <ul>
+        {% for roster in rosters_available %}
+        <li>
+            <a class="uk-link-reset" href="/blood_bowl/rosters/roster?version={{ version.type_name() }}&roster={{ roster.type_name() }}">
+                <img src="/assets/images/blood_bowl/{{ roster.type_name() }}Logo.webp" width="25" height="25" alt="">
+                <span> {{ roster.name("fr") }}</span>
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+{% else %}
+
+<h2>
+    Star introuvable
+</h2>
+
+{% endif %}
+
+{% endblock %}

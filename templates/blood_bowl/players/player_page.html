@@ -87,8 +87,6 @@
         </dd>
     </dl>
 
-    {% match player.player_type %}
-    {% when PlayerType::FromRoster | PlayerType::Journeyman %}
     <div class="uk-overflow-auto">
         <table class="uk-table uk-table-divider uk-table-small">
             <thead>
@@ -114,8 +112,6 @@
             </tbody>
         </table>
     </div>
-    {% else %}
-    {% endmatch %}
 </div>
 
 <div class="uk-margin-medium-bottom">

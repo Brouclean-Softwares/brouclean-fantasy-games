@@ -10,6 +10,7 @@ pub mod competitions;
 pub mod games;
 pub mod players;
 pub mod rosters;
+pub mod stars;
 pub mod statistics;
 pub mod teams;
 
@@ -20,6 +21,7 @@ pub fn init_router() -> Router<AppState> {
         .nest("/games", games::init_router())
         .nest("/players", players::init_router())
         .nest("/rosters", rosters::init_router())
+        .nest("/stars", stars::init_router())
         .nest("/statistics", statistics::init_router())
         .nest("/teams", teams::init_router())
 }

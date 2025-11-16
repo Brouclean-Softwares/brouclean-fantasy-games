@@ -108,6 +108,38 @@
 </ul>
 {% endif %}
 
+{% if stars_available.len() > 0 %}
+<h3 class="uk-heading-divider">
+    Stars acceptées
+</h3>
+<ul>
+    {% for star in stars_available %}
+    <li>
+        <a class="uk-link-reset" href="/blood_bowl/stars/star?version={{ version.type_name() }}&star={{ star.type_name() }}">
+            <img src="/assets/images/blood_bowl/stars/{{ star.type_name() }}.jpg" width="25" height="25" alt="">
+            <span> {{ star.name("fr") }}</span>
+        </a>
+    </li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+{% if mega_stars_available.len() > 0 %}
+<h3 class="uk-heading-divider">
+    Stars acceptées
+</h3>
+<ul>
+    {% for star in mega_stars_available %}
+    <li>
+        <a class="uk-link-reset" href="/blood_bowl/stars/star?version={{ version.type_name() }}&star={{ star.type_name() }}">
+            <img src="/assets/images/blood_bowl/stars/{{ star.type_name() }}.jpg" width="25" height="25" alt="">
+            <span> {{ star.name("fr") }}</span>
+        </a>
+    </li>
+    {% endfor %}
+</ul>
+{% endif %}
+
 {% if let Some(user_profile) = profile %}
 <a href="../teams/new?version={{ roster_definition.version.type_name() }}&roster={{ roster.type_name() }}"
    class="uk-button uk-button-primary uk-margin-medium-top">

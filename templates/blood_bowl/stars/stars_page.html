@@ -1,0 +1,62 @@
+{% extends "page_base.html" %}
+
+{% block navbar %}
+{{ navigation_bar|escape("none") }}
+{% endblock %}
+
+{% block breadcrumb %}
+{{ breadcrumb|escape("none") }}
+{% endblock %}
+
+{% block body %}
+<div class="uk-margin-medium-bottom">
+    <h2>
+        Stars
+    </h2>
+</div>
+
+<ul uk-accordion="collapsible: false">
+
+    {% for version in versions %}
+    {% if let Some(stars) = stars_by_version.get(version) %}
+    {% if stars.len() > 0 %}
+
+    <li>
+        <a class="uk-accordion-title" href>
+            <h3 class="uk-heading-divider">
+                {{ version.name("fr") }}
+            </h3>
+        </a>
+        <div class="uk-accordion-content uk-margin-large-bottom">
+            <div class="uk-grid-divider uk-child-width-1-3@m uk-grid-match" uk-grid>
+
+                {% for star in stars %}
+                {% if let Some(star_definition) = blood_bowl_rs::stars::star_player_position_definition(star, version) %}
+
+                <div>
+                    <a class="uk-link-reset" href="./stars/star?version={{ version.type_name() }}&star={{ star.type_name() }}">
+                        <div class="uk-grid-small uk-flex-center uk-flex-middle" uk-grid>
+                            <div class="uk-width-auto">
+                                <img width="40" height="40" src="/assets/images/blood_bowl/stars/{{ star.type_name() }}.jpg" alt="">
+                            </div>
+                            <div class="uk-width-expand">
+                                <p>{{ star.name("fr") }}</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                {% endif %}
+                {% endfor %}
+
+            </div>
+        </div>
+    </li>
+
+    {% endif %}
+    {% endif %}
+    {% endfor %}
+
+</ul>
+
+{% endblock %}
