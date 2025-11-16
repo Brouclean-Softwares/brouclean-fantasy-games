@@ -25,15 +25,26 @@
     <img src="/assets/images/blood_bowl/stars/{{ star.type_name() }}.jpg" alt="">
 </div>
 
-{% for position in star.positions_for_players() %}
+{% if let Some(star_definition) = blood_bowl_rs::stars::star_player_position_definition(star, version) %}
 <div class="uk-margin-medium-bottom">
     <h3 class="uk-heading-divider">
-        {% if star.positions_for_players().len() > 1 %}
-        <span>{{ position.name("fr") }}</span>
-        {% else %}
         <span>Informations générales</span>
-        {% endif %}
     </h3>
+
+    <dl class="uk-description-list">
+        <dt>Valeur</dt>
+        <dd>{{ star_definition.cost / 1000 }}k</dd>
+    </dl>
+</div>
+{% endif %}
+
+{% for position in star.positions_for_players() %}
+<div class="uk-margin-medium-bottom">
+    {% if star.positions_for_players().len() > 1 %}
+    <h4 class="uk-heading-divider">
+        {{ position.name("fr") }}
+    </h4>
+    {% endif %}
 
     {% if let Some(position_definition) = blood_bowl_rs::stars::star_player_position_definition(position, version) %}
     <div class="uk-overflow-auto">

@@ -115,9 +115,13 @@
 <ul>
     {% for star in stars_available %}
     <li>
-        <a class="uk-link-reset" href="/blood_bowl/stars/star?version={{ version.type_name() }}&star={{ star.type_name() }}">
+        <a class="uk-flex-middle uk-link-reset" href="/blood_bowl/stars/star?version={{ version.type_name() }}&star={{ star.type_name() }}">
             <img src="/assets/images/blood_bowl/stars/{{ star.type_name() }}.jpg" width="25" height="25" alt="">
             <span> {{ star.name("fr") }}</span>
+
+            {% if let Some(star_definition) = blood_bowl_rs::stars::star_player_position_definition(star, version) %}
+            <span class="uk-text-meta"> ({{ star_definition.cost / 1000 }}k)</span>
+            {% endif %}
         </a>
     </li>
     {% endfor %}
@@ -131,9 +135,13 @@
 <ul>
     {% for star in mega_stars_available %}
     <li>
-        <a class="uk-link-reset" href="/blood_bowl/stars/star?version={{ version.type_name() }}&star={{ star.type_name() }}">
+        <a class="uk-flex-middle uk-link-reset" href="/blood_bowl/stars/star?version={{ version.type_name() }}&star={{ star.type_name() }}">
             <img src="/assets/images/blood_bowl/stars/{{ star.type_name() }}.jpg" width="25" height="25" alt="">
             <span> {{ star.name("fr") }}</span>
+
+            {% if let Some(star_definition) = blood_bowl_rs::stars::star_player_position_definition(star, version) %}
+            <span class="uk-text-meta"> ({{ star_definition.cost / 1000 }}k)</span>
+            {% endif %}
         </a>
     </li>
     {% endfor %}
