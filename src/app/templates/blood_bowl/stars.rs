@@ -3,6 +3,7 @@ use crate::data::users::User;
 use crate::AppState;
 use askama::Template;
 use askama_web::WebTemplate;
+use blood_bowl_rs::players::PlayerType;
 use blood_bowl_rs::positions::Position;
 use blood_bowl_rs::rosters::Roster;
 use blood_bowl_rs::translation::TranslatedName;
@@ -11,7 +12,7 @@ use blood_bowl_rs::versions::Version;
 use std::collections::HashMap;
 
 pub fn breadcrumb() -> BreadCrumb {
-    blood_bowl::breadcrumb().plus_link(UrlLink::from("Stars", "/blood_bowl/stars"))
+    blood_bowl::breadcrumb().plus_link(UrlLink::from("Joueurs Stars", "/blood_bowl/stars"))
 }
 
 #[derive(Template, WebTemplate)]
@@ -32,6 +33,9 @@ impl StarsPage {
 
         for version in versions.iter() {
             let mut ordered_stars = blood_bowl_rs::stars::star_position_list(version);
+            let mut mega_stars = blood_bowl_rs::stars::mega_star_position_list(version);
+            ordered_stars.append(&mut mega_stars);
+
             ordered_stars.sort_by(|a, b| a.name("fr").cmp(&b.name("fr")));
 
             stars_by_version.insert(version.clone(), ordered_stars);

@@ -11,7 +11,7 @@
 {% block body %}
 <div class="uk-margin-medium-bottom">
     <h2>
-        Stars
+        Joueurs Stars
     </h2>
 </div>
 
@@ -37,10 +37,17 @@
                     <a class="uk-link-reset" href="./stars/star?version={{ version.type_name() }}&star={{ star.type_name() }}">
                         <div class="uk-grid-small uk-flex-center uk-flex-middle" uk-grid>
                             <div class="uk-width-auto">
-                                <img width="40" height="40" src="/assets/images/blood_bowl/stars/{{ star.type_name() }}.jpg" alt="">
+                                <img width="50" height="50" src="/assets/images/blood_bowl/stars/{{ star.type_name() }}.jpg" alt="">
                             </div>
                             <div class="uk-width-expand">
-                                <p>{{ star.name("fr") }}</p>
+                                <p class="uk-margin-remove-bottom">{{ star.name("fr") }}</p>
+                                <p class="uk-text-meta uk-margin-remove-top">
+                                    {% match star.player_type(version) %}
+                                    {% when PlayerType::Star %} Star
+                                    {% when PlayerType::MegaStar %} Méga-Star
+                                    {% else %}
+                                    {% endmatch %}
+                                </p>
                             </div>
                         </div>
                     </a>

@@ -32,6 +32,15 @@
     </h3>
 
     <dl class="uk-description-list">
+        <dt>Type</dt>
+        <dd>
+            {% match star.player_type(version) %}
+            {% when PlayerType::Star %} Star
+            {% when PlayerType::MegaStar %} Méga-Star
+            {% else %}
+            {% endmatch %}
+        </dd>
+
         <dt>Valeur</dt>
         <dd>{{ star_definition.cost / 1000 }}k</dd>
     </dl>
