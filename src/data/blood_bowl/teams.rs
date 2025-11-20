@@ -618,6 +618,34 @@ pub async fn upgrade(
                 new_player.roster = new_roster;
                 new_player.position = new_position;
 
+                for injury_index in 0..new_player.injuries.len() {
+                    if let Some(new_injury) = new_player.injuries[injury_index]
+                        .injury_in_next_version_with_same_impact(&current_player.version)
+                    {
+                        sqlx::query(
+                            "UPDATE bb_players_injuries
+                                SET injury = $3
+                                WHERE player_id = $1
+                                AND created_at = (
+                                    SELECT created_at
+                                    FROM bb_players_injuries
+                                    WHERE player_id = $1
+                                    ORDER BY created_at
+                                    LIMIT 1 OFFSET $2
+                                )",
+                        )
+                        .bind(new_player.id.clone())
+                        .bind(injury_index.clone() as i32)
+                        .bind(new_injury.clone())
+                        .execute(&mut *transaction)
+                        .await?;
+
+                        if new_injury.ne(&new_player.injuries[injury_index]) {
+                            new_player.injuries[injury_index] = new_injury;
+                        }
+                    }
+                }
+
                 match (
                     current_player.position_definition(),
                     new_player.position_definition(),

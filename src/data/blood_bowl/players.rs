@@ -485,6 +485,7 @@ impl PlayerInjury {
                     | (Injury::SmashedKnee, false)
                     | (Injury::BrokenArm, false)
                     | (Injury::NeckInjury, false)
+                    | (Injury::DislocatedHip, false)
                     | (Injury::DislocatedShoulder, false)
                     | (Injury::Dead, _) => true,
 
@@ -497,6 +498,7 @@ impl PlayerInjury {
                     | (Injury::SmashedKnee, true)
                     | (Injury::BrokenArm, true)
                     | (Injury::NeckInjury, true)
+                    | (Injury::DislocatedHip, true)
                     | (Injury::DislocatedShoulder, true) => false,
                 }
             })
@@ -519,6 +521,7 @@ impl PlayerInjury {
                 | (Injury::BrokenArm, _)
                 | (Injury::NeckInjury, _)
                 | (Injury::DislocatedShoulder, _)
+                | (Injury::DislocatedHip, _)
                 | (Injury::Dead, _) => injuries.push(player_injury.injury.clone()),
 
                 (Injury::Stunned, _)
