@@ -302,6 +302,20 @@
     </div>
     {% endif %}
 
+    {% if roster_definition.special_leagues.len() > 0 %}
+    <div class="uk-width-1-1@m uk-margin-medium-bottom">
+        <h3 class="uk-heading-divider">
+            Ligues spéciales
+        </h3>
+        <ul>
+            {% for special_league in roster_definition.special_leagues %}
+            <li>{{ special_league.name("fr") }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    {% if roster_definition.special_rules.len() > 0 %}
     <div class="uk-width-1-1@m uk-margin-medium-bottom">
         <h3 class="uk-heading-divider">
             Règles spéciales
@@ -312,6 +326,7 @@
             {% endfor %}
         </ul>
     </div>
+    {% endif %}
 
     <div class="uk-width-1-1@m uk-margin">
         {% if editable %}
