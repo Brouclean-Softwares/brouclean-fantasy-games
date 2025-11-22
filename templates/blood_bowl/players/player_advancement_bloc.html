@@ -59,7 +59,7 @@
                     {% for (choice, is_available) in choices_available %}
                     <option value="{{ serde_json::to_string(&choice)? }}"
                             {% if ! is_available %}disabled{% endif %}>
-                        {{ choice.name("fr") }} : {{ choice.star_player_points_cost(advancement_number.clone()) }} PSP
+                        {{ choice.name("fr") }} : {{ choice.star_player_points_cost(advancement_number.clone(), version) }} PSP
                     </option>
                     {% endfor %}
 
