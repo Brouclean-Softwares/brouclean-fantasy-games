@@ -128,6 +128,31 @@
 
 
 
+        {% when GameEvent::Hatred { team_id: team_id, player_id: player_id, keyword: keyword } %}
+        {% if game.first_team.id.eq(team_id.into()) %}
+        <p class="uk-text-left">
+            <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
+
+            {% if let Some((number, player)) = game.first_team.player_by_id(player_id.clone()) %}
+            <span>#{{ number }} - {{ player.position.name("fr") }}</span>
+            <span class="uk-visible@m"> - {{ player.name }}</span>
+            <span> : Haine({{ keyword.name("fr") }})</span>
+            {% endif %}
+        </p>
+        {% else %}
+        <p class="uk-text-right">
+            <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
+
+            {% if let Some((number, player)) = game.second_team.player_by_id(player_id.clone()) %}
+            <span>#{{ number }} - {{ player.position.name("fr") }}</span>
+            <span class="uk-visible@m"> - {{ player.name }}</span>
+            <span> : Haine({{ keyword.name("fr") }})</span>
+            {% endif %}
+        </p>
+        {% endif %}
+
+
+
         {% when GameEvent::Success { team_id: team_id, player_id: player_id, success: success, star_player_points: star_player_points } %}
         {% if game.first_team.id.eq(team_id.into()) %}
         <p class="uk-text-left">

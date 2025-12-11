@@ -10,6 +10,7 @@ use blood_bowl_rs::games::Game;
 use blood_bowl_rs::inducements::{Inducement, TreasuryAndPettyCash};
 use blood_bowl_rs::injuries::Injury;
 use blood_bowl_rs::players::PlayerType;
+use blood_bowl_rs::positions::Keyword;
 use blood_bowl_rs::prayers::PrayerToNuffle;
 use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::translation::TranslatedName;

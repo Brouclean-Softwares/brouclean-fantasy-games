@@ -13,6 +13,7 @@ use askama_web::WebTemplate;
 use blood_bowl_rs::games::Game;
 use blood_bowl_rs::games::GameStatus;
 use blood_bowl_rs::players::{Player, PlayerStatistics};
+use blood_bowl_rs::positions::Keyword;
 use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::translation::TranslatedName;
 use blood_bowl_rs::weather::Weather;

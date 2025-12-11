@@ -13,6 +13,7 @@ use blood_bowl_rs::actions::Success;
 use blood_bowl_rs::events::GameEvent;
 use blood_bowl_rs::games::Game;
 use blood_bowl_rs::injuries::Injury;
+use blood_bowl_rs::positions::Keyword;
 use blood_bowl_rs::prayers::PrayerToNuffle;
 use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::weather::Weather;
@@ -91,6 +92,7 @@ pub struct GameForm {
     pub team_id: Option<i32>,
     pub player_id: Option<i32>,
     pub injury: Option<Injury>,
+    pub hatred: Option<Keyword>,
     pub success: Option<Success>,
     pub end_game: Option<String>,
     pub first_team_winnings: Option<String>,
@@ -498,6 +500,27 @@ pub async fn update(
     {
         game_to_update
             .push_injury(team_id, player_id, injury)
+            .map_err(|err| {
+                redirect_when_update_ko(
+                    &app_state,
+                    &profile,
+                    Some(&game_before_update),
+                    &competition,
+                    err.to_string(),
+                )
+            })?;
+
+        if let Some(last_event) = game_to_update.events.last() {
+            event = Some(last_event.clone());
+        }
+    }
+
+    // Hatred
+    if let (Some(team_id), Some(player_id), Some(keyword)) =
+        (form.team_id, form.player_id, form.hatred)
+    {
+        game_to_update
+            .push_hatred(team_id, player_id, keyword)
             .map_err(|err| {
                 redirect_when_update_ko(
                     &app_state,

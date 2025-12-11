@@ -59,7 +59,14 @@
         {% if let Some(position_definition) = position.definition(roster_definition.version.into(), roster.clone()) %}
         <tr>
             <td>0-{{ position_definition.maximum_quantity }}</td>
-            <td>{{ position.name("fr") }}</td>
+            <td>
+                <span>{{ position.name("fr") }}</span>
+
+                {% if position_definition.keywords.len() > 0 %}
+                <br>
+                <span class="uk-text-meta">({{ position_definition.keywords_names("fr") }})</span>
+                {% endif %}
+            </td>
             <td>{{ position_definition.cost / 1000 }}k</td>
             <td>{{ crate::app::templates::blood_bowl::rosters::movement_allowance_html(position_definition)|escape("none") }}</td>
             <td>{{ crate::app::templates::blood_bowl::rosters::strength_html(position_definition)|escape("none") }}</td>

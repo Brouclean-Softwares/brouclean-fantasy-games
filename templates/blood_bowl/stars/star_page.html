@@ -56,6 +56,14 @@
     {% endif %}
 
     {% if let Some(position_definition) = blood_bowl_rs::stars::star_player_position_definition(position, version) %}
+
+    {% if position_definition.keywords.len() > 0 %}
+    <dl class="uk-description-list">
+        <dt>Mots-clés</dt>
+        <dd>({{ position_definition.keywords_names("fr") }})</dd>
+    </dl>
+    {% endif %}
+
     <div class="uk-overflow-auto">
         <table class="uk-table uk-table-divider uk-table-small">
             <thead>

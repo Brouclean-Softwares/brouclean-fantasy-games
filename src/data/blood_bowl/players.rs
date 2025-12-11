@@ -7,7 +7,7 @@ use crate::AppState;
 use blood_bowl_rs::advancements::{Advancement, AdvancementChoice};
 use blood_bowl_rs::injuries::Injury;
 use blood_bowl_rs::players::{Player, PlayerType};
-use blood_bowl_rs::positions::Position;
+use blood_bowl_rs::positions::{Keyword, Position};
 use blood_bowl_rs::rosters::Roster;
 use blood_bowl_rs::translation::TypeName;
 use blood_bowl_rs::versions::Version;
@@ -28,6 +28,7 @@ impl PlayerDetail {
         let player_injuries = select_player_injuries(state, self.id).await?;
         let star_player_points = select_remaining_star_player_points(state, self.id).await?;
         let advancements = select_advancements(state, self.id).await?;
+        let hatred = select_player_hatred(state, self.id).await?;
 
         Ok(Player {
             id: self.id,
@@ -40,6 +41,7 @@ impl PlayerDetail {
             miss_next_game: PlayerInjury::extract_miss_next_game(&player_injuries),
             advancements,
             injuries: PlayerInjury::extract_current_injuries(&player_injuries),
+            hatred,
         })
     }
 }
@@ -769,4 +771,30 @@ pub async fn add_advancement(
     teams::update_values(state, connected_user, team_id).await?;
 
     Ok(())
+}
+
+#[derive(Deserialize, sqlx::FromRow, Clone)]
+struct PlayerHatred {
+    keyword: Keyword,
+}
+
+async fn select_player_hatred(state: &AppState, player_id: i32) -> Result<Vec<Keyword>, AppError> {
+    tracing::debug!("select_player_hatred with id={}", player_id);
+
+    let hatred: Vec<PlayerHatred> = sqlx::query_as(
+        "SELECT DISTINCT keyword
+            FROM bb_players_hatred
+            WHERE player_id = $1
+            AND recovered_at IS NULL",
+    )
+    .bind(player_id.clone())
+    .fetch_all(&state.db)
+    .await?;
+
+    let keywords = hatred
+        .iter()
+        .map(|player_hatred| player_hatred.keyword)
+        .collect();
+
+    Ok(keywords)
 }

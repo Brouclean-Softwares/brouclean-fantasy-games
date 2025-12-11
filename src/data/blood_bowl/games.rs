@@ -747,8 +747,9 @@ impl GameTeamPlayer {
                 star_player_points: 0,
                 player_type: self.player_position.player_type(&game.version),
                 miss_next_game: false,
-                advancements: vec![],
-                injuries: vec![],
+                advancements: Vec::new(),
+                injuries: Vec::new(),
+                hatred: Vec::new(),
             },
         )
     }
@@ -1220,6 +1221,7 @@ pub async fn update_after_event(
         GameEvent::TurnStart { .. } => false,
         GameEvent::Success { .. } => false,
         GameEvent::Injury { .. } => false,
+        GameEvent::Hatred { .. } => false,
         GameEvent::GameEnd => false,
         GameEvent::Winnings { .. } => true,
         GameEvent::DedicatedFansUpdate { .. } => true,
@@ -1264,6 +1266,7 @@ pub async fn update_after_event(
         GameEvent::TurnStart { .. } => false,
         GameEvent::Success { .. } => true,
         GameEvent::Injury { .. } => true,
+        GameEvent::Hatred { .. } => true,
         GameEvent::GameEnd => false,
         GameEvent::Winnings { .. } => false,
         GameEvent::DedicatedFansUpdate { .. } => false,
@@ -1304,6 +1307,38 @@ pub async fn update_after_event(
                     .execute(&mut *transaction)
                     .await?;
                 }
+            }
+        }
+        sqlx::query(
+            "DELETE
+                FROM bb_players_hatred
+                USING bb_games
+                WHERE bb_games.id = bb_players_hatred.game_id
+                AND bb_games.id = $1
+                AND (bb_games.created_by = $2 OR bb_games.first_coach_id = $2 OR bb_games.second_coach_id = $2)",
+        )
+            .bind(game.id.clone())
+            .bind(profile.id.unwrap_or(-1).clone())
+            .execute(&mut *transaction)
+            .await?;
+
+        for event in game.events.iter() {
+            if let GameEvent::Hatred {
+                player_id, keyword, ..
+            } = event
+            {
+                sqlx::query(
+                    "INSERT INTO bb_players_hatred (
+                            player_id,
+                            game_id,
+                            keyword)
+                        VALUES ($1, $2, $3)",
+                )
+                .bind(player_id.clone())
+                .bind(game.id.clone())
+                .bind(keyword.clone())
+                .execute(&mut *transaction)
+                .await?;
             }
         }
 

@@ -11,6 +11,9 @@
                     <th>#</th>
                     <th>Poste</th>
                     <th>Blessure</th>
+                    {% if Keyword::list(game.version).len() > 0 %}
+                    <th>Haine</th>
+                    {% endif %}
                     <th uk-tooltip="title: Passe précise receptionnée">PAS</th>
                     <th uk-tooltip="title: Lancer superbe d'un coéquipier qui a attérit sur ses pieds">LAN</th>
                     <th uk-tooltip="title: Détournement de passe">DET</th>
@@ -43,6 +46,25 @@
                             </div>
                         </form>
                     </td>
+                    {% if Keyword::list(game.version).len() > 0 %}
+                    <td>
+                        <form method="post" autocomplete="off">
+                            <input name="game_id" type="hidden" value="{{ game.id }}">
+                            <input name="team_id" type="hidden" value="{{ team.id }}">
+                            <input name="player_id" type="hidden" value="{{ player.id }}">
+                            <div class="uk-flex-inline">
+                                <select class="uk-select uk-width-small" name="hatred" aria-label="">
+                                    {% for keyword in player.available_hatred_names("fr") %}
+                                    <option value="{{ keyword.type_name() }}">
+                                        {{ keyword.name("fr") }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <button class="uk-button uk-button-default uk-button-small">+</button>
+                            </div>
+                        </form>
+                    </td>
+                    {% endif %}
                     <td>
                         <form method="post" autocomplete="off">
                             <input name="game_id" type="hidden" value="{{ game.id }}">

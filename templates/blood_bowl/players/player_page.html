@@ -84,6 +84,13 @@
             {% if player.version.ne(&Version::LAST_VERSION) %}
             <span class="uk-text-meta"> ({{ player.version.name("fr") }})</span>
             {% endif %}
+
+            {% if let Some(position_definition) = player.position_definition() %}
+            {% if position_definition.keywords.len() > 0 %}
+            <br>
+            <span class="uk-text-meta">({{ position_definition.keywords_names("fr") }})</span>
+            {% endif %}
+            {% endif %}
         </dd>
     </dl>
 

@@ -12,6 +12,9 @@
                 <th>#</th>
                 <th>Poste</th>
                 <th>Blessures</th>
+                {% if Keyword::list(game.version).len() > 0 %}
+                <th>Haines</th>
+                {% endif %}
                 <th uk-tooltip="title: Passe précise receptionnée">PAS</th>
                 <th uk-tooltip="title: Lancer superbe d'un coéquipier qui a attérit sur ses pieds">LAN</th>
                 <th uk-tooltip="title: Interception">INT</th>
@@ -46,6 +49,14 @@
                         {{ game.suffered_injuries_names(team.id.clone(), player.id.clone(), "fr") }}
                     </a>
                 </td>
+
+                {% if Keyword::list(game.version).len() > 0 %}
+                <td class="uk-table-link">
+                    <a class="uk-link-reset" href="{{ added_player_url }}">
+                        {{ game.suffered_hatred_names(team.id.clone(), player.id.clone(), "fr") }}
+                    </a>
+                </td>
+                {% endif %}
 
                 {% let pas = player_statistics.passing_completions.clone() %}
                 <td class="uk-table-link">
