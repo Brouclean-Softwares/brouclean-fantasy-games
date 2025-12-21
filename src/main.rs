@@ -17,7 +17,27 @@ pub mod errors;
 async fn main() {
     dotenv().ok();
 
-    tracing_subscriber::fmt().with_max_level(Level::INFO).init();
+    let tracing_level = match env::var("LOG_LEVEL") {
+        Ok(log_level) => {
+            if log_level.to_uppercase().eq("DEBUG") {
+                Level::DEBUG
+            } else if log_level.to_uppercase().eq("ERROR") {
+                Level::ERROR
+            } else if log_level.to_uppercase().eq("TRACE") {
+                Level::TRACE
+            } else if log_level.to_uppercase().eq("WARN") {
+                Level::WARN
+            } else {
+                Level::INFO
+            }
+        }
+
+        Err(_) => Level::INFO,
+    };
+
+    tracing_subscriber::fmt()
+        .with_max_level(tracing_level)
+        .init();
 
     let app_url = env::var("APP_URL").expect("APP_URL must be set");
 

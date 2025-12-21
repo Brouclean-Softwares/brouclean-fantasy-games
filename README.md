@@ -86,15 +86,16 @@ For the app to run locally you need to create a .env file containing
 
 ```
 # General
-APP_URL="URL of the app, ex: http://localhost:8000"
-ADMIN_EMAIL="Your admin email"
+APP_URL=<URL of the app, ex: http://localhost:8000>
+ADMIN_EMAIL=<Your admin email>
+LOG_LEVEL=INFO
 
 # Database
 DATABASE_URL=postgres://devapp:<db user password>@localhost:5432/brouclean_fantasy_games
 
 # Google oauth
-GOOGLE_OAUTH_CLIENT_ID="Your client id"
-GOOGLE_OAUTH_CLIENT_SECRET="Your client secret"
+GOOGLE_OAUTH_CLIENT_ID=<Your client id>
+GOOGLE_OAUTH_CLIENT_SECRET=<Your client secret>
 ```
 
 ## To build and run the app
@@ -115,5 +116,13 @@ To start the app
 
 ```
 ./target/release/brouclean-fantasy-games
+```
+
+## To deploy on Leapcell
+
+Command to make it work with ssl
+
+```
+apt-get update && apt-get install -y pkg-config libssl-dev && cargo build --release
 ```
 
