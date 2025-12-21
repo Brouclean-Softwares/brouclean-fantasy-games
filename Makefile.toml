@@ -4,6 +4,10 @@ install_crate = "rustfmt"
 command = "cargo"
 args = ["fmt", "--all"]
 
+[tasks.clean]
+command = "cargo"
+args = ["clean"]
+
 [tasks.clean_blood_bowl_rs]
 description = "Clean the blood-bowl-rs crate"
 command = "cargo"
@@ -14,3 +18,14 @@ description = "Run the project"
 command = "cargo"
 args = ["run"]
 dependencies = ["format", "clean_blood_bowl_rs"]
+
+[tasks.build]
+description = "Build the project"
+command = "cargo"
+args = ["build", "--release"]
+dependencies = ["format", "clean"]
+
+[tasks.start]
+description = "Start the built project"
+command = "./target/release/brouclean_fantasy_games"
+dependencies = ["build"]

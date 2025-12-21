@@ -105,4 +105,15 @@ To run the app locally (localhost)
 cargo make run
 ```
 
-To deploy the app just push to github
+To build the app
+
+```
+cargo build --release
+```
+
+To start the app
+
+```
+./target/release/brouclean-fantasy-games
+```
+
