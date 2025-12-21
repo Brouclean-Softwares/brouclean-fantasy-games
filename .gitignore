@@ -3,3 +3,4 @@
 .shuttle*
 .idea*
 Secrets*.toml
+*.env

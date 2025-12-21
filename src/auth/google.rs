@@ -13,7 +13,7 @@ use oauth2::{
     ClientSecret, RedirectUrl, TokenResponse, TokenUrl,
 };
 use serde::Deserialize;
-use shuttle_runtime::SecretStore;
+use std::env;
 
 #[derive(Debug, Deserialize)]
 pub struct AuthRequest {
@@ -64,10 +64,13 @@ pub async fn callback(
     ))
 }
 
-pub fn build_oauth_client(secrets: &SecretStore) -> BasicClient {
-    let client_id = secrets.get("GOOGLE_OAUTH_CLIENT_ID").unwrap();
-    let client_secret = secrets.get("GOOGLE_OAUTH_CLIENT_SECRET").unwrap();
-    let app_url = secrets.get("APP_URL").unwrap();
+pub fn build_oauth_client() -> BasicClient {
+    let client_id = env::var("GOOGLE_OAUTH_CLIENT_ID").expect("GOOGLE_OAUTH_CLIENT_ID must be set");
+
+    let client_secret =
+        env::var("GOOGLE_OAUTH_CLIENT_SECRET").expect("GOOGLE_OAUTH_CLIENT_SECRET must be set");
+
+    let app_url = env::var("APP_URL").expect("APP_URL must be set");
 
     let redirect_url = format!("{}/auth/google_callback", app_url);
 

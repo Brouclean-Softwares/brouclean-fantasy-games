@@ -5,24 +5,22 @@ edition = "2021"
 
 [dependencies]
 askama = "0.14"
-askama_web = { version = "0.14.0", features = ["axum-0.7"] }
+askama_web = { version = "0.14", features = ["axum-0.7"] }
 axum = { version = "0.7", features = ["multipart", "macros", "query"] }
 axum-extra = { version = "0.9", features = ["cookie-private"] }
 blood-bowl-rs = { git = "https://github.com/Brouclean-Softwares/blood-bowl-rs.git" }
 #blood-bowl-rs = { path = "../blood-bowl-rs" }
 chrono = { version = "0.4", features = ["clock"] }
-http = "1.1"
+dotenv = "0.15"
+http = "1.4"
 lazy_static = "1.5"
-oauth2 = "4.4.1"
+oauth2 = "4.4"
 reqwest = { version = "0.11", features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-shuttle-axum = { version = "0.56", default-features = false, features = ["axum-0-7"] }
-shuttle-runtime = "0.56"
-shuttle-shared-db = { version = "0.56", features = ["postgres", "sqlx"] }
-sqlx = { version = "0.8", features = ["macros", "chrono"] }
-thiserror = "1.0"
-time = "0.3"
-tokio = "1.39"
+sqlx = { version = "0.8", features = ["postgres", "runtime-tokio-native-tls", "macros", "chrono"] }
+thiserror = "2.0"
+tokio = { version = "1.48", features = ["full"] }
 tower-http = { version = "0.6", features = ["fs"] }
 tracing = "0.1"
+tracing-subscriber = "0.3"

@@ -1,24 +1,31 @@
 use axum::{extract::FromRef, Router};
 use axum_extra::extract::cookie::Key;
+use dotenv::dotenv;
 use oauth2::basic::BasicClient;
 use reqwest::Client;
-use shuttle_runtime::SecretStore;
 use sqlx::PgPool;
+use std::env;
 use tower_http::services::{ServeDir, ServeFile};
+use tracing::Level;
 
 pub mod app;
 pub mod auth;
 pub mod data;
 pub mod errors;
 
-#[shuttle_runtime::main]
-async fn main(
-    #[shuttle_shared_db::Postgres(
-        local_uri = "postgres://devapp:{secrets.DB_PASSWORD}@localhost:5432/brouclean_fantasy_games"
-    )]
-    db: PgPool,
-    #[shuttle_runtime::Secrets] secrets: SecretStore,
-) -> shuttle_axum::ShuttleAxum {
+#[tokio::main]
+async fn main() {
+    dotenv().ok();
+
+    tracing_subscriber::fmt().with_max_level(Level::INFO).init();
+
+    let app_url = env::var("APP_URL").expect("APP_URL must be set");
+
+    let admin_email = env::var("ADMIN_EMAIL").expect("ADMIN_EMAIL must be set");
+
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let db = PgPool::connect(&database_url).await.unwrap();
+
     sqlx::migrate!()
         .run(&db)
         .await
@@ -28,13 +35,16 @@ async fn main(
         db,
         http_requester: Client::new(),
         key: Key::generate(),
-        google_oauth_client: auth::google::build_oauth_client(&secrets),
-        admin_email: secrets.get("ADMIN_EMAIL").unwrap(),
+        google_oauth_client: auth::google::build_oauth_client(),
+        admin_email,
     };
 
     let router = init_router(state);
 
-    Ok(router.into())
+    tracing::info!("Application binding on : {}", app_url);
+
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
+    axum::serve(listener, router).await.unwrap();
 }
 
 fn init_router(state: AppState) -> Router {

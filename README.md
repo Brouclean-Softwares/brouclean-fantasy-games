@@ -80,21 +80,21 @@ ALTER DATABASE brouclean_fantasy_games OWNER TO devapp;
 - Even Better TOML
 - Tailwind CSS IntelliSense
 
-## Secrets structure
+## Env variables
 
-For the app to run you need to create a Secrets.toml (and a Secrets.dev.toml for local dev) file containing
+For the app to run locally you need to create a .env file containing
 
 ```
 # General
-APP_URL = "URL of the app, ex: http://localhost:8000"
-ADMIN_EMAIL = "Your admin email"
+APP_URL="URL of the app, ex: http://localhost:8000"
+ADMIN_EMAIL="Your admin email"
 
 # Database
-DB_PASSWORD = "Your db user password"
+DATABASE_URL=postgres://devapp:<db user password>@localhost:5432/brouclean_fantasy_games
 
 # Google oauth
-GOOGLE_OAUTH_CLIENT_ID = "Your client id"
-GOOGLE_OAUTH_CLIENT_SECRET = "Your client secret"
+GOOGLE_OAUTH_CLIENT_ID="Your client id"
+GOOGLE_OAUTH_CLIENT_SECRET="Your client secret"
 ```
 
 ## To build and run the app
@@ -105,8 +105,4 @@ To run the app locally (localhost)
 cargo make run
 ```
 
-To deploy the app
-
-```
-cargo make deploy
-```
+To deploy the app just push to github
