@@ -548,7 +548,7 @@ async fn select_player_injuries(
                     bb_players_injuries.created_at < MAX(bb_games.started_at) as before_last_game
             FROM bb_players_injuries
             INNER JOIN bb_teams_players
-            ON bb_teams_players.player_id = bb_teams_players.player_id
+            ON bb_teams_players.player_id = bb_players_injuries.player_id
             INNER JOIN bb_games
             ON (bb_teams_players.team_id = bb_games.first_team_id OR bb_teams_players.team_id = bb_games.second_team_id)
             WHERE bb_players_injuries.player_id = $1
