@@ -704,7 +704,9 @@ pub async fn add_advancement_choice(
 
     if let Some((_, player)) = select_by_id_for_team(state, player_id, team_id).await? {
         if let Some(team_coach) = coaches::select_from_team(state, team_id).await? {
-            if team_coach.id.eq(&connected_user.id) {
+            let choice_cost = advancement_choice.star_player_points_cost_for_player(&player) as i32;
+
+            if team_coach.id.eq(&connected_user.id) && player.star_player_points >= choice_cost {
                 sqlx::query(
                     "INSERT INTO bb_players_advancements (
                     player_id,
@@ -716,11 +718,7 @@ pub async fn add_advancement_choice(
                 )
                 .bind(player_id.clone())
                 .bind(serde_json::to_string(&advancement_choice)?)
-                .bind(
-                    advancement_choice
-                        .star_player_points_cost_for_player(&player)
-                        .clone() as i32,
-                )
+                .bind(choice_cost.clone())
                 .bind(serde_json::to_string(
                     &advancement_choice.roll_advancements_to_choose_for_player(&player),
                 )?)
