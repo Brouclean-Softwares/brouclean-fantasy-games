@@ -96,7 +96,9 @@ pub struct GameForm {
     pub success: Option<Success>,
     pub end_game: Option<String>,
     pub first_team_winnings: Option<String>,
+    pub first_team_stalled: Option<bool>,
     pub second_team_winnings: Option<String>,
+    pub second_team_stalled: Option<bool>,
     pub first_team_dedicated_fans_delta: Option<String>,
     pub second_team_dedicated_fans_delta: Option<String>,
     pub first_team_mvp: Option<i32>,
@@ -577,21 +579,26 @@ pub async fn update(
     // Winnings
     if form.first_team_winnings.is_some() || form.second_team_winnings.is_some() {
         if form.auto.is_some() {
-            game_to_update.generate_winnings().map_err(|err| {
-                redirect_when_update_ko(
-                    &app_state,
-                    &profile,
-                    Some(&game_before_update),
-                    &competition,
-                    err.to_string(),
-                )
-            })?;
+            let first_team_stalled = form.first_team_stalled.unwrap_or(false);
+            let second_team_stalled = form.second_team_stalled.unwrap_or(false);
+
+            game_to_update
+                .generate_winnings(first_team_stalled, second_team_stalled)
+                .map_err(|err| {
+                    redirect_when_update_ko(
+                        &app_state,
+                        &profile,
+                        Some(&game_before_update),
+                        &competition,
+                        err.to_string(),
+                    )
+                })?;
         } else {
             if let Some(winnings) = form.first_team_winnings {
                 let winnings: u32 = winnings.parse().map_err(|_| {
                     redirect_when_update_ko(
                         &app_state, &profile, Some(&game_before_update), &competition,
-                        "Veuillez remplir la valeur des gains (10000 * TD + Fans / 2) ou bien générer en automatique".to_string(),
+                        "Veuillez remplir la valeur des gains (10000 * TD + Fans + 1 si non temporisé / 2) ou bien générer en automatique".to_string(),
                     )
                 })?;
 

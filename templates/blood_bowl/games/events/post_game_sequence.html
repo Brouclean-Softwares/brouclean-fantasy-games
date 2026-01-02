@@ -20,6 +20,7 @@
                         <span>{{ winnings / 1000 }}k</span>
                         {% else %}
                         <input class="uk-input" type="number" name="first_team_winnings" placeholder="10000 * TD + Fans / 2" aria-label="">
+                        <label><input class="uk-checkbox" type="checkbox" name="first_team_stalled" value="true">A temporisé</label>
                         {% endif %}
                     </div>
                 </div>
@@ -34,6 +35,7 @@
                         <span>{{ winnings / 1000 }}k</span>
                         {% else %}
                         <input class="uk-input" type="number" name="second_team_winnings" placeholder="10000 * TD + Fans / 2" aria-label="">
+                        <label><input class="uk-checkbox" type="checkbox" name="second_team_stalled" value="true">A temporisé</label>
                         {% endif %}
                     </div>
                 </div>
