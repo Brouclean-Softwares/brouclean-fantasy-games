@@ -239,7 +239,7 @@ pub async fn select_all_played(state: &AppState) -> Result<Vec<GameSummary>, App
             LEFT JOIN bb_competitions
             ON bb_competitions.id = bb_competitions_stages_schedule.competition_id
             WHERE bb_games.closed_at IS NOT NULL
-            ORDER BY bb_games.started_at DESC",
+            ORDER BY bb_games.game_at DESC",
     )
     .fetch_all(&state.db)
     .await?;
@@ -285,7 +285,7 @@ pub async fn select_all_playing(state: &AppState) -> Result<Vec<GameSummary>, Ap
             ON bb_competitions.id = bb_competitions_stages_schedule.competition_id
             WHERE bb_games.closed_at IS NULL
             AND bb_games.started_at IS NOT NULL
-            ORDER BY bb_games.started_at ASC",
+            ORDER BY bb_games.game_at ASC",
     )
     .fetch_all(&state.db)
     .await?;
@@ -383,7 +383,7 @@ pub async fn select_played_by_team(
             ON bb_competitions.id = bb_competitions_stages_schedule.competition_id
             WHERE bb_games.closed_at IS NOT NULL
             AND (bb_games.first_team_id = $1 OR bb_games.second_team_id = $1)
-            ORDER BY bb_games.closed_at DESC",
+            ORDER BY bb_games.game_at DESC",
     )
     .bind(team_id.clone())
     .fetch_all(&state.db)
@@ -485,7 +485,7 @@ pub async fn select_playing_by_team(
             WHERE bb_games.closed_at IS NULL
             AND bb_games.started_at IS NOT NULL
             AND (bb_games.first_team_id = $1 OR bb_games.second_team_id = $1)
-            ORDER BY bb_games.started_at
+            ORDER BY bb_games.game_at
             LIMIT 1",
     )
     .bind(team_id.clone())
@@ -587,7 +587,7 @@ pub async fn select_playing_by_coach(
             WHERE bb_games.closed_at IS NULL
             AND bb_games.started_at IS NOT NULL
             AND (bb_games.first_coach_id = $1 OR bb_games.second_coach_id = $1)
-            ORDER BY bb_games.started_at
+            ORDER BY bb_games.game_at
             LIMIT 1",
     )
     .bind(coach_id.clone())
