@@ -155,6 +155,7 @@ pub async fn select_teams_victories_top(state: &AppState) -> Result<Statistics, 
                 OR
                 (bb_games.second_team_id = bb_teams.id AND bb_games.second_team_is_winner)
             )
+            AND bb_games.started_at IS NOT NULL
             GROUP BY bb_teams.id
             ORDER BY COUNT(bb_games.id) DESC
             LIMIT 5",
@@ -192,6 +193,7 @@ pub async fn select_teams_victories_top_for_competition_id(
                 OR
                 (bb_games.second_team_id = bb_teams.id AND bb_games.second_team_is_winner)
             )
+            AND bb_games.started_at IS NOT NULL
             INNER JOIN bb_competitions_stages_schedule
             ON bb_competitions_stages_schedule.game_id = bb_games.id
             WHERE bb_competitions_stages_schedule.competition_id = $1
@@ -223,6 +225,7 @@ pub async fn select_teams_games_top(state: &AppState) -> Result<Statistics, AppE
             FROM bb_teams
             INNER JOIN bb_games
             ON (bb_games.first_team_id = bb_teams.id OR bb_games.second_team_id = bb_teams.id)
+            AND bb_games.started_at IS NOT NULL
             GROUP BY bb_teams.id
             ORDER BY COUNT(bb_games.id) DESC
             LIMIT 5",
@@ -256,6 +259,7 @@ pub async fn select_teams_games_top_for_competition_id(
             FROM bb_teams
             INNER JOIN bb_games
             ON (bb_games.first_team_id = bb_teams.id OR bb_games.second_team_id = bb_teams.id)
+            AND bb_games.started_at IS NOT NULL
             INNER JOIN bb_competitions_stages_schedule
             ON bb_competitions_stages_schedule.game_id = bb_games.id
             WHERE bb_competitions_stages_schedule.competition_id = $1
