@@ -54,7 +54,6 @@ pub async fn buy_staff_for_team(
         let mut team = teams::select_by_id_with_staff_and_players(state, team_id).await?;
 
         let new_staff_quantity = team.buy_staff(&staff)?;
-        println!("new_staff_quantity = {}", new_staff_quantity);
 
         let team_value = team.value()?;
         let team_current_value = team.current_value()?;

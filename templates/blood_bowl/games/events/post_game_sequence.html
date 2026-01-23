@@ -17,7 +17,7 @@
                     </label>
                     <div class="uk-form-controls">
                         {% if let Some(winnings) = first_team_winnings %}
-                        <span>{{ winnings / 1000 }}k</span>
+                        <span>{{ winnings / 1000 }}k 🪙</span>
                         {% else %}
                         <input class="uk-input" type="number" name="first_team_winnings" placeholder="10000 * TD + Fans / 2" aria-label="">
                         <label><input class="uk-checkbox" type="checkbox" name="first_team_stalled" value="true">A temporisé</label>
@@ -32,7 +32,7 @@
                     </label>
                     <div class="uk-form-controls">
                         {% if let Some(winnings) = second_team_winnings %}
-                        <span>{{ winnings / 1000 }}k</span>
+                        <span>{{ winnings / 1000 }}k 🪙</span>
                         {% else %}
                         <input class="uk-input" type="number" name="second_team_winnings" placeholder="10000 * TD + Fans / 2" aria-label="">
                         <label><input class="uk-checkbox" type="checkbox" name="second_team_stalled" value="true">A temporisé</label>
@@ -202,7 +202,13 @@
                     </label>
                     <div class="uk-form-controls">
                         {% if let Some(loss) = first_team_expensive_mistakes %}
-                        <span>{{ loss / 1000 }}k</span>
+
+                        {% if loss.clone() > 0 %}
+                        <span>{{ loss / 1000 }}k 🪙 perdus</span>
+                        {% else %}
+                        <span>Pas de pertes</span>
+                        {% endif %}
+
                         {% else %}
                         <input class="uk-input" type="number" name="first_team_expensive_mistakes" placeholder="pertes : X000" value="0" aria-label="">
                         {% endif %}
@@ -216,7 +222,13 @@
                     </label>
                     <div class="uk-form-controls">
                         {% if let Some(loss) = second_team_expensive_mistakes %}
-                        <span>{{ loss / 1000 }}k</span>
+
+                        {% if loss.clone() > 0 %}
+                        <span>{{ loss / 1000 }}k 🪙 perdus</span>
+                        {% else %}
+                        <span>Pas de pertes</span>
+                        {% endif %}
+
                         {% else %}
                         <input class="uk-input" type="number" name="second_team_expensive_mistakes" placeholder="pertes : X000" value="0" aria-label="">
                         {% endif %}

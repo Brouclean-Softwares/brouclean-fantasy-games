@@ -20,6 +20,19 @@
 
         {% when GameEvent::Weather(weather) %}
         <p class="uk-text-center">
+            {% match weather %}
+            {% when Weather::Blizzard %}
+            <span class="uk-text-large">🌨️</span>
+            {% when Weather::PerfectConditions %}
+            <span class="uk-text-large">⛅️</span>
+            {% when Weather::PouringRain %}
+            <span class="uk-text-large">🌧️</span>
+            {% when Weather::SwelteringHeat %}
+            <span class="uk-text-large">🌡️🌞</span>
+            {% when Weather::VerySunny %}
+            <span class="uk-text-large">☀️</span>
+            {% endmatch %}
+            <br>
             <span>Météo : {{ weather.name("fr") }}</span>
         </p>
 
@@ -189,12 +202,12 @@
         {% if game.first_team.id.eq(team_id.into()) %}
         <p class="uk-text-left">
             <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
-            <span>{{ earned_money / 1000 }}k gagnés</span>
+            <span>{{ earned_money / 1000 }}k 🪙 gagnés</span>
         </p>
         {% else %}
         <p class="uk-text-right">
             <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
-            <span>{{ earned_money / 1000 }}k gagnés</span>
+            <span>{{ earned_money / 1000 }}k 🪙 gagnés</span>
         </p>
         {% endif %}
 
@@ -220,7 +233,7 @@
         <p class="uk-text-left">
             <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
             {% if lost_money.clone() > 0 %}
-            <span>{{ lost_money / 1000 }}k perdus</span>
+            <span>{{ lost_money / 1000 }}k 🪙 perdus</span>
             {% else %}
             <span>Pas de pertes</span>
             {% endif %}
@@ -229,7 +242,7 @@
         <p class="uk-text-right">
             <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
             {% if lost_money.clone() > 0 %}
-            <span>{{ lost_money / 1000 }}k perdus</span>
+            <span>{{ lost_money / 1000 }}k 🪙 perdus</span>
             {% else %}
             <span>Pas de pertes</span>
             {% endif %}

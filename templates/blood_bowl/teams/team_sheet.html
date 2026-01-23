@@ -24,7 +24,13 @@
                 <dd>{{ team.dedicated_fans }}</dd>
 
                 <dt>Trésorerie</dt>
-                <dd>{{ team.treasury / 1000 }}k</dd>
+                <dd>
+                    {% if 0.eq(team.treasury) %}
+                    <span>0 🪙</span>
+                    {% else %}
+                    <span>{{ team.treasury / 1000 }}k 🪙</span>
+                    {% endif %}
+                </dd>
             </dl>
         </div>
     </div>

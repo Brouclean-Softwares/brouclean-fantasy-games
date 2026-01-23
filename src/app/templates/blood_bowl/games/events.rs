@@ -20,6 +20,7 @@ use blood_bowl_rs::translation::TypeName;
 #[template(path = "blood_bowl/games/events/pre_game_sequence.html")]
 pub struct PreGameSequence {
     game: Game,
+    weather_controller: WeatherController,
     first_team_money: TreasuryAndPettyCash,
     second_team_money: TreasuryAndPettyCash,
     first_team_buyable_inducements: Vec<Inducement>,
@@ -30,6 +31,8 @@ pub struct PreGameSequence {
 
 impl PreGameSequence {
     pub fn try_from_game(game: &Game) -> Result<Self, AppError> {
+        let weather_controller = WeatherController { game_id: game.id };
+
         let (first_team_money, second_team_money) = game.teams_money_left()?;
 
         let (first_team_buyable_inducements, second_team_buyable_inducements) =
@@ -40,6 +43,7 @@ impl PreGameSequence {
 
         Ok(Self {
             game: game.clone(),
+            weather_controller,
             first_team_money,
             second_team_money,
             first_team_buyable_inducements,
@@ -68,6 +72,7 @@ pub struct EventsController {
     game: Game,
     pre_game_sequence: PreGameSequence,
     post_game_sequence: PostGameSequence,
+    weather_controller: WeatherController,
     first_team_event_controller: TeamEventController,
     second_team_event_controller: TeamEventController,
 }
@@ -77,11 +82,13 @@ impl EventsController {
         if !game.closed {
             let pre_game_sequence = PreGameSequence::try_from_game(game)?;
             let post_game_sequence = PostGameSequence::try_from_game(game)?;
+            let weather_controller = WeatherController { game_id: game.id };
 
             Ok(Some(Self {
                 game: game.clone(),
                 pre_game_sequence,
                 post_game_sequence,
+                weather_controller,
                 first_team_event_controller: TeamEventController::from_team_game(
                     game.clone(),
                     game.first_team.clone(),
@@ -95,6 +102,12 @@ impl EventsController {
             Ok(None)
         }
     }
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "blood_bowl/games/events/weather_controller.html")]
+pub struct WeatherController {
+    game_id: i32,
 }
 
 #[derive(Template, WebTemplate)]

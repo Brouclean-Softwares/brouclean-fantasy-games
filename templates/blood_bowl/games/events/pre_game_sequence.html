@@ -50,30 +50,9 @@
             Météo
         </h3>
 
-        <form method="post" autocomplete="off" class="uk-margin-medium-top uk-form-stacked">
-            <input name="game_id"
-                   type="hidden"
-                   value="{{ game.id }}">
-
-            <fieldset class="uk-fieldset">
-                <label class="uk-form-label">Quelle météo ?</label>
-                <div class="uk-form-controls">
-                    <select class="uk-select" name="weather" aria-label="">
-                        {% for weather in Weather::options_list() %}
-                        <option value="{{ weather.type_name() }}">{{ weather.name("fr") }}</option>
-                        {% endfor %}}
-                    </select>
-                </div>
-
-                <div class="uk-margin uk-grid-small uk-child-width-auto uk-grid">
-                    <label><input class="uk-checkbox" type="checkbox" name="auto" value="true">Automatique</label>
-                </div>
-            </fieldset>
-
-            <button class="uk-button uk-button-primary">
-                Valider
-            </button>
-        </form>
+        <div class="uk-margin-medium-top">
+            {{ weather_controller|escape("none") }}
+        </div>
     </div>
 
     {% else if ! game.journeymen_ok() %}
@@ -112,13 +91,25 @@
                 <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
                 <span> Trésorerie</span>
             </dt>
-            <dd>{{ first_team_money.treasury / 1000 }}k</dd>
+            <dd>
+                {% if 0.eq(first_team_money.treasury) %}
+                <span>0 🪙</span>
+                {% else %}
+                <span>{{ first_team_money.treasury / 1000 }}k 🪙</span>
+                {% endif %}
+            </dd>
 
             <dt>
                 <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
                 <span> Petite monnaie</span>
             </dt>
-            <dd>{{ first_team_money.petty_cash / 1000 }}k</dd>
+            <dd>
+                {% if 0.eq(first_team_money.petty_cash) %}
+                <span>0 🪙</span>
+                {% else %}
+                <span>{{ first_team_money.petty_cash / 1000 }}k 🪙</span>
+                {% endif %}
+            </dd>
         </dl>
 
         <dl class="uk-description-list uk-text-right">
@@ -126,13 +117,25 @@
                 <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
                 <span> Trésorerie</span>
             </dt>
-            <dd>{{ second_team_money.treasury / 1000 }}k</dd>
+            <dd>
+                {% if 0.eq(second_team_money.treasury) %}
+                <span>0 🪙</span>
+                {% else %}
+                <span>{{ second_team_money.treasury / 1000 }}k 🪙</span>
+                {% endif %}
+            </dd>
 
             <dt>
                 <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
                 <span> Petite monnaie</span>
             </dt>
-            <dd>{{ second_team_money.petty_cash / 1000 }}k</dd>
+            <dd>
+                {% if 0.eq(second_team_money.petty_cash) %}
+                <span>0 🪙</span>
+                {% else %}
+                <span>{{ second_team_money.petty_cash / 1000 }}k 🪙</span>
+                {% endif %}
+            </dd>
         </dl>
     </div>
 

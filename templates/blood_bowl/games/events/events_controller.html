@@ -8,7 +8,14 @@
     <h3 class="uk-margin-medium-top uk-heading-divider">
         Nouveaux évènements de match
     </h3>
+
     <ul class="uk-margin-medium-top" uk-accordion>
+        <li>
+            <a class="uk-accordion-title" href>Nouvelle météo</a>
+            <div class="uk-accordion-content">
+                {{ weather_controller|escape("none") }}
+            </div>
+        </li>
         {{ first_team_event_controller|escape("none") }}
         {{ second_team_event_controller|escape("none") }}
     </ul>

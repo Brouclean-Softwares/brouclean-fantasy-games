@@ -1,0 +1,24 @@
+<form method="post" autocomplete="off" class="uk-form-stacked">
+    <input name="game_id"
+           type="hidden"
+           value="{{ game_id }}">
+
+    <fieldset class="uk-fieldset">
+        <label class="uk-form-label">Quelle météo ?</label>
+        <div class="uk-form-controls">
+            <select class="uk-select" name="weather" aria-label="">
+                {% for weather in Weather::options_list() %}
+                <option value="{{ weather.type_name() }}">{{ weather.name("fr") }}</option>
+                {% endfor %}}
+            </select>
+        </div>
+
+        <div class="uk-margin uk-grid-small uk-child-width-auto uk-grid">
+            <label><input class="uk-checkbox" type="checkbox" name="auto" value="true">Automatique</label>
+        </div>
+    </fieldset>
+
+    <button class="uk-button uk-button-primary">
+        Valider
+    </button>
+</form>
