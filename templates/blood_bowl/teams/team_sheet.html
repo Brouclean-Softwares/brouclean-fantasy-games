@@ -207,7 +207,9 @@
                     </td>
                     <td class="uk-table-link">
                         <a class="uk-link-reset" href="{{ player_url }}">
-                            {% if player.miss_next_game %}
+                            {% if player.is_dead() %}
+                            <span uk-tooltip="title: Mort">🪦Mort</span>
+                            {% elif player.miss_next_game %}
                             x
                             {% endif %}
                         </a>
