@@ -35,7 +35,7 @@ pub async fn player(
         Redirect::to("../teams")
     };
 
-    let team = teams::select_by_id_without_staff_nor_players(&app_state, params.team_id)
+    let team = teams::select_by_id_with_staff_and_players(&app_state, params.team_id)
         .await
         .map_err(error_handler)?;
 
