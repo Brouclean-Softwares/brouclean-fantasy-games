@@ -158,6 +158,9 @@
                     <td class="uk-table-link">
                         <a class="uk-link-reset" href="{{ player_url }}">
                             {{ player.name }}
+                            {% if player.is_captain %}
+                            <span uk-tooltip="title: Capitaine"> 🎖️</span>
+                            {% endif %}
                         </a>
                     </td>
                     <td class="uk-table-link">
@@ -224,6 +227,7 @@
 
                     {% if editable %}
                     <td>
+                        {% if team.can_buyout_player(player) %}
                         <form id="buyout_player_form-{{ player.id }}" method="post" autocomplete="off">
                             <input name="player_id_to_buyout" type="hidden" value="{{ player.id }}">
 
@@ -247,6 +251,7 @@
                                 </div>
                             </div>
                         </form>
+                        {% endif %}
                     </td>
                     {% endif %}
                 </tr>

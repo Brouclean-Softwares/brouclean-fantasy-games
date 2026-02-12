@@ -91,6 +91,7 @@ pub struct NewTeamForm {
     pub cheerleader: u8,
     pub assistant_coach: u8,
     pub apothecary: Option<u8>,
+    pub captain_position: Option<Position>,
 }
 
 impl NewTeamForm {
@@ -133,6 +134,7 @@ pub async fn create(
         staff_quantities,
         position_quantities,
         form.dedicated_fans,
+        form.captain_position,
     )
     .map_err(|error| {
         NewTeamPage::get_with_message(
@@ -278,6 +280,7 @@ pub struct TeamForm {
     pub staff_to_buy: Option<Staff>,
     pub position_to_buy: Option<Position>,
     pub player_id_to_buyout: Option<i32>,
+    pub player_id_to_name_captain: Option<i32>,
 }
 
 pub async fn update(
@@ -358,6 +361,22 @@ pub async fn update(
     if let (Some(profile), Some(player_id_to_buyout)) = (profile.clone(), form.player_id_to_buyout)
     {
         players::buyout_for_team(&app_state, &profile, params.id, player_id_to_buyout)
+            .await
+            .or_else(|app_error| {
+                Err(Redirect::to(&format!(
+                    "./team?id={}&message={}",
+                    params.id, app_error,
+                )))
+            })?;
+
+        return Ok(Redirect::to(&format!("./team?id={}", params.id,)));
+    }
+
+    // Name Player captain
+    if let (Some(profile), Some(player_id_to_name_captain)) =
+        (profile.clone(), form.player_id_to_name_captain)
+    {
+        players::name_captain_for_team(&app_state, &profile, params.id, player_id_to_name_captain)
             .await
             .or_else(|app_error| {
                 Err(Redirect::to(&format!(

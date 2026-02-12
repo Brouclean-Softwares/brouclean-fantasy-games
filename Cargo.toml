@@ -8,8 +8,8 @@ askama = "0.14"
 askama_web = { version = "0.14", features = ["axum-0.7"] }
 axum = { version = "0.7", features = ["multipart", "macros", "query"] }
 axum-extra = { version = "0.9", features = ["cookie-private"] }
-blood-bowl-rs = { git = "https://github.com/Brouclean-Softwares/blood-bowl-rs.git" }
-#blood-bowl-rs = { path = "../blood-bowl-rs" }
+#blood-bowl-rs = { git = "https://github.com/Brouclean-Softwares/blood-bowl-rs.git" }
+blood-bowl-rs = { path = "../blood-bowl-rs" }
 chrono = { version = "0.4", features = ["clock"] }
 dotenv = "0.15"
 http = "1.4"

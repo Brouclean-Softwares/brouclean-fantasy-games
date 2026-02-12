@@ -344,13 +344,15 @@ pub async fn create(state: &AppState, coach: &User, bb_team: &Team) -> Result<i3
             "INSERT INTO bb_players (
                 version,
                 name,
-                position)
-            VALUES ($1, $2, $3)
+                position,
+                is_captain)
+            VALUES ($1, $2, $3, $4)
             RETURNING id",
         )
         .bind(player.version.clone())
         .bind(player.name.clone())
         .bind(player.position.clone())
+        .bind(player.is_captain.clone())
         .fetch_one(&mut *transaction)
         .await?;
 

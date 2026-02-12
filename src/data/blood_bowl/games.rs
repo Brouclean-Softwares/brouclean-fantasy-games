@@ -750,6 +750,7 @@ impl GameTeamPlayer {
                 advancements: Vec::new(),
                 injuries: Vec::new(),
                 hatred: Vec::new(),
+                is_captain: false,
             },
         )
     }

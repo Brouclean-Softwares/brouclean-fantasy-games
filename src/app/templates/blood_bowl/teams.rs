@@ -12,7 +12,7 @@ use askama::Template;
 use askama_web::WebTemplate;
 use blood_bowl_rs::players::Player;
 use blood_bowl_rs::positions::Position;
-use blood_bowl_rs::rosters::{Roster, RosterDefinition};
+use blood_bowl_rs::rosters::{Roster, RosterDefinition, SpecialRule};
 use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::translation::{TranslatedName, TypeName};
 use blood_bowl_rs::versions::Version;

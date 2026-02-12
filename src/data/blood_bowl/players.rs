@@ -21,6 +21,7 @@ struct PlayerDetail {
     position: Position,
     roster: Roster,
     number: i32,
+    is_captain: bool,
 }
 
 impl PlayerDetail {
@@ -42,6 +43,7 @@ impl PlayerDetail {
             advancements,
             injuries: PlayerInjury::extract_current_injuries(&player_injuries),
             hatred,
+            is_captain: self.is_captain,
         })
     }
 }
@@ -63,7 +65,8 @@ pub async fn select_by_id_for_team(
                     bb_players.name,
                     bb_players.position,
                     bb_teams.roster,
-                    bb_teams_players.number
+                    bb_teams_players.number,
+                    bb_players.is_captain
             FROM bb_players
             INNER JOIN bb_teams_players
             ON bb_players.id = bb_teams_players.player_id
@@ -100,7 +103,8 @@ pub async fn select_under_contract_for_team(
                     bb_players.name,
                     bb_players.position,
                     bb_teams.roster,
-                    bb_teams_players.number
+                    bb_teams_players.number,
+                    bb_players.is_captain
             FROM bb_players
             INNER JOIN bb_teams_players
             ON bb_players.id = bb_teams_players.player_id
@@ -168,7 +172,8 @@ pub async fn select_former_for_team(
                     bb_players.name,
                     bb_players.position,
                     bb_teams.roster,
-                    bb_teams_players.number
+                    bb_teams_players.number,
+                    bb_players.is_captain
             FROM bb_players
             INNER JOIN bb_teams_players
             ON bb_players.id = bb_teams_players.player_id
@@ -446,22 +451,68 @@ pub async fn buyout_for_team(
         player_id
     );
 
-    sqlx::query(
-        "UPDATE bb_teams_players
-        SET contract_end = CURRENT_TIMESTAMP
-        FROM bb_teams
-        WHERE bb_teams_players.player_id = $1
-        AND bb_teams_players.team_id = $2
-        AND bb_teams.id = bb_teams_players.team_id
-        AND bb_teams.coach_id = $3",
-    )
-    .bind(player_id.clone())
-    .bind(team_id.clone())
-    .bind(connected_user.id.clone())
-    .execute(&state.db)
-    .await?;
+    let team = teams::select_by_id_with_staff_and_players(state, team_id).await?;
 
-    teams::update_values(state, connected_user, team_id).await?;
+    if let Some((_, player)) = team.player_by_id(player_id) {
+        if team.can_buyout_player(&player) {
+            sqlx::query(
+                "UPDATE bb_teams_players
+                    SET contract_end = CURRENT_TIMESTAMP
+                    FROM bb_teams
+                    WHERE bb_teams_players.player_id = $1
+                    AND bb_teams_players.team_id = $2
+                    AND bb_teams.id = bb_teams_players.team_id
+                    AND bb_teams.coach_id = $3",
+            )
+            .bind(player_id.clone())
+            .bind(team_id.clone())
+            .bind(connected_user.id.clone())
+            .execute(&state.db)
+            .await?;
+
+            teams::update_values(state, connected_user, team_id).await?;
+        }
+    }
+
+    Ok(())
+}
+
+pub async fn name_captain_for_team(
+    state: &AppState,
+    connected_user: &User,
+    team_id: i32,
+    player_id: i32,
+) -> Result<(), AppError> {
+    tracing::debug!(
+        "name_captain_for_team by user={:?} for team_id={} and player_id={}",
+        connected_user,
+        team_id,
+        player_id
+    );
+
+    let team = teams::select_by_id_with_staff_and_players(state, team_id).await?;
+
+    if let Some((_, player)) = team.player_by_id(player_id) {
+        if team.can_player_be_captain(&player) {
+            sqlx::query(
+                "UPDATE bb_players
+                    SET is_captain = true
+                    FROM bb_teams_players, bb_teams
+                    WHERE bb_players.id = $1
+                    AND bb_teams_players.player_id = bb_players.id
+                    AND bb_teams_players.team_id = $2
+                    AND bb_teams.id = bb_teams_players.team_id
+                    AND bb_teams.coach_id = $3",
+            )
+            .bind(player_id.clone())
+            .bind(team_id.clone())
+            .bind(connected_user.id.clone())
+            .execute(&state.db)
+            .await?;
+
+            teams::update_values(state, connected_user, team_id).await?;
+        }
+    }
 
     Ok(())
 }

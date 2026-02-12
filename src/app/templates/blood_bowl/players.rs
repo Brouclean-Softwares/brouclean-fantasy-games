@@ -30,6 +30,7 @@ pub struct PlayerPage {
     edit_mode: bool,
     can_buy: bool,
     can_buyout: bool,
+    can_be_captain: bool,
     statistics: PlayerStatistics,
     player_advancement_blocs: Vec<PlayerAdvancementBloc>,
 }
@@ -48,6 +49,7 @@ impl PlayerPage {
         edit_mode: bool,
         can_buy: bool,
         can_buyout: bool,
+        can_be_captain: bool,
         statistics: PlayerStatistics,
     ) -> Self {
         Self {
@@ -65,6 +67,7 @@ impl PlayerPage {
             edit_mode,
             can_buy,
             can_buyout,
+            can_be_captain,
             statistics,
             player_advancement_blocs: vec![
                 PlayerAdvancementBloc::get(&player, player_advancements.get(0), 1, editable)

@@ -112,6 +112,35 @@
         </table>
     </div>
 
+    {% if roster_definition.special_rules.contains(&SpecialRule::TeamCaptain) %}
+    <h3 class="uk-heading-divider">
+        Capitaine
+    </h3>
+    <div>
+        <p>
+            Ce roster nécessite de choisir un capitaine.
+            <br>
+            Pour quel poste souhaitez-vous donner ce rôle ?
+        </p>
+        <select id="captain_position"
+                name="captain_position"
+                class="uk-select uk-form-width-large"
+                aria-label="Select">
+
+            {% for position in roster_definition.positions %}
+                {% if let Some(position_definition) = position.definition(roster_definition.version.into(), roster.clone()) %}
+                {% if ! position_definition.is_big_man %}
+                <option value="{{ position.type_name() }}">
+                    {{ position.name("fr") }}
+                </option>
+                {% endif %}
+                {% endif %}
+            {% endfor %}
+
+        </select>
+    </div>
+    {% endif %}
+
     <h3 class="uk-heading-divider">
         Staff
     </h3>

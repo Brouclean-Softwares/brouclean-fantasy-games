@@ -72,9 +72,12 @@ pub async fn player(
             .map_err(error_handler)?;
 
     let can_buyout = editable
+        && team.can_buyout_player(&player)
         && players::is_under_contract_for_team(&app_state, params.player_id, params.team_id)
             .await
             .map_err(error_handler)?;
+
+    let can_be_captain = editable && team.can_player_be_captain(&player);
 
     let stats = statistics::players::select_statistics(&app_state, params.player_id)
         .await
@@ -93,6 +96,7 @@ pub async fn player(
         params.edit.unwrap_or(false) && editable,
         false,
         can_buyout,
+        can_be_captain,
         stats,
     ))
 }
@@ -332,6 +336,7 @@ pub async fn added_player(
         editable,
         params.edit.unwrap_or(false) && editable,
         can_buy,
+        false,
         false,
         stats,
     ))
