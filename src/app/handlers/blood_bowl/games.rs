@@ -93,7 +93,9 @@ pub struct GameForm {
     pub player_id: Option<i32>,
     pub injury: Option<Injury>,
     pub hatred: Option<Keyword>,
+    pub sent_off: Option<bool>,
     pub success: Option<Success>,
+    pub half_time: Option<String>,
     pub end_game: Option<String>,
     pub first_team_winnings: Option<String>,
     pub first_team_stalled: Option<bool>,
@@ -538,6 +540,27 @@ pub async fn update(
         }
     }
 
+    // Sent-Off
+    if let (Some(team_id), Some(player_id), Some(_sent_off)) =
+        (form.team_id, form.player_id, form.sent_off)
+    {
+        game_to_update
+            .push_sent_off(team_id, player_id)
+            .map_err(|err| {
+                redirect_when_update_ko(
+                    &app_state,
+                    &profile,
+                    Some(&game_before_update),
+                    &competition,
+                    err.to_string(),
+                )
+            })?;
+
+        if let Some(last_event) = game_to_update.events.last() {
+            event = Some(last_event.clone());
+        }
+    }
+
     // Successes
     if let (Some(team_id), Some(player_id), Some(success)) =
         (form.team_id, form.player_id, form.success)
@@ -553,6 +576,23 @@ pub async fn update(
                     err.to_string(),
                 )
             })?;
+
+        if let Some(last_event) = game_to_update.events.last() {
+            event = Some(last_event.clone());
+        }
+    }
+
+    // Half-time
+    if form.half_time.is_some() {
+        game_to_update.end_first_half().map_err(|err| {
+            redirect_when_update_ko(
+                &app_state,
+                &profile,
+                Some(&game_before_update),
+                &competition,
+                err.to_string(),
+            )
+        })?;
 
         if let Some(last_event) = game_to_update.events.last() {
             event = Some(last_event.clone());

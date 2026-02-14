@@ -20,6 +20,23 @@
         {{ second_team_event_controller|escape("none") }}
     </ul>
 
+    {% if ! game.first_half_finished() %}
+    <div class="uk-flex uk-margin-medium-top">
+        <form method="post" autocomplete="off">
+            <input name="game_id"
+                   type="hidden"
+                   value="{{ game.id }}">
+
+            <input name="half_time"
+                   type="hidden"
+                   value="true">
+
+            <button class="uk-button uk-button-primary">
+                Mi-temps
+            </button>
+        </form>
+    </div>
+    {% else %}
     <div class="uk-flex uk-margin-medium-top">
         <form method="post" autocomplete="off">
             <input name="game_id"
@@ -35,6 +52,7 @@
             </button>
         </form>
     </div>
+    {% endif %}
 
     {% when GameStatus::PostGameSequence | GameStatus::WaitingForValidation %}
     {{ post_game_sequence|escape("none") }}

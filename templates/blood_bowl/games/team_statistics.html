@@ -15,6 +15,7 @@
                 {% if Keyword::list(game.version).len() > 0 %}
                 <th>Haines</th>
                 {% endif %}
+                <th>Expulsion</th>
                 <th uk-tooltip="title: Passe précise receptionnée">PAS</th>
                 <th uk-tooltip="title: Lancer superbe d'un coéquipier qui a attérit sur ses pieds">LAN</th>
                 <th uk-tooltip="title: Interception">INT</th>
@@ -57,6 +58,14 @@
                     </a>
                 </td>
                 {% endif %}
+
+                <td class="uk-table-link">
+                    <a class="uk-link-reset" href="{{ added_player_url }}">
+                        {% if game.player_has_been_sent_off(team.id.clone(), player.id.clone()) %}
+                        <span>Expulsé</span>
+                        {% endif %}
+                    </a>
+                </td>
 
                 {% let pas = player_statistics.passing_completions.clone() %}
                 <td class="uk-table-link">
