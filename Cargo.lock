@@ -311,7 +311,7 @@ dependencies = [
 [[package]]
 name = "blood-bowl-rs"
 version = "0.1.0"
-source = "git+https://github.com/Brouclean-Softwares/blood-bowl-rs.git#10f5c232cac46821bb90951c84ca3f94afacc968"
+source = "git+https://github.com/Brouclean-Softwares/blood-bowl-rs.git#a9e9ba0176be5109c8dea2b2b3d27442da66a1bf"
 dependencies = [
  "chrono",
  "convert_case",
