@@ -17,7 +17,6 @@
                     <th>Expulsion</th>
                     <th uk-tooltip="title: Passe précise receptionnée">PAS</th>
                     <th uk-tooltip="title: Lancer superbe d'un coéquipier qui a attérit sur ses pieds">LAN</th>
-                    <th uk-tooltip="title: Détournement de passe">DET</th>
                     <th uk-tooltip="title: Interception">INT</th>
                     <th uk-tooltip="title: Elimination lors d'un blocage">ELI</th>
                     <th uk-tooltip="title: Touchdown">TD</th>
@@ -36,7 +35,7 @@
                             <input name="team_id" type="hidden" value="{{ team.id }}">
                             <input name="player_id" type="hidden" value="{{ player.id }}">
                             <div class="uk-flex-inline">
-                                <select class="uk-select uk-width-small" name="injury" aria-label="">
+                                <select class="uk-select" style="width:100px;" name="injury" aria-label="">
                                     {% for injury in Injury::list(team.version) %}
                                     <option value="{{ injury.type_name() }}">
                                         {{ injury.name("fr") }}
@@ -54,7 +53,7 @@
                             <input name="team_id" type="hidden" value="{{ team.id }}">
                             <input name="player_id" type="hidden" value="{{ player.id }}">
                             <div class="uk-flex-inline">
-                                <select class="uk-select uk-width-small" name="hatred" aria-label="">
+                                <select class="uk-select" style="width:100px;" name="hatred" aria-label="">
                                     {% for keyword in player.available_hatred_names("fr") %}
                                     <option value="{{ keyword.type_name() }}">
                                         {{ keyword.name("fr") }}
@@ -91,15 +90,6 @@
                             <input name="player_id" type="hidden" value="{{ player.id }}">
                             <input name="success" type="hidden" value="{{ Success::ThrowingCompletion.type_name() }}">
                             <button class="uk-button uk-button-default uk-button-small">+LAN</button>
-                        </form>
-                    </td>
-                    <td>
-                        <form method="post" autocomplete="off">
-                            <input name="game_id" type="hidden" value="{{ game.id }}">
-                            <input name="team_id" type="hidden" value="{{ team.id }}">
-                            <input name="player_id" type="hidden" value="{{ player.id }}">
-                            <input name="success" type="hidden" value="{{ Success::Deflection.type_name() }}">
-                            <button class="uk-button uk-button-default uk-button-small">+DET</button>
                         </form>
                     </td>
                     <td>
