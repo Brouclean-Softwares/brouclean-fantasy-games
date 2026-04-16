@@ -24,13 +24,6 @@ Install cargo make
 cargo install cargo-make
 ```
 
-Install cargo shuttle and login
-
-```
-cargo install cargo-shuttle
-cargo shuttle login
-```
-
 ## Install Postgresql locally
 
 Download and install : [https://www.postgresql.org/download/]
