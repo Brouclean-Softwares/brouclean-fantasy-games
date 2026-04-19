@@ -67,6 +67,13 @@ ALTER DATABASE brouclean_fantasy_games OWNER TO devapp;
 \q
 ```
 
+To dump the data from production to local
+
+```
+pg_dump -Fc -h <host> -U <user> <db> > dump.dump
+pg_restore --clean --if-exists --no-owner --no-acl -U devapp -d brouclean_fantasy_games dump.dump
+```
+
 ## VSCode extensions
 
 - rust-analyzer
