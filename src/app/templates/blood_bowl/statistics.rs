@@ -71,7 +71,7 @@ impl From<TeamsTopStatistics> for TeamsTopStatisticsLists {
                 teams_top_statistics.teams_top_injuries,
             ),
             teams_top_deaths: StatisticList::from(
-                String::from("Morts"),
+                String::from("Morts 🪦"),
                 teams_top_statistics.teams_top_deaths,
             ),
         }
