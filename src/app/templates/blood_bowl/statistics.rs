@@ -24,10 +24,11 @@ pub struct TeamsTopStatisticsLists {
     pub teams_top_star_player_points: StatisticList,
     pub teams_top_touchdowns: StatisticList,
     pub teams_top_casualties: StatisticList,
-    pub teams_top_injuries: StatisticList,
     pub teams_top_interceptions: StatisticList,
     pub teams_top_passing_completions: StatisticList,
     pub teams_top_throwing_completions: StatisticList,
+    pub teams_top_injuries: StatisticList,
+    pub teams_top_deaths: StatisticList,
 }
 
 impl From<TeamsTopStatistics> for TeamsTopStatisticsLists {
@@ -53,10 +54,6 @@ impl From<TeamsTopStatistics> for TeamsTopStatisticsLists {
                 String::from("Éliminations (ELI)"),
                 teams_top_statistics.teams_top_casualties,
             ),
-            teams_top_injuries: StatisticList::from(
-                String::from("Blessures avec match raté (RPM)"),
-                teams_top_statistics.teams_top_injuries,
-            ),
             teams_top_interceptions: StatisticList::from(
                 String::from("Interceptions (INT)"),
                 teams_top_statistics.teams_top_interceptions,
@@ -68,6 +65,14 @@ impl From<TeamsTopStatistics> for TeamsTopStatisticsLists {
             teams_top_throwing_completions: StatisticList::from(
                 String::from("Lancers de coéquipier (LAN)"),
                 teams_top_statistics.teams_top_throwing_completions,
+            ),
+            teams_top_injuries: StatisticList::from(
+                String::from("Blessures avec match raté (RPM)"),
+                teams_top_statistics.teams_top_injuries,
+            ),
+            teams_top_deaths: StatisticList::from(
+                String::from("Morts"),
+                teams_top_statistics.teams_top_deaths,
             ),
         }
     }

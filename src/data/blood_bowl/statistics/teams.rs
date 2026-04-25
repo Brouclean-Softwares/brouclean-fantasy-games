@@ -32,10 +32,11 @@ pub struct TeamsTopStatistics {
     pub teams_top_star_player_points: Statistics,
     pub teams_top_touchdowns: Statistics,
     pub teams_top_casualties: Statistics,
-    pub teams_top_injuries: Statistics,
     pub teams_top_interceptions: Statistics,
     pub teams_top_passing_completions: Statistics,
     pub teams_top_throwing_completions: Statistics,
+    pub teams_top_injuries: Statistics,
+    pub teams_top_deaths: Statistics,
 }
 
 impl TeamsTopStatistics {
@@ -46,10 +47,11 @@ impl TeamsTopStatistics {
             teams_top_star_player_points: Statistics::empty(),
             teams_top_touchdowns: Statistics::empty(),
             teams_top_casualties: Statistics::empty(),
-            teams_top_injuries: Statistics::empty(),
             teams_top_interceptions: Statistics::empty(),
             teams_top_passing_completions: Statistics::empty(),
             teams_top_throwing_completions: Statistics::empty(),
+            teams_top_injuries: Statistics::empty(),
+            teams_top_deaths: Statistics::empty(),
         }
     }
 
@@ -60,10 +62,11 @@ impl TeamsTopStatistics {
             teams_top_star_player_points: select_teams_star_player_points_top(state).await?,
             teams_top_touchdowns: select_teams_touchdowns_top(state).await?,
             teams_top_casualties: select_teams_casualties_top(state).await?,
-            teams_top_injuries: select_teams_injuries_top(state).await?,
             teams_top_interceptions: select_teams_interceptions_top(state).await?,
             teams_top_passing_completions: select_teams_passing_completions_top(state).await?,
             teams_top_throwing_completions: select_teams_throwing_completions_top(state).await?,
+            teams_top_injuries: select_teams_injuries_top(state).await?,
+            teams_top_deaths: select_teams_deaths_top(state).await?,
         })
     }
 
@@ -94,8 +97,6 @@ impl TeamsTopStatistics {
                 competition_id,
             )
             .await?,
-            teams_top_injuries: select_teams_injuries_top_for_competition_id(state, competition_id)
-                .await?,
             teams_top_interceptions: select_teams_interceptions_top_for_competition_id(
                 state,
                 competition_id,
@@ -109,6 +110,10 @@ impl TeamsTopStatistics {
             teams_top_throwing_completions:
                 select_teams_throwing_completions_top_for_competition_id(state, competition_id)
                     .await?,
+            teams_top_injuries: select_teams_injuries_top_for_competition_id(state, competition_id)
+                .await?,
+            teams_top_deaths: select_teams_deaths_top_for_competition_id(state, competition_id)
+                .await?,
         })
     }
 }
@@ -504,6 +509,36 @@ pub async fn select_teams_injuries_top(state: &AppState) -> Result<Statistics, A
     })
 }
 
+pub async fn select_teams_deaths_top(state: &AppState) -> Result<Statistics, AppError> {
+    tracing::debug!("select_teams_deaths_top");
+
+    let stats: Vec<StatisticRow> = sqlx::query_as(
+        "SELECT bb_teams.id,
+                    bb_teams.id as team_id,
+                    bb_teams.external_logo_url,
+                    bb_teams.roster,
+                    bb_teams.name,
+                    NULL as position,
+                    CAST(COUNT(bb_players_injuries.injury) as VARCHAR) as statistic_value
+            FROM bb_teams
+            INNER JOIN bb_teams_players
+            ON bb_teams_players.team_id = bb_teams.id
+            INNER JOIN bb_players_injuries
+            ON bb_players_injuries.player_id = bb_teams_players.player_id
+            WHERE bb_players_injuries.injury = 'Dead'
+            GROUP BY bb_teams.id
+            ORDER BY COUNT(bb_players_injuries.injury) DESC
+            LIMIT 5",
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    Ok(Statistics {
+        statistic_element: StatisticElement::Team,
+        statistics_rows: stats,
+    })
+}
+
 pub async fn select_teams_injuries_top_for_competition_id(
     state: &AppState,
     competition_id: i32,
@@ -529,6 +564,46 @@ pub async fn select_teams_injuries_top_for_competition_id(
             INNER JOIN bb_competitions_stages_schedule
             ON bb_competitions_stages_schedule.game_id = bb_players_injuries.game_id
             WHERE bb_competitions_stages_schedule.competition_id = $1
+            GROUP BY bb_teams.id
+            ORDER BY COUNT(bb_players_injuries.injury) DESC
+            LIMIT 5",
+    )
+    .bind(competition_id.clone())
+    .fetch_all(&state.db)
+    .await?;
+
+    Ok(Statistics {
+        statistic_element: StatisticElement::Team,
+        statistics_rows: stats,
+    })
+}
+
+pub async fn select_teams_deaths_top_for_competition_id(
+    state: &AppState,
+    competition_id: i32,
+) -> Result<Statistics, AppError> {
+    tracing::debug!(
+        "select_teams_deaths_top_for_competition_id with competition_id={}",
+        competition_id
+    );
+
+    let stats: Vec<StatisticRow> = sqlx::query_as(
+        "SELECT bb_teams.id,
+                    bb_teams.id as team_id,
+                    bb_teams.external_logo_url,
+                    bb_teams.roster,
+                    bb_teams.name,
+                    NULL as position,
+                    CAST(COUNT(bb_players_injuries.injury) as VARCHAR) as statistic_value
+            FROM bb_teams
+            INNER JOIN bb_teams_players
+            ON bb_teams_players.team_id = bb_teams.id
+            INNER JOIN bb_players_injuries
+            ON bb_players_injuries.player_id = bb_teams_players.player_id
+            INNER JOIN bb_competitions_stages_schedule
+            ON bb_competitions_stages_schedule.game_id = bb_players_injuries.game_id
+            WHERE bb_competitions_stages_schedule.competition_id = $1
+            AND bb_players_injuries.injury = 'Dead'
             GROUP BY bb_teams.id
             ORDER BY COUNT(bb_players_injuries.injury) DESC
             LIMIT 5",
