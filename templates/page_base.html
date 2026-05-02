@@ -12,6 +12,23 @@
     <script src="/assets/js/htmx.min.js"></script>
     <script src="/assets/js/alpine.min.js"></script>
 
+    <script src="/assets/js/tinymce/js/tinymce/tinymce.min.js" referrerpolicy="origin" crossorigin="anonymous"></script>
+    <script>
+        tinymce.init({
+            selector: '.rich_text_zone',
+            plugins: 'link lists',
+            toolbar: `
+                undo redo |
+                formatselect |
+                bold italic underline |
+                alignleft aligncenter alignright |
+                bullist numlist |
+                link unlink
+              `,
+            license_key: 'gpl'
+        });
+    </script>
+
     <link href="/manifest.webmanifest" rel="manifest">
 
     <title>{% block title %}Brouclean Fantasy Games{% endblock %}</title>

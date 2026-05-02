@@ -19,9 +19,15 @@
                         <li><a href="/blood_bowl/rosters">Rosters</a></li>
                         <li><a href="/blood_bowl/stars">Joueurs Stars</a></li>
                         <li class="uk-nav-divider"></li>
-                        <li class="uk-nav-header">Jeux de rôles</li>
-                        <li><a href="#">Star Wars</a></li>
-                        <li><a href="#">Warhammer</a></li>
+                        <li class="uk-nav-header">Jeux de rôle</li>
+                        {% if let Some(user_profile) = profile %}
+                        <li><a href="/role_playing_games">Accueil</a></li>
+                        {% else %}
+                        {% endif %}
+
+                        <li><a href="/role_playing_games/games">Jeux</a></li>
+                        <li><a href="/role_playing_games/campaigns">Campagnes</a></li>
+                        <li><a href="/role_playing_games/characters">Personnages</a></li>
                     </ul>
                 </div>
 
@@ -48,11 +54,17 @@
                             </ul>
                         </div>
                     <li>
-                        <a href="#">Jeux de rôles<span uk-navbar-parent-icon></span></a>
+                        <a href="#">Jeux de rôle<span uk-navbar-parent-icon></span></a>
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">
-                                <li><a href="#">Star Wars</a></li>
-                                <li><a href="#">Warhammer</a></li>
+                                {% if let Some(user_profile) = profile %}
+                                <li><a href="/role_playing_games">Accueil</a></li>
+                                {% else %}
+                                {% endif %}
+
+                                <li><a href="/role_playing_games/games">Jeux</a></li>
+                                <li><a href="/role_playing_games/campaigns">Campagnes</a></li>
+                                <li><a href="/role_playing_games/characters">Personnages</a></li>
                             </ul>
                         </div>
                     </li>

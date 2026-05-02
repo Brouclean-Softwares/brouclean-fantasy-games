@@ -235,7 +235,7 @@ async fn select_by_id(
     staff_needed: bool,
     players_needed: bool,
 ) -> Result<Team, AppError> {
-    tracing::debug!("select_from_id with id={}", id);
+    tracing::debug!("select_by_id with id={}", id);
 
     let team: TeamSummary = sqlx::query_as(
         "SELECT bb_teams.id,

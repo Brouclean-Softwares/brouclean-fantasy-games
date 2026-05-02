@@ -14,7 +14,8 @@
 
     <h3 class="uk-heading-divider">
         <a class="uk-link-reset" href="/blood_bowl">
-            Blood Bowl
+            <span>Blood Bowl</span>
+            <span uk-icon="icon: home"></span>
         </a>
     </h3>
 
@@ -38,13 +39,12 @@
     {{ GamesScheduleTable::from_games_summary(bb_scheduled_games.clone())|escape("none") }}
     {% endif %}
 
-    {% if let Some(bb_owned_teams_block) = bb_owned_teams_block %}
-    <h4 class="uk-heading-divider">
-        Mes équipes
-    </h4>
-
-    {{ bb_owned_teams_block|escape("none") }}
-    {% endif %}
+    <h3 class="uk-heading-divider">
+        <a class="uk-link-reset" href="/role_playing_games">
+            <span>Jeux de rôle</span>
+            <span uk-icon="icon: home"></span>
+        </a>
+    </h3>
 </div>
 
 {% else %}
