@@ -1,0 +1,22 @@
+{% extends "page_base.html" %}
+
+{% block navbar %}
+{{ navigation_bar|escape("none") }}
+{% endblock %}
+
+{% block breadcrumb %}
+{{ breadcrumb|escape("none") }}
+{% endblock %}
+
+{% block body %}
+<h2>
+    Jeux de rôle
+</h2>
+
+<h3 class="uk-heading-divider">
+    Mes personnages
+</h3>
+
+{{ owned_characters_block|escape("none") }}
+
+{% endblock %}

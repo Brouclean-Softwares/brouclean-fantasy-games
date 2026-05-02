@@ -1,0 +1,33 @@
+<div class="uk-overflow-auto">
+    <table class="uk-table uk-table-striped uk-table-small uk-table-hover">
+        <thead>
+        <tr>
+            <th>Nom</th>
+            <th>Jeu</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        {% for character in owned_characters %}
+        <tr>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="/role_playing_games/characters/character?id={{ character.id }}">
+                    {{ character.name }}
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="/role_playing_games/characters/character?id={{ character.id }}">
+                    {{ character.game_name }}
+
+                    {% if let Some(external_logo_url) = character.game_external_logo_url %}
+                    <img src="{{ external_logo_url }}" width="75" height="75" alt="">
+                    {% endif %}
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{{ add_new_character_button|escape("none") }}

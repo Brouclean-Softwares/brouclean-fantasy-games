@@ -1,0 +1,48 @@
+{% if let Some(user_profile) = profile %}
+<div class="uk-margin-top">
+    <button class="uk-button uk-button-primary"
+            type="button"
+            uk-toggle="target: #modal-add_character">
+        Créer un nouveau personnage
+    </button>
+
+    <div id="modal-add_character" uk-modal>
+        <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+            <h2 class="uk-modal-title">Création d'un nouveau personnage</h2>
+            <p>Vous êtes sur le point de créer un nouveau personnage.</p>
+            <p>
+            <form id="add_character_form" action="/role_playing_games/characters" method="post" autocomplete="off" class="uk-form-stacked">
+                <div class="uk-margin">
+                    <label class="uk-form-label" for="name">Quel est son nom ?</label>
+                    <div class="uk-form-controls">
+                        <input class="uk-input"
+                               id="name"
+                               name="name"
+                               type="text"
+                               placeholder="Nom du personnage..."
+                               aria-label="">
+                    </div>
+                </div>
+                <div class="uk-margin">
+                    <label class="uk-form-label" for="game_id">Pour quel jeu ?</label>
+                    <div class="uk-form-controls">
+                        <select class="uk-select" id="game_id" name="game_id">
+                            {% for game in games %}
+                            <option value="{{ game.id }}">{{ game.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </form>
+            </p>
+            <p class="uk-text-right">
+                <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                <button class="uk-button uk-button-primary"
+                        onclick="document.getElementById('add_character_form').submit()">
+                    Créer
+                </button>
+            </p>
+        </div>
+    </div>
+</div>
+{% endif %}

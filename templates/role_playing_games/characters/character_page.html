@@ -1,0 +1,207 @@
+{% extends "page_base.html" %}
+
+{% block navbar %}
+{{ navigation_bar|escape("none") }}
+{% endblock %}
+
+{% block breadcrumb %}
+{{ breadcrumb|escape("none") }}
+{% endblock %}
+
+{% block body %}
+<div>
+    <h2>
+        {% if edit_mode && field_edited.eq("name") %}
+        <form method="post" autocomplete="off">
+            <input type="hidden" name="id" value="{{ character.id }}">
+            <input type="hidden" name="tab_name" value="{{ tab_name }}">
+
+            <div class="uk-inline">
+                <a href="character?id={{ character.id }}&tab_name={{ tab_name}}" class="uk-form-icon uk-form-icon-flip" uk-icon="icon: check"></a>
+                <input class="uk-input"
+                       id="name"
+                       name="name"
+                       type="text"
+                       value="{{ character.name }}"
+                       placeholder="Nom du personnage..."
+                       onchange="submit()"
+                       aria-label="">
+            </div>
+        </form>
+        {% elif editable %}
+        <a class="uk-link-reset" href="character?id={{ character.id }}&tab_name={{ tab_name}}&edit=true&field_edited=name">
+            {{ character.name }}
+        </a>
+        <a href="character?id={{ character.id }}&tab_name={{ tab_name}}&edit=true&field_edited=name" uk-icon="icon: pencil"></a>
+        {% else %}
+        {{ character.name }}
+        {% endif %}
+    </h2>
+
+    <div class="uk-margin-medium-bottom">
+        <ul class="uk-child-width-expand" uk-tab>
+            <li {% if tab_name.eq("info") %}class="uk-active"{% endif %}>
+                <a href="character?id={{ character.id }}&tab_name=info" uk-icon="icon: info">
+                    <span class="uk-visible@m">Informations</span>
+                </a>
+            </li>
+
+            <li {% if tab_name.eq("profile") %}class="uk-active"{% endif %}>
+                <a href="character?id={{ character.id }}&tab_name=profile" uk-icon="icon: file-text">
+                    <span class="uk-visible@m">Profile</span>
+                </a>
+            </li>
+
+            {% if is_owner %}
+            <li {% if tab_name.eq("notes") %}class="uk-active"{% endif %}>
+                <a href="character?id={{ character.id }}&tab_name=notes" uk-icon="icon: file-edit">
+                    <span class="uk-visible@m">Notes</span>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </div>
+
+    {% if tab_name.eq("info") %}
+    <div>
+        <h3>
+            <span>Image et description</span>
+            {% if editable && ! edit_mode %}
+            <a href="character?id={{ character.id }}&tab_name=info&edit=true" uk-icon="icon: pencil"></a>
+            {% endif %}
+        </h3>
+
+        <div>
+            {% if edit_mode %}
+            <form id="update_information_form" method="post" autocomplete="off" class="uk-form-stacked">
+                <input type="hidden" name="id" value="{{ character.id }}">
+                <input type="hidden" name="tab_name" value="info">
+
+                <div class="uk-margin">
+                    <label class="uk-form-label" for="external_image_url">Url de l'image du personnage</label>
+                    <div class="uk-form-controls">
+                        <input class="uk-input uk-form-width-large"
+                               id="external_image_url"
+                               name="external_image_url"
+                               type="url"
+
+                               {% if let Some(external_image_url) = character.external_image_url %}
+                               value="{{ external_image_url }}"
+                               {% endif %}
+
+                               placeholder="Url de l'image du personnage..."
+                               onchange="submit()"
+                               aria-label="">
+                    </div>
+                </div>
+
+                <div class="uk-margin">
+                    <label class="uk-form-label" for="description">Description du personnage</label>
+                    <div class="uk-form-controls">
+                        <textarea class="rich_text_zone"
+                                  id="description"
+                                  name="description"
+                                  placeholder="Description..."
+                                  aria-label="">
+                            {{ character.description }}
+                        </textarea>
+                    </div>
+                </div>
+            </form>
+
+            <p class="uk-margin-top">
+                <a class="uk-button uk-button-default" href="character?id={{ character.id }}&tab_name=info">Annuler</a>
+
+                <button class="uk-button uk-button-primary uk-margin-left"
+                        type="button"
+                        uk-toggle="target: #modal-update-information">Sauvegarder</button>
+
+                <div id="modal-update-information" uk-modal>
+                    <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                        <h2 class="uk-modal-title">Modification des informations</h2>
+                        <p>Confirmez-vous la modification de la description et de l'image du personnage ?</p>
+                        <p class="uk-text-right">
+                            <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                            <button class="uk-button uk-button-primary"
+                                    onclick="document.getElementById('update_information_form').submit()">
+                                Confirmer
+                            </button>
+                        </p>
+                    </div>
+                </div>
+            </p>
+            {% else %}
+
+            {% if let Some(external_image_url) = character.external_image_url %}
+            <img src="{{ external_image_url }}" class="uk-float-left uk-margin-right uk-margin-bottom" width="50%" alt="">
+            {% endif %}
+
+            <p>{{ character.description|escape("none") }}</p>
+
+            {% endif %}
+        </div>
+    </div>
+
+    {% elif tab_name.eq("profile") %}
+    <div>
+        A venir...
+    </div>
+
+    {% elif tab_name.eq("notes") && is_owner %}
+    <div>
+        <h3>
+            <span>Notes personnelles</span>
+            {% if editable && ! edit_mode %}
+            <a href="character?id={{ character.id }}&tab_name=notes&edit=true" uk-icon="icon: pencil"></a>
+            {% endif %}
+        </h3>
+
+        <div>
+            {% if edit_mode %}
+            <form id="update_notes_form" method="post" autocomplete="off" class="uk-form-stacked">
+                <input type="hidden" name="id" value="{{ character.id }}">
+                <input type="hidden" name="tab_name" value="notes">
+
+                <div class="uk-margin">
+                    <div class="uk-form-controls">
+                        <textarea class="rich_text_zone"
+                                  id="notes"
+                                  name="notes"
+                                  placeholder="Notes..."
+                                  aria-label="">
+                            {{ character.notes }}
+                        </textarea>
+                    </div>
+                </div>
+            </form>
+
+            <p class="uk-margin-top">
+                <a class="uk-button uk-button-default" href="character?id={{ character.id }}&tab_name=info">Annuler</a>
+
+                <button class="uk-button uk-button-primary uk-margin-left"
+                        type="button"
+                        uk-toggle="target: #modal-update-notes">Sauvegarder</button>
+
+            <div id="modal-update-notes" uk-modal>
+                <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                    <h2 class="uk-modal-title">Modification des notes</h2>
+                    <p>Confirmez-vous la modification de vos notes personnelles ?</p>
+                    <p class="uk-text-right">
+                        <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                        <button class="uk-button uk-button-primary"
+                                onclick="document.getElementById('update_notes_form').submit()">
+                            Confirmer
+                        </button>
+                    </p>
+                </div>
+            </div>
+            </p>
+            {% else %}
+            <p>{{ character.notes|escape("none") }}</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

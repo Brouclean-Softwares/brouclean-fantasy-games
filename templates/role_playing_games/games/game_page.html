@@ -1,0 +1,129 @@
+{% extends "page_base.html" %}
+
+{% block navbar %}
+{{ navigation_bar|escape("none") }}
+{% endblock %}
+
+{% block breadcrumb %}
+{{ breadcrumb|escape("none") }}
+{% endblock %}
+
+{% block body %}
+<div>
+    <h2>
+        {% if edit_mode && field_edited.eq("name") %}
+        <form method="post" autocomplete="off">
+            <input type="hidden" name="id" value="{{ game.id }}">
+
+            <div class="uk-inline">
+                <a href="game?id={{ game.id }}" class="uk-form-icon uk-form-icon-flip" uk-icon="icon: check"></a>
+                <input class="uk-input"
+                       id="name"
+                       name="name"
+                       type="text"
+                       value="{{ game.name }}"
+                       placeholder="Nom du jeu..."
+                       onchange="submit()"
+                       aria-label="">
+            </div>
+        </form>
+        {% elif editable %}
+        <a class="uk-link-reset" href="game?id={{ game.id }}&edit=true&field_edited=name">
+            {{ game.name }}
+        </a>
+        <a href="game?id={{ game.id }}&edit=true&field_edited=name" uk-icon="icon: pencil"></a>
+        {% else %}
+        {{ game.name }}
+        {% endif %}
+    </h2>
+
+    <dl class="uk-description-list">
+        <h3>
+            <span>Logo</span>
+            {% if editable && !(edit_mode && field_edited.eq("external_logo_url")) %}
+            <a href="game?id={{ game.id }}&edit=true&field_edited=external_logo_url" uk-icon="icon: pencil"></a>
+            {% endif %}
+        </h3>
+        <div>
+            {% if edit_mode && field_edited.eq("external_logo_url") %}
+            <form method="post" autocomplete="off">
+                <input type="hidden" name="id" value="{{ game.id }}">
+
+                <div class="uk-inline">
+                    <a href="game?id={{ game.id }}" class="uk-form-icon uk-form-icon-flip" uk-icon="icon: check"></a>
+                    <input class="uk-input uk-form-width-large"
+                           id="external_logo_url"
+                           name="external_logo_url"
+                           type="url"
+
+                           {% if let Some(external_logo_url) = game.external_logo_url %}
+                           value="{{ external_logo_url }}"
+                           {% endif %}
+
+                           placeholder="Url de l'image du jeu..."
+                           onchange="submit()"
+                           aria-label="">
+                </div>
+            </form>
+            {% else %}
+
+            {% if let Some(external_logo_url) = game.external_logo_url %}
+            <img src="{{ external_logo_url }}" width="50%" alt="">
+            {% else %}
+            Non spécifié
+            {% endif %}
+
+            {% endif %}
+        </div>
+
+        <h3>Système de règles</h3>
+        <p>Non spécifié</p>
+
+        <h3>
+            <span>Description</span>
+            {% if editable && !(edit_mode && field_edited.eq("description")) %}
+            <a href="game?id={{ game.id }}&edit=true&field_edited=description" uk-icon="icon: pencil"></a>
+            {% endif %}
+        </h3>
+        <div>
+            {% if edit_mode && field_edited.eq("description") %}
+            <form id="update_description_form" method="post" autocomplete="off">
+                <input type="hidden" name="id" value="{{ game.id }}">
+
+                <textarea class="rich_text_zone"
+                          id="description"
+                          name="description"
+                          placeholder="Description..."
+                          aria-label="">
+                    {{ game.description }}
+                </textarea>
+            </form>
+
+            <p class="uk-margin-top">
+                <a class="uk-button uk-button-default" href="game?id={{ game.id }}">Annuler</a>
+
+                <button class="uk-button uk-button-primary uk-margin-left"
+                        type="button"
+                        uk-toggle="target: #modal-update-description">Sauvegarder</button>
+
+                <div id="modal-update-description" uk-modal>
+                    <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                        <h2 class="uk-modal-title">Modification de la description</h2>
+                        <p>Confirmez-vous la modification de la description du jeu ?</p>
+                        <p class="uk-text-right">
+                            <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                            <button class="uk-button uk-button-primary"
+                                    onclick="document.getElementById('update_description_form').submit()">
+                                Confirmer
+                            </button>
+                        </p>
+                    </div>
+                </div>
+            </p>
+            {% else %}
+            {{ game.description|escape("none") }}
+            {% endif %}
+        </div>
+    </dl>
+</div>
+{% endblock %}

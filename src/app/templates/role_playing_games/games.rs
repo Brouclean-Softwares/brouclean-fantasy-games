@@ -1,0 +1,61 @@
+use crate::app::templates::{role_playing_games, BreadCrumb, NavigationBar, UrlLink};
+use crate::data::role_playing_games::games::Game;
+use crate::data::users::User;
+use crate::AppState;
+use askama::Template;
+use askama_web::WebTemplate;
+
+pub fn breadcrumb() -> BreadCrumb {
+    role_playing_games::breadcrumb().plus_link(UrlLink::from("Jeux", "/role_playing_games/games"))
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "role_playing_games/games/games_page.html")]
+pub struct GamesPage {
+    navigation_bar: NavigationBar,
+    breadcrumb: BreadCrumb,
+    profile: Option<User>,
+    games: Vec<Game>,
+}
+
+impl GamesPage {
+    pub fn get(app_state: AppState, profile: Option<User>, games: Vec<Game>) -> Self {
+        Self {
+            navigation_bar: NavigationBar::get(&app_state, &profile),
+            breadcrumb: role_playing_games::breadcrumb(),
+            profile,
+            games,
+        }
+    }
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "role_playing_games/games/game_page.html")]
+pub struct GamePage {
+    navigation_bar: NavigationBar,
+    breadcrumb: BreadCrumb,
+    game: Game,
+    editable: bool,
+    edit_mode: bool,
+    field_edited: String,
+}
+
+impl GamePage {
+    pub fn get(
+        app_state: AppState,
+        profile: Option<User>,
+        game: Game,
+        editable: bool,
+        edit_mode: bool,
+        field_edited: Option<String>,
+    ) -> Self {
+        Self {
+            navigation_bar: NavigationBar::get(&app_state, &profile),
+            breadcrumb: breadcrumb(),
+            game,
+            editable,
+            edit_mode,
+            field_edited: field_edited.unwrap_or_default(),
+        }
+    }
+}
