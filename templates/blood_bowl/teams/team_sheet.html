@@ -124,37 +124,11 @@
                 {% let player_url = format!("../players/player?player_id={}&team_id={}", player.id, team_id) %}
 
                 <tr>
-                    {% if edit_mode %}
-                    <td>
-                        <form method="post" autocomplete="off">
-                            <input name="player_id" type="hidden" value="{{ player.id }}">
-
-                            <div class="uk-inline">
-                                <span class="uk-form-icon uk-form-icon-flip" uk-icon="icon: check"></span>
-                                <input class="uk-input"
-                                       style="width: 70px;"
-                                       id="player_{{ player.id }}_number"
-                                       name="player_number"
-                                       type="text"
-                                       value="{{ number }}"
-                                       placeholder="Numéro du joueur..."
-                                       onchange="submit()"
-                                       aria-label="">
-                            </div>
-                        </form>
-                    </td>
-                    {% elif editable %}
                     <td class="uk-table-link">
-                        <a class="uk-link-reset" href="team?id={{ team.id }}&edit=true&focus=player_{{ player.id }}_number">
+                        <a class="uk-link-reset" href="{{ player_url }}">
                             <span class="uk-text-meta">{{ number }}</span>
                         </a>
                     </td>
-                    {% else %}
-                    <td>
-                        <span class="uk-text-meta">{{ number }}</span>
-                    </td>
-                    {% endif %}
-
                     <td class="uk-table-link">
                         <a class="uk-link-reset" href="{{ player_url }}">
                             {{ player.name }}

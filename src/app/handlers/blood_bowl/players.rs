@@ -222,10 +222,8 @@ pub async fn update_player(
     }
 
     Ok(Redirect::to(&format!(
-        "./player?player_id={}&team_id={}&edit={}",
-        params.player_id,
-        params.team_id,
-        params.edit.unwrap_or(false),
+        "./player?player_id={}&team_id={}",
+        params.player_id, params.team_id,
     )))
 }
 

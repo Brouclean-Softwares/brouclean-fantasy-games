@@ -24,25 +24,28 @@
         <div class="uk-width-expand">
             <h2 class="uk-margin-remove-bottom">
 
-                {% if edit_mode %}
+                {% if edit_mode && field_edited.eq("name") %}
                     <form method="post" autocomplete="off">
                         <div class="uk-inline">
-                            <a href="team?id={{ team.id }}" class="uk-form-icon uk-form-icon-flip" uk-icon="icon: check"></a>
-                            <input class="uk-input"
+                            <input class="uk-input uk-form-width-large"
                                    id="team_name"
                                    name="team_name"
                                    type="text"
                                    value="{{ team.name }}"
                                    placeholder="Nom de l'équipe..."
-                                   onchange="submit()"
                                    aria-label="">
+
+                            <a href="team?id={{ team.id }}" uk-icon="icon: close"></a>
+                            <button class="uk-button uk-button-link" type="button" onclick="submit()">
+                                <span uk-icon="icon: check"></span>
+                            </button>
                         </div>
                     </form>
                 {% elif editable %}
-                <a class="uk-link-reset" href="team?id={{ team.id }}&edit=true">
+                <a class="uk-link-reset" href="team?id={{ team.id }}&edit=true&field_edited=name">
                     {{ team.name }}
                 </a>
-                <a href="team?id={{ team.id }}&edit=true" uk-icon="icon: pencil"></a>
+                <a href="team?id={{ team.id }}&edit=true&field_edited=name" uk-icon="icon: pencil"></a>
                 {% else %}
                     {{ team.name }}
                 {% endif %}
@@ -139,12 +142,4 @@
     </div>
 
 </div>
-
-{% if let Some(focus) = focus %}
-<script>
-    window.onload = function() {
-        document.getElementById('{{ focus }}').focus();
-    }
-</script>
-{% endif %}
 {% endblock %}

@@ -16,15 +16,18 @@
             <input type="hidden" name="id" value="{{ game.id }}">
 
             <div class="uk-inline">
-                <a href="game?id={{ game.id }}" class="uk-form-icon uk-form-icon-flip" uk-icon="icon: check"></a>
-                <input class="uk-input"
+                <input class="uk-input uk-form-width-large"
                        id="name"
                        name="name"
                        type="text"
                        value="{{ game.name }}"
                        placeholder="Nom du jeu..."
-                       onchange="submit()"
                        aria-label="">
+
+                <a href="game?id={{ game.id }}" uk-icon="icon: close"></a>
+                <button class="uk-button uk-button-link" type="button" onclick="submit()">
+                    <span uk-icon="icon: check"></span>
+                </button>
             </div>
         </form>
         {% elif editable %}
@@ -50,7 +53,6 @@
                 <input type="hidden" name="id" value="{{ game.id }}">
 
                 <div class="uk-inline">
-                    <a href="game?id={{ game.id }}" class="uk-form-icon uk-form-icon-flip" uk-icon="icon: check"></a>
                     <input class="uk-input uk-form-width-large"
                            id="external_logo_url"
                            name="external_logo_url"
@@ -61,8 +63,12 @@
                            {% endif %}
 
                            placeholder="Url de l'image du jeu..."
-                           onchange="submit()"
                            aria-label="">
+
+                    <a href="game?id={{ game.id }}" uk-icon="icon: close"></a>
+                    <button class="uk-button uk-button-link" type="button" onclick="submit()">
+                        <span uk-icon="icon: check"></span>
+                    </button>
                 </div>
             </form>
             {% else %}

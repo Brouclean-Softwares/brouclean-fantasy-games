@@ -172,7 +172,7 @@ pub struct TeamQueryParams {
     pub id: i32,
     pub alert_message: Option<String>,
     pub edit: Option<bool>,
-    pub focus: Option<String>,
+    pub field_edited: Option<String>,
 }
 
 pub async fn team(
@@ -261,7 +261,7 @@ pub async fn team(
         games_played,
         roster_definition,
         edit_mode,
-        params.focus,
+        params.field_edited,
         positions_buyable,
         victories,
         draws,
@@ -275,8 +275,6 @@ pub async fn team(
 #[derive(Deserialize)]
 pub struct TeamForm {
     pub team_name: Option<String>,
-    pub player_id: Option<i32>,
-    pub player_number: Option<i32>,
     pub staff_to_buy: Option<Staff>,
     pub position_to_buy: Option<Position>,
     pub player_id_to_buyout: Option<i32>,
@@ -303,30 +301,6 @@ pub async fn update(
             })?;
 
         return Ok(Redirect::to(&format!("./team?id={}", params.id,)));
-    }
-
-    // Player number
-    if let (Some(profile), Some(player_id), Some(player_number)) =
-        (profile.clone(), form.player_id, form.player_number)
-    {
-        players::update_number(&app_state, &profile, &params.id, &player_id, &player_number)
-            .await
-            .or_else(|app_error| {
-                Err(Redirect::to(&format!(
-                    "./team?id={}&message={}&edit={}&focus=player_{}_number",
-                    params.id,
-                    app_error,
-                    params.edit.unwrap_or(false),
-                    player_id,
-                )))
-            })?;
-
-        return Ok(Redirect::to(&format!(
-            "./team?id={}&edit={}&focus=player_{}_number",
-            params.id,
-            params.edit.unwrap_or(false),
-            player_id,
-        )));
     }
 
     // Buy Staff
