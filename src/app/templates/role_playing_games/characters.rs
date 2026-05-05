@@ -75,11 +75,6 @@ impl CharacterPage {
         edit_mode: bool,
         field_edited: Option<String>,
     ) -> Self {
-        let is_owner = match (&character.user, &profile) {
-            (Some(owner), Some(connected_user)) => owner.id.eq(&connected_user.id),
-            (_, _) => false,
-        };
-
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
             breadcrumb: breadcrumb(),
@@ -88,7 +83,7 @@ impl CharacterPage {
             editable,
             edit_mode,
             field_edited: field_edited.unwrap_or_default(),
-            is_owner,
+            is_owner: editable,
         }
     }
 }

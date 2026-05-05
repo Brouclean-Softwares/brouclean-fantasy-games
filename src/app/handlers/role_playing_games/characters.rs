@@ -47,12 +47,17 @@ pub async fn character(
         .await
         .map_err(|_| Redirect::to("/role_playing_games/characters"))?;
 
+    let is_owner = match (&character.user, &profile) {
+        (Some(owner), Some(connected_user)) => owner.id.eq(&connected_user.id),
+        (_, _) => false,
+    };
+
     Ok(CharacterPage::get(
         app_state,
         profile.clone(),
         character,
         params.tab_name,
-        profile.is_some(),
+        is_owner,
         params.edit.unwrap_or(false) && profile.is_some(),
         params.field_edited,
     ))
