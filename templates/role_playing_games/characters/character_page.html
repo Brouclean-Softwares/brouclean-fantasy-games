@@ -16,16 +16,19 @@
             <input type="hidden" name="id" value="{{ character.id }}">
             <input type="hidden" name="tab_name" value="{{ tab_name }}">
 
-            <div class="uk-inline">
-                <a href="character?id={{ character.id }}&tab_name={{ tab_name}}" class="uk-form-icon uk-form-icon-flip" uk-icon="icon: check"></a>
-                <input class="uk-input"
+            <div>
+                <input class="uk-input uk-form-width-large"
                        id="name"
                        name="name"
                        type="text"
                        value="{{ character.name }}"
                        placeholder="Nom du personnage..."
-                       onchange="submit()"
                        aria-label="">
+
+                <a href="character?id={{ character.id }}&tab_name={{ tab_name}}" uk-icon="icon: close"></a>
+                <button class="uk-button uk-button-link" type="button" onclick="submit()">
+                    <span uk-icon="icon: check"></span>
+                </button>
             </div>
         </form>
         {% elif editable %}
@@ -66,13 +69,13 @@
     <div>
         <h3>
             <span>Image et description</span>
-            {% if editable && ! edit_mode %}
-            <a href="character?id={{ character.id }}&tab_name=info&edit=true" uk-icon="icon: pencil"></a>
+            {% if editable && ! field_edited.eq("info") %}
+            <a href="character?id={{ character.id }}&tab_name=info&edit=true&field_edited=info" uk-icon="icon: pencil"></a>
             {% endif %}
         </h3>
 
         <div>
-            {% if edit_mode %}
+            {% if edit_mode && field_edited.eq("info") %}
             <form id="update_information_form" method="post" autocomplete="off" class="uk-form-stacked">
                 <input type="hidden" name="id" value="{{ character.id }}">
                 <input type="hidden" name="tab_name" value="info">
@@ -110,7 +113,7 @@
             </form>
 
             <p class="uk-margin-top">
-                <a class="uk-button uk-button-default" href="character?id={{ character.id }}&tab_name=info">Annuler</a>
+                <a class="uk-button uk-button-default" href="character?id={{ character.id }}&tab_name={{ tab_name}}">Annuler</a>
 
                 <button class="uk-button uk-button-primary uk-margin-left"
                         type="button"
@@ -151,13 +154,13 @@
     <div>
         <h3>
             <span>Notes personnelles</span>
-            {% if editable && ! edit_mode %}
-            <a href="character?id={{ character.id }}&tab_name=notes&edit=true" uk-icon="icon: pencil"></a>
+            {% if editable && ! field_edited.eq("notes") %}
+            <a href="character?id={{ character.id }}&tab_name=notes&edit=true&field_edited=notes" uk-icon="icon: pencil"></a>
             {% endif %}
         </h3>
 
         <div>
-            {% if edit_mode %}
+            {% if edit_mode && field_edited.eq("notes") %}
             <form id="update_notes_form" method="post" autocomplete="off" class="uk-form-stacked">
                 <input type="hidden" name="id" value="{{ character.id }}">
                 <input type="hidden" name="tab_name" value="notes">
@@ -176,7 +179,7 @@
             </form>
 
             <p class="uk-margin-top">
-                <a class="uk-button uk-button-default" href="character?id={{ character.id }}&tab_name=info">Annuler</a>
+                <a class="uk-button uk-button-default" href="character?id={{ character.id }}&tab_name={{ tab_name}}">Annuler</a>
 
                 <button class="uk-button uk-button-primary uk-margin-left"
                         type="button"
