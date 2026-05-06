@@ -49,33 +49,36 @@
                     {{ competition.version.name("fr") }}</dd>
                 {% endif %}
 
-            <dt>Description</dt>
+            <dt>
+                Description
+
+                {% if editable && ! field_edited.eq("description") %}
+                <a href="{{ link_url }}&edit=true&field_edited=description" uk-icon="icon: pencil"></a>
+                {% endif %}
+            </dt>
             <dd>
                 {% if edit_mode && field_edited.eq("description") %}
                 <form method="post" autocomplete="off">
-                    <div class="uk-inline">
-                        <input class="uk-input uk-form-width-large"
-                               name="competition_description"
-                               type="text"
-                               value="{{ competition.description }}"
-                               placeholder="Description..."
-                               aria-label="">
+                    <textarea class="rich_text_zone"
+                              id="competition_description"
+                              name="competition_description"
+                              placeholder="Description..."
+                              aria-label="">
+                        {{ competition.description }}
+                    </textarea>
 
-                        <a href="{{ link_url }}" uk-icon="icon: close"></a>
-                        <button class="uk-button uk-button-link" type="button" onclick="submit()">
-                            <span uk-icon="icon: check"></span>
+                    <div class="uk-margin-top">
+                        <a class="uk-button uk-button-default" href="{{ link_url }}">Annuler</a>
+
+                        <button class="uk-button uk-button-primary uk-margin-left"
+                                type="button"
+                                onclick="submit()">
+                            Sauvegarder
                         </button>
                     </div>
                 </form>
-
-                {% elif editable %}
-                <a class="uk-link-reset" href="{{ link_url }}&edit=true&field_edited=description">
-                    {{ competition.description }}
-                </a>
-                <a href="{{ link_url }}&edit=true&field_edited=description" uk-icon="icon: pencil"></a>
-
                 {% else %}
-                    {{ competition.description }}
+                    {{ competition.description|escape("none") }}
                 {% endif %}
             </dd>
         </dl>
