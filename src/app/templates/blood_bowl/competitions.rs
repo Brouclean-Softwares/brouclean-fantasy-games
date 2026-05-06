@@ -62,6 +62,7 @@ pub struct CompetitionPage {
     competition: Competition,
     editable: bool,
     edit_mode: bool,
+    field_edited: String,
     tab: Option<String>,
     link_url: String,
     information: CompetitionInformationTab,
@@ -79,6 +80,7 @@ impl CompetitionPage {
         teams_top_statistics: TeamsTopStatisticsLists,
         players_top_statistics: PlayersTopStatisticsLists,
         edit_mode: bool,
+        field_edited: Option<String>,
         tab: Option<String>,
     ) -> Result<Self, AppError> {
         let competition_id = competition.id;
@@ -100,6 +102,7 @@ impl CompetitionPage {
             competition: competition.clone(),
             editable,
             edit_mode,
+            field_edited: field_edited.clone().unwrap_or_default(),
             tab,
             link_url: link_url.clone(),
             information: CompetitionInformationTab {
@@ -115,6 +118,7 @@ impl CompetitionPage {
                 profile,
                 editable,
                 edit_mode,
+                field_edited: field_edited.unwrap_or_default(),
                 link_url,
                 team_selector: TeamSelector::get("team_to_registered_id".to_string()),
             },
@@ -142,6 +146,7 @@ pub struct CompetitionInformationTab {
     profile: Option<User>,
     editable: bool,
     edit_mode: bool,
+    field_edited: String,
     link_url: String,
     team_selector: TeamSelector,
 }

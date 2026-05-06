@@ -19,11 +19,10 @@
 
             <dt>Version des règles</dt>
             <dd>
-                {% if edit_mode %}
+                {% if edit_mode && field_edited.eq("version") %}
                 <form method="post" autocomplete="off">
                     <select name="competition_version"
                             class="uk-select uk-form-width-large"
-                            onchange="submit()"
                             aria-label="Select">
 
                         {% for version in Version::list() %}
@@ -33,13 +32,18 @@
                         {% endfor %}
 
                     </select>
+
+                    <a href="{{ link_url }}" uk-icon="icon: close"></a>
+                    <button class="uk-button uk-button-link" type="button" onclick="submit()">
+                        <span uk-icon="icon: check"></span>
+                    </button>
                 </form>
 
                 {% elif editable %}
-                <a class="uk-link-reset" href="{{ link_url }}&edit=true">
+                <a class="uk-link-reset" href="{{ link_url }}&edit=true&field_edited=version">
                     {{ competition.version.name("fr") }}
                 </a>
-                <a href="{{ link_url }}&edit=true" uk-icon="icon: pencil"></a>
+                <a href="{{ link_url }}&edit=true&field_edited=version" uk-icon="icon: pencil"></a>
 
                 {% else %}
                     {{ competition.version.name("fr") }}</dd>
@@ -47,25 +51,28 @@
 
             <dt>Description</dt>
             <dd>
-                {% if edit_mode %}
+                {% if edit_mode && field_edited.eq("description") %}
                 <form method="post" autocomplete="off">
                     <div class="uk-inline">
-                        <a href="{{ link_url }}" class="uk-form-icon uk-form-icon-flip" uk-icon="icon: check"></a>
                         <input class="uk-input uk-form-width-large"
                                name="competition_description"
                                type="text"
                                value="{{ competition.description }}"
                                placeholder="Description..."
-                               onchange="submit()"
                                aria-label="">
+
+                        <a href="{{ link_url }}" uk-icon="icon: close"></a>
+                        <button class="uk-button uk-button-link" type="button" onclick="submit()">
+                            <span uk-icon="icon: check"></span>
+                        </button>
                     </div>
                 </form>
 
                 {% elif editable %}
-                <a class="uk-link-reset" href="{{ link_url }}&edit=true">
+                <a class="uk-link-reset" href="{{ link_url }}&edit=true&field_edited=description">
                     {{ competition.description }}
                 </a>
-                <a href="{{ link_url }}&edit=true" uk-icon="icon: pencil"></a>
+                <a href="{{ link_url }}&edit=true&field_edited=description" uk-icon="icon: pencil"></a>
 
                 {% else %}
                     {{ competition.description }}

@@ -92,12 +92,12 @@ impl Competition {
         }
     }
 
-    pub fn new(creator: Option<User>) -> Self {
+    pub fn new(creator: User, name: String) -> Self {
         Self {
             id: 0,
-            name: "".to_string(),
+            name,
             edition_number: 1,
-            director: creator,
+            director: Some(creator),
             version: Version::LAST_VERSION,
             description: "".to_string(),
             started: false,
@@ -107,13 +107,17 @@ impl Competition {
         }
     }
 
+    pub fn is_new(&self) -> bool {
+        self.id.eq(&0)
+    }
+
     pub async fn save(&mut self, state: &AppState, connected_user: &User) -> Result<(), AppError> {
         tracing::debug!("save by user={:?} with id={}", connected_user, self.id);
 
         let editions = self.select_editions(state).await?;
 
         if let Some(director) = &self.director {
-            if self.id > 0 {
+            if !self.is_new() {
                 if connected_user.eq(director) {
                     let edition_number = if let Some(position) = editions
                         .iter()

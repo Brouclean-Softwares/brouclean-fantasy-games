@@ -20,8 +20,7 @@ use serde::Deserialize;
 
 pub fn init_router() -> Router<AppState> {
     Router::new()
-        .route("/", get(competitions))
-        .route("/new", get(new).post(save))
+        .route("/", get(competitions).post(new))
         .route("/delete", post(delete))
         .route("/competition", get(competition).post(save))
         .route("/add_stage", post(add_stage))
@@ -64,37 +63,11 @@ pub async fn competitions(
     ))
 }
 
-pub async fn new(
-    State(app_state): State<AppState>,
-    profile: Option<User>,
-) -> Result<CompetitionPage, Redirect> {
-    if profile.is_some() {
-        let competition = Competition::new(profile.clone());
-
-        Ok(CompetitionPage::get(
-            app_state,
-            profile,
-            None,
-            competition,
-            TeamsTopStatistics::empty().into(),
-            PlayersTopStatistics::empty().into(),
-            true,
-            None,
-        )
-        .await
-        .map_err(|error| {
-            tracing::debug!("competition: Error: {}", error);
-            Redirect::to("../competitions")
-        })?)
-    } else {
-        Err(Redirect::to("../competitions"))
-    }
-}
-
 #[derive(Deserialize)]
 pub struct CompetitionQueryParams {
     pub id: Option<i32>,
     pub edit: Option<bool>,
+    pub field_edited: Option<String>,
     pub alert_message: Option<String>,
     pub tab: Option<String>,
 }
@@ -140,6 +113,7 @@ pub async fn competition(
             teams_top_statistics.into(),
             players_top_statistics.into(),
             params.edit.unwrap_or(false),
+            params.field_edited,
             params.tab,
         )
         .await
@@ -154,6 +128,29 @@ pub struct CompetitionForm {
     pub competition_name: Option<String>,
     pub competition_description: Option<String>,
     pub competition_version: Option<Version>,
+}
+
+pub async fn new(
+    State(app_state): State<AppState>,
+    profile: User,
+    Form(form): Form<CompetitionForm>,
+) -> Result<Redirect, Redirect> {
+    let mut competition =
+        Competition::new(profile.clone(), form.competition_name.unwrap_or_default());
+
+    competition
+        .save(&app_state, &profile)
+        .await
+        .map_err(|_| Redirect::to("./competitions"))?;
+
+    if competition.is_new() {
+        Err(Redirect::to("./competitions"))
+    } else {
+        Ok(Redirect::to(&format!(
+            "./competitions/competition?id={}",
+            competition.id,
+        )))
+    }
 }
 
 pub async fn save(
@@ -177,7 +174,7 @@ pub async fn save(
             .map_err(error_handler)?
             .ok_or(Redirect::to("../competitions"))?
     } else {
-        Competition::new(Some(profile.clone()))
+        Competition::new(profile.clone(), "".to_string())
     };
 
     // Name

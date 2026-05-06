@@ -21,25 +21,28 @@
 <div x-data="{ tab: '{{ tab_name }}' }">
 
     <h2 class="uk-margin-medium-bottom">
-        {% if edit_mode %}
+        {% if edit_mode && field_edited.eq("name") %}
         <form method="post" autocomplete="off">
             <div class="uk-inline">
-                <a href="{{ link_url }}" class="uk-form-icon uk-form-icon-flip" uk-icon="icon: check"></a>
                 <input class="uk-input uk-form-width-large"
                        name="competition_name"
                        type="text"
                        value="{{ competition.name }}"
                        placeholder="Nom de la compétition..."
-                       onchange="submit()"
                        aria-label="">
             </div>
+
+            <a href="{{ link_url }}" uk-icon="icon: close"></a>
+            <button class="uk-button uk-button-link" type="button" onclick="submit()">
+                <span uk-icon="icon: check"></span>
+            </button>
         </form>
 
         {% elif editable %}
-        <a class="uk-link-reset" href="{{ link_url }}&edit=true">
+        <a class="uk-link-reset" href="{{ link_url }}&edit=true&field_edited=name">
             {{ competition.name() }}
         </a>
-        <a href="{{ link_url }}&edit=true" uk-icon="icon: pencil"></a>
+        <a href="{{ link_url }}&edit=true&field_edited=name" uk-icon="icon: pencil"></a>
 
         {% else %}
             {{ competition.name() }}
