@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS rpg_characters (
 CREATE TABLE IF NOT EXISTS rpg_characters_profiles (
     id SERIAL PRIMARY KEY,
     character_id INTEGER REFERENCES rpg_characters ON DELETE CASCADE,
-    profile TEXT DEFAULT NULL,
+    profile JSONB DEFAULT NULL,
     current_profile BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     closed_at TIMESTAMP WITH TIME ZONE,

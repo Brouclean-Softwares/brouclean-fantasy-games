@@ -8,7 +8,6 @@ pub enum CharacterProfile {
 }
 
 /*
-
     #[serde(rename = "WarhammerV1CharacterSheet")]
     WarhammerV1CharacterSheet {
         // Description
@@ -52,35 +51,14 @@ enum CharacterProfile {
     #[serde(other)]
     Unknown,
 }
-
------------------------ Sérialisation (Rust → JSON)
-
-fn main() {
-    let profile = CharacterProfile::Warhammer {
-        strength: 40,
-        toughness: 30,
-        agility: 25,
-    };
-
-    let json = serde_json::to_string_pretty(&profile).unwrap();
-
-    println!("{}", json);
-}
-
--------------------------- Désérialisation (JSON → Rust)
-
-fn main() {
-    let data = r#"
-    {
-        "type": "starwars",
-        "force_sensitive": true,
-        "midichlorians": 12000
-    }
-    "#;
-
-    let profile: CharacterProfile =
-        serde_json::from_str(data).unwrap();
-
-    println!("{:?}", profile);
-}
  */
+
+impl CharacterProfile {
+    pub fn to_json(&self) -> Option<String> {
+        serde_json::to_string_pretty(self).ok()
+    }
+
+    pub fn from_json(json: &String) -> Option<Self> {
+        serde_json::from_str(json).ok()
+    }
+}
