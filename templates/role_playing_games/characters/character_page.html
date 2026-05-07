@@ -55,13 +55,11 @@
                 </a>
             </li>
 
-            {% if is_owner %}
             <li {% if tab_name.eq("notes") %}class="uk-active"{% endif %}>
                 <a href="character?id={{ character.id }}&tab_name=notes" uk-icon="icon: file-edit">
                     <span class="uk-visible@m">Notes</span>
                 </a>
             </li>
-            {% endif %}
         </ul>
     </div>
 
@@ -150,29 +148,29 @@
         A venir...
     </div>
 
-    {% elif tab_name.eq("notes") && is_owner %}
+    {% elif tab_name.eq("notes") %}
     <div>
         <h3>
-            <span>Notes personnelles</span>
-            {% if editable && ! field_edited.eq("notes") %}
-            <a href="character?id={{ character.id }}&tab_name=notes&edit=true&field_edited=notes" uk-icon="icon: pencil"></a>
+            <span>Notes publiques</span>
+            {% if editable && ! field_edited.eq("public_note") %}
+            <a href="character?id={{ character.id }}&tab_name=notes&edit=true&field_edited=public_note" uk-icon="icon: pencil"></a>
             {% endif %}
         </h3>
 
         <div>
-            {% if edit_mode && field_edited.eq("notes") %}
-            <form id="update_notes_form" method="post" autocomplete="off" class="uk-form-stacked">
+            {% if edit_mode && field_edited.eq("public_note") %}
+            <form id="update_public_note_form" method="post" autocomplete="off" class="uk-form-stacked">
                 <input type="hidden" name="id" value="{{ character.id }}">
                 <input type="hidden" name="tab_name" value="notes">
 
                 <div class="uk-margin">
                     <div class="uk-form-controls">
                         <textarea class="rich_text_zone"
-                                  id="notes"
-                                  name="notes"
-                                  placeholder="Notes..."
+                                  id="public_note"
+                                  name="public_note"
+                                  placeholder="Notes publiques..."
                                   aria-label="">
-                            {{ character.notes }}
+                            {{ character.public_note }}
                         </textarea>
                     </div>
                 </div>
@@ -183,16 +181,16 @@
 
                 <button class="uk-button uk-button-primary uk-margin-left"
                         type="button"
-                        uk-toggle="target: #modal-update-notes">Sauvegarder</button>
+                        uk-toggle="target: #modal-update-public_note">Sauvegarder</button>
 
-            <div id="modal-update-notes" uk-modal>
+            <div id="modal-update-public_note" uk-modal>
                 <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
-                    <h2 class="uk-modal-title">Modification des notes</h2>
-                    <p>Confirmez-vous la modification de vos notes personnelles ?</p>
+                    <h2 class="uk-modal-title">Modification des notes publiques</h2>
+                    <p>Confirmez-vous la modification de vos notes publiques ?</p>
                     <p class="uk-text-right">
                         <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
                         <button class="uk-button uk-button-primary"
-                                onclick="document.getElementById('update_notes_form').submit()">
+                                onclick="document.getElementById('update_public_note_form').submit()">
                             Confirmer
                         </button>
                     </p>
@@ -200,9 +198,63 @@
             </div>
             </p>
             {% else %}
-            <p>{{ character.notes|escape("none") }}</p>
+            <p>{{ character.public_note|escape("none") }}</p>
             {% endif %}
         </div>
+
+        {% if is_owner %}
+        <h3>
+            <span>Notes privées</span>
+            {% if editable && ! field_edited.eq("private_note") %}
+            <a href="character?id={{ character.id }}&tab_name=notes&edit=true&field_edited=private_note" uk-icon="icon: pencil"></a>
+            {% endif %}
+        </h3>
+
+        <div>
+            {% if edit_mode && field_edited.eq("private_note") %}
+            <form id="update_private_note_form" method="post" autocomplete="off" class="uk-form-stacked">
+                <input type="hidden" name="id" value="{{ character.id }}">
+                <input type="hidden" name="tab_name" value="notes">
+
+                <div class="uk-margin">
+                    <div class="uk-form-controls">
+                        <textarea class="rich_text_zone"
+                                  id="private_note"
+                                  name="private_note"
+                                  placeholder="Notes privées..."
+                                  aria-label="">
+                            {{ character.private_note }}
+                        </textarea>
+                    </div>
+                </div>
+            </form>
+
+            <p class="uk-margin-top">
+                <a class="uk-button uk-button-default" href="character?id={{ character.id }}&tab_name={{ tab_name}}">Annuler</a>
+
+                <button class="uk-button uk-button-primary uk-margin-left"
+                        type="button"
+                        uk-toggle="target: #modal-update-private_note">Sauvegarder</button>
+
+            <div id="modal-update-private_note" uk-modal>
+                <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                    <h2 class="uk-modal-title">Modification des notes privées</h2>
+                    <p>Confirmez-vous la modification de vos notes privées ?</p>
+                    <p class="uk-text-right">
+                        <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                        <button class="uk-button uk-button-primary"
+                                onclick="document.getElementById('update_private_note_form').submit()">
+                            Confirmer
+                        </button>
+                    </p>
+                </div>
+            </div>
+            </p>
+            {% else %}
+            <p>{{ character.private_note|escape("none") }}</p>
+            {% endif %}
+        </div>
+        {% endif %}
     </div>
     {% endif %}
 

@@ -16,7 +16,8 @@ CREATE TABLE IF NOT EXISTS rpg_characters (
     description TEXT NOT NULL DEFAULT '',
     user_id INTEGER REFERENCES users ON DELETE SET NULL,
     external_image_url VARCHAR,
-    notes TEXT NOT NULL DEFAULT '',
+    private_note TEXT NOT NULL DEFAULT '',
+    public_note TEXT NOT NULL DEFAULT '',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     closed_at TIMESTAMP WITH TIME ZONE,
     last_updated TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP

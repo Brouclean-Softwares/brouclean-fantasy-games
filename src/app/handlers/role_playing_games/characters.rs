@@ -87,8 +87,9 @@ pub async fn add_new(
         name: form.name,
         external_image_url: None,
         description: "".to_string(),
-        profile: None,
-        notes: "".to_string(),
+        current_profile: None,
+        private_note: "".to_string(),
+        public_note: "".to_string(),
         game_id: game.id,
         game_name: game.name,
         game_external_logo_url: game.external_logo_url,
@@ -112,7 +113,8 @@ pub struct UpdateCharacterForm {
     pub name: Option<String>,
     pub external_image_url: Option<String>,
     pub description: Option<String>,
-    pub notes: Option<String>,
+    pub private_note: Option<String>,
+    pub public_note: Option<String>,
 }
 
 pub async fn update(
@@ -148,8 +150,12 @@ pub async fn update(
         character.description = description;
     }
 
-    if let Some(notes) = form.notes {
-        character.notes = notes;
+    if let Some(private_note) = form.private_note {
+        character.private_note = private_note;
+    }
+
+    if let Some(public_note) = form.public_note {
+        character.public_note = public_note;
     }
 
     characters::update(&app_state, &updating_user, &character)
