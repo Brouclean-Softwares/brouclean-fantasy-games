@@ -1,4 +1,3 @@
-use crate::data::role_playing_games::profiles::CharacterProfile;
 use crate::data::users::User;
 use crate::data::Id;
 use crate::errors::AppError;
@@ -29,7 +28,6 @@ impl CharacterRow {
             name: self.name,
             external_image_url: self.external_image_url,
             description: self.description,
-            current_profile: None,
             private_note: self.private_note,
             public_note: self.public_note,
             game_id: self.game_id,
@@ -46,7 +44,6 @@ pub struct Character {
     pub name: String,
     pub external_image_url: Option<String>,
     pub description: String,
-    pub current_profile: Option<CharacterProfile>,
     pub private_note: String,
     pub public_note: String,
     pub game_id: i32,
