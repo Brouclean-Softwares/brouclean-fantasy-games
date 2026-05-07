@@ -163,7 +163,7 @@ pub async fn update(
         .map_err(|_| redirect_when_error.clone())?;
 
     Ok(Redirect::to(&format!(
-        "/role_playing_games/characters/character?id={}",
-        form.id
+        "/role_playing_games/characters/character?id={}&tab_name={}",
+        form.id, form.tab_name
     )))
 }
