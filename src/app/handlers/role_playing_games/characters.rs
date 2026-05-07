@@ -87,6 +87,7 @@ pub async fn add_new(
         name: form.name,
         external_image_url: None,
         description: "".to_string(),
+        profile: "".to_string(),
         private_note: "".to_string(),
         public_note: "".to_string(),
         game_id: game.id,
@@ -112,6 +113,7 @@ pub struct UpdateCharacterForm {
     pub name: Option<String>,
     pub external_image_url: Option<String>,
     pub description: Option<String>,
+    pub profile: Option<String>,
     pub private_note: Option<String>,
     pub public_note: Option<String>,
 }
@@ -147,6 +149,10 @@ pub async fn update(
 
     if let Some(description) = form.description {
         character.description = description;
+    }
+
+    if let Some(profile) = form.profile {
+        character.profile = profile;
     }
 
     if let Some(private_note) = form.private_note {

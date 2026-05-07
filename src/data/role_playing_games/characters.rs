@@ -10,6 +10,7 @@ pub struct CharacterRow {
     pub name: String,
     pub external_image_url: Option<String>,
     pub description: String,
+    pub profile: String,
     pub private_note: String,
     pub public_note: String,
     pub game_id: i32,
@@ -28,6 +29,7 @@ impl CharacterRow {
             name: self.name,
             external_image_url: self.external_image_url,
             description: self.description,
+            profile: self.profile,
             private_note: self.private_note,
             public_note: self.public_note,
             game_id: self.game_id,
@@ -44,6 +46,7 @@ pub struct Character {
     pub name: String,
     pub external_image_url: Option<String>,
     pub description: String,
+    pub profile: String,
     pub private_note: String,
     pub public_note: String,
     pub game_id: i32,
@@ -60,6 +63,7 @@ pub async fn select_all(state: &AppState) -> Result<Vec<CharacterRow>, AppError>
                     rpg_characters.name,
                     rpg_characters.external_image_url,
                     rpg_characters.description,
+                    rpg_characters.profile,
                     rpg_characters.private_note,
                     rpg_characters.public_note,
                     rpg_games.id as game_id,
@@ -88,6 +92,7 @@ pub async fn select_owned(state: &AppState, user: &User) -> Result<Vec<Character
                     rpg_characters.name,
                     rpg_characters.external_image_url,
                     rpg_characters.description,
+                    rpg_characters.profile,
                     rpg_characters.private_note,
                     rpg_characters.public_note,
                     rpg_games.id as game_id,
@@ -118,6 +123,7 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<Character, AppErr
                     rpg_characters.name,
                     rpg_characters.external_image_url,
                     rpg_characters.description,
+                    rpg_characters.profile,
                     rpg_characters.private_note,
                     rpg_characters.public_note,
                     rpg_games.id as game_id,
@@ -186,8 +192,9 @@ pub async fn update(
             SET name = $3,
                 external_image_url = $4,
                 description = $5,
-                private_note = $6,
-                public_note = $7,
+                profile = $6,
+                private_note = $7,
+                public_note = $8,
                 last_updated = CURRENT_TIMESTAMP
             WHERE id = $1
             and user_id = $2",
@@ -197,6 +204,7 @@ pub async fn update(
         .bind(character.name.clone())
         .bind(character.external_image_url.clone())
         .bind(character.description.clone())
+        .bind(character.profile.clone())
         .bind(character.private_note.clone())
         .bind(character.public_note.clone())
         .execute(&state.db)
