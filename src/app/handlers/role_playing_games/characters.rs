@@ -87,6 +87,7 @@ pub async fn add_new(
         name: form.name,
         external_image_url: None,
         description: "".to_string(),
+        profile: None,
         notes: "".to_string(),
         game_id: game.id,
         game_name: game.name,

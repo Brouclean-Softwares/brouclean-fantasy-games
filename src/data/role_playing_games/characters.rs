@@ -1,8 +1,10 @@
+use crate::data::role_playing_games::profiles::CharacterProfile;
 use crate::data::users::User;
 use crate::data::Id;
 use crate::errors::AppError;
 use crate::AppState;
 use serde::Deserialize;
+use sqlx::types::Json;
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
 pub struct CharacterRow {
@@ -10,6 +12,7 @@ pub struct CharacterRow {
     pub name: String,
     pub external_image_url: Option<String>,
     pub description: String,
+    pub profile: Option<Json<CharacterProfile>>,
     pub notes: String,
     pub game_id: i32,
     pub game_name: String,
@@ -22,11 +25,17 @@ impl CharacterRow {
     pub async fn into_character(self, state: &AppState) -> Result<Character, AppError> {
         let user = User::select_by_id(state, self.user_id).await?;
 
+        let profile = match self.profile {
+            Some(json_profile) => Some(json_profile.0),
+            None => None,
+        };
+
         Ok(Character {
             id: self.id,
             name: self.name,
             external_image_url: self.external_image_url,
             description: self.description,
+            profile,
             notes: self.notes,
             game_id: self.game_id,
             game_name: self.game_name,
@@ -42,6 +51,7 @@ pub struct Character {
     pub name: String,
     pub external_image_url: Option<String>,
     pub description: String,
+    pub profile: Option<CharacterProfile>,
     pub notes: String,
     pub game_id: i32,
     pub game_name: String,
@@ -57,6 +67,7 @@ pub async fn select_all(state: &AppState) -> Result<Vec<CharacterRow>, AppError>
                     rpg_characters.name,
                     rpg_characters.external_image_url,
                     rpg_characters.description,
+                    rpg_characters_profiles.profile,
                     rpg_characters.notes,
                     rpg_games.id as game_id,
                     rpg_games.name as game_name,
@@ -68,6 +79,9 @@ pub async fn select_all(state: &AppState) -> Result<Vec<CharacterRow>, AppError>
             ON rpg_games.id = rpg_characters.game_id
             LEFT OUTER JOIN users
             ON users.id = rpg_characters.user_id
+            LEFT OUTER JOIN rpg_characters_profiles
+            ON rpg_characters_profiles.character_id = rpg_characters.id
+            AND rpg_characters_profiles.current_profile = TRUE
             ORDER BY rpg_characters.name ASC",
     )
     .fetch_all(&state.db)
@@ -84,6 +98,7 @@ pub async fn select_owned(state: &AppState, user: &User) -> Result<Vec<Character
                     rpg_characters.name,
                     rpg_characters.external_image_url,
                     rpg_characters.description,
+                    rpg_characters_profiles.profile,
                     rpg_characters.notes,
                     rpg_games.id as game_id,
                     rpg_games.name as game_name,
@@ -95,6 +110,9 @@ pub async fn select_owned(state: &AppState, user: &User) -> Result<Vec<Character
             ON rpg_games.id = rpg_characters.game_id
             LEFT OUTER JOIN users
             ON users.id = rpg_characters.user_id
+            LEFT OUTER JOIN rpg_characters_profiles
+            ON rpg_characters_profiles.character_id = rpg_characters.id
+            AND rpg_characters_profiles.current_profile = TRUE
             WHERE rpg_characters.user_id = $1
             ORDER BY rpg_characters.name ASC",
     )
@@ -113,6 +131,7 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<Character, AppErr
                     rpg_characters.name,
                     rpg_characters.external_image_url,
                     rpg_characters.description,
+                    rpg_characters_profiles.profile,
                     rpg_characters.notes,
                     rpg_games.id as game_id,
                     rpg_games.name as game_name,
@@ -124,6 +143,9 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<Character, AppErr
             ON rpg_games.id = rpg_characters.game_id
             LEFT OUTER JOIN users
             ON users.id = rpg_characters.user_id
+            LEFT OUTER JOIN rpg_characters_profiles
+            ON rpg_characters_profiles.character_id = rpg_characters.id
+            AND rpg_characters_profiles.current_profile = TRUE
             WHERE rpg_characters.id = $1",
     )
     .bind(id.clone())
