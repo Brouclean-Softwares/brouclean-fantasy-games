@@ -74,7 +74,7 @@
 
         <div>
             {% if edit_mode && field_edited.eq("info") %}
-            <form id="update_information_form" method="post" autocomplete="off" class="uk-form-stacked">
+            <form method="post" autocomplete="off" class="uk-form-stacked">
                 <input type="hidden" name="id" value="{{ character.id }}">
                 <input type="hidden" name="tab_name" value="info">
 
@@ -108,29 +108,18 @@
                         </textarea>
                     </div>
                 </div>
+
+                <div class="uk-margin-top">
+                    <a class="uk-button uk-button-default" href="character?id={{ character.id }}&tab_name={{ tab_name}}">Annuler</a>
+
+                    <button class="uk-button uk-button-primary uk-margin-left"
+                            type="button"
+                            onclick="submit()">
+                        Sauvegarder
+                    </button>
+                </div>
             </form>
 
-            <p class="uk-margin-top">
-                <a class="uk-button uk-button-default" href="character?id={{ character.id }}&tab_name={{ tab_name}}">Annuler</a>
-
-                <button class="uk-button uk-button-primary uk-margin-left"
-                        type="button"
-                        uk-toggle="target: #modal-update-information">Sauvegarder</button>
-
-                <div id="modal-update-information" uk-modal>
-                    <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
-                        <h2 class="uk-modal-title">Modification des informations</h2>
-                        <p>Confirmez-vous la modification de la description et de l'image du personnage ?</p>
-                        <p class="uk-text-right">
-                            <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
-                            <button class="uk-button uk-button-primary"
-                                    onclick="document.getElementById('update_information_form').submit()">
-                                Confirmer
-                            </button>
-                        </p>
-                    </div>
-                </div>
-            </p>
             {% else %}
 
             {% if let Some(external_image_url) = character.external_image_url %}
@@ -154,7 +143,7 @@
 
         <div>
             {% if edit_mode && field_edited.eq("profile") %}
-            <form id="update_profile_form" method="post" autocomplete="off" class="uk-form-stacked">
+            <form method="post" autocomplete="off" class="uk-form-stacked">
                 <input type="hidden" name="id" value="{{ character.id }}">
                 <input type="hidden" name="tab_name" value="profile">
 
@@ -169,29 +158,18 @@
                         </textarea>
                     </div>
                 </div>
+
+                <div class="uk-margin-top">
+                    <a class="uk-button uk-button-default" href="character?id={{ character.id }}&tab_name={{ tab_name}}">Annuler</a>
+
+                    <button class="uk-button uk-button-primary uk-margin-left"
+                            type="button"
+                            onclick="submit()">
+                        Sauvegarder
+                    </button>
+                </div>
             </form>
 
-            <p class="uk-margin-top">
-                <a class="uk-button uk-button-default" href="character?id={{ character.id }}&tab_name={{ tab_name}}">Annuler</a>
-
-                <button class="uk-button uk-button-primary uk-margin-left"
-                        type="button"
-                        uk-toggle="target: #modal-update-profile">Sauvegarder</button>
-
-            <div id="modal-update-profile" uk-modal>
-                <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
-                    <h2 class="uk-modal-title">Modification du profil du personnage</h2>
-                    <p>Confirmez-vous la modification du profil du personnage ?</p>
-                    <p class="uk-text-right">
-                        <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
-                        <button class="uk-button uk-button-primary"
-                                onclick="document.getElementById('update_profile_form').submit()">
-                            Confirmer
-                        </button>
-                    </p>
-                </div>
-            </div>
-            </p>
             {% else %}
             <p>{{ character.profile|escape("none") }}</p>
             {% endif %}
@@ -209,7 +187,7 @@
 
         <div>
             {% if edit_mode && field_edited.eq("public_note") %}
-            <form id="update_public_note_form" method="post" autocomplete="off" class="uk-form-stacked">
+            <form method="post" autocomplete="off" class="uk-form-stacked">
                 <input type="hidden" name="id" value="{{ character.id }}">
                 <input type="hidden" name="tab_name" value="notes">
 
@@ -224,29 +202,18 @@
                         </textarea>
                     </div>
                 </div>
+
+                <div class="uk-margin-top">
+                    <a class="uk-button uk-button-default" href="character?id={{ character.id }}&tab_name={{ tab_name}}">Annuler</a>
+
+                    <button class="uk-button uk-button-primary uk-margin-left"
+                            type="button"
+                            onclick="submit()">
+                        Sauvegarder
+                    </button>
+                </div>
             </form>
 
-            <p class="uk-margin-top">
-                <a class="uk-button uk-button-default" href="character?id={{ character.id }}&tab_name={{ tab_name}}">Annuler</a>
-
-                <button class="uk-button uk-button-primary uk-margin-left"
-                        type="button"
-                        uk-toggle="target: #modal-update-public_note">Sauvegarder</button>
-
-            <div id="modal-update-public_note" uk-modal>
-                <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
-                    <h2 class="uk-modal-title">Modification des notes publiques</h2>
-                    <p>Confirmez-vous la modification de vos notes publiques ?</p>
-                    <p class="uk-text-right">
-                        <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
-                        <button class="uk-button uk-button-primary"
-                                onclick="document.getElementById('update_public_note_form').submit()">
-                            Confirmer
-                        </button>
-                    </p>
-                </div>
-            </div>
-            </p>
             {% else %}
             <p>{{ character.public_note|escape("none") }}</p>
             {% endif %}
@@ -262,7 +229,7 @@
 
         <div>
             {% if edit_mode && field_edited.eq("private_note") %}
-            <form id="update_private_note_form" method="post" autocomplete="off" class="uk-form-stacked">
+            <form method="post" autocomplete="off" class="uk-form-stacked">
                 <input type="hidden" name="id" value="{{ character.id }}">
                 <input type="hidden" name="tab_name" value="notes">
 
@@ -277,29 +244,18 @@
                         </textarea>
                     </div>
                 </div>
+
+                <div class="uk-margin-top">
+                    <a class="uk-button uk-button-default" href="character?id={{ character.id }}&tab_name={{ tab_name}}">Annuler</a>
+
+                    <button class="uk-button uk-button-primary uk-margin-left"
+                            type="button"
+                            onclick="submit()">
+                        Sauvegarder
+                    </button>
+                </div>
             </form>
 
-            <p class="uk-margin-top">
-                <a class="uk-button uk-button-default" href="character?id={{ character.id }}&tab_name={{ tab_name}}">Annuler</a>
-
-                <button class="uk-button uk-button-primary uk-margin-left"
-                        type="button"
-                        uk-toggle="target: #modal-update-private_note">Sauvegarder</button>
-
-            <div id="modal-update-private_note" uk-modal>
-                <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
-                    <h2 class="uk-modal-title">Modification des notes privées</h2>
-                    <p>Confirmez-vous la modification de vos notes privées ?</p>
-                    <p class="uk-text-right">
-                        <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
-                        <button class="uk-button uk-button-primary"
-                                onclick="document.getElementById('update_private_note_form').submit()">
-                            Confirmer
-                        </button>
-                    </p>
-                </div>
-            </div>
-            </p>
             {% else %}
             <p>{{ character.private_note|escape("none") }}</p>
             {% endif %}
