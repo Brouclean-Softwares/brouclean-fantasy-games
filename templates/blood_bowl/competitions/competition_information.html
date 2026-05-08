@@ -66,19 +66,11 @@
                               aria-label="">
                         {{ competition.description }}
                     </textarea>
-
-                    <div class="uk-margin-top">
-                        <a class="uk-button uk-button-default" href="{{ link_url }}">Annuler</a>
-
-                        <button class="uk-button uk-button-primary uk-margin-left"
-                                type="button"
-                                onclick="submit()">
-                            Sauvegarder
-                        </button>
-                    </div>
                 </form>
                 {% else %}
-                    {{ competition.description|escape("none") }}
+                    <div class="uk-overflow-auto">
+                        {{ competition.description|escape("none") }}
+                    </div>
                 {% endif %}
             </dd>
         </dl>

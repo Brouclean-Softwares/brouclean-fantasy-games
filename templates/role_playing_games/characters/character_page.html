@@ -31,11 +31,13 @@
                 </button>
             </div>
         </form>
+
         {% elif editable %}
         <a class="uk-link-reset" href="character?id={{ character.id }}&tab_name={{ tab_name}}&edit=true&field_edited=name">
             {{ character.name }}
         </a>
         <a href="character?id={{ character.id }}&tab_name={{ tab_name}}&edit=true&field_edited=name" uk-icon="icon: pencil"></a>
+
         {% else %}
         {{ character.name }}
         {% endif %}
@@ -67,6 +69,7 @@
     <div>
         <h3>
             <span>Image et description</span>
+
             {% if editable && ! field_edited.eq("info") %}
             <a href="character?id={{ character.id }}&tab_name=info&edit=true&field_edited=info" uk-icon="icon: pencil"></a>
             {% endif %}
@@ -122,11 +125,13 @@
 
             {% else %}
 
-            {% if let Some(external_image_url) = character.external_image_url %}
-            <img src="{{ external_image_url }}" class="uk-float-left uk-margin-right uk-margin-bottom" width="50%" alt="">
-            {% endif %}
+            <div class="uk-overflow-auto">
+                {% if let Some(external_image_url) = character.external_image_url %}
+                <img src="{{ external_image_url }}" class="uk-float-left uk-margin-right uk-margin-bottom" width="50%" alt="">
+                {% endif %}
 
-            <p>{{ character.description|escape("none") }}</p>
+                <p>{{ character.description|escape("none") }}</p>
+            </div>
 
             {% endif %}
         </div>
@@ -171,7 +176,9 @@
             </form>
 
             {% else %}
-            <p>{{ character.profile|escape("none") }}</p>
+            <div class="uk-overflow-auto">
+                {{ character.profile|escape("none") }}
+            </div>
             {% endif %}
         </div>
     </div>
@@ -215,7 +222,9 @@
             </form>
 
             {% else %}
-            <p>{{ character.public_note|escape("none") }}</p>
+            <div class="uk-overflow-auto">
+                {{ character.public_note|escape("none") }}
+            </div>
             {% endif %}
         </div>
 
@@ -257,7 +266,9 @@
             </form>
 
             {% else %}
-            <p>{{ character.private_note|escape("none") }}</p>
+            <div class="uk-overflow-auto">
+                {{ character.private_note|escape("none") }}
+            </div>
             {% endif %}
         </div>
         {% endif %}

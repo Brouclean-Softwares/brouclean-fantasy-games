@@ -123,8 +123,11 @@
                     </div>
                 </div>
             </p>
+
             {% else %}
-            {{ game.description|escape("none") }}
+            <div class="uk-overflow-auto">
+                {{ game.description|escape("none") }}
+            </div>
             {% endif %}
         </div>
     </dl>
