@@ -125,13 +125,11 @@
 
             {% else %}
 
-            <div class="uk-overflow-auto">
-                {% if let Some(external_image_url) = character.external_image_url %}
-                <img src="{{ external_image_url }}" class="uk-float-left uk-margin-right uk-margin-bottom" width="50%" alt="">
-                {% endif %}
+            {% if let Some(external_image_url) = character.external_image_url %}
+            <img src="{{ external_image_url }}" class="uk-float-left uk-margin-right uk-margin-bottom" width="50%" alt="">
+            {% endif %}
 
-                <p>{{ character.description|escape("none") }}</p>
-            </div>
+            <p>{{ character.description|escape("none") }}</p>
 
             {% endif %}
         </div>
