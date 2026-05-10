@@ -63,6 +63,7 @@
 
     {% if tab_name.eq("info") || ! is_owner %}
     <div>
+        {% if editable || campaign.external_image_url.is_some() || campaign.description.len() > 0 %}
         <h3>
             <span>Image et description</span>
 
@@ -129,6 +130,7 @@
 
             {% endif %}
         </div>
+        {% endif %}
     </div>
 
     {% elif tab_name.eq("notes") && is_owner %}

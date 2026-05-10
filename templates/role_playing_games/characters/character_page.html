@@ -67,6 +67,7 @@
 
     {% if tab_name.eq("info") %}
     <div>
+        {% if editable || character.external_image_url.is_some() || character.description.len() > 0 %}
         <h3>
             <span>Image et description</span>
 
@@ -133,10 +134,12 @@
 
             {% endif %}
         </div>
+        {% endif %}
     </div>
 
     {% elif tab_name.eq("profile") %}
     <div>
+        {% if editable || character.profile.len() > 0 %}
         <h3>
             <span>Profil du personnage</span>
             {% if editable && ! field_edited.eq("profile") %}
@@ -179,10 +182,12 @@
             </div>
             {% endif %}
         </div>
+        {% endif %}
     </div>
 
     {% elif tab_name.eq("notes") %}
     <div>
+        {% if editable || character.public_note.len() > 0 %}
         <h3>
             <span>Notes publiques</span>
             {% if editable && ! field_edited.eq("public_note") %}
@@ -225,6 +230,7 @@
             </div>
             {% endif %}
         </div>
+        {% endif %}
 
         {% if is_owner %}
         <h3>
