@@ -85,7 +85,7 @@ pub async fn select_all(state: &AppState) -> Result<Vec<CharacterRow>, AppError>
 }
 
 pub async fn select_owned(state: &AppState, user: &User) -> Result<Vec<CharacterRow>, AppError> {
-    tracing::debug!("select_owned for coach={:?}", user);
+    tracing::debug!("select_owned for user={:?}", user);
 
     let character_rows: Vec<CharacterRow> = sqlx::query_as(
         "SELECT rpg_characters.id,
@@ -154,8 +154,6 @@ pub async fn create(state: &AppState, user: &User, character: &Character) -> Res
         character,
     );
 
-    let mut transaction = state.db.begin().await?;
-
     let new_character_id: Id = sqlx::query_as(
         "INSERT INTO rpg_characters (
                 game_id,
@@ -167,10 +165,8 @@ pub async fn create(state: &AppState, user: &User, character: &Character) -> Res
     .bind(character.game_id.clone())
     .bind(character.name.clone())
     .bind(user.id.clone())
-    .fetch_one(&mut *transaction)
+    .fetch_one(&state.db)
     .await?;
-
-    transaction.commit().await?;
 
     Ok(new_character_id.id)
 }

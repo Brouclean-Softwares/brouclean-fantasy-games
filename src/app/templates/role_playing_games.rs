@@ -1,7 +1,11 @@
+use crate::app::templates::role_playing_games::campaigns::{
+    AddNewCampaignButton, OwnedCampaignsBlock,
+};
 use crate::app::templates::role_playing_games::characters::{
     AddNewCharacterButton, OwnedCharactersBlock,
 };
 use crate::app::templates::{BreadCrumb, NavigationBar, UrlLink};
+use crate::data::role_playing_games::campaigns::CampaignRow;
 use crate::data::role_playing_games::characters::CharacterRow;
 use crate::data::role_playing_games::games::Game;
 use crate::data::users::User;
@@ -10,6 +14,7 @@ use crate::AppState;
 use askama::Template;
 use askama_web::WebTemplate;
 
+pub mod campaigns;
 pub mod characters;
 pub mod games;
 
@@ -23,6 +28,7 @@ pub struct HomePage {
     navigation_bar: NavigationBar,
     breadcrumb: BreadCrumb,
     owned_characters_block: OwnedCharactersBlock,
+    owned_campaigns_block: OwnedCampaignsBlock,
 }
 
 impl HomePage {
@@ -30,6 +36,7 @@ impl HomePage {
         app_state: &AppState,
         profile: &User,
         owned_characters: Vec<CharacterRow>,
+        owned_campaigns: Vec<CampaignRow>,
         games: Vec<Game>,
     ) -> Result<Self, AppError> {
         Ok(Self {
@@ -38,6 +45,13 @@ impl HomePage {
             owned_characters_block: OwnedCharactersBlock {
                 owned_characters,
                 add_new_character_button: AddNewCharacterButton {
+                    profile: Some(profile.clone()),
+                    games: games.clone(),
+                },
+            },
+            owned_campaigns_block: OwnedCampaignsBlock {
+                owned_campaigns,
+                add_new_campaign_button: AddNewCampaignButton {
                     profile: Some(profile.clone()),
                     games,
                 },

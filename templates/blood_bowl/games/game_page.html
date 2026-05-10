@@ -132,8 +132,12 @@
                     <input id="game_at"
                            name="game_at"
                            type="datetime-local"
-                           onchange="submit()"
                            value="{{ game_date_input }}">
+
+                    <a href="./game?id={{ game.id }}" uk-icon="icon: close"></a>
+                    <button class="uk-button uk-button-link" type="button" onclick="submit()">
+                        <span uk-icon="icon: check"></span>
+                    </button>
                 </form>
                 {% elif editable %}
                 <a class="uk-link-reset" href="./game?id={{ game.id }}&edit_mode=true" uk-icon="icon: pencil">
