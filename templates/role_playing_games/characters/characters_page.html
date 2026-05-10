@@ -33,10 +33,11 @@
             </td>
             <td class="uk-table-link">
                 <a class="uk-link-reset" href="/role_playing_games/characters/character?id={{ character.id }}">
-                    {{ character.game_name }}
-
                     {% if let Some(external_logo_url) = character.game_external_logo_url %}
-                    <img src="{{ external_logo_url }}" width="75" height="75" alt="">
+                    <span class="uk-visible@m uk-margin-right">{{ character.game_name }}</span>
+                    <img src="{{ external_logo_url }}" class="uk-height-max-small" style="max-height:25px; width:auto;" alt="">
+                    {% else %}
+                    {{ character.game_name }}
                     {% endif %}
                 </a>
             </td>
