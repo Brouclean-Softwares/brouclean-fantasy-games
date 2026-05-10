@@ -52,6 +52,10 @@ pub async fn campaign(
         (_, _) => false,
     };
 
+    let games = games::select_all(&app_state)
+        .await
+        .or_else(|_| Err(Redirect::to("/role_playing_games/campaigns")))?;
+
     Ok(CampaignPage::get(
         app_state,
         profile.clone(),
@@ -60,6 +64,7 @@ pub async fn campaign(
         is_owner,
         params.edit.unwrap_or(false) && profile.is_some(),
         params.field_edited,
+        games,
     ))
 }
 
@@ -109,6 +114,7 @@ pub struct UpdateCampaignForm {
     pub id: i32,
     pub tab_name: String,
     pub name: Option<String>,
+    pub game_id: Option<i32>,
     pub external_image_url: Option<String>,
     pub description: Option<String>,
     pub notes: Option<String>,
@@ -140,6 +146,10 @@ pub async fn update(
 
     if let Some(name) = form.name {
         campaign.name = name;
+    }
+
+    if let Some(game_id) = form.game_id {
+        campaign.game_id = game_id;
     }
 
     if let Some(external_image_url) = form.external_image_url {

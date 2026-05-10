@@ -61,6 +61,7 @@ pub struct CampaignPage {
     edit_mode: bool,
     field_edited: String,
     is_owner: bool,
+    games: Vec<Game>,
 }
 
 impl CampaignPage {
@@ -72,6 +73,7 @@ impl CampaignPage {
         editable: bool,
         edit_mode: bool,
         field_edited: Option<String>,
+        games: Vec<Game>,
     ) -> Self {
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
@@ -82,6 +84,7 @@ impl CampaignPage {
             edit_mode,
             field_edited: field_edited.unwrap_or_default(),
             is_owner: editable,
+            games,
         }
     }
 }

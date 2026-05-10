@@ -63,6 +63,7 @@ pub struct CharacterPage {
     edit_mode: bool,
     field_edited: String,
     is_owner: bool,
+    games: Vec<Game>,
 }
 
 impl CharacterPage {
@@ -74,6 +75,7 @@ impl CharacterPage {
         editable: bool,
         edit_mode: bool,
         field_edited: Option<String>,
+        games: Vec<Game>,
     ) -> Self {
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
@@ -84,6 +86,7 @@ impl CharacterPage {
             edit_mode,
             field_edited: field_edited.unwrap_or_default(),
             is_owner: editable,
+            games,
         }
     }
 }

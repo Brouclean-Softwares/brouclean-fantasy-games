@@ -191,6 +191,7 @@ pub async fn update(
                 profile = $6,
                 private_note = $7,
                 public_note = $8,
+                game_id = $9,
                 last_updated = CURRENT_TIMESTAMP
             WHERE id = $1
             and user_id = $2",
@@ -203,6 +204,7 @@ pub async fn update(
         .bind(character.profile.clone())
         .bind(character.private_note.clone())
         .bind(character.public_note.clone())
+        .bind(character.game_id.clone())
         .execute(&state.db)
         .await?;
     }

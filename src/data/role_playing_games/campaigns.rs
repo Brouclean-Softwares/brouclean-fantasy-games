@@ -177,6 +177,7 @@ pub async fn update(
                 external_image_url = $4,
                 description = $5,
                 notes = $6,
+                game_id = $7,
                 last_updated = CURRENT_TIMESTAMP
             WHERE id = $1
             and game_master_id = $2",
@@ -187,6 +188,7 @@ pub async fn update(
         .bind(campaign.external_image_url.clone())
         .bind(campaign.description.clone())
         .bind(campaign.notes.clone())
+        .bind(campaign.game_id.clone())
         .execute(&state.db)
         .await?;
     }
