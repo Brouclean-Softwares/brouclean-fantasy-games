@@ -1,6 +1,6 @@
+use crate::AppState;
 use crate::auth::SESSION_ID;
 use crate::errors::AppError;
-use crate::AppState;
 use axum::extract::FromRequestParts;
 use axum_extra::extract::PrivateCookieJar;
 use blood_bowl_rs::coaches::Coach;

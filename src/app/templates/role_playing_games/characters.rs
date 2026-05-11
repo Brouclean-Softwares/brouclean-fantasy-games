@@ -1,8 +1,8 @@
-use crate::app::templates::{role_playing_games, BreadCrumb, NavigationBar, UrlLink};
+use crate::AppState;
+use crate::app::templates::{BreadCrumb, NavigationBar, UrlLink, role_playing_games};
 use crate::data::role_playing_games::characters::{Character, CharacterRow};
 use crate::data::role_playing_games::games::Game;
 use crate::data::users::User;
-use crate::AppState;
 use askama::Template;
 use askama_web::WebTemplate;
 

@@ -1,6 +1,6 @@
+use crate::AppState;
 use crate::data::blood_bowl::statistics::{StatisticElement, StatisticRow, Statistics};
 use crate::errors::AppError;
-use crate::AppState;
 use serde::Deserialize;
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]

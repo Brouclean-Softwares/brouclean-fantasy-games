@@ -1,5 +1,5 @@
-use crate::errors::AppError;
 use crate::AppState;
+use crate::errors::AppError;
 
 pub struct Session {}
 

@@ -1,6 +1,6 @@
+use crate::AppState;
 use crate::data::users::User;
 use crate::errors::AppError;
-use crate::AppState;
 use blood_bowl_rs::coaches::Coach;
 
 pub async fn select_by_id(state: &AppState, id: Option<i32>) -> Result<Option<Coach>, AppError> {

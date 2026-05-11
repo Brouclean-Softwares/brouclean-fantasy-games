@@ -1,3 +1,4 @@
+use crate::AppState;
 use crate::app::templates::blood_bowl::games::GameCard;
 use crate::app::templates::blood_bowl::games::GamesScheduleTable;
 use crate::app::templates::blood_bowl::teams::OwnedTeamsBlock;
@@ -5,7 +6,6 @@ use crate::app::templates::{BreadCrumb, NavigationBar, UrlLink};
 use crate::data::blood_bowl::games::GameSummary;
 use crate::data::users::User;
 use crate::errors::AppError;
-use crate::AppState;
 use askama::Template;
 use askama_web::WebTemplate;
 

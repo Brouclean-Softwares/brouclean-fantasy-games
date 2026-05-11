@@ -1,6 +1,6 @@
+use crate::AppState;
 use crate::data::users::User;
 use crate::errors::AppError;
-use crate::AppState;
 use serde::Deserialize;
 
 #[derive(Deserialize, sqlx::FromRow, Clone, Debug)]

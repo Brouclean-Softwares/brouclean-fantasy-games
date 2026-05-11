@@ -1,10 +1,10 @@
+use crate::AppState;
 use crate::app::templates::blood_bowl::players::PlayerPage;
 use crate::app::templates::{AlertMessage, AlertType};
 use crate::data::blood_bowl::statistics::players::PlayerStatistics;
 use crate::data::blood_bowl::{games, players, statistics, teams};
 use crate::data::users::User;
 use crate::errors::AppError;
-use crate::AppState;
 use axum::extract::{Query, State};
 use axum::response::Redirect;
 use axum::routing::get;

@@ -1,15 +1,15 @@
+use crate::AppState;
 use crate::data::blood_bowl::competitions::schedule::{
-    GameSchedule, RoundSchedule, StageSchedule, BYE,
+    BYE, GameSchedule, RoundSchedule, StageSchedule,
 };
 use crate::data::blood_bowl::competitions::standings::{
     CompetingForPositionStandings, StageStandings,
 };
-use crate::data::blood_bowl::competitions::{stages, Competition};
+use crate::data::blood_bowl::competitions::{Competition, stages};
 use crate::data::blood_bowl::games;
 use crate::data::blood_bowl::teams::TeamSummary;
 use crate::data::users::User;
 use crate::errors::AppError;
-use crate::AppState;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 

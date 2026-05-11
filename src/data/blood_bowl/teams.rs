@@ -1,8 +1,8 @@
+use crate::AppState;
 use crate::data::blood_bowl::competitions::schedule::BYE;
 use crate::data::blood_bowl::{games, players, staff, teams};
 use crate::data::users::User;
 use crate::errors::AppError;
-use crate::AppState;
 use blood_bowl_rs::coaches::Coach;
 use blood_bowl_rs::rosters::Roster;
 use blood_bowl_rs::teams::Team;
@@ -699,7 +699,7 @@ pub async fn upgrade(
                     _ => {
                         return Err(AppError::BloodBowlAppError(String::from(
                             "Un joueur actuel n'a pas de poste connu",
-                        )))
+                        )));
                     }
                 }
             }

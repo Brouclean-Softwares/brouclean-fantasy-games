@@ -1,3 +1,4 @@
+use crate::AppState;
 use crate::data::blood_bowl::competitions::registrations::TeamRegistration;
 use crate::data::blood_bowl::competitions::schedule::{CompetitionSchedule, StageSchedule};
 use crate::data::blood_bowl::competitions::stages::{CompetitionStage, CompetitionStageType};
@@ -5,7 +6,6 @@ use crate::data::blood_bowl::competitions::standings::{CompetitionStandings, Sta
 use crate::data::blood_bowl::teams::TeamSummary;
 use crate::data::users::User;
 use crate::errors::AppError;
-use crate::AppState;
 use blood_bowl_rs::versions::Version;
 use serde::Deserialize;
 

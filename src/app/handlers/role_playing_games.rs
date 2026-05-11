@@ -1,10 +1,10 @@
+use crate::AppState;
 use crate::app::templates::role_playing_games;
 use crate::data::users::User;
-use crate::AppState;
+use axum::Router;
 use axum::extract::State;
 use axum::response::Redirect;
 use axum::routing::get;
-use axum::Router;
 
 pub mod campaigns;
 pub mod characters;

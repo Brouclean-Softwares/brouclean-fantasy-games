@@ -1,9 +1,9 @@
+use crate::AppState;
 use crate::app::templates::blood_bowl::rosters::{RosterPage, RostersPage};
 use crate::data::users::User;
-use crate::AppState;
+use axum::Router;
 use axum::extract::{Query, State};
 use axum::routing::get;
-use axum::Router;
 use blood_bowl_rs::rosters::Roster;
 use blood_bowl_rs::translation::TranslatedName;
 use blood_bowl_rs::versions::Version;

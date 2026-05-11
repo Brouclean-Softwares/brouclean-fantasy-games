@@ -1,4 +1,4 @@
-use crate::data::blood_bowl::competitions::schedule::{GameSchedule, BYE};
+use crate::data::blood_bowl::competitions::schedule::{BYE, GameSchedule};
 use crate::data::blood_bowl::competitions::stages::CompetitionStage;
 use crate::data::blood_bowl::games::GameSummary;
 use crate::data::blood_bowl::teams::TeamSummary;

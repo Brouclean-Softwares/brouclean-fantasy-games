@@ -1,8 +1,8 @@
+use crate::AppState;
 use crate::data::blood_bowl::games::select_playing_team_player_for_game;
 use crate::data::blood_bowl::{coaches, games, teams};
 use crate::data::users::User;
 use crate::errors::AppError;
-use crate::AppState;
 use blood_bowl_rs::advancements::{Advancement, AdvancementChoice};
 use blood_bowl_rs::injuries::Injury;
 use blood_bowl_rs::players::{Player, PlayerType};

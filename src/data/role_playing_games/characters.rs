@@ -1,6 +1,6 @@
+use crate::AppState;
 use crate::data::users::User;
 use crate::errors::AppError;
-use crate::AppState;
 use serde::Deserialize;
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
@@ -193,7 +193,7 @@ pub async fn update(
                 game_id = $9,
                 last_updated = CURRENT_TIMESTAMP
             WHERE id = $1
-            and user_id = $2",
+            AND user_id = $2",
         )
         .bind(character.id.clone())
         .bind(connected_user_id.clone())

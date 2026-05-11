@@ -1,3 +1,4 @@
+use crate::AppState;
 use crate::app::templates::blood_bowl::teams::{
     NewTeamPage, TeamFilteredList, TeamPage, TeamsPage,
 };
@@ -7,7 +8,6 @@ use crate::data::blood_bowl::statistics::players::PlayersTopStatistics;
 use crate::data::blood_bowl::{games, players, staff, teams};
 use crate::data::users::User;
 use crate::errors::AppError;
-use crate::AppState;
 use axum::extract::{Query, State};
 use axum::response::Redirect;
 use axum::routing::{get, post};

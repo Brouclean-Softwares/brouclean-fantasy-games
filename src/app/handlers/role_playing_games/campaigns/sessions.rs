@@ -1,7 +1,7 @@
 use crate::AppState;
-use crate::app::templates::role_playing_games::campaigns::NarrativeArcPage;
+use crate::app::templates::role_playing_games::campaigns::GameSessionPage;
 use crate::data::role_playing_games::campaigns;
-use crate::data::role_playing_games::campaigns::arcs;
+use crate::data::role_playing_games::campaigns::{arcs, sessions};
 use crate::data::users::User;
 use axum::Form;
 use axum::extract::{Query, State};
@@ -9,15 +9,16 @@ use axum::response::Redirect;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
-pub struct NewNarrativeArcForm {
+pub struct NewGameSessionForm {
     pub name: String,
     pub campaign_id: i32,
+    pub arc_id: i32,
 }
 
-pub async fn new_arc(
+pub async fn new_session(
     State(app_state): State<AppState>,
     profile: Option<User>,
-    Form(form): Form<NewNarrativeArcForm>,
+    Form(form): Form<NewGameSessionForm>,
 ) -> Result<Redirect, Redirect> {
     let redirect = Redirect::to(&format!(
         "/role_playing_games/campaigns/campaign?id={}&tab_name=sessions",
@@ -26,11 +27,11 @@ pub async fn new_arc(
 
     let profile = profile.ok_or(redirect.clone())?;
 
-    let campaign = campaigns::select_by_id(&app_state, form.campaign_id)
+    let arc = arcs::select_by_id(&app_state, form.arc_id)
         .await
         .map_err(|error| error.log_and_redirect(Redirect::to("/role_playing_games/campaigns")))?;
 
-    let _ = campaigns::arcs::push_new_into_campaign(&app_state, &profile, &campaign, form.name)
+    let _ = campaigns::sessions::push_new_into_arc(&app_state, &profile, &arc, form.name)
         .await
         .map_err(|error| error.log_and_redirect(redirect.clone()))?;
 
@@ -38,24 +39,24 @@ pub async fn new_arc(
 }
 
 #[derive(Deserialize)]
-pub struct NarrativeArcQueryParams {
+pub struct GameSessionQueryParams {
     pub id: i32,
     pub edit: Option<bool>,
     pub field_edited: Option<String>,
 }
 
-pub async fn arc(
+pub async fn session(
     State(app_state): State<AppState>,
     profile: Option<User>,
-    Query(params): Query<NarrativeArcQueryParams>,
-) -> Result<NarrativeArcPage, Redirect> {
+    Query(params): Query<GameSessionQueryParams>,
+) -> Result<GameSessionPage, Redirect> {
     let redirect_if_error = Redirect::to("/role_playing_games/campaigns");
 
-    let arc = arcs::select_by_id(&app_state, params.id)
+    let session = sessions::select_by_id(&app_state, params.id)
         .await
         .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
 
-    let campaign = campaigns::select_by_id(&app_state, arc.campaign_id)
+    let campaign = campaigns::select_by_id(&app_state, session.campaign_id)
         .await
         .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
 
@@ -64,10 +65,10 @@ pub async fn arc(
         (_, _) => false,
     };
 
-    Ok(NarrativeArcPage::get(
+    Ok(GameSessionPage::get(
         app_state,
         profile.clone(),
-        arc,
+        session,
         is_owner,
         params.edit.unwrap_or(false) && profile.is_some(),
         params.field_edited,
@@ -75,7 +76,7 @@ pub async fn arc(
 }
 
 #[derive(Deserialize)]
-pub struct UpdateNarrativeArcForm {
+pub struct UpdateGameSessionForm {
     pub id: i32,
     pub name: Option<String>,
     pub external_image_url: Option<String>,
@@ -86,18 +87,20 @@ pub struct UpdateNarrativeArcForm {
 pub async fn update(
     State(app_state): State<AppState>,
     profile: Option<User>,
-    Form(form): Form<UpdateNarrativeArcForm>,
+    Form(form): Form<UpdateGameSessionForm>,
 ) -> Result<Redirect, Redirect> {
-    let redirect_when_error =
-        Redirect::to(&format!("/role_playing_games/campaigns/arc?id={}", form.id));
+    let redirect_when_error = Redirect::to(&format!(
+        "/role_playing_games/campaigns/session?id={}",
+        form.id
+    ));
 
-    let mut arc = arcs::select_by_id(&app_state, form.id)
+    let mut session = sessions::select_by_id(&app_state, form.id)
         .await
         .map_err(|error| error.log_and_redirect(redirect_when_error.clone()))?;
 
     let updating_user = profile.ok_or(redirect_when_error.clone())?;
 
-    let campaign = campaigns::select_by_id(&app_state, arc.campaign_id)
+    let campaign = campaigns::select_by_id(&app_state, session.campaign_id)
         .await
         .map_err(|error| error.log_and_redirect(redirect_when_error.clone()))?;
 
@@ -110,11 +113,11 @@ pub async fn update(
     }
 
     if let Some(name) = form.name {
-        arc.name = name;
+        session.name = name;
     }
 
     if let Some(external_image_url) = form.external_image_url {
-        arc.external_image_url = if external_image_url.len() > 0 {
+        session.external_image_url = if external_image_url.len() > 0 {
             Some(external_image_url)
         } else {
             None
@@ -122,19 +125,19 @@ pub async fn update(
     }
 
     if let Some(description) = form.description {
-        arc.description = description;
+        session.description = description;
     }
 
     if let Some(notes) = form.notes {
-        arc.notes = notes;
+        session.notes = notes;
     }
 
-    arcs::update(&app_state, &updating_user, &arc)
+    sessions::update(&app_state, &updating_user, &session)
         .await
         .map_err(|error| error.log_and_redirect(redirect_when_error.clone()))?;
 
     Ok(Redirect::to(&format!(
-        "/role_playing_games/campaigns/arc?id={}",
+        "/role_playing_games/campaigns/session?id={}",
         form.id
     )))
 }

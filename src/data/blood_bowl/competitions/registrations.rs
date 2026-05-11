@@ -1,9 +1,9 @@
+use crate::AppState;
 use crate::data::blood_bowl::competitions::Competition;
 use crate::data::blood_bowl::teams;
 use crate::data::blood_bowl::teams::TeamSummary;
 use crate::data::users::User;
 use crate::errors::AppError;
-use crate::AppState;
 use serde::Deserialize;
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]

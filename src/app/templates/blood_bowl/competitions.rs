@@ -1,18 +1,18 @@
+use crate::AppState;
 use crate::app::templates::blood_bowl::games::GamesScheduleTable;
 use crate::app::templates::blood_bowl::statistics::{
     PlayersTopStatisticsLists, TeamsTopStatisticsLists,
 };
 use crate::app::templates::blood_bowl::teams::TeamSelector;
-use crate::app::templates::{blood_bowl, AlertMessage, BreadCrumb, NavigationBar, UrlLink};
+use crate::app::templates::{AlertMessage, BreadCrumb, NavigationBar, UrlLink, blood_bowl};
+use crate::data::blood_bowl::competitions::Competition;
 use crate::data::blood_bowl::competitions::registrations::TeamRegistration;
 use crate::data::blood_bowl::competitions::schedule::CompetitionSchedule;
 use crate::data::blood_bowl::competitions::stages::{CompetitionStage, CompetitionStageType};
 use crate::data::blood_bowl::competitions::standings::CompetitionStandings;
-use crate::data::blood_bowl::competitions::Competition;
 use crate::data::blood_bowl::teams::TeamLogo;
 use crate::data::users::User;
 use crate::errors::AppError;
-use crate::AppState;
 use askama::Template;
 use askama_web::WebTemplate;
 use blood_bowl_rs::translation::TranslatedName;

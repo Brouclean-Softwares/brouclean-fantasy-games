@@ -1,10 +1,10 @@
+use crate::AppState;
 use crate::app::templates::blood_bowl::games::{GamePage, GamesPage, NewGamePage};
 use crate::app::templates::{AlertMessage, AlertType};
 use crate::data::blood_bowl::competitions::Competition;
 use crate::data::blood_bowl::{games, teams};
 use crate::data::users::User;
 use crate::errors::AppError;
-use crate::AppState;
 use axum::extract::{Query, State};
 use axum::response::{IntoResponse, Redirect, Response};
 use axum::routing::{get, post};
@@ -932,11 +932,7 @@ pub async fn create(
     Form(form): Form<NewGameForm>,
 ) -> Result<Redirect, NewGamePage> {
     let fn_if_id_positive = |id| {
-        if id < 0 {
-            None
-        } else {
-            Some(id)
-        }
+        if id < 0 { None } else { Some(id) }
     };
 
     let first_team_id = form.first_team_id.and_then(fn_if_id_positive);

@@ -1,3 +1,4 @@
+use crate::AppState;
 use crate::app::templates::blood_bowl::teams;
 use crate::app::templates::{AlertMessage, BreadCrumb, NavigationBar, UrlLink};
 use crate::data::blood_bowl::players::PlayerAdvancement;
@@ -5,7 +6,6 @@ use crate::data::blood_bowl::statistics::players::PlayerStatistics;
 use crate::data::blood_bowl::teams::TeamLogo;
 use crate::data::users::User;
 use crate::errors::AppError;
-use crate::AppState;
 use askama::Template;
 use askama_web::WebTemplate;
 use blood_bowl_rs::advancements::{Advancement, AdvancementChoice};

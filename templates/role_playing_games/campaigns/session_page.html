@@ -1,0 +1,46 @@
+{% extends "page_base.html" %}
+
+{% block navbar %}
+{{ navigation_bar|escape("none") }}
+{% endblock %}
+
+{% block breadcrumb %}
+{{ breadcrumb|escape("none") }}
+{% endblock %}
+
+{% block body %}
+<div>
+    <h2>
+        {% if edit_mode && field_edited.eq("name") %}
+        <form method="post" autocomplete="off">
+            <input type="hidden" name="id" value="{{ session.id }}">
+
+            <div>
+                <input class="uk-input uk-form-width-large"
+                       id="name"
+                       name="name"
+                       type="text"
+                       value="{{ session.name }}"
+                       placeholder="Nom de la session de jeu..."
+                       aria-label="">
+
+                <a href="session?id={{ session.id }}" uk-icon="icon: close"></a>
+                <button class="uk-button uk-button-link" type="button" onclick="submit()">
+                    <span uk-icon="icon: check"></span>
+                </button>
+            </div>
+        </form>
+
+        {% elif editable %}
+        <a class="uk-link-reset" href="session?id={{ session.id }}&edit=true&field_edited=name">
+            {{ session.indexed_name() }}
+        </a>
+        <a href="session?id={{ session.id }}&edit=true&field_edited=name" uk-icon="icon: pencil"></a>
+
+        {% else %}
+        {{ session.indexed_name() }}
+        {% endif %}
+    </h2>
+
+</div>
+{% endblock %}

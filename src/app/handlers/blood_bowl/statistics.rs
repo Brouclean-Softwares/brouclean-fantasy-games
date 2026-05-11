@@ -1,14 +1,14 @@
+use crate::AppState;
 use crate::app::templates::blood_bowl::statistics::StatisticsPage;
-use crate::app::templates::{blood_bowl, NavigationBar};
+use crate::app::templates::{NavigationBar, blood_bowl};
 use crate::data::blood_bowl::statistics::players::PlayersTopStatistics;
 use crate::data::blood_bowl::statistics::teams::TeamsTopStatistics;
 use crate::data::users::User;
 use crate::errors::AppError;
-use crate::AppState;
+use axum::Router;
 use axum::extract::State;
 use axum::response::Redirect;
 use axum::routing::get;
-use axum::Router;
 
 pub fn init_router() -> Router<AppState> {
     Router::new().route("/", get(statistics))

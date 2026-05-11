@@ -1,6 +1,6 @@
 use crate::AppState;
-use axum::routing::get;
 use axum::Router;
+use axum::routing::get;
 
 pub mod handlers;
 pub mod templates;

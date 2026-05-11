@@ -1,9 +1,12 @@
-use crate::app::templates::{role_playing_games, BreadCrumb, NavigationBar, UrlLink};
-use crate::data::role_playing_games::campaigns::arcs::NarrativeArc;
+use crate::AppState;
+use crate::app::templates::{BreadCrumb, NavigationBar, UrlLink, role_playing_games};
+use crate::data::role_playing_games::campaigns::arcs::{
+    NarrativeArc, NarrativeArcWithGameSessions,
+};
+use crate::data::role_playing_games::campaigns::sessions::GameSession;
 use crate::data::role_playing_games::campaigns::{Campaign, CampaignRow};
 use crate::data::role_playing_games::games::Game;
 use crate::data::users::User;
-use crate::AppState;
 use askama::Template;
 use askama_web::WebTemplate;
 
@@ -63,7 +66,7 @@ pub struct CampaignPage {
     field_edited: String,
     is_owner: bool,
     games: Vec<Game>,
-    arcs: Vec<NarrativeArc>,
+    arcs_with_sessions: Vec<NarrativeArcWithGameSessions>,
 }
 
 impl CampaignPage {
@@ -76,7 +79,7 @@ impl CampaignPage {
         edit_mode: bool,
         field_edited: Option<String>,
         games: Vec<Game>,
-        arcs: Vec<NarrativeArc>,
+        arcs_with_sessions: Vec<NarrativeArcWithGameSessions>,
     ) -> Self {
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
@@ -88,7 +91,81 @@ impl CampaignPage {
             field_edited: field_edited.unwrap_or_default(),
             is_owner: editable,
             games,
-            arcs,
+            arcs_with_sessions,
+        }
+    }
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "role_playing_games/campaigns/arc_page.html")]
+pub struct NarrativeArcPage {
+    navigation_bar: NavigationBar,
+    breadcrumb: BreadCrumb,
+    arc: NarrativeArc,
+    editable: bool,
+    edit_mode: bool,
+    field_edited: String,
+}
+
+impl NarrativeArcPage {
+    pub fn get(
+        app_state: AppState,
+        profile: Option<User>,
+        arc: NarrativeArc,
+        editable: bool,
+        edit_mode: bool,
+        field_edited: Option<String>,
+    ) -> Self {
+        Self {
+            navigation_bar: NavigationBar::get(&app_state, &profile),
+            breadcrumb: breadcrumb().plus_link(UrlLink::from(
+                "Campagne",
+                &format!(
+                    "/role_playing_games/campaigns/campaign?id={}&tab_name=sessions",
+                    arc.campaign_id
+                ),
+            )),
+            arc,
+            editable,
+            edit_mode,
+            field_edited: field_edited.unwrap_or_default(),
+        }
+    }
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "role_playing_games/campaigns/session_page.html")]
+pub struct GameSessionPage {
+    navigation_bar: NavigationBar,
+    breadcrumb: BreadCrumb,
+    session: GameSession,
+    editable: bool,
+    edit_mode: bool,
+    field_edited: String,
+}
+
+impl GameSessionPage {
+    pub fn get(
+        app_state: AppState,
+        profile: Option<User>,
+        session: GameSession,
+        editable: bool,
+        edit_mode: bool,
+        field_edited: Option<String>,
+    ) -> Self {
+        Self {
+            navigation_bar: NavigationBar::get(&app_state, &profile),
+            breadcrumb: breadcrumb().plus_link(UrlLink::from(
+                "Campagne",
+                &format!(
+                    "/role_playing_games/campaigns/campaign?id={}&tab_name=sessions",
+                    session.campaign_id
+                ),
+            )),
+            session,
+            editable,
+            edit_mode,
+            field_edited: field_edited.unwrap_or_default(),
         }
     }
 }

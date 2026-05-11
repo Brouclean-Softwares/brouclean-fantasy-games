@@ -1,13 +1,13 @@
+use crate::AppState;
 use crate::app::templates::blood_bowl::games::events::{EventsController, GameEvents};
 use crate::app::templates::blood_bowl::teams::{TeamCard, TeamSelector};
-use crate::app::templates::{blood_bowl, AlertMessage, BreadCrumb, NavigationBar, UrlLink};
-use crate::data::blood_bowl::competitions::schedule::GameSchedule;
+use crate::app::templates::{AlertMessage, BreadCrumb, NavigationBar, UrlLink, blood_bowl};
 use crate::data::blood_bowl::competitions::Competition;
+use crate::data::blood_bowl::competitions::schedule::GameSchedule;
 use crate::data::blood_bowl::games::GameSummary;
 use crate::data::blood_bowl::teams::TeamLogo;
 use crate::data::users::User;
 use crate::errors::AppError;
-use crate::AppState;
 use askama::Template;
 use askama_web::WebTemplate;
 use blood_bowl_rs::games::Game;

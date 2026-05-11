@@ -1,13 +1,13 @@
 use crate::app::templates::blood_bowl::games::GameCard;
 use crate::app::templates::blood_bowl::statistics::PlayersTopStatisticsLists;
-use crate::app::templates::{blood_bowl, AlertMessage, BreadCrumb, NavigationBar, UrlLink};
+use crate::app::templates::{AlertMessage, BreadCrumb, NavigationBar, UrlLink, blood_bowl};
 use crate::data::blood_bowl::games::GameSummary;
 use crate::data::blood_bowl::statistics::players::PlayersTopStatistics;
 use crate::data::blood_bowl::statistics::teams::TeamStatistics;
 use crate::data::blood_bowl::teams::{TeamLogo, TeamSummary};
 use crate::data::users::User;
 use crate::errors::AppError;
-use crate::{data, AppState};
+use crate::{AppState, data};
 use askama::Template;
 use askama_web::WebTemplate;
 use blood_bowl_rs::players::Player;

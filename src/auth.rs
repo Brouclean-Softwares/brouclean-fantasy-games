@@ -1,14 +1,14 @@
+use crate::AppState;
 use crate::app::templates::users::UserPage;
 use crate::data::users::User;
-use crate::AppState;
 use axum::extract::State;
 use axum::routing::get;
 use axum::{
-    response::{IntoResponse, Redirect},
     Router,
+    response::{IntoResponse, Redirect},
 };
-use axum_extra::extract::cookie::Cookie;
 use axum_extra::extract::PrivateCookieJar;
+use axum_extra::extract::cookie::Cookie;
 
 pub mod google;
 

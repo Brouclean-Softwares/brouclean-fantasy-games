@@ -1,9 +1,8 @@
-use crate::app::handlers::role_playing_games::campaigns::arcs::new_arc;
+use crate::AppState;
 use crate::app::templates::role_playing_games::campaigns::{CampaignPage, CampaignsPage};
 use crate::data::role_playing_games::campaigns::Campaign;
 use crate::data::role_playing_games::{campaigns, games};
 use crate::data::users::User;
-use crate::AppState;
 use axum::extract::{Query, State};
 use axum::response::Redirect;
 use axum::routing::{get, post};
@@ -11,12 +10,16 @@ use axum::{Form, Router};
 use serde::Deserialize;
 
 pub mod arcs;
+pub mod sessions;
 
 pub fn init_router() -> Router<AppState> {
     Router::new()
         .route("/", get(campaigns).post(add_new))
         .route("/campaign", get(campaign).post(update))
-        .route("/new_arc", post(new_arc))
+        .route("/new_arc", post(arcs::new_arc))
+        .route("/arc", get(arcs::arc).post(arcs::update))
+        .route("/new_session", post(sessions::new_session))
+        .route("/session", get(sessions::session).post(sessions::update))
 }
 
 pub async fn campaigns(
@@ -47,9 +50,11 @@ pub async fn campaign(
     profile: Option<User>,
     Query(params): Query<CampaignQueryParams>,
 ) -> Result<CampaignPage, Redirect> {
+    let redirect_if_error = Redirect::to("/role_playing_games/campaigns");
+
     let campaign = campaigns::select_by_id(&app_state, params.id)
         .await
-        .map_err(|error| error.log_and_redirect(Redirect::to("/role_playing_games/campaigns")))?;
+        .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
 
     let is_owner = match (&campaign.game_master, &profile) {
         (Some(owner), Some(connected_user)) => owner.id.eq(&connected_user.id),
@@ -58,11 +63,12 @@ pub async fn campaign(
 
     let games = games::select_all(&app_state)
         .await
-        .map_err(|error| error.log_and_redirect(Redirect::to("/role_playing_games/campaigns")))?;
+        .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
 
-    let arcs = campaigns::arcs::select_for_campaigns(&app_state, &campaign)
-        .await
-        .map_err(|error| error.log_and_redirect(Redirect::to("/role_playing_games/campaigns")))?;
+    let arcs_with_sessions =
+        campaigns::arcs::select_for_campaign_with_game_sessions(&app_state, campaign.id)
+            .await
+            .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
 
     Ok(CampaignPage::get(
         app_state,
@@ -73,7 +79,7 @@ pub async fn campaign(
         params.edit.unwrap_or(false) && profile.is_some(),
         params.field_edited,
         games,
-        arcs,
+        arcs_with_sessions,
     ))
 }
 

@@ -1,6 +1,6 @@
+use crate::AppState;
 use crate::app::templates::NavigationBar;
 use crate::data::users::User;
-use crate::AppState;
 use askama::Template;
 use askama_web::WebTemplate;
 

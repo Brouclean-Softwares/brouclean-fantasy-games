@@ -1,8 +1,8 @@
+use crate::AppState;
 use crate::app::templates::blood_bowl::games::GameCard;
 use crate::app::templates::blood_bowl::games::GamesScheduleTable;
 use crate::data::blood_bowl::games::GameSummary;
 use crate::data::users::User;
-use crate::AppState;
 use askama::Template;
 use askama_web::WebTemplate;
 use std::fmt;

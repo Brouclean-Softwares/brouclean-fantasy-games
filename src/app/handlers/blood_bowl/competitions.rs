@@ -1,15 +1,15 @@
+use crate::AppState;
 use crate::app::templates::blood_bowl::competitions::{CompetitionPage, CompetitionsPage};
 use crate::app::templates::{AlertMessage, AlertType};
+use crate::data::blood_bowl::competitions::Competition;
 use crate::data::blood_bowl::competitions::stages::{
     CompetitionStage, CompetitionStageRule, CompetitionStageType,
 };
-use crate::data::blood_bowl::competitions::Competition;
 use crate::data::blood_bowl::games;
 use crate::data::blood_bowl::statistics::players::PlayersTopStatistics;
 use crate::data::blood_bowl::statistics::teams::TeamsTopStatistics;
 use crate::data::users::User;
 use crate::errors::AppError;
-use crate::AppState;
 use axum::extract::{Query, State};
 use axum::response::Redirect;
 use axum::routing::{get, post};

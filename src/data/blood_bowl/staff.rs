@@ -1,7 +1,7 @@
+use crate::AppState;
 use crate::data::blood_bowl::teams;
 use crate::data::users::User;
 use crate::errors::AppError;
-use crate::AppState;
 use blood_bowl_rs::staffs::Staff;
 use serde::Deserialize;
 use std::collections::HashMap;

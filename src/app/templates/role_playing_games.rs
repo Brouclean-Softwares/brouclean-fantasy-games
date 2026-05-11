@@ -1,3 +1,4 @@
+use crate::AppState;
 use crate::app::templates::role_playing_games::campaigns::{
     AddNewCampaignButton, OwnedCampaignsBlock,
 };
@@ -10,7 +11,6 @@ use crate::data::role_playing_games::characters::CharacterRow;
 use crate::data::role_playing_games::games::Game;
 use crate::data::users::User;
 use crate::errors::AppError;
-use crate::AppState;
 use askama::Template;
 use askama_web::WebTemplate;
 

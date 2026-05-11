@@ -193,28 +193,34 @@
              {% if editable %} uk-sortable="handle: .arc-handle" {% endif %}
              uk-grid
         >
-            {% for arc in arcs %}
+            {% for arc_with_sessions in arcs_with_sessions %}
             <div>
                 <h4>
                     {% if editable %}
                     <span class="arc-handle uk-margin-right" uk-icon="icon: table"></span>
                     {% endif %}
 
-                    <span>{{ arc.position + 1 }}. {{ arc.name }}</span>
+                    <a class="uk-link-reset" href="/role_playing_games/campaigns/arc?id={{ arc_with_sessions.arc.id }}">
+                        <span>{{ arc_with_sessions.arc.indexed_name() }}</span>
+                    </a>
                 </h4>
 
-                <div data-arc-id="{{ arc.id }}"
+                <div data-arc-id="{{ arc_with_sessions.arc.id }}"
                      {% if editable %} uk-sortable="group: sessions; handle: .session-handle" {% endif %}
                 >
-                    <div data-session-id="1" class="uk-margin">
+                    {% for session in arc_with_sessions.sessions %}
+                    <div data-session-id="{{ session.id }}" class="uk-margin">
                         <div class="uk-card uk-card-hover uk-card-body uk-card-small">
                             {% if editable %}
                             <span class="session-handle uk-margin-right" uk-icon="icon: table"></span>
                             {% endif %}
 
-                            <span>1.1. Session</span>
+                            <a class="uk-link-reset" href="/role_playing_games/campaigns/session?id={{ session.id }}">
+                                <span>{{ session.indexed_name() }}</span>
+                            </a>
                         </div>
                     </div>
+                    {% endfor %}
                 </div>
 
                 {% if editable %}
@@ -232,7 +238,7 @@
                             <p>
                             <form id="add_session_form" action="/role_playing_games/campaigns/new_session" method="post" autocomplete="off" class="uk-form-stacked">
                                 <input type="hidden" name="campaign_id" value="{{ campaign.id }}">
-                                <input type="hidden" name="arc_id" value="{{ arc.id }}">
+                                <input type="hidden" name="arc_id" value="{{ arc_with_sessions.arc.id }}">
 
                                 <div class="uk-margin">
                                     <label class="uk-form-label" for="name">Quel est son nom ?</label>

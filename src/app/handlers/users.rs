@@ -1,9 +1,9 @@
+use crate::AppState;
 use crate::app::templates::users::UserPage;
 use crate::data::users::User;
-use crate::AppState;
+use axum::Router;
 use axum::extract::State;
 use axum::routing::get;
-use axum::Router;
 
 pub fn init_router() -> Router<AppState> {
     Router::new().route("/user", get(user))

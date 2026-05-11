@@ -1,6 +1,6 @@
-use crate::app::templates::{blood_bowl, BreadCrumb, NavigationBar, UrlLink};
-use crate::data::users::User;
 use crate::AppState;
+use crate::app::templates::{BreadCrumb, NavigationBar, UrlLink, blood_bowl};
+use crate::data::users::User;
 use askama::Template;
 use askama_web::WebTemplate;
 use blood_bowl_rs::players::PlayerType;

@@ -1,6 +1,6 @@
+use crate::AppState;
 use crate::app::templates::HomePage;
 use crate::data::users::User;
-use crate::AppState;
 use axum::extract::State;
 
 pub mod blood_bowl;

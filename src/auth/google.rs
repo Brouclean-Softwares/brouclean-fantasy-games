@@ -1,16 +1,16 @@
+use crate::AppState;
 use crate::app::templates::HomePage;
 use crate::auth::SESSION_ID;
 use crate::data::sessions::Session;
 use crate::data::users::User;
 use crate::errors::AppError;
-use crate::AppState;
 use axum::extract::{Query, State};
 use axum::response::IntoResponse;
-use axum_extra::extract::cookie::{Cookie, SameSite};
 use axum_extra::extract::PrivateCookieJar;
+use axum_extra::extract::cookie::{Cookie, SameSite};
 use oauth2::{
-    basic::BasicClient, reqwest::async_http_client, AuthUrl, AuthorizationCode, ClientId,
-    ClientSecret, RedirectUrl, TokenResponse, TokenUrl,
+    AuthUrl, AuthorizationCode, ClientId, ClientSecret, RedirectUrl, TokenResponse, TokenUrl,
+    basic::BasicClient, reqwest::async_http_client,
 };
 use serde::Deserialize;
 use std::env;

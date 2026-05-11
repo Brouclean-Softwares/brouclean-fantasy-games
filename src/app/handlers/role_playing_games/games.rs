@@ -1,8 +1,8 @@
+use crate::AppState;
 use crate::app::templates::role_playing_games::games::{GamePage, GamesPage};
 use crate::data::role_playing_games::games;
 use crate::data::role_playing_games::games::Game;
 use crate::data::users::User;
-use crate::AppState;
 use axum::extract::{Query, State};
 use axum::response::Redirect;
 use axum::routing::get;

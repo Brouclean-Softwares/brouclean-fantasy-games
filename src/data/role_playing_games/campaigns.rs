@@ -1,6 +1,6 @@
+use crate::AppState;
 use crate::data::users::User;
 use crate::errors::AppError;
-use crate::AppState;
 use serde::Deserialize;
 
 pub mod arcs;
@@ -188,7 +188,7 @@ pub async fn update(
                 game_id = $7,
                 last_updated = CURRENT_TIMESTAMP
             WHERE id = $1
-            and game_master_id = $2",
+            AND game_master_id = $2",
         )
         .bind(campaign.id.clone())
         .bind(connected_user_id.clone())

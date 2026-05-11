@@ -1,4 +1,4 @@
-use axum::{extract::FromRef, Router};
+use axum::{Router, extract::FromRef};
 use axum_extra::extract::cookie::Key;
 use dotenv::dotenv;
 use oauth2::basic::BasicClient;

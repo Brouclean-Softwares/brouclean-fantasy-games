@@ -1,3 +1,4 @@
+use crate::AppState;
 use crate::data::blood_bowl::competitions::schedule::RoundSchedule;
 use crate::data::blood_bowl::competitions::stages::{CompetitionStage, CompetitionStageType};
 use crate::data::blood_bowl::teams::TeamSummary;
@@ -5,7 +6,6 @@ use crate::data::blood_bowl::{coaches, players, teams};
 use crate::data::users::User;
 use crate::errors::AppError;
 use crate::errors::AppError::BloodBowlAppError;
-use crate::AppState;
 use blood_bowl_rs::events::GameEvent;
 use blood_bowl_rs::games::Game;
 use blood_bowl_rs::players::{Player, PlayerType};
