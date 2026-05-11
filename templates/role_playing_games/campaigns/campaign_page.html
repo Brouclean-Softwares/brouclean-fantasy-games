@@ -69,7 +69,7 @@
 
     {% if tab_name.eq("info") %}
     <div>
-        <h3>
+        <h3 class="uk-heading-divider">
             <span>Jeu</span>
 
             {% if editable && ! field_edited.eq("game") %}
@@ -101,18 +101,21 @@
 
             {% else %}
             <div>
-                {% if let Some(external_logo_url) = campaign.game_external_logo_url %}
-                <span class="uk-visible@m uk-margin-right">{{ campaign.game_name }}</span>
-                <img src="{{ external_logo_url }}" class="uk-height-max-small" style="max-height:50px; width:auto;" alt="">
-                {% else %}
-                {{ campaign.game_name }}
-                {% endif %}
+                <a class="uk-link-reset" href="/role_playing_games/games/game?id={{ campaign.game_id }}">
+                    {% if let Some(external_logo_url) = campaign.game_external_logo_url %}
+                    <span class="uk-visible@m uk-margin-right">{{ campaign.game_name }}</span>
+                    <img src="{{ external_logo_url }}" class="uk-height-max-small" style="max-height:50px; width:auto;" alt="">
+
+                    {% else %}
+                    {{ campaign.game_name }}
+                    {% endif %}
+                </a>
             </div>
             {% endif %}
         </div>
 
         {% if editable || campaign.external_image_url.is_some() || campaign.description.len() > 0 %}
-        <h3>
+        <h3 class="uk-heading-divider">
             <span>Image et description</span>
 
             {% if editable && ! field_edited.eq("info") %}
@@ -182,89 +185,129 @@
 
     {% elif tab_name.eq("sessions") %}
     <div>
-        <h3>Sessions</h3>
+        <h3 class="uk-heading-divider">
+            Sessions
+        </h3>
 
-        <div class="uk-child-width-1-2@s uk-child-width-1-3@m uk-child-width-1-4@xl"
-             uk-sortable="group: arcs; handle: .uk-sortable-handle"
-             uk-grid>
-
+        <div class="uk-child-width-1-2@s uk-child-width-1-3@m uk-child-width-1-4@xl" uk-sortable="handle: .arc-handle" uk-grid>
             <div>
                 <h4>
-                    <span class="uk-sortable-handle uk-margin-right" uk-icon="icon: table"></span>
+                    <span class="arc-handle uk-margin-right" uk-icon="icon: table"></span>
                     <span>Arc 1</span>
                 </h4>
-                <div uk-sortable="group: sessions; handle: .uk-sortable-handle">
-                    <div class="uk-margin">
+
+                <div data-arc-id="1" uk-sortable="group: sessions; handle: .session-handle">
+                    <div data-session-id="1" class="uk-margin">
                         <div class="uk-card uk-card-default uk-card-body uk-card-small">
-                            <span class="uk-sortable-handle uk-margin-right" uk-icon="icon: table"></span>
+                            <span class="session-handle uk-margin-right" uk-icon="icon: table"></span>
                             <span>Session 1.1</span>
                         </div>
                     </div>
-                    <div class="uk-margin">
+                    <div data-session-id="2" class="uk-margin">
                         <div class="uk-card uk-card-default uk-card-body uk-card-small">
-                            <span class="uk-sortable-handle uk-margin-right" uk-icon="icon: table"></span>
+                            <span class="session-handle uk-margin-right" uk-icon="icon: table"></span>
                             <span>Session 1.2</span>
                         </div>
                     </div>
-                    <div class="uk-margin">
+                    <div data-session-id="3" class="uk-margin">
                         <div class="uk-card uk-card-default uk-card-body uk-card-small">
-                            <span class="uk-sortable-handle uk-margin-right" uk-icon="icon: table"></span>
+                            <span class="session-handle uk-margin-right" uk-icon="icon: table"></span>
                             <span>Session 1.3</span>
                         </div>
                     </div>
-                    <div class="uk-margin">
-                        <div class="uk-card uk-card-default uk-card-body uk-card-small">
-                            <span class="uk-sortable-handle uk-margin-right" uk-icon="icon: table"></span>
-                            <span>Session 1.4</span>
-                        </div>
-                    </div>
                 </div>
             </div>
+
             <div>
                 <h4>
-                    <span class="uk-sortable-handle uk-margin-right" uk-icon="icon: table"></span>
+                    <span class="arc-handle uk-margin-right" uk-icon="icon: table"></span>
                     <span>Arc 2</span>
                 </h4>
-                <div uk-sortable="group: sessions; handle: .uk-sortable-handle">
-                    <div class="uk-margin">
+
+                <div data-arc-id="2" uk-sortable="group: sessions; handle: .session-handle">
+                    <div data-session-id="4" class="uk-margin">
                         <div class="uk-card uk-card-default uk-card-body uk-card-small">
-                            <span class="uk-sortable-handle uk-margin-right" uk-icon="icon: table"></span>
+                            <span class="session-handle uk-margin-right" uk-icon="icon: table"></span>
                             <span>Session 2.1</span>
                         </div>
                     </div>
-                    <div class="uk-margin">
+                    <div data-session-id="5" class="uk-margin">
                         <div class="uk-card uk-card-default uk-card-body uk-card-small">
-                            <span class="uk-sortable-handle uk-margin-right" uk-icon="icon: table"></span>
+                            <span class="session-handle uk-margin-right" uk-icon="icon: table"></span>
                             <span>Session 2.2</span>
-                        </div>
-                    </div>
-                    <div class="uk-margin">
-                        <div class="uk-card uk-card-default uk-card-body uk-card-small">
-                            <span class="uk-sortable-handle uk-margin-right" uk-icon="icon: table"></span>
-                            <span>Session 2.3</span>
-                        </div>
-                    </div>
-                    <div class="uk-margin">
-                        <div class="uk-card uk-card-default uk-card-body uk-card-small">
-                            <span class="uk-sortable-handle uk-margin-right" uk-icon="icon: table"></span>
-                            <span>Session 2.4</span>
                         </div>
                     </div>
                 </div>
             </div>
-            <div>
-                <h4>
-                    <span class="uk-sortable-handle uk-margin-right" uk-icon="icon: table"></span>
-                    <span>Arc 3</span>
-                </h4>
-                <div uk-sortable="group: sessions; handle: .uk-sortable-handle"></div>
-            </div>
         </div>
+
+        <script>
+            async function saveCampaignStructure() {
+
+                const arcs = [];
+
+                document
+                    .querySelectorAll('[data-arc-id]')
+                    .forEach((arcEl, arcPosition) => {
+
+                        const arc = {
+                            arcId: Number(arcEl.dataset.arcId),
+                            position: arcPosition,
+                            sessions: []
+                        };
+
+                        arcEl
+                            .querySelectorAll('[data-session-id]')
+                            .forEach((sessionEl, sessionPosition) => {
+
+                                arc.sessions.push({
+                                    sessionId: Number(sessionEl.dataset.sessionId),
+                                    position: sessionPosition
+                                });
+
+                            });
+
+                        arcs.push(arc);
+                    });
+
+                try {
+
+                    /*const response = await fetch('/api/campaigns/1/reorder', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(arcs)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Save failed');
+                    }*/
+
+                    console.log('saved');
+
+                } catch (err) {
+
+                    console.error(err);
+
+                }
+            }
+
+            UIkit.util.on(
+                '[uk-sortable]',
+                'stop',
+                function () {
+
+                    saveCampaignStructure();
+
+                }
+            );
+        </script>
     </div>
 
     {% elif tab_name.eq("notes") && is_owner %}
     <div>
-        <h3>
+        <h3 class="uk-heading-divider">
             <span>Notes</span>
             {% if editable && ! field_edited.eq("notes") %}
             <a href="campaign?id={{ campaign.id }}&tab_name=notes&edit=true&field_edited=notes" uk-icon="icon: pencil"></a>

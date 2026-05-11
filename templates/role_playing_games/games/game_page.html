@@ -41,7 +41,7 @@
     </h2>
 
     <dl class="uk-description-list">
-        <h3>
+        <h3 class="uk-heading-divider">
             <span>Logo</span>
             {% if editable && !(edit_mode && field_edited.eq("external_logo_url")) %}
             <a href="game?id={{ game.id }}&edit=true&field_edited=external_logo_url" uk-icon="icon: pencil"></a>
@@ -82,7 +82,7 @@
             {% endif %}
         </div>
 
-        <h3>
+        <h3 class="uk-heading-divider">
             <span>Description</span>
             {% if editable && !(edit_mode && field_edited.eq("description")) %}
             <a href="game?id={{ game.id }}&edit=true&field_edited=description" uk-icon="icon: pencil"></a>

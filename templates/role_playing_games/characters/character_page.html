@@ -67,7 +67,7 @@
 
     {% if tab_name.eq("info") %}
     <div>
-        <h3>
+        <h3 class="uk-heading-divider">
             <span>Jeu</span>
 
             {% if editable && ! field_edited.eq("game") %}
@@ -99,18 +99,21 @@
 
             {% else %}
             <div>
-                {% if let Some(external_logo_url) = character.game_external_logo_url %}
-                <span class="uk-visible@m uk-margin-right">{{ character.game_name }}</span>
-                <img src="{{ external_logo_url }}" class="uk-height-max-small" style="max-height:50px; width:auto;" alt="">
-                {% else %}
-                {{ character.game_name }}
-                {% endif %}
+                <a class="uk-link-reset" href="/role_playing_games/games/game?id={{ character.game_id }}">
+                    {% if let Some(external_logo_url) = character.game_external_logo_url %}
+                    <span class="uk-visible@m uk-margin-right">{{ character.game_name }}</span>
+                    <img src="{{ external_logo_url }}" class="uk-height-max-small" style="max-height:50px; width:auto;" alt="">
+
+                    {% else %}
+                    {{ character.game_name }}
+                    {% endif %}
+                </a>
             </div>
             {% endif %}
         </div>
 
         {% if editable || character.external_image_url.is_some() || character.description.len() > 0 %}
-        <h3>
+        <h3 class="uk-heading-divider">
             <span>Image et description</span>
 
             {% if editable && ! field_edited.eq("info") %}
@@ -181,7 +184,7 @@
     {% elif tab_name.eq("profile") %}
     <div>
         {% if editable || character.profile.len() > 0 %}
-        <h3>
+        <h3 class="uk-heading-divider">
             <span>Profil du personnage</span>
             {% if editable && ! field_edited.eq("profile") %}
             <a href="character?id={{ character.id }}&tab_name=profile&edit=true&field_edited=profile" uk-icon="icon: pencil"></a>
@@ -229,7 +232,7 @@
     {% elif tab_name.eq("notes") %}
     <div>
         {% if editable || character.public_note.len() > 0 %}
-        <h3>
+        <h3 class="uk-heading-divider">
             <span>Notes publiques</span>
             {% if editable && ! field_edited.eq("public_note") %}
             <a href="character?id={{ character.id }}&tab_name=notes&edit=true&field_edited=public_note" uk-icon="icon: pencil"></a>
@@ -274,7 +277,7 @@
         {% endif %}
 
         {% if is_owner %}
-        <h3>
+        <h3 class="uk-heading-divider">
             <span>Notes privées</span>
             {% if editable && ! field_edited.eq("private_note") %}
             <a href="character?id={{ character.id }}&tab_name=notes&edit=true&field_edited=private_note" uk-icon="icon: pencil"></a>
