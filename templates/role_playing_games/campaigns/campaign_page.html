@@ -189,27 +189,79 @@
             Sessions
         </h3>
 
-        <div class="uk-child-width-1-2@s uk-child-width-1-3@m uk-child-width-1-4@xl" uk-sortable="handle: .arc-handle" uk-grid>
+        <div class="uk-child-width-1-2@m uk-child-width-1-3@xl"
+             {% if editable %} uk-sortable="handle: .arc-handle" {% endif %}
+             uk-grid
+        >
             {% for arc in arcs %}
             <div>
                 <h4>
+                    {% if editable %}
                     <span class="arc-handle uk-margin-right" uk-icon="icon: table"></span>
-                    <span>{{ arc.name }}</span>
+                    {% endif %}
+
+                    <span>{{ arc.position + 1 }}. {{ arc.name }}</span>
                 </h4>
 
-                <div data-arc-id="1" uk-sortable="group: sessions; handle: .session-handle">
+                <div data-arc-id="{{ arc.id }}"
+                     {% if editable %} uk-sortable="group: sessions; handle: .session-handle" {% endif %}
+                >
                     <div data-session-id="1" class="uk-margin">
-                        <div class="uk-card uk-card-default uk-card-body uk-card-small">
+                        <div class="uk-card uk-card-hover uk-card-body uk-card-small">
+                            {% if editable %}
                             <span class="session-handle uk-margin-right" uk-icon="icon: table"></span>
-                            <span>Session 1.1</span>
+                            {% endif %}
+
+                            <span>1.1. Session</span>
                         </div>
                     </div>
                 </div>
+
+                {% if editable %}
+                <div class="cls-no-drag uk-margin-top">
+                    <button class="uk-button uk-button-primary"
+                            type="button"
+                            uk-toggle="target: #modal-add_session">
+                        Créer une nouvelle session
+                    </button>
+
+                    <div id="modal-add_session" uk-modal>
+                        <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                            <h2 class="uk-modal-title">Création d'une nouvelle session</h2>
+                            <p>Vous êtes sur le point de créer une nouvelle session de jeu.</p>
+                            <p>
+                            <form id="add_session_form" action="/role_playing_games/campaigns/new_session" method="post" autocomplete="off" class="uk-form-stacked">
+                                <input type="hidden" name="campaign_id" value="{{ campaign.id }}">
+                                <input type="hidden" name="arc_id" value="{{ arc.id }}">
+
+                                <div class="uk-margin">
+                                    <label class="uk-form-label" for="name">Quel est son nom ?</label>
+                                    <div class="uk-form-controls">
+                                        <input class="uk-input"
+                                               name="name"
+                                               type="text"
+                                               placeholder="Nom de a session..."
+                                               aria-label="">
+                                    </div>
+                                </div>
+                            </form>
+                            </p>
+                            <p class="uk-text-right">
+                                <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                                <button class="uk-button uk-button-primary"
+                                        onclick="document.getElementById('add_session_form').submit()">
+                                    Créer
+                                </button>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
             </div>
             {% endfor %}
 
             {% if editable %}
-            <div>
+            <div class="cls-no-drag">
                 <button class="uk-button uk-button-primary"
                         type="button"
                         uk-toggle="target: #modal-add_arc">
@@ -298,9 +350,11 @@
                     </div>
                 </div>
             </div>
-        </div>
-        -->
+            -->
 
+        </div>
+
+        {% if editable %}
         <script>
             async function saveCampaignStructure() {
 
@@ -363,6 +417,7 @@
                 }
             );
         </script>
+        {% endif %}
     </div>
 
     {% elif tab_name.eq("notes") && is_owner %}

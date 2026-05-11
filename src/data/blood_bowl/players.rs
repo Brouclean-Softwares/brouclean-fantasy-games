@@ -1,7 +1,6 @@
 use crate::data::blood_bowl::games::select_playing_team_player_for_game;
 use crate::data::blood_bowl::{coaches, games, teams};
 use crate::data::users::User;
-use crate::data::{IsTrue, Total};
 use crate::errors::AppError;
 use crate::AppState;
 use blood_bowl_rs::advancements::{Advancement, AdvancementChoice};
@@ -141,8 +140,8 @@ pub async fn is_under_contract_for_team(
         team_id
     );
 
-    let result: Option<IsTrue> = sqlx::query_as(
-        "SELECT contract_end IS NULL as is_true
+    let result: Option<bool> = sqlx::query_scalar(
+        "SELECT contract_end IS NULL as is_under_contract
             FROM bb_teams_players
             WHERE team_id = $1
             AND player_id = $2
@@ -154,7 +153,7 @@ pub async fn is_under_contract_for_team(
     .await?;
 
     if let Some(result) = result {
-        Ok(result.is_true)
+        Ok(result)
     } else {
         Ok(false)
     }
@@ -620,7 +619,7 @@ async fn select_remaining_star_player_points(
 ) -> Result<i32, AppError> {
     tracing::debug!("select_remaining_star_player_points with id={}", player_id);
 
-    let points_won: Total = sqlx::query_as(
+    let points_won: Option<i64> = sqlx::query_scalar(
         "SELECT SUM(star_player_points) as total
             FROM bb_games_teams_players
             WHERE player_id = $1",
@@ -629,7 +628,7 @@ async fn select_remaining_star_player_points(
     .fetch_one(&state.db)
     .await?;
 
-    let points_spent: Total = sqlx::query_as(
+    let points_spent: Option<i64> = sqlx::query_scalar(
         "SELECT SUM(star_player_points) as total
             FROM bb_players_advancements
             WHERE player_id = $1",
@@ -638,7 +637,7 @@ async fn select_remaining_star_player_points(
     .fetch_one(&state.db)
     .await?;
 
-    Ok((points_won.total.unwrap_or(0) - points_spent.total.unwrap_or(0)) as i32)
+    Ok((points_won.unwrap_or(0) - points_spent.unwrap_or(0)) as i32)
 }
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
