@@ -4,7 +4,6 @@ use crate::data::blood_bowl::competitions::stages::{CompetitionStage, Competitio
 use crate::data::blood_bowl::competitions::standings::{CompetitionStandings, StageStandings};
 use crate::data::blood_bowl::teams::TeamSummary;
 use crate::data::users::User;
-use crate::data::Id;
 use crate::errors::AppError;
 use crate::AppState;
 use blood_bowl_rs::versions::Version;
@@ -157,7 +156,7 @@ impl Competition {
             } else {
                 let edition_number = editions.len() as i32 + 1;
 
-                let new_competition_id: Id = sqlx::query_as(
+                let new_competition_id: i32 = sqlx::query_scalar(
                     "INSERT INTO bb_competitions (
                             name,
                             edition_number,
@@ -175,7 +174,7 @@ impl Competition {
                 .fetch_one(&state.db)
                 .await?;
 
-                self.id = new_competition_id.id;
+                self.id = new_competition_id;
             }
         }
 

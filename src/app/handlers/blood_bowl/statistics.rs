@@ -3,6 +3,7 @@ use crate::app::templates::{blood_bowl, NavigationBar};
 use crate::data::blood_bowl::statistics::players::PlayersTopStatistics;
 use crate::data::blood_bowl::statistics::teams::TeamsTopStatistics;
 use crate::data::users::User;
+use crate::errors::AppError;
 use crate::AppState;
 use axum::extract::State;
 use axum::response::Redirect;
@@ -17,10 +18,7 @@ pub async fn statistics(
     State(app_state): State<AppState>,
     profile: Option<User>,
 ) -> Result<StatisticsPage, Redirect> {
-    let error_redirect = |error| {
-        tracing::debug!("Error : {}", error);
-        Redirect::to("/blood_bowl")
-    };
+    let error_redirect = |error: AppError| error.log_and_redirect(Redirect::to("/blood_bowl"));
 
     let teams_top_statistics = TeamsTopStatistics::global(&app_state)
         .await

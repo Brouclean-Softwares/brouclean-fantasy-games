@@ -1,3 +1,4 @@
+use crate::app::handlers::role_playing_games::campaigns::arcs::new_arc;
 use crate::app::templates::role_playing_games::campaigns::{CampaignPage, CampaignsPage};
 use crate::data::role_playing_games::campaigns::Campaign;
 use crate::data::role_playing_games::{campaigns, games};
@@ -5,14 +6,17 @@ use crate::data::users::User;
 use crate::AppState;
 use axum::extract::{Query, State};
 use axum::response::Redirect;
-use axum::routing::get;
+use axum::routing::{get, post};
 use axum::{Form, Router};
 use serde::Deserialize;
+
+pub mod arcs;
 
 pub fn init_router() -> Router<AppState> {
     Router::new()
         .route("/", get(campaigns).post(add_new))
         .route("/campaign", get(campaign).post(update))
+        .route("/new_arc", post(new_arc))
 }
 
 pub async fn campaigns(
@@ -21,11 +25,11 @@ pub async fn campaigns(
 ) -> Result<CampaignsPage, Redirect> {
     let campaigns = campaigns::select_all(&app_state)
         .await
-        .or_else(|_| Err(Redirect::to("/")))?;
+        .or_else(|error| Err(error.log_and_redirect(Redirect::to("/"))))?;
 
     let games = games::select_all(&app_state)
         .await
-        .or_else(|_| Err(Redirect::to("/")))?;
+        .or_else(|error| Err(error.log_and_redirect(Redirect::to("/"))))?;
 
     Ok(CampaignsPage::get(app_state, profile, campaigns, games))
 }
@@ -45,7 +49,7 @@ pub async fn campaign(
 ) -> Result<CampaignPage, Redirect> {
     let campaign = campaigns::select_by_id(&app_state, params.id)
         .await
-        .map_err(|_| Redirect::to("/role_playing_games/campaigns"))?;
+        .map_err(|error| error.log_and_redirect(Redirect::to("/role_playing_games/campaigns")))?;
 
     let is_owner = match (&campaign.game_master, &profile) {
         (Some(owner), Some(connected_user)) => owner.id.eq(&connected_user.id),
@@ -54,7 +58,11 @@ pub async fn campaign(
 
     let games = games::select_all(&app_state)
         .await
-        .or_else(|_| Err(Redirect::to("/role_playing_games/campaigns")))?;
+        .map_err(|error| error.log_and_redirect(Redirect::to("/role_playing_games/campaigns")))?;
+
+    let arcs = campaigns::arcs::select_for_campaigns(&app_state, &campaign)
+        .await
+        .map_err(|error| error.log_and_redirect(Redirect::to("/role_playing_games/campaigns")))?;
 
     Ok(CampaignPage::get(
         app_state,
@@ -65,6 +73,7 @@ pub async fn campaign(
         params.edit.unwrap_or(false) && profile.is_some(),
         params.field_edited,
         games,
+        arcs,
     ))
 }
 
@@ -85,7 +94,7 @@ pub async fn add_new(
 
     let game = games::select_by_id(&app_state, form.game_id)
         .await
-        .map_err(|_| redirect_if_error.clone())?;
+        .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
 
     let campaign = Campaign {
         id: 0,
@@ -101,7 +110,7 @@ pub async fn add_new(
 
     let new_campaign_id = campaigns::create(&app_state, &profile, &campaign)
         .await
-        .map_err(|_| redirect_if_error.clone())?;
+        .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
 
     Ok(Redirect::to(&format!(
         "/role_playing_games/campaigns/campaign?id={}",
@@ -134,7 +143,7 @@ pub async fn update(
 
     let mut campaign = campaigns::select_by_id(&app_state, form.id)
         .await
-        .map_err(|_| redirect_when_error.clone())?;
+        .map_err(|error| error.log_and_redirect(redirect_when_error.clone()))?;
 
     let game_master = campaign
         .game_master
@@ -170,7 +179,7 @@ pub async fn update(
 
     campaigns::update(&app_state, &updating_user, &campaign)
         .await
-        .map_err(|_| redirect_when_error.clone())?;
+        .map_err(|error| error.log_and_redirect(redirect_when_error.clone()))?;
 
     Ok(Redirect::to(&format!(
         "/role_playing_games/campaigns/campaign?id={}&tab_name={}",

@@ -1,5 +1,4 @@
 use crate::data::users::User;
-use crate::data::Id;
 use crate::errors::AppError;
 use crate::AppState;
 use serde::Deserialize;
@@ -50,7 +49,7 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<Game, AppError> {
 pub async fn create(state: &AppState, user: &User, game: &Game) -> Result<i32, AppError> {
     tracing::debug!("create game={:?} by user={:?}", game, user,);
 
-    let new_game_id: Id = sqlx::query_as(
+    let new_game_id: i32 = sqlx::query_scalar(
         "INSERT INTO rpg_games (name)
             VALUES ($1)
             RETURNING id",
@@ -59,7 +58,7 @@ pub async fn create(state: &AppState, user: &User, game: &Game) -> Result<i32, A
     .fetch_one(&state.db)
     .await?;
 
-    Ok(new_game_id.id)
+    Ok(new_game_id)
 }
 
 pub async fn update(state: &AppState, user: &User, game: &Game) -> Result<(), AppError> {

@@ -131,7 +131,7 @@ fn redirect_when_update_ko(
         )
         .into_response()
     } else {
-        tracing::debug!(error_message);
+        tracing::error!(error_message);
         Redirect::to("/blood_bowl/games").into_response()
     }
 }
@@ -961,7 +961,9 @@ pub async fn create(
         (Some(first_team_id), Some(second_team_id), Some(scheduled_at)) => {
             let first_team = teams::select_by_id_with_staff_and_players(&app_state, first_team_id)
                 .await
-                .map_err(|_| {
+                .map_err(|error| {
+                    tracing::error!("{}", error);
+
                     NewGamePage::get_with_message(
                         app_state.clone(),
                         profile.clone(),
@@ -977,7 +979,9 @@ pub async fn create(
             let second_team =
                 teams::select_by_id_with_staff_and_players(&app_state, second_team_id)
                     .await
-                    .map_err(|_| {
+                    .map_err(|error| {
+                        tracing::error!("{}", error);
+
                         NewGamePage::get_with_message(
                             app_state.clone(),
                             profile.clone(),
@@ -991,7 +995,9 @@ pub async fn create(
                     })?;
 
             let scheduled_at = NaiveDateTime::parse_from_str(&*scheduled_at, "%Y-%m-%dT%H:%M")
-                .map_err(|_| {
+                .map_err(|error| {
+                    tracing::error!("{}", error);
+
                     NewGamePage::get_with_message(
                         app_state.clone(),
                         profile.clone(),
@@ -1013,6 +1019,8 @@ pub async fn create(
             )
             .await
             .map_err(|error| {
+                tracing::error!("{}", error);
+
                 NewGamePage::get_with_message(
                     app_state.clone(),
                     profile.clone(),
@@ -1045,19 +1053,19 @@ pub async fn delete(
     let competition = Competition::select_for_game_id(&app_state, form.id.clone())
         .await
         .or_else(|app_error| {
-            Err(Redirect::to(&format!(
+            Err(app_error.log_and_redirect(Redirect::to(&format!(
                 "./game?id={}&message={}",
                 form.id, app_error
-            )))
+            ))))
         })?;
 
     games::delete(&app_state, &profile, form.id.clone())
         .await
         .or_else(|app_error| {
-            Err(Redirect::to(&format!(
+            Err(app_error.log_and_redirect(Redirect::to(&format!(
                 "./game?id={}&message={}",
                 form.id, app_error
-            )))
+            ))))
         })?;
 
     if let Some(competition) = competition {

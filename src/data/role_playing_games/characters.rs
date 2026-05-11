@@ -1,5 +1,4 @@
 use crate::data::users::User;
-use crate::data::Id;
 use crate::errors::AppError;
 use crate::AppState;
 use serde::Deserialize;
@@ -154,7 +153,7 @@ pub async fn create(state: &AppState, user: &User, character: &Character) -> Res
         character,
     );
 
-    let new_character_id: Id = sqlx::query_as(
+    let new_character_id: i32 = sqlx::query_scalar(
         "INSERT INTO rpg_characters (
                 game_id,
                 name,
@@ -168,7 +167,7 @@ pub async fn create(state: &AppState, user: &User, character: &Character) -> Res
     .fetch_one(&state.db)
     .await?;
 
-    Ok(new_character_id.id)
+    Ok(new_character_id)
 }
 
 pub async fn update(

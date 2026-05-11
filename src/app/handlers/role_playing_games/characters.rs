@@ -21,11 +21,11 @@ pub async fn characters(
 ) -> Result<CharactersPage, Redirect> {
     let characters = characters::select_all(&app_state)
         .await
-        .or_else(|_| Err(Redirect::to("/")))?;
+        .or_else(|error| Err(error.log_and_redirect(Redirect::to("/"))))?;
 
     let games = games::select_all(&app_state)
         .await
-        .or_else(|_| Err(Redirect::to("/")))?;
+        .or_else(|error| Err(error.log_and_redirect(Redirect::to("/"))))?;
 
     Ok(CharactersPage::get(app_state, profile, characters, games))
 }
@@ -43,9 +43,11 @@ pub async fn character(
     profile: Option<User>,
     Query(params): Query<CharacterQueryParams>,
 ) -> Result<CharacterPage, Redirect> {
+    let redirect_if_error = Redirect::to("/role_playing_games/characters");
+
     let character = characters::select_by_id(&app_state, params.id)
         .await
-        .map_err(|_| Redirect::to("/role_playing_games/characters"))?;
+        .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
 
     let is_owner = match (&character.user, &profile) {
         (Some(owner), Some(connected_user)) => owner.id.eq(&connected_user.id),
@@ -54,7 +56,7 @@ pub async fn character(
 
     let games = games::select_all(&app_state)
         .await
-        .or_else(|_| Err(Redirect::to("/role_playing_games/characters")))?;
+        .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
 
     Ok(CharacterPage::get(
         app_state,
@@ -85,7 +87,7 @@ pub async fn add_new(
 
     let game = games::select_by_id(&app_state, form.game_id)
         .await
-        .map_err(|_| redirect_if_error.clone())?;
+        .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
 
     let character = Character {
         id: 0,
@@ -103,7 +105,7 @@ pub async fn add_new(
 
     let new_character_id = characters::create(&app_state, &profile, &character)
         .await
-        .map_err(|_| redirect_if_error.clone())?;
+        .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
 
     Ok(Redirect::to(&format!(
         "/role_playing_games/characters/character?id={}",
@@ -138,7 +140,7 @@ pub async fn update(
 
     let mut character = characters::select_by_id(&app_state, form.id)
         .await
-        .map_err(|_| redirect_when_error.clone())?;
+        .map_err(|error| error.log_and_redirect(redirect_when_error.clone()))?;
 
     let character_owner = character.user.clone().ok_or(redirect_when_error.clone())?;
     if updating_user.id.ne(&character_owner.id) {
@@ -179,7 +181,7 @@ pub async fn update(
 
     characters::update(&app_state, &updating_user, &character)
         .await
-        .map_err(|_| redirect_when_error.clone())?;
+        .map_err(|error| error.log_and_redirect(redirect_when_error.clone()))?;
 
     Ok(Redirect::to(&format!(
         "/role_playing_games/characters/character?id={}&tab_name={}",

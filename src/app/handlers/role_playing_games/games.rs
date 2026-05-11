@@ -21,7 +21,7 @@ pub async fn games(
 ) -> Result<GamesPage, Redirect> {
     let characters = games::select_all(&app_state)
         .await
-        .or_else(|_| Err(Redirect::to("/")))?;
+        .or_else(|error| Err(error.log_and_redirect(Redirect::to("/"))))?;
 
     Ok(GamesPage::get(app_state, profile, characters))
 }
@@ -40,7 +40,7 @@ pub async fn game(
 ) -> Result<GamePage, Redirect> {
     let game = games::select_by_id(&app_state, params.id)
         .await
-        .map_err(|_| Redirect::to("/role_playing_games/games"))?;
+        .map_err(|error| error.log_and_redirect(Redirect::to("/role_playing_games/games")))?;
 
     Ok(GamePage::get(
         app_state,
@@ -72,7 +72,7 @@ pub async fn add_new(
 
         let new_game_id = games::create(&app_state, &profile, &game)
             .await
-            .map_err(|_| Redirect::to("/role_playing_games/games"))?;
+            .map_err(|error| error.log_and_redirect(Redirect::to("/role_playing_games/games")))?;
 
         Ok(Redirect::to(&format!(
             "/role_playing_games/games/game?id={}",
@@ -103,7 +103,7 @@ pub async fn update(
 
     let mut game = games::select_by_id(&app_state, form.id)
         .await
-        .map_err(|_| redirect_when_error.clone())?;
+        .map_err(|error| error.log_and_redirect(redirect_when_error.clone()))?;
 
     if let Some(name) = form.name {
         game.name = name;
@@ -119,7 +119,7 @@ pub async fn update(
 
     games::update(&app_state, &updating_user, &game)
         .await
-        .map_err(|_| redirect_when_error.clone())?;
+        .map_err(|error| error.log_and_redirect(redirect_when_error.clone()))?;
 
     Ok(Redirect::to(&format!(
         "/role_playing_games/games/game?id={}",

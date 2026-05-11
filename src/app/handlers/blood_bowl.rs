@@ -33,7 +33,7 @@ pub async fn home(
     if let Some(connected_user) = profile {
         let home_page = blood_bowl::HomePage::get(&app_state, &connected_user)
             .await
-            .or_else(|_| Err(Redirect::to("/")))?;
+            .or_else(|error| Err(error.log_and_redirect(Redirect::to("/"))))?;
 
         Ok(home_page)
     } else {

@@ -6,11 +6,6 @@ pub mod sessions;
 pub mod users;
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
-pub struct Id {
-    pub id: i32,
-}
-
-#[derive(Deserialize, sqlx::FromRow, Clone)]
 pub struct IsTrue {
     pub is_true: bool,
 }

@@ -3,7 +3,6 @@ use crate::data::blood_bowl::competitions::stages::{CompetitionStage, Competitio
 use crate::data::blood_bowl::teams::TeamSummary;
 use crate::data::blood_bowl::{coaches, players, teams};
 use crate::data::users::User;
-use crate::data::Id;
 use crate::errors::AppError;
 use crate::errors::AppError::BloodBowlAppError;
 use crate::AppState;
@@ -613,7 +612,7 @@ pub async fn is_last_for_team(
         game_id
     );
 
-    let last_game_id: Option<Id> = sqlx::query_as(
+    let last_game_id: Option<i32> = sqlx::query_scalar(
         "SELECT id
             FROM bb_games
             WHERE (first_team_id = $1 OR second_team_id = $1)
@@ -626,7 +625,7 @@ pub async fn is_last_for_team(
     .await?;
 
     if let Some(last_game_id) = last_game_id {
-        Ok(last_game_id.id.eq(game_id))
+        Ok(last_game_id.eq(game_id))
     } else {
         Ok(false)
     }
@@ -869,7 +868,7 @@ async fn can_be_saved(state: &AppState, profile: &User, game: &Game) -> Result<b
     }
 
     if game.started {
-        let other_playing_game: Option<Id> = sqlx::query_as(
+        let other_playing_game: Option<i32> = sqlx::query_scalar(
             "SELECT id
             FROM bb_games
             WHERE started_at IS NOT NULL
@@ -891,7 +890,7 @@ async fn can_be_saved(state: &AppState, profile: &User, game: &Game) -> Result<b
         }
     }
 
-    let game_played_after: Option<Id> = sqlx::query_as(
+    let game_played_after: Option<i32> = sqlx::query_scalar(
         "SELECT id
             FROM bb_games
             WHERE game_at > $2
@@ -1007,7 +1006,7 @@ pub async fn create(
 
     let mut transaction = state.db.begin().await?;
 
-    let mut new_game_id: Id = sqlx::query_as(
+    let mut new_game_id: i32 = sqlx::query_scalar(
         "INSERT INTO bb_games (
                 version,
                 created_by,
@@ -1034,18 +1033,18 @@ pub async fn create(
     if let (Some(competition_id), Some(stage_id), Some(round_name)) =
         (competition_id, stage_id, round_name)
     {
-        new_game_id = sqlx::query_as(
+        new_game_id = sqlx::query_scalar(
             "INSERT INTO bb_competitions_stages_schedule (
                     competition_id,
                     stage_id,
                     game_id,
                     round_name)
                 VALUES ($1, $2, $3, $4)
-                RETURNING game_id as id",
+                RETURNING game_id",
         )
         .bind(competition_id.clone())
         .bind(stage_id.clone())
-        .bind(new_game_id.id.clone())
+        .bind(new_game_id.clone())
         .bind(round_name.clone())
         .fetch_one(&mut *transaction)
         .await?;
@@ -1069,7 +1068,7 @@ pub async fn create(
 
     transaction.commit().await?;
 
-    Ok(new_game_id.id)
+    Ok(new_game_id)
 }
 
 pub async fn update_schedule(
@@ -1558,7 +1557,7 @@ pub async fn delete(state: &AppState, profile: &User, game_id: i32) -> Result<()
         .execute(&mut *transaction)
         .await?;
 
-    let competition_id: Option<Id> = sqlx::query_as(
+    let competition_id: Option<i32> = sqlx::query_scalar(
         "DELETE
             FROM bb_competitions_stages_schedule
             WHERE game_id = $1
@@ -1581,7 +1580,7 @@ pub async fn delete(state: &AppState, profile: &User, game_id: i32) -> Result<()
                         )
                     WHERE bb_competitions.id = $1",
         )
-            .bind(competition_id.id.clone())
+            .bind(competition_id.clone())
             .execute(&mut *transaction)
             .await?;
     }

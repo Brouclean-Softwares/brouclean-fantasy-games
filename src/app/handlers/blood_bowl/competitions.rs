@@ -37,22 +37,19 @@ pub async fn competitions(
     State(app_state): State<AppState>,
     profile: Option<User>,
 ) -> Result<CompetitionsPage, Redirect> {
-    let error_handler = |error| {
-        tracing::debug!("competitions: Error: {}", error);
-        Redirect::to("..")
-    };
+    let redirect_if_error = Redirect::to("..");
 
     let competitions_preparing = Competition::select_all_preparing(&app_state)
         .await
-        .map_err(error_handler)?;
+        .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
 
     let competitions_in_progress = Competition::select_all_in_progress(&app_state)
         .await
-        .map_err(error_handler)?;
+        .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
 
     let competitions_closed = Competition::select_all_closed(&app_state)
         .await
-        .map_err(error_handler)?;
+        .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
 
     Ok(CompetitionsPage::get(
         app_state,
@@ -78,10 +75,7 @@ pub async fn competition(
     Query(params): Query<CompetitionQueryParams>,
 ) -> Result<CompetitionPage, Redirect> {
     if let Some(competition_id) = params.id {
-        let error_handler = |error| {
-            tracing::debug!("competition: Error: {}", error);
-            Redirect::to("../competitions")
-        };
+        let redirect_if_error = Redirect::to("../competitions");
 
         let alert_message: Option<AlertMessage> = params.alert_message.and_then(|message| {
             Some(AlertMessage {
@@ -92,18 +86,18 @@ pub async fn competition(
 
         let competition = Competition::select_by_id(&app_state, competition_id)
             .await
-            .map_err(error_handler)?
-            .ok_or(Redirect::to("../competitions"))?;
+            .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?
+            .ok_or(redirect_if_error.clone())?;
 
         let teams_top_statistics =
             TeamsTopStatistics::for_competition_id(&app_state, competition.id)
                 .await
-                .map_err(error_handler)?;
+                .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
 
         let players_top_statistics =
             PlayersTopStatistics::for_competition_id(&app_state, competition.id)
                 .await
-                .map_err(error_handler)?;
+                .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
 
         Ok(CompetitionPage::get(
             app_state,
@@ -117,7 +111,7 @@ pub async fn competition(
             params.tab,
         )
         .await
-        .map_err(error_handler)?)
+        .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?)
     } else {
         Err(Redirect::to("../competitions"))
     }
@@ -135,16 +129,18 @@ pub async fn new(
     profile: User,
     Form(form): Form<CompetitionForm>,
 ) -> Result<Redirect, Redirect> {
+    let redirect_if_error = Redirect::to("../competitions");
+
     let mut competition =
         Competition::new(profile.clone(), form.competition_name.unwrap_or_default());
 
     competition
         .save(&app_state, &profile)
         .await
-        .map_err(|_| Redirect::to("./competitions"))?;
+        .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
 
     if competition.is_new() {
-        Err(Redirect::to("./competitions"))
+        Err(redirect_if_error)
     } else {
         Ok(Redirect::to(&format!(
             "./competitions/competition?id={}",
@@ -159,13 +155,13 @@ pub async fn save(
     Query(params): Query<CompetitionQueryParams>,
     Form(form): Form<CompetitionForm>,
 ) -> Result<Redirect, Redirect> {
-    let error_handler = |error| {
-        Redirect::to(&format!(
+    let error_handler = |error: AppError| {
+        error.log_and_redirect(Redirect::to(&format!(
             "./competition?id={:?}&alert_message={}&edit={}",
             params.id,
             error,
             params.edit.unwrap_or(false),
-        ))
+        )))
     };
 
     let mut competition = if let Some(competition_id) = params.id {
@@ -216,10 +212,10 @@ pub async fn delete(
     Competition::delete(&app_state, &profile, form.id)
         .await
         .or_else(|app_error| {
-            Err(Redirect::to(&format!(
+            Err(app_error.log_and_redirect(Redirect::to(&format!(
                 "./competition?id={}&message={}",
                 form.id, app_error
-            )))
+            ))))
         })?;
 
     Ok(Redirect::to("/blood_bowl/competitions"))
@@ -237,11 +233,11 @@ pub async fn add_stage(
     Form(form): Form<AddStageForm>,
 ) -> Result<Redirect, Redirect> {
     let error_handler = |error: AppError| {
-        Redirect::to(&format!(
+        error.log_and_redirect(Redirect::to(&format!(
             "./competition?id={}&alert_message={}",
             form.competition_id,
             error.to_string()
-        ))
+        )))
     };
 
     let competition = Competition::select_by_id(&app_state, form.competition_id)
@@ -251,6 +247,8 @@ pub async fn add_stage(
     if let (Some(mut competition), Some(connected_user)) = (competition, profile) {
         let stage_type_to_add: CompetitionStageType = serde_json::from_str(&form.stage_type_to_add)
             .map_err(|error| {
+                tracing::error!("{}", error);
+
                 Redirect::to(&format!(
                     "./competition?id={}&alert_message={}",
                     form.competition_id,
@@ -282,11 +280,11 @@ pub async fn delete_stage(
     Form(form): Form<DeleteStageForm>,
 ) -> Result<Redirect, Redirect> {
     let error_handler = |error: AppError| {
-        Redirect::to(&format!(
+        error.log_and_redirect(Redirect::to(&format!(
             "./competition?id={}&alert_message={}",
             form.competition_id,
             error.to_string()
-        ))
+        )))
     };
 
     let competition = Competition::select_by_id(&app_state, form.competition_id)
@@ -319,11 +317,11 @@ pub async fn add_rule(
     Form(form): Form<AddRuleForm>,
 ) -> Result<Redirect, Redirect> {
     let error_handler = |error: AppError| {
-        Redirect::to(&format!(
+        error.log_and_redirect(Redirect::to(&format!(
             "./competition?id={}&alert_message={}",
             form.competition_id,
             error.to_string()
-        ))
+        )))
     };
 
     let stage = CompetitionStage::select_by_id(&app_state, form.stage_id)
@@ -338,6 +336,8 @@ pub async fn add_rule(
         if let (Some(mut competition), Some(connected_user)) = (competition, profile) {
             let rule_to_add: CompetitionStageRule = serde_json::from_str(&form.rule_to_add)
                 .map_err(|error| {
+                    tracing::error!("{}", error);
+
                     Redirect::to(&format!(
                         "./competition?id={}&alert_message={}",
                         form.competition_id,
@@ -373,11 +373,11 @@ pub async fn delete_rule(
     Form(form): Form<DeleteRuleForm>,
 ) -> Result<Redirect, Redirect> {
     let error_handler = |error: AppError| {
-        Redirect::to(&format!(
+        error.log_and_redirect(Redirect::to(&format!(
             "./competition?id={}&alert_message={}",
             form.competition_id,
             error.to_string()
-        ))
+        )))
     };
 
     let stage = CompetitionStage::select_by_id(&app_state, form.stage_id)
@@ -392,6 +392,8 @@ pub async fn delete_rule(
         if let (Some(mut competition), Some(connected_user)) = (competition, profile) {
             let rule_to_delete: CompetitionStageRule = serde_json::from_str(&form.rule_to_delete)
                 .map_err(|error| {
+                tracing::error!("{}", error);
+
                 Redirect::to(&format!(
                     "./competition?id={}&alert_message={}",
                     form.competition_id,
@@ -428,11 +430,11 @@ pub async fn register_team(
     Form(form): Form<RegisterTeamForm>,
 ) -> Result<Redirect, Redirect> {
     let error_handler = |error: AppError| {
-        Redirect::to(&format!(
+        error.log_and_redirect(Redirect::to(&format!(
             "./competition?id={}&alert_message={}",
             form.competition_id,
             error.to_string()
-        ))
+        )))
     };
 
     let competition = Competition::select_by_id(&app_state, form.competition_id)
@@ -464,11 +466,11 @@ pub async fn unregister_team(
     Form(form): Form<UnregisterTeamForm>,
 ) -> Result<Redirect, Redirect> {
     let error_handler = |error: AppError| {
-        Redirect::to(&format!(
+        error.log_and_redirect(Redirect::to(&format!(
             "./competition?id={}&alert_message={}",
             form.competition_id,
             error.to_string()
-        ))
+        )))
     };
 
     let competition = Competition::select_by_id(&app_state, form.competition_id)
@@ -501,11 +503,11 @@ pub async fn update_team_validation(
     Form(form): Form<TeamValidationForm>,
 ) -> Result<Redirect, Redirect> {
     let error_handler = |error: AppError| {
-        Redirect::to(&format!(
+        error.log_and_redirect(Redirect::to(&format!(
             "./competition?id={}&alert_message={}",
             form.competition_id,
             error.to_string()
-        ))
+        )))
     };
 
     let competition = Competition::select_by_id(&app_state, form.competition_id)
@@ -539,15 +541,16 @@ pub async fn insert_games(
     Form(form): Form<InsertGamesForm>,
 ) -> Result<Redirect, Redirect> {
     let error_handler = |error: AppError| {
-        Redirect::to(&format!(
+        error.log_and_redirect(Redirect::to(&format!(
             "./competition?id={}&tab=schedule&alert_message={}",
             form.competition_id,
             error.to_string()
-        ))
+        )))
     };
 
     let scheduled_at = NaiveDateTime::parse_from_str(&*form.scheduled_at, "%Y-%m-%dT%H:%M")
-        .map_err(|_| {
+        .map_err(|error| {
+            tracing::error!("{}", error);
             Redirect::to(&format!(
                 "./competition?id={}&tab=schedule&alert_message=Veuillez remplir la date et l'heure des matchs.",
                 form.competition_id

@@ -1,4 +1,5 @@
 use crate::app::templates::{role_playing_games, BreadCrumb, NavigationBar, UrlLink};
+use crate::data::role_playing_games::campaigns::arcs::NarrativeArc;
 use crate::data::role_playing_games::campaigns::{Campaign, CampaignRow};
 use crate::data::role_playing_games::games::Game;
 use crate::data::users::User;
@@ -62,6 +63,7 @@ pub struct CampaignPage {
     field_edited: String,
     is_owner: bool,
     games: Vec<Game>,
+    arcs: Vec<NarrativeArc>,
 }
 
 impl CampaignPage {
@@ -74,6 +76,7 @@ impl CampaignPage {
         edit_mode: bool,
         field_edited: Option<String>,
         games: Vec<Game>,
+        arcs: Vec<NarrativeArc>,
     ) -> Self {
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
@@ -85,6 +88,7 @@ impl CampaignPage {
             field_edited: field_edited.unwrap_or_default(),
             is_owner: editable,
             games,
+            arcs,
         }
     }
 }

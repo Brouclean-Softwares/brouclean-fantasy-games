@@ -3,6 +3,7 @@ use crate::app::templates::{AlertMessage, AlertType};
 use crate::data::blood_bowl::statistics::players::PlayerStatistics;
 use crate::data::blood_bowl::{games, players, statistics, teams};
 use crate::data::users::User;
+use crate::errors::AppError;
 use crate::AppState;
 use axum::extract::{Query, State};
 use axum::response::Redirect;
@@ -30,10 +31,7 @@ pub async fn player(
     profile: Option<User>,
     Query(params): Query<PlayerQueryParams>,
 ) -> Result<PlayerPage, Redirect> {
-    let error_handler = |error| {
-        tracing::debug!("get_player: Error: {}", error);
-        Redirect::to("../teams")
-    };
+    let error_handler = |error: AppError| error.log_and_redirect(Redirect::to("../teams"));
 
     let team = teams::select_by_id_with_staff_and_players(&app_state, params.team_id)
         .await
@@ -115,6 +113,16 @@ pub async fn update_player(
     Query(params): Query<PlayerQueryParams>,
     Form(form): Form<PlayerForm>,
 ) -> Result<Redirect, Redirect> {
+    let error_handler = |app_error: AppError| {
+        Err(app_error.log_and_redirect(Redirect::to(&format!(
+            "./player?player_id={}&team_id={}&alert_message={}&edit={}",
+            params.player_id,
+            params.team_id,
+            app_error,
+            params.edit.unwrap_or(false),
+        ))))
+    };
+
     // Player number
     if let (Some(profile), Some(player_number)) = (profile.clone(), form.player_number) {
         players::update_number(
@@ -125,15 +133,7 @@ pub async fn update_player(
             &player_number,
         )
         .await
-        .or_else(|app_error| {
-            Err(Redirect::to(&format!(
-                "./player?player_id={}&team_id={}&alert_message={}&edit={}",
-                params.player_id,
-                params.team_id,
-                app_error,
-                params.edit.unwrap_or(false),
-            )))
-        })?;
+        .or_else(error_handler)?;
     }
 
     // Player name
@@ -146,21 +146,15 @@ pub async fn update_player(
             &player_name,
         )
         .await
-        .or_else(|app_error| {
-            Err(Redirect::to(&format!(
-                "./player?player_id={}&team_id={}&alert_message={}&edit={}",
-                params.player_id,
-                params.team_id,
-                app_error,
-                params.edit.unwrap_or(false),
-            )))
-        })?;
+        .or_else(error_handler)?;
     }
 
     // Advancement choice
     if let (Some(profile), Some(advancement_choice)) = (profile.clone(), form.advancement_choice) {
         let advancement_choice =
             serde_json::from_str(&advancement_choice).or_else(|app_error| {
+                tracing::error!("{}", app_error);
+
                 Err(Redirect::to(&format!(
                     "./player?player_id={}&team_id={}&alert_message={}&edit={}",
                     params.player_id,
@@ -178,21 +172,15 @@ pub async fn update_player(
             advancement_choice,
         )
         .await
-        .or_else(|app_error| {
-            Err(Redirect::to(&format!(
-                "./player?player_id={}&team_id={}&alert_message={}&edit={}",
-                params.player_id,
-                params.team_id,
-                app_error,
-                params.edit.unwrap_or(false),
-            )))
-        })?;
+        .or_else(error_handler)?;
     }
 
     // Advancement
     if let (Some(profile), Some(advancement_to_add)) = (profile.clone(), form.advancement_to_add) {
         let advancement_to_add =
             serde_json::from_str(&advancement_to_add).or_else(|app_error| {
+                tracing::error!("{}", app_error);
+
                 Err(Redirect::to(&format!(
                     "./player?player_id={}&team_id={}&alert_message={}&edit={}",
                     params.player_id,
@@ -210,15 +198,7 @@ pub async fn update_player(
             advancement_to_add,
         )
         .await
-        .or_else(|app_error| {
-            Err(Redirect::to(&format!(
-                "./player?player_id={}&team_id={}&alert_message={}&edit={}",
-                params.player_id,
-                params.team_id,
-                app_error,
-                params.edit.unwrap_or(false),
-            )))
-        })?;
+        .or_else(error_handler)?;
     }
 
     Ok(Redirect::to(&format!(
@@ -241,17 +221,16 @@ pub async fn added_player(
     profile: Option<User>,
     Query(params): Query<AddedPlayerQueryParams>,
 ) -> Result<PlayerPage, Redirect> {
-    let error_handler = |error| {
-        tracing::debug!("journeyman: Error: {}", error);
-        Redirect::to(&format!("../games/game?id={}", params.game_id))
+    let error_handler = |error: AppError| {
+        error.log_and_redirect(Redirect::to(&format!(
+            "../games/game?id={}",
+            params.game_id
+        )))
     };
 
     let game = games::select_by_id(&app_state, params.game_id)
         .await
-        .map_err(|error| {
-            tracing::debug!("journeyman: Error: {}", error);
-            Redirect::to("../games")
-        })?;
+        .map_err(|error| error.log_and_redirect(Redirect::to("../games")))?;
 
     let (number, player) = games::select_playing_team_player_for_game(
         &app_state,
@@ -352,6 +331,16 @@ pub async fn update_added_player(
     Query(params): Query<AddedPlayerQueryParams>,
     Form(form): Form<AddedPlayerForm>,
 ) -> Result<Redirect, Redirect> {
+    let error_handler = |error: AppError| {
+        Err(error.log_and_redirect(Redirect::to(&format!(
+            "./player?player_id={}&team_id={}&alert_message={}&edit={}",
+            params.player_id_in_game,
+            params.team_id,
+            error,
+            params.edit.unwrap_or(false),
+        ))))
+    };
+
     // Player number
     if let (Some(profile), Some(player_number)) = (profile.clone(), form.player_number) {
         games::update_number_for_added_player_in_game(
@@ -363,15 +352,7 @@ pub async fn update_added_player(
             player_number,
         )
         .await
-        .or_else(|app_error| {
-            Err(Redirect::to(&format!(
-                "./player?player_id={}&team_id={}&alert_message={}&edit={}",
-                params.player_id_in_game,
-                params.team_id,
-                app_error,
-                params.edit.unwrap_or(false),
-            )))
-        })?;
+        .or_else(error_handler)?;
 
         return Ok(Redirect::to(&format!(
             "../games/game?id={}",
@@ -391,15 +372,7 @@ pub async fn update_added_player(
             params.game_id,
         )
         .await
-        .or_else(|app_error| {
-            Err(Redirect::to(&format!(
-                "./player?player_id={}&team_id={}&alert_message={}&edit={}",
-                params.player_id_in_game,
-                params.team_id,
-                app_error,
-                params.edit.unwrap_or(false),
-            )))
-        })?;
+        .or_else(error_handler)?;
 
         return Ok(Redirect::to(&format!(
             "../teams/team?id={}",

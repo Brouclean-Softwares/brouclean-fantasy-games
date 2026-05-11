@@ -6,6 +6,7 @@ use crate::data::blood_bowl::statistics;
 use crate::data::blood_bowl::statistics::players::PlayersTopStatistics;
 use crate::data::blood_bowl::{games, players, staff, teams};
 use crate::data::users::User;
+use crate::errors::AppError;
 use crate::AppState;
 use axum::extract::{Query, State};
 use axum::response::Redirect;
@@ -36,7 +37,7 @@ pub async fn teams(
 ) -> Result<TeamsPage, Redirect> {
     let teams = teams::select_all(&app_state)
         .await
-        .or_else(|_| Err(Redirect::to("/")))?;
+        .or_else(|error| Err(error.log_and_redirect(Redirect::to("/"))))?;
 
     Ok(TeamsPage::get(app_state, profile, teams))
 }
@@ -154,16 +155,20 @@ pub async fn create(
     match created_team_id {
         Ok(team_id) => Ok(Redirect::to(&format!("team?id={}&edit=true", team_id))),
 
-        Err(error) => Err(NewTeamPage::get_with_message(
-            app_state,
-            profile,
-            form.version,
-            form.roster,
-            Some(AlertMessage {
-                alert_type: AlertType::Danger,
-                message: error.to_string(),
-            }),
-        )),
+        Err(error) => {
+            tracing::error!("{}", error);
+
+            Err(NewTeamPage::get_with_message(
+                app_state,
+                profile,
+                form.version,
+                form.roster,
+                Some(AlertMessage {
+                    alert_type: AlertType::Danger,
+                    message: error.to_string(),
+                }),
+            ))
+        }
     }
 }
 
@@ -180,10 +185,7 @@ pub async fn team(
     profile: Option<User>,
     Query(params): Query<TeamQueryParams>,
 ) -> Result<TeamPage, Redirect> {
-    let error_handler = |error| {
-        tracing::debug!("get_team: Error: {}", error);
-        Redirect::to("../teams")
-    };
+    let error_handler = |error: AppError| error.log_and_redirect(Redirect::to("../teams"));
 
     let team = teams::select_by_id_with_staff_and_players(&app_state, params.id)
         .await
@@ -292,12 +294,12 @@ pub async fn update(
         teams::update_name(&app_state, &profile, params.id, &team_name)
             .await
             .or_else(|app_error| {
-                Err(Redirect::to(&format!(
+                Err(app_error.log_and_redirect(Redirect::to(&format!(
                     "./team?id={}&message={}&edit={}&focus=team_name",
                     params.id,
                     app_error,
                     params.edit.unwrap_or(false),
-                )))
+                ))))
             })?;
 
         return Ok(Redirect::to(&format!("./team?id={}", params.id,)));
@@ -308,10 +310,10 @@ pub async fn update(
         staff::buy_staff_for_team(&app_state, &profile, params.id, staff_to_buy)
             .await
             .or_else(|app_error| {
-                Err(Redirect::to(&format!(
+                Err(app_error.log_and_redirect(Redirect::to(&format!(
                     "./team?id={}&message={}",
                     params.id, app_error,
-                )))
+                ))))
             })?;
 
         return Ok(Redirect::to(&format!("./team?id={}", params.id,)));
@@ -322,10 +324,10 @@ pub async fn update(
         players::buy_position_for_team(&app_state, &profile, params.id, position_to_buy)
             .await
             .or_else(|app_error| {
-                Err(Redirect::to(&format!(
+                Err(app_error.log_and_redirect(Redirect::to(&format!(
                     "./team?id={}&message={}",
                     params.id, app_error,
-                )))
+                ))))
             })?;
 
         return Ok(Redirect::to(&format!("./team?id={}", params.id,)));
@@ -337,10 +339,10 @@ pub async fn update(
         players::buyout_for_team(&app_state, &profile, params.id, player_id_to_buyout)
             .await
             .or_else(|app_error| {
-                Err(Redirect::to(&format!(
+                Err(app_error.log_and_redirect(Redirect::to(&format!(
                     "./team?id={}&message={}",
                     params.id, app_error,
-                )))
+                ))))
             })?;
 
         return Ok(Redirect::to(&format!("./team?id={}", params.id,)));
@@ -353,10 +355,10 @@ pub async fn update(
         players::name_captain_for_team(&app_state, &profile, params.id, player_id_to_name_captain)
             .await
             .or_else(|app_error| {
-                Err(Redirect::to(&format!(
+                Err(app_error.log_and_redirect(Redirect::to(&format!(
                     "./team?id={}&message={}",
                     params.id, app_error,
-                )))
+                ))))
             })?;
 
         return Ok(Redirect::to(&format!("./team?id={}", params.id,)));
@@ -378,12 +380,10 @@ pub async fn delete(
     teams::delete(&app_state, &profile, form.id)
         .await
         .or_else(|app_error| {
-            tracing::debug!("delete_team: Error: {}", app_error);
-
-            Err(Redirect::to(&format!(
+            Err(app_error.log_and_redirect(Redirect::to(&format!(
                 "./team?id={}&message={}",
                 form.id, app_error
-            )))
+            ))))
         })?;
 
     Ok(Redirect::to("/blood_bowl"))
@@ -399,10 +399,7 @@ pub async fn upgrade(
     profile: User,
     Form(form): Form<UpgradeTeamForm>,
 ) -> Result<Redirect, Redirect> {
-    let error_handler = |error| {
-        tracing::debug!("upgrade_team: Error: {}", error);
-        Redirect::to("../teams")
-    };
+    let error_handler = |error: AppError| error.log_and_redirect(Redirect::to("../teams"));
 
     let team = teams::select_by_id_with_staff_and_players(&app_state, form.id)
         .await
@@ -412,12 +409,10 @@ pub async fn upgrade(
         teams::upgrade(&app_state, &profile, team)
             .await
             .or_else(|app_error| {
-                tracing::debug!("upgrade_team: Error: {}", app_error);
-
-                Err(Redirect::to(&format!(
+                Err(app_error.log_and_redirect(Redirect::to(&format!(
                     "./team?id={}&message={}",
                     form.id, app_error
-                )))
+                ))))
             })?;
     }
 

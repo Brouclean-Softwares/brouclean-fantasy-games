@@ -1,5 +1,5 @@
 use axum::http::StatusCode;
-use axum::response::{IntoResponse, Response};
+use axum::response::{IntoResponse, Redirect, Response};
 use blood_bowl_rs::translation::TranslatedName;
 use std::fmt::{Display, Formatter};
 use thiserror::Error;
@@ -87,5 +87,13 @@ impl Display for AppError {
                 write!(f, "Règles de blood bowl non respectées : {}", error)
             }
         }
+    }
+}
+
+impl AppError {
+    pub fn log_and_redirect(&self, redirect: Redirect) -> Redirect {
+        tracing::error!("{}", self);
+
+        redirect
     }
 }

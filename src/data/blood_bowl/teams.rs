@@ -1,7 +1,6 @@
 use crate::data::blood_bowl::competitions::schedule::BYE;
 use crate::data::blood_bowl::{games, players, staff, teams};
 use crate::data::users::User;
-use crate::data::Id;
 use crate::errors::AppError;
 use crate::AppState;
 use blood_bowl_rs::coaches::Coach;
@@ -299,7 +298,7 @@ pub async fn create(state: &AppState, coach: &User, bb_team: &Team) -> Result<i3
 
     let mut transaction = state.db.begin().await?;
 
-    let new_team_id: Id = sqlx::query_as(
+    let new_team_id: i32 = sqlx::query_scalar(
         "INSERT INTO bb_teams (
                 version,
                 name,
@@ -334,13 +333,13 @@ pub async fn create(state: &AppState, coach: &User, bb_team: &Team) -> Result<i3
         )
         .bind(staff.clone())
         .bind(quantity.clone() as i32)
-        .bind(new_team_id.id.clone())
+        .bind(new_team_id.clone())
         .execute(&mut *transaction)
         .await?;
     }
 
     for (number, player) in bb_team.players.clone() {
-        let new_player_id: Id = sqlx::query_as(
+        let new_player_id: i32 = sqlx::query_scalar(
             "INSERT INTO bb_players (
                 version,
                 name,
@@ -364,15 +363,15 @@ pub async fn create(state: &AppState, coach: &User, bb_team: &Team) -> Result<i3
             VALUES ($1, $2, $3)",
         )
         .bind(number.clone())
-        .bind(new_team_id.id.clone())
-        .bind(new_player_id.id.clone())
+        .bind(new_team_id.clone())
+        .bind(new_player_id.clone())
         .execute(&mut *transaction)
         .await?;
     }
 
     transaction.commit().await?;
 
-    Ok(new_team_id.id)
+    Ok(new_team_id)
 }
 
 pub async fn update_values(

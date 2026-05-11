@@ -1,7 +1,7 @@
 use crate::data::blood_bowl::games::select_playing_team_player_for_game;
 use crate::data::blood_bowl::{coaches, games, teams};
 use crate::data::users::User;
-use crate::data::{Id, IsTrue, Total};
+use crate::data::{IsTrue, Total};
 use crate::errors::AppError;
 use crate::AppState;
 use blood_bowl_rs::advancements::{Advancement, AdvancementChoice};
@@ -294,7 +294,7 @@ pub async fn buy_position_for_team(
 
         let mut transaction = state.db.begin().await?;
 
-        let new_player_id: Id = sqlx::query_as(
+        let new_player_id: i32 = sqlx::query_scalar(
             "INSERT INTO bb_players (
                 version,
                 name,
@@ -317,7 +317,7 @@ pub async fn buy_position_for_team(
         )
         .bind(number.clone())
         .bind(team_id.clone())
-        .bind(new_player_id.id.clone())
+        .bind(new_player_id.clone())
         .execute(&mut *transaction)
         .await?;
 
@@ -372,7 +372,7 @@ pub async fn buy_journeyman_in_game_for_team(
 
                 let mut transaction = state.db.begin().await?;
 
-                let new_player_id: Id = sqlx::query_as(
+                let new_player_id: i32 = sqlx::query_scalar(
                     "INSERT INTO bb_players (
                         version,
                         name,
@@ -395,7 +395,7 @@ pub async fn buy_journeyman_in_game_for_team(
                 )
                 .bind(number.clone())
                 .bind(team_id.clone())
-                .bind(new_player_id.id.clone())
+                .bind(new_player_id.clone())
                 .execute(&mut *transaction)
                 .await?;
 
@@ -406,7 +406,7 @@ pub async fn buy_journeyman_in_game_for_team(
                     AND game_id = $3
                     AND team_id = $4",
                 )
-                .bind(new_player_id.id.clone())
+                .bind(new_player_id.clone())
                 .bind(player_id_in_game.clone())
                 .bind(game_id.clone())
                 .bind(team_id.clone())

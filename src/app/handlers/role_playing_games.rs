@@ -28,16 +28,16 @@ pub async fn home(
         let owned_characters =
             crate::data::role_playing_games::characters::select_owned(&app_state, &connected_user)
                 .await
-                .map_err(|_| redirect_if_error.clone())?;
+                .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
 
         let owned_campaigns =
             crate::data::role_playing_games::campaigns::select_owned(&app_state, &connected_user)
                 .await
-                .map_err(|_| redirect_if_error.clone())?;
+                .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
 
         let games = crate::data::role_playing_games::games::select_all(&app_state)
             .await
-            .map_err(|_| redirect_if_error.clone())?;
+            .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
 
         let home_page = role_playing_games::HomePage::get(
             &app_state,

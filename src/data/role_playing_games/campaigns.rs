@@ -1,8 +1,10 @@
 use crate::data::users::User;
-use crate::data::Id;
 use crate::errors::AppError;
 use crate::AppState;
 use serde::Deserialize;
+
+pub mod arcs;
+pub mod sessions;
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
 pub struct CampaignRow {
@@ -47,6 +49,12 @@ pub struct Campaign {
     pub game_name: String,
     pub game_external_logo_url: Option<String>,
     pub game_master: Option<User>,
+}
+
+impl Campaign {
+    pub fn is_this_user_the_game_master(&self, user: &Option<User>) -> bool {
+        User::optional_user_eq_other(&self.game_master, user)
+    }
 }
 
 pub async fn select_all(state: &AppState) -> Result<Vec<CampaignRow>, AppError> {
@@ -142,7 +150,7 @@ pub async fn create(state: &AppState, user: &User, campaign: &Campaign) -> Resul
         campaign,
     );
 
-    let new_campaign_id: Id = sqlx::query_as(
+    let new_campaign_id: i32 = sqlx::query_scalar(
         "INSERT INTO rpg_campaigns (
                 game_id,
                 name,
@@ -156,7 +164,7 @@ pub async fn create(state: &AppState, user: &User, campaign: &Campaign) -> Resul
     .fetch_one(&state.db)
     .await?;
 
-    Ok(new_campaign_id.id)
+    Ok(new_campaign_id)
 }
 
 pub async fn update(
