@@ -43,6 +43,12 @@
         {% endif %}
     </h2>
 
+    {% if ! edit_mode %}
+    <div class="uk-margin-medium-bottom">
+        {{ session_pagination|escape("none") }}
+    </div>
+    {% endif %}
+
     {% if editable %}
     <div class="uk-margin-medium-bottom">
         <ul class="uk-child-width-expand" uk-tab>
@@ -61,17 +67,13 @@
     </div>
     {% endif %}
 
-    <div class="uk-margin-medium-bottom">
-        {{ session_pagination|escape("none") }}
-    </div>
-
     {% if tab_name.eq("info") || ! editable %}
     <div>
         {% if editable || session.external_image_url.is_some() || session.description.len() > 0 %}
 
         {% if editable %}
         <h3 class="uk-heading-divider">
-            <span>Informations sur la session de jeu</span>
+            <span>Informations sur la session</span>
 
             {% if ! field_edited.eq("info") %}
             <a href="session?id={{ session.id }}&tab_name=info&edit=true&field_edited=info" uk-icon="icon: pencil"></a>
@@ -162,7 +164,7 @@
     {% elif tab_name.eq("notes") && editable %}
     <div>
         <h3 class="uk-heading-divider">
-            <span>Notes</span>
+            <span>Notes privées</span>
             {% if editable && ! field_edited.eq("notes") %}
             <a href="session?id={{ session.id }}&tab_name=notes&edit=true&field_edited=notes" uk-icon="icon: pencil"></a>
             {% endif %}
@@ -206,9 +208,11 @@
     </div>
     {% endif %}
 
+    {% if ! edit_mode %}
     <div class="uk-margin-medium-top">
         {{ session_pagination|escape("none") }}
     </div>
+    {% endif %}
 
 </div>
 {% endblock %}
