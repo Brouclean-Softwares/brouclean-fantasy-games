@@ -122,14 +122,16 @@ pub async fn update(
     }
 
     if let Some(session_date_input) = form.session_date_input {
-        session.playing_at = Some(
-            NaiveDateTime::parse_from_str(&*session_date_input, "%Y-%m-%dT%H:%M").map_err(
-                |error| {
-                    tracing::error!("{}", error);
-                    redirect_when_error.clone()
-                },
-            )?,
-        );
+        if session_date_input.len() > 0 {
+            session.playing_at = Some(
+                NaiveDateTime::parse_from_str(&*session_date_input, "%Y-%m-%dT%H:%M").map_err(
+                    |error| {
+                        tracing::error!("{}", error);
+                        redirect_when_error.clone()
+                    },
+                )?,
+            );
+        }
     }
 
     if let Some(external_image_url) = form.external_image_url {

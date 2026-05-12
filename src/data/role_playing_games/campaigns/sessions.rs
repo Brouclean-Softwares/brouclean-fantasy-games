@@ -187,7 +187,7 @@ pub async fn update(
                 arc_id = $8,
                 last_updated = CURRENT_TIMESTAMP
             FROM rpg_campaigns, rpg_arcs
-            WHERE rpg_arcs.id = $1
+            WHERE rpg_sessions.id = $1
             AND rpg_arcs.id = rpg_sessions.arc_id
             AND rpg_campaigns.id = rpg_arcs.campaign_id
             AND rpg_campaigns.game_master_id = $2",
