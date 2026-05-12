@@ -300,3 +300,37 @@ pub async fn update(
 
     Ok(())
 }
+
+pub async fn delete(
+    state: &AppState,
+    connected_user: &User,
+    session_id: i32,
+) -> Result<bool, AppError> {
+    tracing::debug!(
+        "delete by user={:?} for session_id={}",
+        connected_user,
+        session_id,
+    );
+
+    if let Some(connected_user_id) = connected_user.id {
+        let mut transaction = state.db.begin().await?;
+
+        sqlx::query(
+            "DELETE
+                FROM rpg_sessions
+                USING rpg_arcs, rpg_campaigns
+                WHERE rpg_arcs.id = rpg_sessions.arc_id
+                AND rpg_campaigns.id = rpg_arcs.campaign_id
+                AND rpg_sessions.id = $1
+                AND rpg_campaigns.game_master_id = $2",
+        )
+        .bind(session_id.clone())
+        .bind(connected_user_id.clone())
+        .execute(&mut *transaction)
+        .await?;
+
+        transaction.commit().await?;
+    }
+
+    Ok(true)
+}

@@ -14,7 +14,7 @@ pub struct NewNarrativeArcForm {
     pub campaign_id: i32,
 }
 
-pub async fn new_arc(
+pub async fn new(
     State(app_state): State<AppState>,
     profile: Option<User>,
     Form(form): Form<NewNarrativeArcForm>,

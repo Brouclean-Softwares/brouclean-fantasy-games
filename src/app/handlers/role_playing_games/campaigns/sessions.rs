@@ -16,7 +16,7 @@ pub struct NewGameSessionForm {
     pub arc_id: i32,
 }
 
-pub async fn new_session(
+pub async fn new(
     State(app_state): State<AppState>,
     profile: Option<User>,
     Form(form): Form<NewGameSessionForm>,
@@ -82,6 +82,7 @@ pub async fn session(
         previous_session,
         next_session,
         params.tab_name,
+        is_owner,
         is_owner,
         params.edit.unwrap_or(false) && profile.is_some(),
         params.field_edited,
@@ -168,4 +169,35 @@ pub async fn update(
         "/role_playing_games/campaigns/session?id={}&tab_name={}",
         form.id, form.tab_name
     )))
+}
+
+#[derive(Deserialize)]
+pub struct DeleteGameSessionForm {
+    pub id: i32,
+    pub campaign_id: i32,
+}
+
+pub async fn delete(
+    State(app_state): State<AppState>,
+    profile: Option<User>,
+    Form(form): Form<DeleteGameSessionForm>,
+) -> Result<Redirect, Redirect> {
+    let redirect_when_error = Redirect::to(&format!(
+        "/role_playing_games/campaigns/session?id={}&tab_name=info",
+        form.id
+    ));
+
+    if let Some(connected_user) = profile {
+        if sessions::delete(&app_state, &connected_user, form.id)
+            .await
+            .map_err(|error| error.log_and_redirect(redirect_when_error.clone()))?
+        {
+            return Ok(Redirect::to(&format!(
+                "/role_playing_games/campaigns/campaign?id={}&tab_name=sessions",
+                form.campaign_id
+            )));
+        }
+    }
+
+    Err(redirect_when_error)
 }
