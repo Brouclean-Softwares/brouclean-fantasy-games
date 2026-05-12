@@ -205,23 +205,21 @@
                     </a>
                 </h4>
 
-                <div data-arc-id="{{ arc_with_sessions.arc.id }}"
+                <ul class="uk-list" data-arc-id="{{ arc_with_sessions.arc.id }}"
                      {% if editable %} uk-sortable="group: sessions; handle: .session-handle" {% endif %}
                 >
                     {% for session in arc_with_sessions.sessions %}
-                    <div data-session-id="{{ session.id }}" class="uk-margin">
-                        <div class="uk-card uk-card-hover uk-card-body uk-card-small">
-                            {% if editable %}
-                            <span class="session-handle uk-margin-right" uk-icon="icon: table"></span>
-                            {% endif %}
+                    <li data-session-id="{{ session.id }}" class="uk-margin">
+                        {% if editable %}
+                        <span class="session-handle uk-margin-right" uk-icon="icon: arrow-down-arrow-up"></span>
+                        {% endif %}
 
-                            <a class="uk-link-reset" href="/role_playing_games/campaigns/session?id={{ session.id }}">
-                                <span>{{ session.indexed_name() }}</span>
-                            </a>
-                        </div>
-                    </div>
+                        <a class="uk-link-reset" href="/role_playing_games/campaigns/session?id={{ session.id }}">
+                            <span>{{ session.indexed_name() }}</span>
+                        </a>
+                    </li>
                     {% endfor %}
-                </div>
+                </ul>
 
                 {% if editable %}
                 <div class="cls-no-drag uk-margin-top">

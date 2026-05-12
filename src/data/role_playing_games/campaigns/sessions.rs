@@ -48,7 +48,7 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<GameSession, AppE
             FROM rpg_sessions
             INNER JOIN rpg_arcs
             ON rpg_sessions.arc_id = rpg_arcs.id
-            WHERE rpg_arcs.id = $1",
+            WHERE rpg_sessions.id = $1",
     )
     .bind(id.clone())
     .fetch_one(&state.db)
@@ -74,7 +74,7 @@ pub async fn select_for_arc(state: &AppState, arc_id: i32) -> Result<Vec<GameSes
             FROM rpg_sessions
             INNER JOIN rpg_arcs
             ON rpg_sessions.arc_id = rpg_arcs.id
-            ORDER BY rpg_arcs.position ASC",
+            ORDER BY rpg_sessions.position ASC",
     )
     .bind(arc_id.clone())
     .fetch_all(&state.db)
