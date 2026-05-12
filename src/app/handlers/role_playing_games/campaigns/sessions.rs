@@ -6,6 +6,7 @@ use crate::data::users::User;
 use axum::Form;
 use axum::extract::{Query, State};
 use axum::response::Redirect;
+use chrono::NaiveDateTime;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -82,6 +83,7 @@ pub struct UpdateGameSessionForm {
     pub id: i32,
     pub tab_name: String,
     pub name: Option<String>,
+    pub session_date_input: Option<String>,
     pub external_image_url: Option<String>,
     pub description: Option<String>,
     pub notes: Option<String>,
@@ -117,6 +119,17 @@ pub async fn update(
 
     if let Some(name) = form.name {
         session.name = name;
+    }
+
+    if let Some(session_date_input) = form.session_date_input {
+        session.playing_at = Some(
+            NaiveDateTime::parse_from_str(&*session_date_input, "%Y-%m-%dT%H:%M").map_err(
+                |error| {
+                    tracing::error!("{}", error);
+                    redirect_when_error.clone()
+                },
+            )?,
+        );
     }
 
     if let Some(external_image_url) = form.external_image_url {

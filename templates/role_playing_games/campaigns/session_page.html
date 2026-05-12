@@ -64,10 +64,13 @@
     <div>
         {% if editable || session.external_image_url.is_some() || session.description.len() > 0 %}
 
-        {% if editable && ! field_edited.eq("info") %}
+        {% if editable %}
         <h3 class="uk-heading-divider">
-            <span>Image et description</span>
+            <span>Informations sur la session de jeu</span>
+
+            {% if ! field_edited.eq("info") %}
             <a href="session?id={{ session.id }}&tab_name=info&edit=true&field_edited=info" uk-icon="icon: pencil"></a>
+            {% endif %}
         </h3>
         {% endif %}
 
@@ -78,7 +81,7 @@
                 <input type="hidden" name="tab_name" value="info">
 
                 <div class="uk-margin">
-                    <label class="uk-form-label" for="external_image_url">Url de l'image de la session de jeu</label>
+                    <label class="uk-form-label" for="external_image_url">Url de l'image</label>
                     <div class="uk-form-controls">
                         <input class="uk-input uk-form-width-large"
                                id="external_image_url"
@@ -89,13 +92,29 @@
                                value="{{ external_image_url }}"
                                {% endif %}
 
-                               placeholder="Url de l'image de la session de jeu..."
+                               placeholder="Url de l'image..."
                                aria-label="">
                     </div>
                 </div>
 
                 <div class="uk-margin">
-                    <label class="uk-form-label" for="description">Description de la session de jeu</label>
+                    <label class="uk-form-label" for="external_image_url">Date</label>
+                    <div class="uk-form-controls">
+                        <input class="uk-input uk-form-width-large"
+                               id="session_date_input"
+                               name="session_date_input"
+                               type="datetime-local"
+
+                               {% if let Some(session_date_input) = session_date_input %}
+                               value="{{ session_date_input }}"
+                               {% endif %}
+
+                               aria-label="">
+                    </div>
+                </div>
+
+                <div class="uk-margin">
+                    <label class="uk-form-label" for="description">Description</label>
                     <div class="uk-form-controls">
                         <textarea class="rich_text_zone"
                                   id="description"
@@ -122,6 +141,10 @@
 
             {% if let Some(external_image_url) = session.external_image_url %}
             <img src="{{ external_image_url }}" class="uk-float-left uk-margin-right uk-margin-bottom" width="50%" alt="">
+            {% endif %}
+
+            {% if let Some(session_date) = session_date %}
+            <p>{{ session_date }}</p>
             {% endif %}
 
             <p>{{ session.description|escape("none") }}</p>

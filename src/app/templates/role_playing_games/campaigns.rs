@@ -137,6 +137,8 @@ pub struct GameSessionPage {
     navigation_bar: NavigationBar,
     breadcrumb: BreadCrumb,
     session: GameSession,
+    session_date_input: Option<String>,
+    session_date: Option<String>,
     tab_name: String,
     editable: bool,
     edit_mode: bool,
@@ -153,6 +155,18 @@ impl GameSessionPage {
         edit_mode: bool,
         field_edited: Option<String>,
     ) -> Self {
+        let session_date_input = if let Some(date) = session.playing_at {
+            Some(date.format("%Y-%m-%dT%H:%M").to_string())
+        } else {
+            None
+        };
+
+        let session_date = if let Some(date) = session.playing_at {
+            Some(date.format("%d/%m/%Y à %H:%M").to_string())
+        } else {
+            None
+        };
+
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
             breadcrumb: breadcrumb().plus_link(UrlLink::from(
@@ -163,6 +177,8 @@ impl GameSessionPage {
                 ),
             )),
             session,
+            session_date_input,
+            session_date,
             tab_name: tab_name.unwrap_or("info".to_owned()),
             editable,
             edit_mode,

@@ -3,6 +3,7 @@ use crate::data::role_playing_games::campaigns;
 use crate::data::role_playing_games::campaigns::arcs::NarrativeArc;
 use crate::data::users::User;
 use crate::errors::AppError;
+use chrono::NaiveDateTime;
 use serde::Deserialize;
 
 #[derive(Deserialize, sqlx::FromRow, Clone, Debug)]
@@ -11,6 +12,7 @@ pub struct GameSession {
     pub position: i32,
     pub arc_position: i32,
     pub name: String,
+    pub playing_at: Option<NaiveDateTime>,
     pub external_image_url: Option<String>,
     pub description: String,
     pub notes: String,
@@ -37,6 +39,7 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<GameSession, AppE
                     rpg_sessions.position,
                     rpg_arcs.position as arc_position,
                     rpg_sessions.name,
+                    rpg_sessions.playing_at,
                     rpg_sessions.external_image_url,
                     rpg_sessions.description,
                     rpg_sessions.notes,
@@ -62,6 +65,7 @@ pub async fn select_for_arc(state: &AppState, arc_id: i32) -> Result<Vec<GameSes
                     rpg_sessions.position,
                     rpg_arcs.position as arc_position,
                     rpg_sessions.name,
+                    rpg_sessions.playing_at,
                     rpg_sessions.external_image_url,
                     rpg_sessions.description,
                     rpg_sessions.notes,
@@ -175,10 +179,11 @@ pub async fn update(
         sqlx::query(
             "UPDATE rpg_sessions
             SET name = $3,
-                external_image_url = $4,
-                description = $5,
-                notes = $6,
-                arc_id = $7,
+                playing_at = $4,
+                external_image_url = $5,
+                description = $6,
+                notes = $7,
+                arc_id = $8,
                 last_updated = CURRENT_TIMESTAMP
             FROM rpg_campaigns, rpg_arcs
             WHERE rpg_arcs.id = $1
@@ -189,6 +194,7 @@ pub async fn update(
         .bind(session.id.clone())
         .bind(connected_user_id.clone())
         .bind(session.name.clone())
+        .bind(session.playing_at.clone())
         .bind(session.external_image_url.clone())
         .bind(session.description.clone())
         .bind(session.notes.clone())
