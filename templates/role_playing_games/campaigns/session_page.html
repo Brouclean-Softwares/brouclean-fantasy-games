@@ -61,6 +61,10 @@
     </div>
     {% endif %}
 
+    <div class="uk-margin-medium-bottom">
+        {{ session_pagination|escape("none") }}
+    </div>
+
     {% if tab_name.eq("info") || ! editable %}
     <div>
         {% if editable || session.external_image_url.is_some() || session.description.len() > 0 %}
@@ -201,6 +205,10 @@
         </div>
     </div>
     {% endif %}
+
+    <div class="uk-margin-medium-top">
+        {{ session_pagination|escape("none") }}
+    </div>
 
 </div>
 {% endblock %}

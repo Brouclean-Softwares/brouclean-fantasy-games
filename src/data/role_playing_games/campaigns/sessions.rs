@@ -84,6 +84,74 @@ pub async fn select_for_arc(state: &AppState, arc_id: i32) -> Result<Vec<GameSes
     Ok(sessions)
 }
 
+pub async fn select_previous_session(
+    state: &AppState,
+    session: &GameSession,
+) -> Result<Option<GameSession>, AppError> {
+    tracing::debug!("select_previous_session for session id={}", session.id);
+
+    let session: Option<GameSession> = sqlx::query_as(
+        "SELECT rpg_sessions.id,
+                    rpg_sessions.position,
+                    rpg_arcs.position as arc_position,
+                    rpg_sessions.name,
+                    rpg_sessions.playing_at,
+                    rpg_sessions.external_image_url,
+                    rpg_sessions.description,
+                    rpg_sessions.notes,
+                    rpg_arcs.campaign_id,
+                    rpg_sessions.arc_id
+            FROM rpg_sessions
+            INNER JOIN rpg_arcs
+            ON rpg_sessions.arc_id = rpg_arcs.id
+            WHERE rpg_sessions.position < $1
+            AND rpg_arcs.position <= $2
+            ORDER BY rpg_arcs.position DESC,
+                     rpg_sessions.position DESC
+            LIMIT 1",
+    )
+    .bind(session.position.clone())
+    .bind(session.arc_position.clone())
+    .fetch_optional(&state.db)
+    .await?;
+
+    Ok(session)
+}
+
+pub async fn select_next_session(
+    state: &AppState,
+    session: &GameSession,
+) -> Result<Option<GameSession>, AppError> {
+    tracing::debug!("select_next_session for session id={}", session.id);
+
+    let session: Option<GameSession> = sqlx::query_as(
+        "SELECT rpg_sessions.id,
+                    rpg_sessions.position,
+                    rpg_arcs.position as arc_position,
+                    rpg_sessions.name,
+                    rpg_sessions.playing_at,
+                    rpg_sessions.external_image_url,
+                    rpg_sessions.description,
+                    rpg_sessions.notes,
+                    rpg_arcs.campaign_id,
+                    rpg_sessions.arc_id
+            FROM rpg_sessions
+            INNER JOIN rpg_arcs
+            ON rpg_sessions.arc_id = rpg_arcs.id
+            WHERE rpg_sessions.position > $1
+            AND rpg_arcs.position >= $2
+            ORDER BY rpg_arcs.position ASC,
+                     rpg_sessions.position ASC
+            LIMIT 1",
+    )
+    .bind(session.position.clone())
+    .bind(session.arc_position.clone())
+    .fetch_optional(&state.db)
+    .await?;
+
+    Ok(session)
+}
+
 pub async fn push_new_into_arc(
     state: &AppState,
     connected_user: &User,

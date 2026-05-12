@@ -1,0 +1,19 @@
+<div uk-grid>
+    <p class="uk-text-left uk-width-1-2">
+        {% if let Some(previous_session) = previous_session %}
+        <a href="session?id={{ previous_session.id }}&tab_name=info">
+            <span uk-icon="icon: arrow-left"></span>
+            <span>Précédente</span>
+        </a>
+        {% endif %}
+    </p>
+
+    <p class="uk-text-right uk-width-1-2">
+        {% if let Some(next_session) = next_session %}
+        <a href="session?id={{ next_session.id }}&tab_name=info">
+            <span>Suivante</span>
+            <span uk-icon="icon: arrow-right"></span>
+        </a>
+        {% endif %}
+    </p>
+</div>

@@ -132,11 +132,19 @@ impl NarrativeArcPage {
 }
 
 #[derive(Template, WebTemplate)]
+#[template(path = "role_playing_games/campaigns/session_pagination.html")]
+pub struct GameSessionPagination {
+    previous_session: Option<GameSession>,
+    next_session: Option<GameSession>,
+}
+
+#[derive(Template, WebTemplate)]
 #[template(path = "role_playing_games/campaigns/session_page.html")]
 pub struct GameSessionPage {
     navigation_bar: NavigationBar,
     breadcrumb: BreadCrumb,
     session: GameSession,
+    session_pagination: GameSessionPagination,
     session_date_input: Option<String>,
     session_date: Option<String>,
     tab_name: String,
@@ -150,6 +158,8 @@ impl GameSessionPage {
         app_state: AppState,
         profile: Option<User>,
         session: GameSession,
+        previous_session: Option<GameSession>,
+        next_session: Option<GameSession>,
         tab_name: Option<String>,
         editable: bool,
         edit_mode: bool,
@@ -177,6 +187,10 @@ impl GameSessionPage {
                 ),
             )),
             session,
+            session_pagination: GameSessionPagination {
+                previous_session,
+                next_session,
+            },
             session_date_input,
             session_date,
             tab_name: tab_name.unwrap_or("info".to_owned()),
