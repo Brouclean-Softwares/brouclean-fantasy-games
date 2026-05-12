@@ -74,6 +74,7 @@ pub async fn select_for_arc(state: &AppState, arc_id: i32) -> Result<Vec<GameSes
             FROM rpg_sessions
             INNER JOIN rpg_arcs
             ON rpg_sessions.arc_id = rpg_arcs.id
+            WHERE rpg_arcs.id = $1
             ORDER BY rpg_sessions.position ASC",
     )
     .bind(arc_id.clone())
