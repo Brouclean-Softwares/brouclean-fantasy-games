@@ -24,7 +24,7 @@
                        placeholder="Nom de la session de jeu..."
                        aria-label="">
 
-                <a href="session?id={{ session.id }}" uk-icon="icon: close"></a>
+                <a href="session?id={{ session.id }}&tab_name={{ tab_name }}" uk-icon="icon: close"></a>
                 <button class="uk-button uk-button-link" type="button" onclick="submit()">
                     <span uk-icon="icon: check"></span>
                 </button>
@@ -32,15 +32,151 @@
         </form>
 
         {% elif editable %}
-        <a class="uk-link-reset" href="session?id={{ session.id }}&edit=true&field_edited=name">
+        <a class="uk-link-reset" href="session?id={{ session.id }}&tab_name={{ tab_name }}&edit=true&field_edited=name">
             {{ session.indexed_name() }}
         </a>
-        <a href="session?id={{ session.id }}&edit=true&field_edited=name" uk-icon="icon: pencil"></a>
+        <a href="session?id={{ session.id }}&tab_name={{ tab_name }}&edit=true&field_edited=name" uk-icon="icon: pencil"></a>
 
         {% else %}
         {{ session.indexed_name() }}
         {% endif %}
     </h2>
+
+    {% if editable %}
+    <div class="uk-margin-medium-bottom">
+        <ul class="uk-child-width-expand" uk-tab>
+            <li {% if tab_name.eq("info") %}class="uk-active"{% endif %}>
+            <a href="session?id={{ session.id }}&tab_name=info" uk-icon="icon: info">
+                <span class="uk-visible@m">Informations</span>
+            </a>
+            </li>
+
+            <li {% if tab_name.eq("notes") %}class="uk-active"{% endif %}>
+            <a href="session?id={{ session.id }}&tab_name=notes" uk-icon="icon: file-edit">
+                <span class="uk-visible@m">Notes</span>
+            </a>
+            </li>
+        </ul>
+    </div>
+    {% endif %}
+
+    {% if tab_name.eq("info") || ! editable %}
+    <div>
+        {% if editable || session.external_image_url.is_some() || session.description.len() > 0 %}
+
+        {% if editable && ! field_edited.eq("info") %}
+        <h3 class="uk-heading-divider">
+            <span>Image et description</span>
+            <a href="session?id={{ session.id }}&tab_name=info&edit=true&field_edited=info" uk-icon="icon: pencil"></a>
+        </h3>
+        {% endif %}
+
+        <div>
+            {% if edit_mode && field_edited.eq("info") %}
+            <form method="post" autocomplete="off" class="uk-form-stacked">
+                <input type="hidden" name="id" value="{{ session.id }}">
+                <input type="hidden" name="tab_name" value="info">
+
+                <div class="uk-margin">
+                    <label class="uk-form-label" for="external_image_url">Url de l'image de la session de jeu</label>
+                    <div class="uk-form-controls">
+                        <input class="uk-input uk-form-width-large"
+                               id="external_image_url"
+                               name="external_image_url"
+                               type="url"
+
+                               {% if let Some(external_image_url) = session.external_image_url %}
+                               value="{{ external_image_url }}"
+                               {% endif %}
+
+                               placeholder="Url de l'image de la session de jeu..."
+                               aria-label="">
+                    </div>
+                </div>
+
+                <div class="uk-margin">
+                    <label class="uk-form-label" for="description">Description de la session de jeu</label>
+                    <div class="uk-form-controls">
+                        <textarea class="rich_text_zone"
+                                  id="description"
+                                  name="description"
+                                  placeholder="Description..."
+                                  aria-label="">
+                            {{ session.description }}
+                        </textarea>
+                    </div>
+                </div>
+
+                <div class="uk-margin-top">
+                    <a class="uk-button uk-button-default" href="session?id={{ session.id }}&tab_name={{ tab_name}}">Annuler</a>
+
+                    <button class="uk-button uk-button-primary uk-margin-left"
+                            type="button"
+                            onclick="submit()">
+                        Sauvegarder
+                    </button>
+                </div>
+            </form>
+
+            {% else %}
+
+            {% if let Some(external_image_url) = session.external_image_url %}
+            <img src="{{ external_image_url }}" class="uk-float-left uk-margin-right uk-margin-bottom" width="50%" alt="">
+            {% endif %}
+
+            <p>{{ session.description|escape("none") }}</p>
+
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    {% elif tab_name.eq("notes") && editable %}
+    <div>
+        <h3 class="uk-heading-divider">
+            <span>Notes</span>
+            {% if editable && ! field_edited.eq("notes") %}
+            <a href="session?id={{ session.id }}&tab_name=notes&edit=true&field_edited=notes" uk-icon="icon: pencil"></a>
+            {% endif %}
+        </h3>
+
+        <div>
+            {% if edit_mode && field_edited.eq("notes") %}
+            <form method="post" autocomplete="off" class="uk-form-stacked">
+                <input type="hidden" name="id" value="{{ session.id }}">
+                <input type="hidden" name="tab_name" value="notes">
+
+                <div class="uk-margin">
+                    <div class="uk-form-controls">
+                        <textarea class="rich_text_zone"
+                                  id="notes"
+                                  name="notes"
+                                  placeholder="Notes..."
+                                  aria-label="">
+                            {{ session.notes }}
+                        </textarea>
+                    </div>
+                </div>
+
+                <div class="uk-margin-top">
+                    <a class="uk-button uk-button-default" href="session?id={{ session.id }}&tab_name={{ tab_name}}">Annuler</a>
+
+                    <button class="uk-button uk-button-primary uk-margin-left"
+                            type="button"
+                            onclick="submit()">
+                        Sauvegarder
+                    </button>
+                </div>
+            </form>
+
+            {% else %}
+            <div class="uk-overflow-auto">
+                {{ session.notes|escape("none") }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
 
 </div>
 {% endblock %}

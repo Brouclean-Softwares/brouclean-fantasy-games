@@ -57,7 +57,7 @@
             </a>
             </li>
 
-            {% if is_owner %}
+            {% if editable %}
             <li {% if tab_name.eq("notes") %}class="uk-active"{% endif %}>
             <a href="campaign?id={{ campaign.id }}&tab_name=notes" uk-icon="icon: file-edit">
                 <span class="uk-visible@m">Notes</span>
@@ -305,59 +305,6 @@
                 </div>
             </div>
             {% endif %}
-
-            <!--
-            <div>
-                <h4>
-                    <span class="arc-handle uk-margin-right" uk-icon="icon: table"></span>
-                    <span>Arc 1</span>
-                </h4>
-
-                <div data-arc-id="1" uk-sortable="group: sessions; handle: .session-handle">
-                    <div data-session-id="1" class="uk-margin">
-                        <div class="uk-card uk-card-default uk-card-body uk-card-small">
-                            <span class="session-handle uk-margin-right" uk-icon="icon: table"></span>
-                            <span>Session 1.1</span>
-                        </div>
-                    </div>
-                    <div data-session-id="2" class="uk-margin">
-                        <div class="uk-card uk-card-default uk-card-body uk-card-small">
-                            <span class="session-handle uk-margin-right" uk-icon="icon: table"></span>
-                            <span>Session 1.2</span>
-                        </div>
-                    </div>
-                    <div data-session-id="3" class="uk-margin">
-                        <div class="uk-card uk-card-default uk-card-body uk-card-small">
-                            <span class="session-handle uk-margin-right" uk-icon="icon: table"></span>
-                            <span>Session 1.3</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div>
-                <h4>
-                    <span class="arc-handle uk-margin-right" uk-icon="icon: table"></span>
-                    <span>Arc 2</span>
-                </h4>
-
-                <div data-arc-id="2" uk-sortable="group: sessions; handle: .session-handle">
-                    <div data-session-id="4" class="uk-margin">
-                        <div class="uk-card uk-card-default uk-card-body uk-card-small">
-                            <span class="session-handle uk-margin-right" uk-icon="icon: table"></span>
-                            <span>Session 2.1</span>
-                        </div>
-                    </div>
-                    <div data-session-id="5" class="uk-margin">
-                        <div class="uk-card uk-card-default uk-card-body uk-card-small">
-                            <span class="session-handle uk-margin-right" uk-icon="icon: table"></span>
-                            <span>Session 2.2</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            -->
-
         </div>
 
         {% if editable %}
@@ -426,7 +373,7 @@
         {% endif %}
     </div>
 
-    {% elif tab_name.eq("notes") && is_owner %}
+    {% elif tab_name.eq("notes") && editable %}
     <div>
         <h3 class="uk-heading-divider">
             <span>Notes</span>

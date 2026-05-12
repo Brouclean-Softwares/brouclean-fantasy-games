@@ -41,6 +41,7 @@ pub async fn new_session(
 #[derive(Deserialize)]
 pub struct GameSessionQueryParams {
     pub id: i32,
+    pub tab_name: Option<String>,
     pub edit: Option<bool>,
     pub field_edited: Option<String>,
 }
@@ -69,6 +70,7 @@ pub async fn session(
         app_state,
         profile.clone(),
         session,
+        params.tab_name,
         is_owner,
         params.edit.unwrap_or(false) && profile.is_some(),
         params.field_edited,
@@ -78,6 +80,7 @@ pub async fn session(
 #[derive(Deserialize)]
 pub struct UpdateGameSessionForm {
     pub id: i32,
+    pub tab_name: String,
     pub name: Option<String>,
     pub external_image_url: Option<String>,
     pub description: Option<String>,
@@ -90,8 +93,8 @@ pub async fn update(
     Form(form): Form<UpdateGameSessionForm>,
 ) -> Result<Redirect, Redirect> {
     let redirect_when_error = Redirect::to(&format!(
-        "/role_playing_games/campaigns/session?id={}",
-        form.id
+        "/role_playing_games/campaigns/session?id={}&tab_name={}",
+        form.id, form.tab_name
     ));
 
     let mut session = sessions::select_by_id(&app_state, form.id)
@@ -137,7 +140,7 @@ pub async fn update(
         .map_err(|error| error.log_and_redirect(redirect_when_error.clone()))?;
 
     Ok(Redirect::to(&format!(
-        "/role_playing_games/campaigns/session?id={}",
-        form.id
+        "/role_playing_games/campaigns/session?id={}&tab_name={}",
+        form.id, form.tab_name
     )))
 }
