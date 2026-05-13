@@ -18,7 +18,7 @@
     Matchs en cours
 </h3>
 
-<div class="uk-grid-divider uk-child-width-1-1" uk-grid>
+<div class="uk-grid-divider uk-child-width-1-1 uk-margin-large-bottom" uk-grid>
     {% for game in playing_games %}
     {{ GameCard::get(game.clone())|escape("none") }}
     {% endfor %}
@@ -41,7 +41,7 @@
     </a>
 </div>
 
-<h3 class="uk-heading-divider">
+<h3 class="uk-heading-divider uk-margin-large-top">
     Mes équipes
 </h3>
 
