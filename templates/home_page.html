@@ -31,11 +31,13 @@
     </div>
     {% endif %}
 
-    {% if bb_scheduled_games.len() > 0 %}
     <h4 class="uk-heading-divider">
         Mes matchs à venir
     </h4>
 
+    {% if bb_scheduled_games.is_empty() %}
+    <p>Aucun</p>
+    {% else %}
     {{ GamesScheduleTable::from_games_summary(bb_scheduled_games.clone())|escape("none") }}
     {% endif %}
 
@@ -46,11 +48,14 @@
         </a>
     </h3>
     
-    {% if rpg_scheduled_campaign_sessions.len() > 0 %}
+
     <h4 class="uk-heading-divider">
         Mes sessions de jeu à venir
     </h4>
-    
+
+    {% if rpg_scheduled_campaign_sessions.is_empty() %}
+    <p>Aucune</p>
+    {% else %}
     {{ CampaignSessionTable::from_campaign_sessions(rpg_scheduled_campaign_sessions.clone())|escape("none") }}
     {% endif %}
 </div>
