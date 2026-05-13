@@ -16,14 +16,16 @@
     <script>
         tinymce.init({
             selector: '.rich_text_zone',
-            plugins: 'link lists table textcolor',
+            plugins: 'link lists table textcolor formatpainter',
             toolbar: `
                 undo redo |
+                blocks |
                 formatselect |
                 bold italic underline |
                 forecolor backcolor |
                 alignleft aligncenter alignright |
                 bullist numlist |
+                formatpainter |
                 table tablecellprops tablecellbackgroundcolor |
                 link unlink
               `,

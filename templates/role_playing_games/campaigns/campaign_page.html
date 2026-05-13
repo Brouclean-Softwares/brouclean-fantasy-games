@@ -185,9 +185,11 @@
 
     {% elif tab_name.eq("sessions") %}
     <div>
+        {% if editable %}
         <h3 class="uk-heading-divider">
             Sessions
         </h3>
+        {% endif %}
 
         <div class="uk-child-width-1-2@xl"
              {% if editable %} uk-sortable="handle: .arc-handle" {% endif %}
