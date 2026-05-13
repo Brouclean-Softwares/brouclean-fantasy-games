@@ -68,7 +68,7 @@ pub async fn arc(
         (_, _) => false,
     };
 
-    let deletable = is_owner && sessions.len() == 0;
+    let deletable = is_owner && sessions.is_empty();
 
     Ok(NarrativeArcPage::get(
         app_state,

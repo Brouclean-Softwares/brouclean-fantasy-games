@@ -143,6 +143,50 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<Campaign, AppErro
     Ok(campaign)
 }
 
+pub async fn exists_for_game(state: &AppState, game_id: i32) -> Result<bool, AppError> {
+    tracing::debug!("exists_for_game with game_id={}", game_id);
+
+    let campaign_id: Option<i32> = sqlx::query_scalar(
+        "SELECT id
+            FROM rpg_campaigns
+            WHERE game_id = $1
+            LIMIT 1",
+    )
+    .bind(game_id.clone())
+    .fetch_optional(&state.db)
+    .await?;
+
+    Ok(campaign_id.is_some())
+}
+
+pub async fn select_for_game(state: &AppState, game_id: i32) -> Result<Vec<CampaignRow>, AppError> {
+    tracing::debug!("select_for_game with game_id={}", game_id);
+
+    let campaign_rows: Vec<CampaignRow> = sqlx::query_as(
+        "SELECT rpg_campaigns.id,
+                    rpg_campaigns.name,
+                    rpg_campaigns.external_image_url,
+                    rpg_campaigns.description,
+                    rpg_campaigns.notes,
+                    rpg_games.id as game_id,
+                    rpg_games.name as game_name,
+                    rpg_games.external_logo_url as game_external_logo_url,
+                    users.id as game_master_id,
+                    users.name as game_master_name
+            FROM rpg_campaigns
+            INNER JOIN rpg_games
+            ON rpg_games.id = rpg_campaigns.game_id
+            LEFT OUTER JOIN users
+            ON users.id = rpg_campaigns.game_master_id
+            WHERE rpg_campaigns.game_id = $1",
+    )
+    .bind(game_id.clone())
+    .fetch_all(&state.db)
+    .await?;
+
+    Ok(campaign_rows)
+}
+
 pub async fn create(state: &AppState, user: &User, campaign: &Campaign) -> Result<i32, AppError> {
     tracing::debug!(
         "create for user={:?} the following campaign={:?}",
@@ -202,4 +246,31 @@ pub async fn update(
     }
 
     Ok(())
+}
+
+pub async fn delete(
+    state: &AppState,
+    connected_user: &User,
+    campaign_id: i32,
+) -> Result<bool, AppError> {
+    tracing::debug!(
+        "delete by user={:?} for campaign_id={}",
+        connected_user,
+        campaign_id,
+    );
+
+    if let Some(connected_user_id) = connected_user.id {
+        sqlx::query(
+            "DELETE
+                FROM rpg_campaigns
+                WHERE id = $1
+                AND game_master_id = $2",
+        )
+        .bind(campaign_id.clone())
+        .bind(connected_user_id.clone())
+        .execute(&state.db)
+        .await?;
+    }
+
+    Ok(true)
 }

@@ -1,17 +1,18 @@
 use crate::AppState;
 use crate::app::templates::role_playing_games::games::{GamePage, GamesPage};
-use crate::data::role_playing_games::games;
 use crate::data::role_playing_games::games::Game;
+use crate::data::role_playing_games::{campaigns, characters, games};
 use crate::data::users::User;
 use axum::extract::{Query, State};
 use axum::response::Redirect;
-use axum::routing::get;
+use axum::routing::{get, post};
 use axum::{Form, Router};
 use serde::Deserialize;
 
 pub fn init_router() -> Router<AppState> {
     Router::new()
         .route("/", get(games).post(add_new))
+        .route("/delete", post(delete))
         .route("/game", get(game).post(update))
 }
 
@@ -38,14 +39,27 @@ pub async fn game(
     profile: Option<User>,
     Query(params): Query<GameQueryParams>,
 ) -> Result<GamePage, Redirect> {
+    let redirect_if_error = Redirect::to("/role_playing_games/games");
+
     let game = games::select_by_id(&app_state, params.id)
         .await
-        .map_err(|error| error.log_and_redirect(Redirect::to("/role_playing_games/games")))?;
+        .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
+
+    let has_campaigns = campaigns::exists_for_game(&app_state, game.id)
+        .await
+        .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
+
+    let has_characters = characters::exists_for_game(&app_state, game.id)
+        .await
+        .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
+
+    let deletable = profile.is_some() && !has_campaigns && !has_characters;
 
     Ok(GamePage::get(
         app_state,
         profile.clone(),
         game,
+        deletable,
         profile.is_some(),
         params.edit.unwrap_or(false) && profile.is_some(),
         params.field_edited,
@@ -125,4 +139,29 @@ pub async fn update(
         "/role_playing_games/games/game?id={}",
         form.id
     )))
+}
+
+#[derive(Deserialize)]
+pub struct DeleteGameForm {
+    pub id: i32,
+}
+
+pub async fn delete(
+    State(app_state): State<AppState>,
+    profile: Option<User>,
+    Form(form): Form<DeleteGameForm>,
+) -> Result<Redirect, Redirect> {
+    let redirect_when_error =
+        Redirect::to(&format!("/role_playing_games/games/game?id={}", form.id));
+
+    if let Some(connected_user) = profile {
+        if games::delete(&app_state, &connected_user, form.id)
+            .await
+            .map_err(|error| error.log_and_redirect(redirect_when_error.clone()))?
+        {
+            return Ok(Redirect::to("/role_playing_games/games"));
+        }
+    }
+
+    Err(redirect_when_error)
 }

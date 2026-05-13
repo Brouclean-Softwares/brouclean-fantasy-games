@@ -146,6 +146,55 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<Character, AppErr
     Ok(character)
 }
 
+pub async fn exists_for_game(state: &AppState, game_id: i32) -> Result<bool, AppError> {
+    tracing::debug!("exists_for_game with game_id={}", game_id);
+
+    let character_id: Option<i32> = sqlx::query_scalar(
+        "SELECT id
+            FROM rpg_characters
+            WHERE game_id = $1
+            LIMIT 1",
+    )
+    .bind(game_id.clone())
+    .fetch_optional(&state.db)
+    .await?;
+
+    Ok(character_id.is_some())
+}
+
+pub async fn select_for_game(
+    state: &AppState,
+    game_id: i32,
+) -> Result<Vec<CharacterRow>, AppError> {
+    tracing::debug!("select_for_game with game_id={}", game_id);
+
+    let character_rows: Vec<CharacterRow> = sqlx::query_as(
+        "SELECT rpg_characters.id,
+                    rpg_characters.name,
+                    rpg_characters.external_image_url,
+                    rpg_characters.description,
+                    rpg_characters.profile,
+                    rpg_characters.private_note,
+                    rpg_characters.public_note,
+                    rpg_games.id as game_id,
+                    rpg_games.name as game_name,
+                    rpg_games.external_logo_url as game_external_logo_url,
+                    users.id as user_id,
+                    users.name as user_name
+            FROM rpg_characters
+            INNER JOIN rpg_games
+            ON rpg_games.id = rpg_characters.game_id
+            LEFT OUTER JOIN users
+            ON users.id = rpg_characters.user_id
+            WHERE rpg_characters.game_id = $1",
+    )
+    .bind(game_id.clone())
+    .fetch_all(&state.db)
+    .await?;
+
+    Ok(character_rows)
+}
+
 pub async fn create(state: &AppState, user: &User, character: &Character) -> Result<i32, AppError> {
     tracing::debug!(
         "create for user={:?} the following character={:?}",

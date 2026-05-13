@@ -15,6 +15,7 @@ pub mod sessions;
 pub fn init_router() -> Router<AppState> {
     Router::new()
         .route("/", get(campaigns).post(add_new))
+        .route("/delete", post(delete))
         .route("/campaign", get(campaign).post(update))
         .route("/new_arc", post(arcs::new))
         .route("/delete_arc", post(arcs::delete))
@@ -72,11 +73,14 @@ pub async fn campaign(
             .await
             .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
 
+    let deletable = is_owner && arcs_with_sessions.is_empty();
+
     Ok(CampaignPage::get(
         app_state,
         profile.clone(),
         campaign,
         params.tab_name,
+        deletable,
         is_owner,
         params.edit.unwrap_or(false) && profile.is_some(),
         params.field_edited,
@@ -193,4 +197,31 @@ pub async fn update(
         "/role_playing_games/campaigns/campaign?id={}&tab_name={}",
         form.id, form.tab_name
     )))
+}
+
+#[derive(Deserialize)]
+pub struct DeleteCampaignForm {
+    pub id: i32,
+}
+
+pub async fn delete(
+    State(app_state): State<AppState>,
+    profile: Option<User>,
+    Form(form): Form<DeleteCampaignForm>,
+) -> Result<Redirect, Redirect> {
+    let redirect_when_error = Redirect::to(&format!(
+        "/role_playing_games/campaigns/campaign?id={}&tab_name=info",
+        form.id
+    ));
+
+    if let Some(connected_user) = profile {
+        if campaigns::delete(&app_state, &connected_user, form.id)
+            .await
+            .map_err(|error| error.log_and_redirect(redirect_when_error.clone()))?
+        {
+            return Ok(Redirect::to("/role_playing_games/campaigns"));
+        }
+    }
+
+    Err(redirect_when_error)
 }

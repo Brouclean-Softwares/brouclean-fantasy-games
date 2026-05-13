@@ -81,3 +81,26 @@ pub async fn update(state: &AppState, user: &User, game: &Game) -> Result<(), Ap
 
     Ok(())
 }
+
+pub async fn delete(
+    state: &AppState,
+    connected_user: &User,
+    game_id: i32,
+) -> Result<bool, AppError> {
+    tracing::debug!(
+        "delete by user={:?} for campaign_id={}",
+        connected_user,
+        game_id,
+    );
+
+    sqlx::query(
+        "DELETE
+            FROM rpg_games
+            WHERE id = $1",
+    )
+    .bind(game_id.clone())
+    .execute(&state.db)
+    .await?;
+
+    Ok(true)
+}
