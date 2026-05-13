@@ -74,6 +74,7 @@ pub async fn arc(
         app_state,
         profile.clone(),
         arc,
+        sessions,
         deletable,
         is_owner,
         params.edit.unwrap_or(false) && profile.is_some(),

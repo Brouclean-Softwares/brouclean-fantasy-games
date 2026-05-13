@@ -42,6 +42,16 @@
         {% endif %}
     </h2>
 
+    <ul class="uk-list">
+        {% for session in sessions %}
+        <li class="uk-margin">
+            <a class="uk-link-reset" href="/role_playing_games/campaigns/session?id={{ session.id }}">
+                <span>{{ session.indexed_name() }}</span>
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+
     {% if deletable %}
     <div class="uk-margin-medium-top">
         <form id="delete_form" action="./delete_arc" method="post" autocomplete="off">
