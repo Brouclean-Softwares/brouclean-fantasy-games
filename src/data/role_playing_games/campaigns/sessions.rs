@@ -192,7 +192,20 @@ pub async fn select_schedule_sessions_for_user(
             ON rpg_games.id = rpg_campaigns.game_id
             LEFT OUTER JOIN users
             ON users.id = rpg_campaigns.game_master_id
-            WHERE rpg_campaigns.game_master_id = $1
+            WHERE (
+                rpg_campaigns.game_master_id = $1
+                OR rpg_campaigns.id in (
+                    SELECT charac_arcs.campaign_id
+                    FROM rpg_characters as charac
+                    INNER JOIN rpg_sessions_characters as charac_sessions
+                    ON charac_sessions.character_id = charac.id
+                    INNER JOIN rpg_sessions as sessions
+                    ON sessions.id = charac_sessions.session_id
+                    INNER JOIN rpg_arcs as charac_arcs
+                    ON charac_arcs.id = sessions.arc_id
+                    WHERE charac.user_id = $1
+                )
+            )
             AND rpg_sessions.playing_at >= CURRENT_TIMESTAMP
             ORDER BY rpg_sessions.playing_at",
     )
