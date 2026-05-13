@@ -17,6 +17,7 @@ pub fn init_router() -> Router<AppState> {
         .route("/", get(campaigns).post(add_new))
         .route("/campaign", get(campaign).post(update))
         .route("/new_arc", post(arcs::new))
+        .route("/delete_arc", post(arcs::delete))
         .route("/arc", get(arcs::arc).post(arcs::update))
         .route("/new_session", post(sessions::new))
         .route("/delete_session", post(sessions::delete))

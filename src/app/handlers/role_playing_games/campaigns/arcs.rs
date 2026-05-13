@@ -1,7 +1,7 @@
 use crate::AppState;
 use crate::app::templates::role_playing_games::campaigns::NarrativeArcPage;
 use crate::data::role_playing_games::campaigns;
-use crate::data::role_playing_games::campaigns::arcs;
+use crate::data::role_playing_games::campaigns::{arcs, sessions};
 use crate::data::users::User;
 use axum::Form;
 use axum::extract::{Query, State};
@@ -59,15 +59,22 @@ pub async fn arc(
         .await
         .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
 
+    let sessions = sessions::select_for_arc(&app_state, arc.id)
+        .await
+        .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
+
     let is_owner = match (&campaign.game_master, &profile) {
         (Some(owner), Some(connected_user)) => owner.id.eq(&connected_user.id),
         (_, _) => false,
     };
 
+    let deletable = is_owner && sessions.len() == 0;
+
     Ok(NarrativeArcPage::get(
         app_state,
         profile.clone(),
         arc,
+        deletable,
         is_owner,
         params.edit.unwrap_or(false) && profile.is_some(),
         params.field_edited,
@@ -137,4 +144,35 @@ pub async fn update(
         "/role_playing_games/campaigns/arc?id={}",
         form.id
     )))
+}
+
+#[derive(Deserialize)]
+pub struct DeleteNarrativeArcForm {
+    pub id: i32,
+    pub campaign_id: i32,
+}
+
+pub async fn delete(
+    State(app_state): State<AppState>,
+    profile: Option<User>,
+    Form(form): Form<DeleteNarrativeArcForm>,
+) -> Result<Redirect, Redirect> {
+    let redirect_when_error = Redirect::to(&format!(
+        "/role_playing_games/campaigns/arc?id={}&tab_name=info",
+        form.id
+    ));
+
+    if let Some(connected_user) = profile {
+        if arcs::delete(&app_state, &connected_user, form.id)
+            .await
+            .map_err(|error| error.log_and_redirect(redirect_when_error.clone()))?
+        {
+            return Ok(Redirect::to(&format!(
+                "/role_playing_games/campaigns/campaign?id={}&tab_name=sessions",
+                form.campaign_id
+            )));
+        }
+    }
+
+    Err(redirect_when_error)
 }

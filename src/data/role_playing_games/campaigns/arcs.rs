@@ -213,3 +213,28 @@ pub async fn update(
 
     Ok(())
 }
+
+pub async fn delete(
+    state: &AppState,
+    connected_user: &User,
+    arc_id: i32,
+) -> Result<bool, AppError> {
+    tracing::debug!("delete by user={:?} for arc_id={}", connected_user, arc_id,);
+
+    if let Some(connected_user_id) = connected_user.id {
+        sqlx::query(
+            "DELETE
+                FROM rpg_arcs
+                USING rpg_campaigns
+                WHERE rpg_campaigns.id = rpg_arcs.campaign_id
+                AND rpg_arcs.id = $1
+                AND rpg_campaigns.game_master_id = $2",
+        )
+        .bind(arc_id.clone())
+        .bind(connected_user_id.clone())
+        .execute(&state.db)
+        .await?;
+    }
+
+    Ok(true)
+}

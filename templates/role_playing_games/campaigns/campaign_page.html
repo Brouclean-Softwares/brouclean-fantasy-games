@@ -227,16 +227,16 @@
                 <div class="cls-no-drag uk-margin-top">
                     <button class="uk-button uk-button-primary"
                             type="button"
-                            uk-toggle="target: #modal-add_session">
+                            uk-toggle="target: #modal-add_session-to_arc{{ arc_with_sessions.arc.id }}">
                         Créer une nouvelle session
                     </button>
 
-                    <div id="modal-add_session" uk-modal>
+                    <div id="modal-add_session-to_arc{{ arc_with_sessions.arc.id }}" uk-modal>
                         <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
                             <h2 class="uk-modal-title">Création d'une nouvelle session</h2>
                             <p>Vous êtes sur le point de créer une nouvelle session de jeu.</p>
                             <p>
-                            <form id="add_session_form" action="/role_playing_games/campaigns/new_session" method="post" autocomplete="off" class="uk-form-stacked">
+                            <form id="add_session_form-to_arc{{ arc_with_sessions.arc.id }}" action="/role_playing_games/campaigns/new_session" method="post" autocomplete="off" class="uk-form-stacked">
                                 <input type="hidden" name="campaign_id" value="{{ campaign.id }}">
                                 <input type="hidden" name="arc_id" value="{{ arc_with_sessions.arc.id }}">
 
@@ -255,7 +255,7 @@
                             <p class="uk-text-right">
                                 <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
                                 <button class="uk-button uk-button-primary"
-                                        onclick="document.getElementById('add_session_form').submit()">
+                                        onclick="document.getElementById('add_session_form-to_arc{{ arc_with_sessions.arc.id }}').submit()">
                                     Créer
                                 </button>
                             </p>

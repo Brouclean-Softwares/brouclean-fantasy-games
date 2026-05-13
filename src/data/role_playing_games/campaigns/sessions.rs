@@ -313,19 +313,38 @@ pub async fn delete(
     );
 
     if let Some(connected_user_id) = connected_user.id {
+        let session = select_by_id(state, session_id).await?;
+
         let mut transaction = state.db.begin().await?;
 
-        sqlx::query(
+        let position_deleted: i32 = sqlx::query_scalar(
             "DELETE
                 FROM rpg_sessions
                 USING rpg_arcs, rpg_campaigns
                 WHERE rpg_arcs.id = rpg_sessions.arc_id
                 AND rpg_campaigns.id = rpg_arcs.campaign_id
                 AND rpg_sessions.id = $1
-                AND rpg_campaigns.game_master_id = $2",
+                AND rpg_campaigns.game_master_id = $2
+                RETURNING rpg_sessions.position",
         )
         .bind(session_id.clone())
         .bind(connected_user_id.clone())
+        .fetch_one(&mut *transaction)
+        .await?;
+
+        sqlx::query(
+            "UPDATE rpg_sessions
+            SET position = rpg_sessions.position - 1
+            FROM rpg_campaigns, rpg_arcs
+            WHERE rpg_sessions.position > $1
+            AND rpg_arcs.id = rpg_sessions.arc_id
+            AND rpg_campaigns.id = rpg_arcs.campaign_id
+            AND rpg_campaigns.game_master_id = $2
+            AND rpg_sessions.arc_id = $3",
+        )
+        .bind(position_deleted.clone())
+        .bind(connected_user_id.clone())
+        .bind(session.arc_id.clone())
         .execute(&mut *transaction)
         .await?;
 

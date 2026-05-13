@@ -42,5 +42,32 @@
         {% endif %}
     </h2>
 
+    {% if deletable %}
+    <div class="uk-margin-medium-top">
+        <form id="delete_form" action="./delete_arc" method="post" autocomplete="off">
+            <input name="id" type="hidden" value="{{ arc.id }}">
+            <input name="campaign_id" type="hidden" value="{{ arc.campaign_id }}">
+
+            <button class="uk-button uk-button-danger"
+                    type="button"
+                    uk-toggle="target: #modal-delete">Supprimer</button>
+
+            <div id="modal-delete" uk-modal>
+                <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                    <h2 class="uk-modal-title">Suppression de l'arc narratif en cours</h2>
+                    <p>Confirmez-vous la suppression de l'arc narratif ?</p>
+                    <p class="uk-text-right">
+                        <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                        <button class="uk-button uk-button-danger"
+                                onclick="document.getElementById('delete_form').submit()">
+                            Confirmer
+                        </button>
+                    </p>
+                </div>
+            </div>
+        </form>
+    </div>
+    {% endif %}
+
 </div>
 {% endblock %}
