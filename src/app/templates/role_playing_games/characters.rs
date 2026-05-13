@@ -5,6 +5,7 @@ use crate::data::role_playing_games::games::Game;
 use crate::data::users::User;
 use askama::Template;
 use askama_web::WebTemplate;
+use http::Uri;
 
 pub fn breadcrumb() -> BreadCrumb {
     role_playing_games::breadcrumb().plus_link(UrlLink::from(
@@ -26,11 +27,12 @@ impl CharactersPage {
     pub fn get(
         app_state: AppState,
         profile: Option<User>,
+        uri: &Uri,
         characters: Vec<CharacterRow>,
         games: Vec<Game>,
     ) -> Self {
         Self {
-            navigation_bar: NavigationBar::get(&app_state, &profile),
+            navigation_bar: NavigationBar::get(&app_state, &profile, uri),
             breadcrumb: role_playing_games::breadcrumb(),
             characters,
             add_new_character_button: AddNewCharacterButton { profile, games },
@@ -70,6 +72,7 @@ impl CharacterPage {
     pub fn get(
         app_state: AppState,
         profile: Option<User>,
+        uri: &Uri,
         character: Character,
         tab_name: Option<String>,
         editable: bool,
@@ -78,7 +81,7 @@ impl CharacterPage {
         games: Vec<Game>,
     ) -> Self {
         Self {
-            navigation_bar: NavigationBar::get(&app_state, &profile),
+            navigation_bar: NavigationBar::get(&app_state, &profile, uri),
             breadcrumb: breadcrumb(),
             character,
             tab_name: tab_name.unwrap_or("info".to_owned()),

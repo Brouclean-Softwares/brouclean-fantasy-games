@@ -3,7 +3,7 @@ use crate::app::templates::role_playing_games::games::{GamePage, GamesPage};
 use crate::data::role_playing_games::games::Game;
 use crate::data::role_playing_games::{campaigns, characters, games};
 use crate::data::users::User;
-use axum::extract::{Query, State};
+use axum::extract::{OriginalUri, Query, State};
 use axum::response::Redirect;
 use axum::routing::{get, post};
 use axum::{Form, Router};
@@ -17,6 +17,7 @@ pub fn init_router() -> Router<AppState> {
 }
 
 pub async fn games(
+    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
     profile: Option<User>,
 ) -> Result<GamesPage, Redirect> {
@@ -24,7 +25,7 @@ pub async fn games(
         .await
         .or_else(|error| Err(error.log_and_redirect(Redirect::to("/"))))?;
 
-    Ok(GamesPage::get(app_state, profile, characters))
+    Ok(GamesPage::get(app_state, profile, &uri, characters))
 }
 
 #[derive(Deserialize)]
@@ -35,6 +36,7 @@ pub struct GameQueryParams {
 }
 
 pub async fn game(
+    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
     profile: Option<User>,
     Query(params): Query<GameQueryParams>,
@@ -58,6 +60,7 @@ pub async fn game(
     Ok(GamePage::get(
         app_state,
         profile.clone(),
+        &uri,
         game,
         deletable,
         profile.is_some(),

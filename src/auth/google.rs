@@ -1,11 +1,10 @@
 use crate::AppState;
-use crate::app::templates::HomePage;
-use crate::auth::SESSION_ID;
+use crate::auth::{REDIRECT_URI_AFTER_AUTH, SESSION_ID};
 use crate::data::sessions::Session;
 use crate::data::users::User;
 use crate::errors::AppError;
 use axum::extract::{Query, State};
-use axum::response::IntoResponse;
+use axum::response::{IntoResponse, Redirect};
 use axum_extra::extract::PrivateCookieJar;
 use axum_extra::extract::cookie::{Cookie, SameSite};
 use oauth2::{
@@ -44,12 +43,12 @@ pub async fn callback(
     let profile = profile.json::<User>().await?;
 
     let cookie = Cookie::build((SESSION_ID, access_token.to_owned()))
-        .same_site(SameSite::Strict)
+        .same_site(SameSite::Lax)
         .path("/")
         .secure(true)
         .http_only(true);
 
-    let user_profile: User = profile.upsert(&app_state).await?;
+    profile.upsert(&app_state).await?;
 
     Session::upsert(
         &app_state,
@@ -58,10 +57,20 @@ pub async fn callback(
     )
     .await?;
 
-    Ok((
-        jar.add(cookie),
-        HomePage::get(app_state, Some(user_profile)).await,
-    ))
+    let redirect_uri = jar
+        .get(REDIRECT_URI_AFTER_AUTH)
+        .map(|c| c.value().to_string())
+        .unwrap_or("/".to_string());
+
+    let redirect_uri = if redirect_uri.starts_with('/') {
+        redirect_uri
+    } else {
+        "/".into()
+    };
+
+    let jar = jar.remove(Cookie::from(REDIRECT_URI_AFTER_AUTH));
+
+    Ok((jar.add(cookie), Redirect::to(&redirect_uri)))
 }
 
 pub fn build_oauth_client() -> BasicClient {

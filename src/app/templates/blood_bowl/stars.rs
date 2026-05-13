@@ -9,6 +9,7 @@ use blood_bowl_rs::rosters::Roster;
 use blood_bowl_rs::translation::TranslatedName;
 use blood_bowl_rs::translation::TypeName;
 use blood_bowl_rs::versions::Version;
+use http::Uri;
 use std::collections::HashMap;
 
 pub fn breadcrumb() -> BreadCrumb {
@@ -25,7 +26,7 @@ pub struct StarsPage {
 }
 
 impl StarsPage {
-    pub fn get(app_state: AppState, profile: Option<User>) -> Self {
+    pub fn get(app_state: AppState, profile: Option<User>, uri: &Uri) -> Self {
         let mut versions = Version::list();
         versions.reverse();
 
@@ -42,7 +43,7 @@ impl StarsPage {
         }
 
         Self {
-            navigation_bar: NavigationBar::get(&app_state, &profile),
+            navigation_bar: NavigationBar::get(&app_state, &profile, uri),
             breadcrumb: blood_bowl::breadcrumb(),
             versions,
             stars_by_version,
@@ -64,12 +65,13 @@ impl StarPage {
     pub fn get(
         app_state: AppState,
         profile: Option<User>,
+        uri: &Uri,
         version: Version,
         star: Option<Position>,
         rosters_available: Vec<Roster>,
     ) -> Self {
         Self {
-            navigation_bar: NavigationBar::get(&app_state, &profile),
+            navigation_bar: NavigationBar::get(&app_state, &profile, uri),
             breadcrumb: breadcrumb(),
             star,
             version,

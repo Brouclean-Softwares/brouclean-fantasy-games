@@ -3,7 +3,7 @@ use crate::app::templates::role_playing_games::characters::{CharacterPage, Chara
 use crate::data::role_playing_games::characters::Character;
 use crate::data::role_playing_games::{characters, games};
 use crate::data::users::User;
-use axum::extract::{Query, State};
+use axum::extract::{OriginalUri, Query, State};
 use axum::response::Redirect;
 use axum::routing::get;
 use axum::{Form, Router};
@@ -16,6 +16,7 @@ pub fn init_router() -> Router<AppState> {
 }
 
 pub async fn characters(
+    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
     profile: Option<User>,
 ) -> Result<CharactersPage, Redirect> {
@@ -27,7 +28,9 @@ pub async fn characters(
         .await
         .or_else(|error| Err(error.log_and_redirect(Redirect::to("/"))))?;
 
-    Ok(CharactersPage::get(app_state, profile, characters, games))
+    Ok(CharactersPage::get(
+        app_state, profile, &uri, characters, games,
+    ))
 }
 
 #[derive(Deserialize)]
@@ -39,6 +42,7 @@ pub struct CharacterQueryParams {
 }
 
 pub async fn character(
+    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
     profile: Option<User>,
     Query(params): Query<CharacterQueryParams>,
@@ -61,6 +65,7 @@ pub async fn character(
     Ok(CharacterPage::get(
         app_state,
         profile.clone(),
+        &uri,
         character,
         params.tab_name,
         is_owner,

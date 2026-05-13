@@ -2,7 +2,7 @@ use crate::AppState;
 use crate::app::templates::role_playing_games;
 use crate::data::users::User;
 use axum::Router;
-use axum::extract::State;
+use axum::extract::{OriginalUri, State};
 use axum::response::Redirect;
 use axum::routing::get;
 
@@ -19,6 +19,7 @@ pub fn init_router() -> Router<AppState> {
 }
 
 pub async fn home(
+    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
     profile: Option<User>,
 ) -> Result<role_playing_games::HomePage, Redirect> {
@@ -52,6 +53,7 @@ pub async fn home(
         let home_page = role_playing_games::HomePage::get(
             &app_state,
             &connected_user,
+            &uri,
             scheduled_campaign_sessions,
             owned_characters,
             owned_campaigns,

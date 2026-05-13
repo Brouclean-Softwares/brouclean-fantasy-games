@@ -2,7 +2,7 @@ use crate::AppState;
 use crate::app::templates::blood_bowl::stars::{StarPage, StarsPage};
 use crate::data::users::User;
 use axum::Router;
-use axum::extract::{Query, State};
+use axum::extract::{OriginalUri, Query, State};
 use axum::routing::get;
 use blood_bowl_rs::positions::Position;
 use blood_bowl_rs::rosters::Roster;
@@ -16,8 +16,12 @@ pub fn init_router() -> Router<AppState> {
         .route("/star", get(star))
 }
 
-pub async fn stars(State(app_state): State<AppState>, profile: Option<User>) -> StarsPage {
-    StarsPage::get(app_state, profile)
+pub async fn stars(
+    OriginalUri(uri): OriginalUri,
+    State(app_state): State<AppState>,
+    profile: Option<User>,
+) -> StarsPage {
+    StarsPage::get(app_state, profile, &uri)
 }
 
 #[derive(Deserialize)]
@@ -27,6 +31,7 @@ pub struct StarQueryParams {
 }
 
 pub async fn star(
+    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
     profile: Option<User>,
     Query(params): Query<StarQueryParams>,
@@ -43,5 +48,12 @@ pub async fn star(
         rosters_available.sort_by(|a, b| a.name("fr").cmp(&b.name("fr")));
     }
 
-    StarPage::get(app_state, profile, version, params.star, rosters_available)
+    StarPage::get(
+        app_state,
+        profile,
+        &uri,
+        version,
+        params.star,
+        rosters_available,
+    )
 }

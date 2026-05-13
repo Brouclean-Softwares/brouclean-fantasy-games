@@ -22,7 +22,7 @@ pub struct GameSession {
 
 impl GameSession {
     pub fn indexed_name(&self) -> String {
-        session_indexed_name(self.arc_position + 1, self.position + 1, &self.name)
+        session_indexed_name(self.arc_position, self.position, &self.name)
     }
 }
 

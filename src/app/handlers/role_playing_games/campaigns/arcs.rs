@@ -4,7 +4,7 @@ use crate::data::role_playing_games::campaigns;
 use crate::data::role_playing_games::campaigns::{arcs, sessions};
 use crate::data::users::User;
 use axum::Form;
-use axum::extract::{Query, State};
+use axum::extract::{OriginalUri, Query, State};
 use axum::response::Redirect;
 use serde::Deserialize;
 
@@ -45,6 +45,7 @@ pub struct NarrativeArcQueryParams {
 }
 
 pub async fn arc(
+    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
     profile: Option<User>,
     Query(params): Query<NarrativeArcQueryParams>,
@@ -73,6 +74,7 @@ pub async fn arc(
     Ok(NarrativeArcPage::get(
         app_state,
         profile.clone(),
+        &uri,
         arc,
         sessions,
         deletable,

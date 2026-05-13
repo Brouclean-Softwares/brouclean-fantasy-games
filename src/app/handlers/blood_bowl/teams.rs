@@ -8,7 +8,7 @@ use crate::data::blood_bowl::statistics::players::PlayersTopStatistics;
 use crate::data::blood_bowl::{games, players, staff, teams};
 use crate::data::users::User;
 use crate::errors::AppError;
-use axum::extract::{Query, State};
+use axum::extract::{OriginalUri, Query, State};
 use axum::response::Redirect;
 use axum::routing::{get, post};
 use axum::{Form, Router};
@@ -32,6 +32,7 @@ pub fn init_router() -> Router<AppState> {
 }
 
 pub async fn teams(
+    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
     profile: Option<User>,
 ) -> Result<TeamsPage, Redirect> {
@@ -39,7 +40,7 @@ pub async fn teams(
         .await
         .or_else(|error| Err(error.log_and_redirect(Redirect::to("/"))))?;
 
-    Ok(TeamsPage::get(app_state, profile, teams))
+    Ok(TeamsPage::get(app_state, profile, &uri, teams))
 }
 
 #[derive(Deserialize)]
@@ -74,11 +75,12 @@ pub struct NewTeamQueryParams {
 }
 
 pub async fn new(
+    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
     profile: User,
     Query(params): Query<NewTeamQueryParams>,
 ) -> NewTeamPage {
-    NewTeamPage::get(app_state, profile, params.version, params.roster)
+    NewTeamPage::get(app_state, profile, &uri, params.version, params.roster)
 }
 
 #[derive(Deserialize)]
@@ -113,6 +115,7 @@ impl NewTeamForm {
 }
 
 pub async fn create(
+    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
     profile: User,
     Form(form): Form<NewTeamForm>,
@@ -141,6 +144,7 @@ pub async fn create(
         NewTeamPage::get_with_message(
             app_state.clone(),
             profile.clone(),
+            &uri,
             form.version,
             form.roster,
             Some(AlertMessage {
@@ -161,6 +165,7 @@ pub async fn create(
             Err(NewTeamPage::get_with_message(
                 app_state,
                 profile,
+                &uri,
                 form.version,
                 form.roster,
                 Some(AlertMessage {
@@ -181,6 +186,7 @@ pub struct TeamQueryParams {
 }
 
 pub async fn team(
+    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
     profile: Option<User>,
     Query(params): Query<TeamQueryParams>,
@@ -256,6 +262,7 @@ pub async fn team(
     Ok(TeamPage::get(
         app_state,
         profile,
+        &uri,
         alert_message,
         team,
         games_scheduled,

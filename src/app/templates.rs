@@ -7,6 +7,7 @@ use crate::data::role_playing_games::campaigns::sessions::CampaignSession;
 use crate::data::users::User;
 use askama::Template;
 use askama_web::WebTemplate;
+use http::Uri;
 use std::fmt;
 use std::fmt::Formatter;
 
@@ -27,7 +28,7 @@ pub struct HomePage {
 }
 
 impl HomePage {
-    pub async fn get(app_state: AppState, profile: Option<User>) -> Self {
+    pub async fn get(app_state: AppState, profile: Option<User>, uri: &Uri) -> Self {
         let bb_playing_games = if let Ok(games) =
             crate::data::blood_bowl::games::select_all_playing(&app_state).await
         {
@@ -64,7 +65,7 @@ impl HomePage {
         };
 
         Self {
-            navigation_bar: NavigationBar::get(&app_state, &profile),
+            navigation_bar: NavigationBar::get(&app_state, &profile, &uri),
             profile,
             google_connection_url: crate::auth::google::connection_url(app_state),
             bb_playing_games,
@@ -110,12 +111,12 @@ impl BreadCrumb {
 #[template(path = "navigation_bar.html")]
 pub struct NavigationBar {
     profile: Option<User>,
-    google_connection_url: String,
+    redirection_uri: String,
     is_admin: bool,
 }
 
 impl NavigationBar {
-    pub fn get(app_state: &AppState, profile: &Option<User>) -> Self {
+    pub fn get(app_state: &AppState, profile: &Option<User>, uri: &Uri) -> Self {
         let is_admin = match profile {
             Some(user) => user.is_admin(app_state),
             _ => false,
@@ -123,7 +124,7 @@ impl NavigationBar {
 
         Self {
             profile: profile.clone(),
-            google_connection_url: crate::auth::google::connection_url(app_state.clone()),
+            redirection_uri: uri.to_string(),
             is_admin,
         }
     }

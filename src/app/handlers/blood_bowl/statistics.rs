@@ -6,7 +6,7 @@ use crate::data::blood_bowl::statistics::teams::TeamsTopStatistics;
 use crate::data::users::User;
 use crate::errors::AppError;
 use axum::Router;
-use axum::extract::State;
+use axum::extract::{OriginalUri, State};
 use axum::response::Redirect;
 use axum::routing::get;
 
@@ -15,6 +15,7 @@ pub fn init_router() -> Router<AppState> {
 }
 
 pub async fn statistics(
+    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
     profile: Option<User>,
 ) -> Result<StatisticsPage, Redirect> {
@@ -29,7 +30,7 @@ pub async fn statistics(
         .map_err(error_redirect)?;
 
     Ok(StatisticsPage {
-        navigation_bar: NavigationBar::get(&app_state, &profile),
+        navigation_bar: NavigationBar::get(&app_state, &profile, &uri),
         breadcrumb: blood_bowl::breadcrumb(),
         teams_top_statistics: teams_top_statistics.into(),
         players_top_statistics: players_top_statistics.into(),

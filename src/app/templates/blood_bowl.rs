@@ -8,6 +8,7 @@ use crate::data::users::User;
 use crate::errors::AppError;
 use askama::Template;
 use askama_web::WebTemplate;
+use http::Uri;
 
 pub mod competitions;
 pub mod games;
@@ -32,7 +33,7 @@ pub struct HomePage {
 }
 
 impl HomePage {
-    pub async fn get(app_state: &AppState, profile: &User) -> Result<Self, AppError> {
+    pub async fn get(app_state: &AppState, profile: &User, uri: &Uri) -> Result<Self, AppError> {
         let playing_games = crate::data::blood_bowl::games::select_all_playing(&app_state).await?;
 
         let scheduled_games = if let Some(coach_id) = profile.id {
@@ -45,7 +46,7 @@ impl HomePage {
         let owned_teams_block = OwnedTeamsBlock::get(&app_state, &profile.clone()).await?;
 
         Ok(Self {
-            navigation_bar: NavigationBar::get(&app_state, &Some(profile.clone())),
+            navigation_bar: NavigationBar::get(&app_state, &Some(profile.clone()), uri),
             breadcrumb: BreadCrumb::only_home(),
             playing_games,
             scheduled_games,

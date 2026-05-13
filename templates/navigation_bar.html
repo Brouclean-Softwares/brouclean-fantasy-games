@@ -101,10 +101,14 @@
                     </ul>
                 </div>
             {% else %}
-                <a class="uk-navbar-item uk-link-reset" href="{{ google_connection_url }}">
-                    <span  uk-icon="icon: sign-in"></span>
-                    <div class="uk-visible@m">Se connecter</div>
-                </a>
+                <form action="/auth/sign_in" method="post">
+                    <input type="hidden" name="redirection_uri" value="{{ redirection_uri }}">
+
+                    <button class="uk-button uk-button-link" type="button" onclick="submit()">
+                        <span  uk-icon="icon: sign-in"></span>
+                        <span class="uk-visible@m">Se connecter</span>
+                    </button>
+                </form>
             {% endif %}
             </div>
 

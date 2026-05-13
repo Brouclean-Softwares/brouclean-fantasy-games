@@ -10,7 +10,7 @@ use crate::data::blood_bowl::statistics::players::PlayersTopStatistics;
 use crate::data::blood_bowl::statistics::teams::TeamsTopStatistics;
 use crate::data::users::User;
 use crate::errors::AppError;
-use axum::extract::{Query, State};
+use axum::extract::{OriginalUri, Query, State};
 use axum::response::Redirect;
 use axum::routing::{get, post};
 use axum::{Form, Router};
@@ -34,6 +34,7 @@ pub fn init_router() -> Router<AppState> {
 }
 
 pub async fn competitions(
+    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
     profile: Option<User>,
 ) -> Result<CompetitionsPage, Redirect> {
@@ -54,6 +55,7 @@ pub async fn competitions(
     Ok(CompetitionsPage::get(
         app_state,
         profile,
+        &uri,
         competitions_preparing,
         competitions_in_progress,
         competitions_closed,
@@ -70,6 +72,7 @@ pub struct CompetitionQueryParams {
 }
 
 pub async fn competition(
+    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
     profile: Option<User>,
     Query(params): Query<CompetitionQueryParams>,
@@ -102,6 +105,7 @@ pub async fn competition(
         Ok(CompetitionPage::get(
             app_state,
             profile,
+            &uri,
             alert_message,
             competition,
             teams_top_statistics.into(),

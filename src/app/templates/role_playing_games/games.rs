@@ -4,6 +4,7 @@ use crate::data::role_playing_games::games::Game;
 use crate::data::users::User;
 use askama::Template;
 use askama_web::WebTemplate;
+use http::Uri;
 
 pub fn breadcrumb() -> BreadCrumb {
     role_playing_games::breadcrumb().plus_link(UrlLink::from("Jeux", "/role_playing_games/games"))
@@ -19,9 +20,9 @@ pub struct GamesPage {
 }
 
 impl GamesPage {
-    pub fn get(app_state: AppState, profile: Option<User>, games: Vec<Game>) -> Self {
+    pub fn get(app_state: AppState, profile: Option<User>, uri: &Uri, games: Vec<Game>) -> Self {
         Self {
-            navigation_bar: NavigationBar::get(&app_state, &profile),
+            navigation_bar: NavigationBar::get(&app_state, &profile, uri),
             breadcrumb: role_playing_games::breadcrumb(),
             profile,
             games,
@@ -45,6 +46,7 @@ impl GamePage {
     pub fn get(
         app_state: AppState,
         profile: Option<User>,
+        uri: &Uri,
         game: Game,
         deletable: bool,
         editable: bool,
@@ -52,7 +54,7 @@ impl GamePage {
         field_edited: Option<String>,
     ) -> Self {
         Self {
-            navigation_bar: NavigationBar::get(&app_state, &profile),
+            navigation_bar: NavigationBar::get(&app_state, &profile, uri),
             breadcrumb: breadcrumb(),
             game,
             deletable,

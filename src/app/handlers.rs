@@ -1,12 +1,16 @@
 use crate::AppState;
 use crate::app::templates::HomePage;
 use crate::data::users::User;
-use axum::extract::State;
+use axum::extract::{OriginalUri, State};
 
 pub mod blood_bowl;
 pub mod role_playing_games;
 pub mod users;
 
-pub async fn home_page(State(app_state): State<AppState>, profile: Option<User>) -> HomePage {
-    HomePage::get(app_state, profile).await
+pub async fn home_page(
+    OriginalUri(uri): OriginalUri,
+    State(app_state): State<AppState>,
+    profile: Option<User>,
+) -> HomePage {
+    HomePage::get(app_state, profile, &uri).await
 }

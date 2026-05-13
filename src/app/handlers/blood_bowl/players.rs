@@ -5,7 +5,7 @@ use crate::data::blood_bowl::statistics::players::PlayerStatistics;
 use crate::data::blood_bowl::{games, players, statistics, teams};
 use crate::data::users::User;
 use crate::errors::AppError;
-use axum::extract::{Query, State};
+use axum::extract::{OriginalUri, Query, State};
 use axum::response::Redirect;
 use axum::routing::get;
 use axum::{Form, Router};
@@ -27,6 +27,7 @@ pub struct PlayerQueryParams {
 }
 
 pub async fn player(
+    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
     profile: Option<User>,
     Query(params): Query<PlayerQueryParams>,
@@ -84,6 +85,7 @@ pub async fn player(
     Ok(PlayerPage::get(
         app_state,
         profile,
+        &uri,
         alert_message,
         format!("player?player_id={}&team_id={}", player.id, team.id),
         number,
@@ -217,6 +219,7 @@ pub struct AddedPlayerQueryParams {
 }
 
 pub async fn added_player(
+    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
     profile: Option<User>,
     Query(params): Query<AddedPlayerQueryParams>,
@@ -301,6 +304,7 @@ pub async fn added_player(
     Ok(PlayerPage::get(
         app_state,
         profile,
+        &uri,
         alert_message,
         format!(
             "added_player?player_id_in_game={}&team_id={}&game_id={}",

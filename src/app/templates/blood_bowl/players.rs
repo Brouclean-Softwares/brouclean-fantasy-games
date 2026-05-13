@@ -14,6 +14,7 @@ use blood_bowl_rs::players::PlayerType;
 use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::translation::TranslatedName;
 use blood_bowl_rs::versions::Version;
+use http::Uri;
 use std::vec;
 
 #[derive(Template, WebTemplate)]
@@ -39,6 +40,7 @@ impl PlayerPage {
     pub fn get(
         app_state: AppState,
         profile: Option<User>,
+        uri: &Uri,
         alert_message: Option<AlertMessage>,
         link_url: String,
         number: i32,
@@ -53,7 +55,7 @@ impl PlayerPage {
         statistics: PlayerStatistics,
     ) -> Self {
         Self {
-            navigation_bar: NavigationBar::get(&app_state, &profile),
+            navigation_bar: NavigationBar::get(&app_state, &profile, uri),
             alert_message,
             breadcrumb: teams::breadcrumb().plus_link(UrlLink::from(
                 "Équipe",

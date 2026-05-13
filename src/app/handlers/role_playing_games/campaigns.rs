@@ -3,7 +3,7 @@ use crate::app::templates::role_playing_games::campaigns::{CampaignPage, Campaig
 use crate::data::role_playing_games::campaigns::Campaign;
 use crate::data::role_playing_games::{campaigns, games};
 use crate::data::users::User;
-use axum::extract::{Query, State};
+use axum::extract::{OriginalUri, Query, State};
 use axum::response::Redirect;
 use axum::routing::{get, post};
 use axum::{Form, Router};
@@ -26,6 +26,7 @@ pub fn init_router() -> Router<AppState> {
 }
 
 pub async fn campaigns(
+    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
     profile: Option<User>,
 ) -> Result<CampaignsPage, Redirect> {
@@ -37,7 +38,9 @@ pub async fn campaigns(
         .await
         .or_else(|error| Err(error.log_and_redirect(Redirect::to("/"))))?;
 
-    Ok(CampaignsPage::get(app_state, profile, campaigns, games))
+    Ok(CampaignsPage::get(
+        app_state, profile, &uri, campaigns, games,
+    ))
 }
 
 #[derive(Deserialize)]
@@ -49,6 +52,7 @@ pub struct CampaignQueryParams {
 }
 
 pub async fn campaign(
+    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
     profile: Option<User>,
     Query(params): Query<CampaignQueryParams>,
@@ -78,6 +82,7 @@ pub async fn campaign(
     Ok(CampaignPage::get(
         app_state,
         profile.clone(),
+        &uri,
         campaign,
         params.tab_name,
         deletable,

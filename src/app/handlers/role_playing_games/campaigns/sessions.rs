@@ -4,7 +4,7 @@ use crate::data::role_playing_games::campaigns;
 use crate::data::role_playing_games::campaigns::{arcs, sessions};
 use crate::data::users::User;
 use axum::Form;
-use axum::extract::{Query, State};
+use axum::extract::{OriginalUri, Query, State};
 use axum::response::Redirect;
 use chrono::NaiveDateTime;
 use serde::Deserialize;
@@ -48,6 +48,7 @@ pub struct GameSessionQueryParams {
 }
 
 pub async fn session(
+    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
     profile: Option<User>,
     Query(params): Query<GameSessionQueryParams>,
@@ -78,6 +79,7 @@ pub async fn session(
     Ok(GameSessionPage::get(
         app_state,
         profile.clone(),
+        &uri,
         session,
         previous_session,
         next_session,
