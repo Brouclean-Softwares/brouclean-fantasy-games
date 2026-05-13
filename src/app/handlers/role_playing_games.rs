@@ -25,6 +25,16 @@ pub async fn home(
     let redirect_if_error = Redirect::to("/");
 
     if let Some(connected_user) = profile {
+        let scheduled_campaign_sessions = if let Some(user_id) = connected_user.id {
+            crate::data::role_playing_games::campaigns::sessions::select_schedule_sessions_for_user(
+                &app_state, user_id,
+            )
+            .await
+            .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?
+        } else {
+            Vec::new()
+        };
+
         let owned_characters =
             crate::data::role_playing_games::characters::select_owned(&app_state, &connected_user)
                 .await
@@ -42,6 +52,7 @@ pub async fn home(
         let home_page = role_playing_games::HomePage::get(
             &app_state,
             &connected_user,
+            scheduled_campaign_sessions,
             owned_characters,
             owned_campaigns,
             games,

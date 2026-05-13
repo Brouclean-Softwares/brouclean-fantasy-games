@@ -1,4 +1,5 @@
 use crate::AppState;
+use crate::app::templates::CampaignSessionTable;
 use crate::app::templates::role_playing_games::campaigns::{
     AddNewCampaignButton, OwnedCampaignsBlock,
 };
@@ -7,6 +8,7 @@ use crate::app::templates::role_playing_games::characters::{
 };
 use crate::app::templates::{BreadCrumb, NavigationBar, UrlLink};
 use crate::data::role_playing_games::campaigns::CampaignRow;
+use crate::data::role_playing_games::campaigns::sessions::CampaignSession;
 use crate::data::role_playing_games::characters::CharacterRow;
 use crate::data::role_playing_games::games::Game;
 use crate::data::users::User;
@@ -27,6 +29,7 @@ pub fn breadcrumb() -> BreadCrumb {
 pub struct HomePage {
     navigation_bar: NavigationBar,
     breadcrumb: BreadCrumb,
+    scheduled_campaign_sessions: Vec<CampaignSession>,
     owned_characters_block: OwnedCharactersBlock,
     owned_campaigns_block: OwnedCampaignsBlock,
 }
@@ -35,6 +38,7 @@ impl HomePage {
     pub async fn get(
         app_state: &AppState,
         profile: &User,
+        scheduled_campaign_sessions: Vec<CampaignSession>,
         owned_characters: Vec<CharacterRow>,
         owned_campaigns: Vec<CampaignRow>,
         games: Vec<Game>,
@@ -42,6 +46,7 @@ impl HomePage {
         Ok(Self {
             navigation_bar: NavigationBar::get(&app_state, &Some(profile.clone())),
             breadcrumb: BreadCrumb::only_home(),
+            scheduled_campaign_sessions,
             owned_characters_block: OwnedCharactersBlock {
                 owned_characters,
                 add_new_character_button: AddNewCharacterButton {

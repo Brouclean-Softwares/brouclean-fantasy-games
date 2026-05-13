@@ -22,13 +22,31 @@ pub struct GameSession {
 
 impl GameSession {
     pub fn indexed_name(&self) -> String {
-        format!(
-            "{}.{}. {}",
-            self.arc_position + 1,
-            self.position + 1,
-            self.name
-        )
+        session_indexed_name(self.arc_position + 1, self.position + 1, &self.name)
     }
+}
+
+#[derive(Deserialize, sqlx::FromRow, Clone, Debug)]
+pub struct CampaignSession {
+    pub id: i32,
+    pub playing_at: Option<NaiveDateTime>,
+    pub campaign_name: String,
+    pub game_name: String,
+    pub game_external_logo_url: Option<String>,
+    pub game_master_name: Option<String>,
+}
+
+pub fn session_indexed_name(
+    arc_position: i32,
+    session_position: i32,
+    session_name: &String,
+) -> String {
+    format!(
+        "{}.{}. {}",
+        arc_position + 1,
+        session_position + 1,
+        session_name
+    )
 }
 
 pub async fn select_by_id(state: &AppState, id: i32) -> Result<GameSession, AppError> {
@@ -104,8 +122,8 @@ pub async fn select_previous_session(
             FROM rpg_sessions
             INNER JOIN rpg_arcs
             ON rpg_sessions.arc_id = rpg_arcs.id
-            WHERE rpg_sessions.position < $1
-            AND rpg_arcs.position <= $2
+            WHERE (rpg_sessions.position < $1 AND rpg_arcs.position = $2)
+            OR rpg_arcs.position < $2
             ORDER BY rpg_arcs.position DESC,
                      rpg_sessions.position DESC
             LIMIT 1",
@@ -138,8 +156,8 @@ pub async fn select_next_session(
             FROM rpg_sessions
             INNER JOIN rpg_arcs
             ON rpg_sessions.arc_id = rpg_arcs.id
-            WHERE rpg_sessions.position > $1
-            AND rpg_arcs.position >= $2
+            WHERE (rpg_sessions.position > $1 AND rpg_arcs.position = $2)
+            OR rpg_arcs.position > $2
             ORDER BY rpg_arcs.position ASC,
                      rpg_sessions.position ASC
             LIMIT 1",
@@ -150,6 +168,39 @@ pub async fn select_next_session(
     .await?;
 
     Ok(session)
+}
+
+pub async fn select_schedule_sessions_for_user(
+    state: &AppState,
+    user_id: i32,
+) -> Result<Vec<CampaignSession>, AppError> {
+    tracing::debug!("select_schedule_sessions_for_user for user_id={}", user_id);
+
+    let sessions: Vec<CampaignSession> = sqlx::query_as(
+        "SELECT rpg_sessions.id,
+                    rpg_sessions.playing_at,
+                    rpg_campaigns.name as campaign_name,
+                    rpg_games.name as game_name,
+                    rpg_games.external_logo_url as game_external_logo_url,
+                    users.name as game_master_name
+            FROM rpg_sessions
+            INNER JOIN rpg_arcs
+            ON rpg_sessions.arc_id = rpg_arcs.id
+            INNER JOIN rpg_campaigns
+            ON rpg_arcs.campaign_id = rpg_campaigns.id
+            INNER JOIN rpg_games
+            ON rpg_games.id = rpg_campaigns.game_id
+            LEFT OUTER JOIN users
+            ON users.id = rpg_campaigns.game_master_id
+            WHERE rpg_campaigns.game_master_id = $1
+            AND rpg_sessions.playing_at >= CURRENT_TIMESTAMP
+            ORDER BY rpg_sessions.playing_at",
+    )
+    .bind(user_id.clone())
+    .fetch_all(&state.db)
+    .await?;
+
+    Ok(sessions)
 }
 
 pub async fn push_new_into_arc(

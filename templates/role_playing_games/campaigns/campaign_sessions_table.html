@@ -1,0 +1,50 @@
+<div class="uk-overflow-auto">
+    <table class="uk-table uk-table-striped uk-table-small uk-table-hover">
+        <thead>
+        <tr>
+            <th>Nom</th>
+            <th>Jeu</th>
+            <th>Date</th>
+            <th>Maître de jeu</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        {% for campaign_session in campaign_sessions %}
+        <tr>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="/role_playing_games/campaigns/session?id={{ campaign_session.id }}">
+                    {{ campaign_session.campaign_name }}
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="/role_playing_games/campaigns/session?id={{ campaign_session.id }}">
+                    {% if let Some(external_logo_url) = campaign_session.game_external_logo_url %}
+                    <span class="uk-visible@m uk-margin-right">{{ campaign_session.game_name }}</span>
+                    <img src="{{ external_logo_url }}" class="uk-height-max-small" style="max-height:25px; width:auto;" alt="">
+                    {% else %}
+                    {{ campaign_session.game_name }}
+                    {% endif %}
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="/role_playing_games/campaigns/session?id={{ campaign_session.id }}">
+                    {% if let Some(session_date) = campaign_session.playing_at %}
+                    <span class="uk-text-meta">{{ session_date.format("%d/%m/%Y à %H:%M").to_string() }}</span>
+                    {% endif %}
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="/role_playing_games/campaigns/session?id={{ campaign_session.id }}">
+                    {% if let Some(game_master_name) = campaign_session.game_master_name %}
+                    {{ game_master_name }}
+                    {% else %}
+                    <span>Personne</span>
+                    {% endif %}
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>

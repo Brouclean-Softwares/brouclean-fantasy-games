@@ -69,7 +69,7 @@
 
     {% if tab_name.eq("info") || ! editable %}
     <div>
-        {% if editable || session.external_image_url.is_some() || session.description.len() > 0 %}
+        {% if editable || session.external_image_url.is_some() || session_date_input.is_some() || session.description.len() > 0 %}
 
         {% if editable %}
         <h3 class="uk-heading-divider">

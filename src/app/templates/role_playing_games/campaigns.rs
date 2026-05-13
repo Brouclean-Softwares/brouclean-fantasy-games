@@ -3,7 +3,7 @@ use crate::app::templates::{BreadCrumb, NavigationBar, UrlLink, role_playing_gam
 use crate::data::role_playing_games::campaigns::arcs::{
     NarrativeArc, NarrativeArcWithGameSessions,
 };
-use crate::data::role_playing_games::campaigns::sessions::GameSession;
+use crate::data::role_playing_games::campaigns::sessions::{CampaignSession, GameSession};
 use crate::data::role_playing_games::campaigns::{Campaign, CampaignRow};
 use crate::data::role_playing_games::games::Game;
 use crate::data::users::User;
@@ -210,5 +210,17 @@ impl GameSessionPage {
             edit_mode,
             field_edited: field_edited.unwrap_or_default(),
         }
+    }
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "role_playing_games/campaigns/campaign_sessions_table.html")]
+pub struct CampaignSessionTable {
+    pub campaign_sessions: Vec<CampaignSession>,
+}
+
+impl CampaignSessionTable {
+    pub fn from_campaign_sessions(campaign_sessions: Vec<CampaignSession>) -> Self {
+        Self { campaign_sessions }
     }
 }

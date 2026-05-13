@@ -45,6 +45,14 @@
             <span uk-icon="icon: home"></span>
         </a>
     </h3>
+    
+    {% if rpg_scheduled_campaign_sessions.len() > 0 %}
+    <h4 class="uk-heading-divider">
+        Mes sessions de jeu à venir
+    </h4>
+    
+    {{ CampaignSessionTable::from_campaign_sessions(rpg_scheduled_campaign_sessions.clone())|escape("none") }}
+    {% endif %}
 </div>
 
 {% else %}

@@ -13,6 +13,14 @@
     Jeux de rôle
 </h2>
 
+{% if scheduled_campaign_sessions.len() > 0 %}
+<h3 class="uk-heading-divider">
+    Mes sessions de jeu à venir
+</h3>
+
+{{ CampaignSessionTable::from_campaign_sessions(scheduled_campaign_sessions.clone())|escape("none") }}
+{% endif %}
+
 <h3 class="uk-heading-divider">
     Mes personnages
 </h3>

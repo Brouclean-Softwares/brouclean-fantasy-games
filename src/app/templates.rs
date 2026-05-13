@@ -1,7 +1,9 @@
 use crate::AppState;
 use crate::app::templates::blood_bowl::games::GameCard;
 use crate::app::templates::blood_bowl::games::GamesScheduleTable;
+use crate::app::templates::role_playing_games::campaigns::CampaignSessionTable;
 use crate::data::blood_bowl::games::GameSummary;
+use crate::data::role_playing_games::campaigns::sessions::CampaignSession;
 use crate::data::users::User;
 use askama::Template;
 use askama_web::WebTemplate;
@@ -21,6 +23,7 @@ pub struct HomePage {
     google_connection_url: String,
     bb_playing_games: Vec<GameSummary>,
     bb_scheduled_games: Vec<GameSummary>,
+    rpg_scheduled_campaign_sessions: Vec<CampaignSession>,
 }
 
 impl HomePage {
@@ -47,12 +50,26 @@ impl HomePage {
             Vec::new()
         };
 
+        let rpg_scheduled_campaign_sessions = if let Some(user_id) =
+            profile.clone().and_then(|user| user.id)
+        {
+            if let Ok(sessions) = crate::data::role_playing_games::campaigns::sessions::select_schedule_sessions_for_user(&app_state, user_id).await
+            {
+                sessions
+            } else {
+                Vec::new()
+            }
+        } else {
+            Vec::new()
+        };
+
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
             profile,
             google_connection_url: crate::auth::google::connection_url(app_state),
             bb_playing_games,
             bb_scheduled_games,
+            rpg_scheduled_campaign_sessions,
         }
     }
 }
