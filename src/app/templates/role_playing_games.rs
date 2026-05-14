@@ -31,8 +31,8 @@ pub struct HomePage {
     navigation_bar: NavigationBar,
     breadcrumb: BreadCrumb,
     scheduled_campaign_sessions: Vec<CampaignSession>,
-    owned_characters_block: OwnedCharactersBlock,
-    owned_campaigns_block: OwnedCampaignsBlock,
+    owned_characters_block: Option<OwnedCharactersBlock>,
+    owned_campaigns_block: Option<OwnedCampaignsBlock>,
 }
 
 impl HomePage {
@@ -45,24 +45,36 @@ impl HomePage {
         owned_campaigns: Vec<CampaignRow>,
         games: Vec<Game>,
     ) -> Result<Self, AppError> {
-        Ok(Self {
-            navigation_bar: NavigationBar::get(&app_state, &Some(profile.clone()), uri),
-            breadcrumb: BreadCrumb::only_home(),
-            scheduled_campaign_sessions,
-            owned_characters_block: OwnedCharactersBlock {
+        let owned_characters_block = if owned_characters.is_empty() {
+            None
+        } else {
+            Some(OwnedCharactersBlock {
                 owned_characters,
                 add_new_character_button: AddNewCharacterButton {
                     profile: Some(profile.clone()),
                     games: games.clone(),
                 },
-            },
-            owned_campaigns_block: OwnedCampaignsBlock {
+            })
+        };
+
+        let owned_campaigns_block = if owned_campaigns.is_empty() {
+            None
+        } else {
+            Some(OwnedCampaignsBlock {
                 owned_campaigns,
                 add_new_campaign_button: AddNewCampaignButton {
                     profile: Some(profile.clone()),
-                    games,
+                    games: games.clone(),
                 },
-            },
+            })
+        };
+
+        Ok(Self {
+            navigation_bar: NavigationBar::get(&app_state, &Some(profile.clone()), uri),
+            breadcrumb: BreadCrumb::only_home(),
+            scheduled_campaign_sessions,
+            owned_characters_block,
+            owned_campaigns_block,
         })
     }
 }

@@ -23,16 +23,20 @@
 {{ CampaignSessionTable::from_campaign_sessions(scheduled_campaign_sessions.clone())|escape("none") }}
 {% endif %}
 
+{% if let Some(owned_characters_block) = owned_characters_block %}
 <h3 class="uk-heading-divider uk-margin-large-top">
     Mes personnages
 </h3>
 
 {{ owned_characters_block|escape("none") }}
+{% endif %}
 
+{% if let Some(owned_campaigns_block) = owned_campaigns_block %}
 <h3 class="uk-heading-divider uk-margin-large-top">
     Mes campagnes
 </h3>
 
 {{ owned_campaigns_block|escape("none") }}
+{% endif %}
 
 {% endblock %}
