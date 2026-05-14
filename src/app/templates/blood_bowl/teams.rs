@@ -1,3 +1,4 @@
+use crate::AppState;
 use crate::app::templates::blood_bowl::games::GameCard;
 use crate::app::templates::blood_bowl::statistics::PlayersTopStatisticsLists;
 use crate::app::templates::{AlertMessage, BreadCrumb, NavigationBar, UrlLink, blood_bowl};
@@ -6,8 +7,6 @@ use crate::data::blood_bowl::statistics::players::PlayersTopStatistics;
 use crate::data::blood_bowl::statistics::teams::TeamStatistics;
 use crate::data::blood_bowl::teams::{TeamLogo, TeamSummary};
 use crate::data::users::User;
-use crate::errors::AppError;
-use crate::{AppState, data};
 use askama::Template;
 use askama_web::WebTemplate;
 use blood_bowl_rs::players::Player;
@@ -233,16 +232,7 @@ struct FormerPlayersTab {
 #[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/teams/owned_teams_block.html")]
 pub struct OwnedTeamsBlock {
-    owned_teams: Vec<TeamSummary>,
-}
-
-impl OwnedTeamsBlock {
-    pub async fn get(app_state: &AppState, profile: &User) -> Result<Self, AppError> {
-        let owned_teams =
-            data::blood_bowl::teams::select_owned(&app_state, profile.clone()).await?;
-
-        Ok(Self { owned_teams })
-    }
+    pub owned_teams: Vec<TeamSummary>,
 }
 
 #[derive(Template, WebTemplate)]

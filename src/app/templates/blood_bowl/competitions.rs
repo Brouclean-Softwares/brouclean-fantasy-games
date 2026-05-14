@@ -73,6 +73,12 @@ pub struct CompetitionPage {
     statistics: CompetitionStatisticsTab,
 }
 
+#[derive(Template, WebTemplate)]
+#[template(path = "blood_bowl/competitions/owned_competitions_block.html")]
+pub struct OwnedCompetitionsBlock {
+    pub owned_competitions: Vec<Competition>,
+}
+
 impl CompetitionPage {
     pub async fn get(
         app_state: AppState,

@@ -9,75 +9,74 @@
 {% endblock %}
 
 {% block body %}
-<div>
-    <h2>
-        {% if edit_mode && field_edited.eq("name") %}
-        <form method="post" autocomplete="off">
-            <input type="hidden" name="id" value="{{ arc.id }}">
 
-            <div>
-                <input class="uk-input uk-form-width-large"
-                       id="name"
-                       name="name"
-                       type="text"
-                       value="{{ arc.name }}"
-                       placeholder="Nom de l'arc narratif..."
-                       aria-label="">
+<h2>
+    {% if edit_mode && field_edited.eq("name") %}
+    <form method="post" autocomplete="off">
+        <input type="hidden" name="id" value="{{ arc.id }}">
 
-                <a href="arc?id={{ arc.id }}" uk-icon="icon: close"></a>
-                <button class="uk-button uk-button-link" type="button" onclick="submit()">
-                    <span uk-icon="icon: check"></span>
-                </button>
-            </div>
-        </form>
+        <div>
+            <input class="uk-input uk-form-width-large"
+                   id="name"
+                   name="name"
+                   type="text"
+                   value="{{ arc.name }}"
+                   placeholder="Nom de l'arc narratif..."
+                   aria-label="">
 
-        {% elif editable %}
-        <a class="uk-link-reset" href="arc?id={{ arc.id }}&edit=true&field_edited=name">
-            {{ arc.indexed_name() }}
-        </a>
-        <a href="arc?id={{ arc.id }}&edit=true&field_edited=name" uk-icon="icon: pencil"></a>
+            <a href="arc?id={{ arc.id }}" uk-icon="icon: close"></a>
+            <button class="uk-button uk-button-link" type="button" onclick="submit()">
+                <span uk-icon="icon: check"></span>
+            </button>
+        </div>
+    </form>
 
-        {% else %}
+    {% elif editable %}
+    <a class="uk-link-reset" href="arc?id={{ arc.id }}&edit=true&field_edited=name">
         {{ arc.indexed_name() }}
-        {% endif %}
-    </h2>
+    </a>
+    <a href="arc?id={{ arc.id }}&edit=true&field_edited=name" uk-icon="icon: pencil"></a>
 
-    <ul class="uk-list uk-margin-medium-top">
-        {% for session in sessions %}
-        <li class="uk-margin">
-            <a class="uk-link-reset" href="/role_playing_games/campaigns/session?id={{ session.id }}">
-                <span>{{ session.indexed_name() }}</span>
-            </a>
-        </li>
-        {% endfor %}
-    </ul>
-
-    {% if deletable %}
-    <div class="uk-margin-medium-top">
-        <form id="delete_form" action="./delete_arc" method="post" autocomplete="off">
-            <input name="id" type="hidden" value="{{ arc.id }}">
-            <input name="campaign_id" type="hidden" value="{{ arc.campaign_id }}">
-
-            <button class="uk-button uk-button-danger"
-                    type="button"
-                    uk-toggle="target: #modal-delete">Supprimer</button>
-
-            <div id="modal-delete" uk-modal>
-                <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
-                    <h2 class="uk-modal-title">Suppression de l'arc narratif en cours</h2>
-                    <p>Confirmez-vous la suppression de l'arc narratif ?</p>
-                    <p class="uk-text-right">
-                        <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
-                        <button class="uk-button uk-button-danger"
-                                onclick="document.getElementById('delete_form').submit()">
-                            Confirmer
-                        </button>
-                    </p>
-                </div>
-            </div>
-        </form>
-    </div>
+    {% else %}
+    {{ arc.indexed_name() }}
     {% endif %}
+</h2>
 
+<ul class="uk-list uk-margin-medium-top">
+    {% for session in sessions %}
+    <li class="uk-margin">
+        <a class="uk-link-reset" href="/role_playing_games/campaigns/session?id={{ session.id }}">
+            <span>{{ session.indexed_name() }}</span>
+        </a>
+    </li>
+    {% endfor %}
+</ul>
+
+{% if deletable %}
+<div class="uk-margin-medium-top">
+    <form id="delete_form" action="./delete_arc" method="post" autocomplete="off">
+        <input name="id" type="hidden" value="{{ arc.id }}">
+        <input name="campaign_id" type="hidden" value="{{ arc.campaign_id }}">
+
+        <button class="uk-button uk-button-danger"
+                type="button"
+                uk-toggle="target: #modal-delete">Supprimer</button>
+
+        <div id="modal-delete" uk-modal>
+            <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                <h2 class="uk-modal-title">Suppression de l'arc narratif en cours</h2>
+                <p>Confirmez-vous la suppression de l'arc narratif ?</p>
+                <p class="uk-text-right">
+                    <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                    <button class="uk-button uk-button-danger"
+                            onclick="document.getElementById('delete_form').submit()">
+                        Confirmer
+                    </button>
+                </p>
+            </div>
+        </div>
+    </form>
 </div>
+{% endif %}
+
 {% endblock %}

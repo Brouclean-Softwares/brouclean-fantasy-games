@@ -1,9 +1,12 @@
 use crate::AppState;
+use crate::app::templates::blood_bowl::competitions::OwnedCompetitionsBlock;
 use crate::app::templates::blood_bowl::games::GameCard;
 use crate::app::templates::blood_bowl::games::GamesScheduleTable;
 use crate::app::templates::blood_bowl::teams::OwnedTeamsBlock;
 use crate::app::templates::{BreadCrumb, NavigationBar, UrlLink};
+use crate::data::blood_bowl::competitions::Competition;
 use crate::data::blood_bowl::games::GameSummary;
+use crate::data::blood_bowl::teams::TeamSummary;
 use crate::data::users::User;
 use crate::errors::AppError;
 use askama::Template;
@@ -29,27 +32,34 @@ pub struct HomePage {
     breadcrumb: BreadCrumb,
     playing_games: Vec<GameSummary>,
     scheduled_games: Vec<GameSummary>,
+    owned_competitions_block: Option<OwnedCompetitionsBlock>,
     owned_teams_block: OwnedTeamsBlock,
 }
 
 impl HomePage {
-    pub async fn get(app_state: &AppState, profile: &User, uri: &Uri) -> Result<Self, AppError> {
-        let playing_games = crate::data::blood_bowl::games::select_all_playing(&app_state).await?;
-
-        let scheduled_games = if let Some(coach_id) = profile.id {
-            crate::data::blood_bowl::games::select_scheduled_for_coach(&app_state, &coach_id)
-                .await?
+    pub async fn get(
+        app_state: &AppState,
+        profile: &User,
+        uri: &Uri,
+        playing_games: Vec<GameSummary>,
+        scheduled_games: Vec<GameSummary>,
+        owned_competitions: Vec<Competition>,
+        owned_teams: Vec<TeamSummary>,
+    ) -> Result<Self, AppError> {
+        let owned_competitions_block = if owned_competitions.is_empty() {
+            None
         } else {
-            Vec::new()
+            Some(OwnedCompetitionsBlock { owned_competitions })
         };
 
-        let owned_teams_block = OwnedTeamsBlock::get(&app_state, &profile.clone()).await?;
+        let owned_teams_block = OwnedTeamsBlock { owned_teams };
 
         Ok(Self {
             navigation_bar: NavigationBar::get(&app_state, &Some(profile.clone()), uri),
             breadcrumb: BreadCrumb::only_home(),
             playing_games,
             scheduled_games,
+            owned_competitions_block,
             owned_teams_block,
         })
     }

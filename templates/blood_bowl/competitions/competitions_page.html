@@ -39,11 +39,7 @@
             </td>
             <td class="uk-table-link">
                 <a class="uk-link-reset" href="{{ competition_url }}">
-                    {% if let (Some(playing_stage_name), Some(playing_round_name)) = (competition.playing_stage_name.clone(), competition.playing_round_name.clone()) %}
-                    <span>{{ playing_stage_name }} - {{ playing_round_name }}</span>
-                    {% else %}
-                    <span>Pas encore démarré</span>
-                    {% endif %}
+                    {{ competition.progress_status() }}
                 </a>
             </td>
         </tr>
@@ -94,42 +90,7 @@
 {% endif %}
 
 {% if let Some(user_profile) = profile %}
-<div class="uk-margin-top">
-    <button class="uk-button uk-button-primary"
-            type="button"
-            uk-toggle="target: #modal-add-new">
-        Créer une nouvelle compétition
-    </button>
-
-    <div id="modal-add-new" uk-modal>
-        <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
-            <h2 class="uk-modal-title">Création d'une nouvelle compétition</h2>
-            <p>Vous êtes sur le point de créer une nouvelle compétition.</p>
-            <p>
-            <form id="add_competition_form" action="/blood_bowl/competitions" method="post" autocomplete="off" class="uk-form-stacked">
-                <div class="uk-margin">
-                    <label class="uk-form-label" for="competition_name">Quel est son nom ?</label>
-                    <div class="uk-form-controls">
-                        <input class="uk-input"
-                               id="competition_name"
-                               name="competition_name"
-                               type="text"
-                               placeholder="Nom de la compétition..."
-                               aria-label="">
-                    </div>
-                </div>
-            </form>
-            </p>
-            <p class="uk-text-right">
-                <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
-                <button class="uk-button uk-button-primary"
-                        onclick="document.getElementById('add_competition_form').submit()">
-                    Créer
-                </button>
-            </p>
-        </div>
-    </div>
-</div>
+{% include "new_competition_button.html" %}
 {% endif %}
 
 {% if competitions_closed.len() > 0 %}
@@ -153,12 +114,12 @@
         <tr>
             <td class="uk-table-link">
                 <a class="uk-link-reset" href="{{ competition_url }}">
-                    {{ competition.name }} {{ competition.edition_number }}
+                    {{ competition.name() }}
                 </a>
             </td>
             <td class="uk-table-link">
                 <a class="uk-link-reset" href="{{ competition_url }}">
-                    A venir...
+                    {{ competition.progress_status() }}
                 </a>
             </td>
         </tr>

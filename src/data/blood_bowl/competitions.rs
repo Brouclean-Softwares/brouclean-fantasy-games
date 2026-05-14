@@ -91,6 +91,16 @@ impl Competition {
         }
     }
 
+    pub fn progress_status(&self) -> String {
+        if let (Some(playing_stage_name), Some(playing_round_name)) =
+            (&self.playing_stage_name, &self.playing_round_name)
+        {
+            format!("{} - {}", playing_stage_name, playing_round_name)
+        } else {
+            "Pas encore démarré".to_string()
+        }
+    }
+
     pub fn new(creator: User, name: String) -> Self {
         Self {
             id: 0,
@@ -358,6 +368,35 @@ impl Competition {
             WHERE closed_at IS NOT NULL
             ORDER BY closed_at DESC",
         )
+        .fetch_all(&state.db)
+        .await?;
+
+        let mut competitions: Vec<Competition> = Vec::with_capacity(rows.len());
+
+        for row in rows {
+            competitions.push(row.into_competition(state).await?);
+        }
+
+        Ok(competitions)
+    }
+
+    pub async fn select_owned(state: &AppState, director: User) -> Result<Vec<Self>, AppError> {
+        tracing::debug!("select_owned for director={:?}", director);
+
+        let rows: Vec<CompetitionRow> = sqlx::query_as(
+            "SELECT id,
+                    name,
+                    edition_number,
+                    director,
+                    version,
+                    description,
+                    started_at IS NOT NULL as started,
+                    closed_at IS NOT NULL as closed
+            FROM bb_competitions
+            WHERE director = $1
+            ORDER BY last_updated DESC",
+        )
+        .bind(director.id.clone())
         .fetch_all(&state.db)
         .await?;
 

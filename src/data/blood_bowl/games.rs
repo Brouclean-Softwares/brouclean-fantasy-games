@@ -1422,6 +1422,17 @@ pub async fn update_after_event(
         .bind(profile.id.unwrap_or(-1).clone())
         .execute(&mut *transaction)
         .await?;
+
+        sqlx::query(
+            "UPDATE bb_competitions
+            SET last_updated = CURRENT_TIMESTAMP
+            USING bb_competitions_stages_schedule
+            WHERE bb_competitions_stages_schedule.game_id = $1
+            AND bb_competitions_stages_schedule.competition_id = bb_competitions.id",
+        )
+        .bind(game.id.clone())
+        .execute(&mut *transaction)
+        .await?;
     }
 
     transaction.commit().await?;

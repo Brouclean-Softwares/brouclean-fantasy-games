@@ -47,4 +47,12 @@
 
 {{ owned_teams_block|escape("none") }}
 
+{% if let Some(owned_competitions_block) = owned_competitions_block %}
+<h3 class="uk-heading-divider uk-margin-large-top">
+    Mes compétitions
+</h3>
+
+{{ owned_competitions_block|escape("none") }}
+{% endif %}
+
 {% endblock %}

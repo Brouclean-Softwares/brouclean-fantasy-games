@@ -1,0 +1,31 @@
+<div class="uk-overflow-auto">
+    <table class="uk-table uk-table-striped uk-table-small uk-table-hover">
+        <thead>
+        <tr>
+            <th class="uk-width-1-2">Nom</th>
+            <th class="uk-width-1-2">Résultat</th>
+        </tr>
+        </thead>
+
+        {% for competition in owned_competitions %}
+
+        {% let competition_url = format!("/blood_bowl/competitions/competition?id={}&tab=info", competition.id) %}
+
+        <tr>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="{{ competition_url }}">
+                    {{ competition.name() }}
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="{{ competition_url }}">
+                    {{ competition.progress_status() }}
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+        <tbody>
+    </table>
+</div>
+
+{% include "new_competition_button.html" %}

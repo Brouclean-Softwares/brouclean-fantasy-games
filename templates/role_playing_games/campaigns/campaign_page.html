@@ -9,21 +9,88 @@
 {% endblock %}
 
 {% block body %}
-<div>
-    <h2>
-        {% if edit_mode && field_edited.eq("name") %}
-        <form method="post" autocomplete="off">
-            <input type="hidden" name="id" value="{{ campaign.id }}">
-            <input type="hidden" name="tab_name" value="{{ tab_name }}">
 
-            <div>
-                <input class="uk-input uk-form-width-large"
-                       id="name"
-                       name="name"
-                       type="text"
-                       value="{{ campaign.name }}"
-                       placeholder="Nom de la campagne..."
-                       aria-label="">
+<h2>
+    {% if edit_mode && field_edited.eq("name") %}
+    <form method="post" autocomplete="off">
+        <input type="hidden" name="id" value="{{ campaign.id }}">
+        <input type="hidden" name="tab_name" value="{{ tab_name }}">
+
+        <div>
+            <input class="uk-input uk-form-width-large"
+                   id="name"
+                   name="name"
+                   type="text"
+                   value="{{ campaign.name }}"
+                   placeholder="Nom de la campagne..."
+                   aria-label="">
+
+            <a href="campaign?id={{ campaign.id }}&tab_name={{ tab_name}}" uk-icon="icon: close"></a>
+            <button class="uk-button uk-button-link" type="button" onclick="submit()">
+                <span uk-icon="icon: check"></span>
+            </button>
+        </div>
+    </form>
+
+    {% elif editable %}
+    <a class="uk-link-reset" href="campaign?id={{ campaign.id }}&tab_name={{ tab_name}}&edit=true&field_edited=name">
+        {{ campaign.name }}
+    </a>
+    <a href="campaign?id={{ campaign.id }}&tab_name={{ tab_name}}&edit=true&field_edited=name" uk-icon="icon: pencil"></a>
+
+    {% else %}
+    {{ campaign.name }}
+    {% endif %}
+</h2>
+
+<div class="uk-margin-medium-bottom">
+    <ul class="uk-child-width-expand" uk-tab>
+        <li {% if tab_name.eq("info") %}class="uk-active"{% endif %}>
+        <a href="campaign?id={{ campaign.id }}&tab_name=info" uk-icon="icon: info">
+            <span class="uk-visible@m">Informations</span>
+        </a>
+        </li>
+
+        <li {% if tab_name.eq("sessions") %}class="uk-active"{% endif %}>
+        <a href="campaign?id={{ campaign.id }}&tab_name=sessions" uk-icon="icon: list">
+            <span class="uk-visible@m">Sessions</span>
+        </a>
+        </li>
+
+        {% if editable %}
+        <li {% if tab_name.eq("notes") %}class="uk-active"{% endif %}>
+        <a href="campaign?id={{ campaign.id }}&tab_name=notes" uk-icon="icon: file-edit">
+            <span class="uk-visible@m">Notes</span>
+        </a>
+        </li>
+        {% endif %}
+    </ul>
+</div>
+
+{% if tab_name.eq("info") %}
+<div>
+    <h3 class="uk-heading-divider">
+        <span>Jeu</span>
+
+        {% if editable && ! field_edited.eq("game") %}
+        <a href="campaign?id={{ campaign.id }}&tab_name=info&edit=true&field_edited=game" uk-icon="icon: pencil"></a>
+        {% endif %}
+    </h3>
+
+    <div>
+        {% if edit_mode && field_edited.eq("game") %}
+        <form method="post" autocomplete="off" class="uk-form-stacked">
+            <input type="hidden" name="id" value="{{ campaign.id }}">
+            <input type="hidden" name="tab_name" value="info">
+
+            <div class="uk-inline">
+                <select class="uk-select uk-form-width-large" id="game_id" name="game_id">
+                    {% for game in games %}
+                    <option value="{{ game.id }}" {% if game.id.eq(campaign.game_id) %} selected {% endif %}>
+                        {{ game.name }}
+                    </option>
+                    {% endfor %}
+                </select>
 
                 <a href="campaign?id={{ campaign.id }}&tab_name={{ tab_name}}" uk-icon="icon: close"></a>
                 <button class="uk-button uk-button-link" type="button" onclick="submit()">
@@ -32,249 +99,140 @@
             </div>
         </form>
 
-        {% elif editable %}
-        <a class="uk-link-reset" href="campaign?id={{ campaign.id }}&tab_name={{ tab_name}}&edit=true&field_edited=name">
-            {{ campaign.name }}
-        </a>
-        <a href="campaign?id={{ campaign.id }}&tab_name={{ tab_name}}&edit=true&field_edited=name" uk-icon="icon: pencil"></a>
+        {% else %}
+        <div>
+            <a class="uk-link-reset" href="/role_playing_games/games/game?id={{ campaign.game_id }}">
+                {% if let Some(external_logo_url) = campaign.game_external_logo_url %}
+                <span class="uk-visible@m uk-margin-right">{{ campaign.game_name }}</span>
+                <img src="{{ external_logo_url }}" class="uk-height-max-small" style="max-height:50px; width:auto;" alt="">
+
+                {% else %}
+                {{ campaign.game_name }}
+                {% endif %}
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if editable || campaign.external_image_url.is_some() || campaign.description.len() > 0 %}
+    <h3 class="uk-heading-divider">
+        <span>Image et description</span>
+
+        {% if editable && ! field_edited.eq("info") %}
+        <a href="campaign?id={{ campaign.id }}&tab_name=info&edit=true&field_edited=info" uk-icon="icon: pencil"></a>
+        {% endif %}
+    </h3>
+
+    <div>
+        {% if edit_mode && field_edited.eq("info") %}
+        <form method="post" autocomplete="off" class="uk-form-stacked">
+            <input type="hidden" name="id" value="{{ campaign.id }}">
+            <input type="hidden" name="tab_name" value="info">
+
+            <div class="uk-margin">
+                <label class="uk-form-label" for="external_image_url">Url de l'image de la campagne</label>
+                <div class="uk-form-controls">
+                    <input class="uk-input uk-form-width-large"
+                           id="external_image_url"
+                           name="external_image_url"
+                           type="url"
+
+                           {% if let Some(external_image_url) = campaign.external_image_url %}
+                           value="{{ external_image_url }}"
+                           {% endif %}
+
+                           placeholder="Url de l'image de la campagne..."
+                           aria-label="">
+                </div>
+            </div>
+
+            <div class="uk-margin">
+                <label class="uk-form-label" for="description">Description de la campagne</label>
+                <div class="uk-form-controls">
+                    <textarea class="rich_text_zone"
+                              id="description"
+                              name="description"
+                              placeholder="Description..."
+                              aria-label="">
+                        {{ campaign.description }}
+                    </textarea>
+                </div>
+            </div>
+
+            <div class="uk-margin-top">
+                <a class="uk-button uk-button-default" href="campaign?id={{ campaign.id }}&tab_name={{ tab_name}}">Annuler</a>
+
+                <button class="uk-button uk-button-primary uk-margin-left"
+                        type="button"
+                        onclick="submit()">
+                    Sauvegarder
+                </button>
+            </div>
+        </form>
 
         {% else %}
-        {{ campaign.name }}
+
+        {% if let Some(external_image_url) = campaign.external_image_url %}
+        <img src="{{ external_image_url }}" class="uk-float-left uk-margin-right uk-margin-bottom" width="50%" alt="">
         {% endif %}
-    </h2>
 
-    <div class="uk-margin-medium-bottom">
-        <ul class="uk-child-width-expand" uk-tab>
-            <li {% if tab_name.eq("info") %}class="uk-active"{% endif %}>
-            <a href="campaign?id={{ campaign.id }}&tab_name=info" uk-icon="icon: info">
-                <span class="uk-visible@m">Informations</span>
-            </a>
-            </li>
+        <p>{{ campaign.description|escape("none") }}</p>
 
-            <li {% if tab_name.eq("sessions") %}class="uk-active"{% endif %}>
-            <a href="campaign?id={{ campaign.id }}&tab_name=sessions" uk-icon="icon: list">
-                <span class="uk-visible@m">Sessions</span>
-            </a>
-            </li>
-
-            {% if editable %}
-            <li {% if tab_name.eq("notes") %}class="uk-active"{% endif %}>
-            <a href="campaign?id={{ campaign.id }}&tab_name=notes" uk-icon="icon: file-edit">
-                <span class="uk-visible@m">Notes</span>
-            </a>
-            </li>
-            {% endif %}
-        </ul>
-    </div>
-
-    {% if tab_name.eq("info") %}
-    <div>
-        <h3 class="uk-heading-divider">
-            <span>Jeu</span>
-
-            {% if editable && ! field_edited.eq("game") %}
-            <a href="campaign?id={{ campaign.id }}&tab_name=info&edit=true&field_edited=game" uk-icon="icon: pencil"></a>
-            {% endif %}
-        </h3>
-
-        <div>
-            {% if edit_mode && field_edited.eq("game") %}
-            <form method="post" autocomplete="off" class="uk-form-stacked">
-                <input type="hidden" name="id" value="{{ campaign.id }}">
-                <input type="hidden" name="tab_name" value="info">
-
-                <div class="uk-inline">
-                    <select class="uk-select uk-form-width-large" id="game_id" name="game_id">
-                        {% for game in games %}
-                        <option value="{{ game.id }}" {% if game.id.eq(campaign.game_id) %} selected {% endif %}>
-                            {{ game.name }}
-                        </option>
-                        {% endfor %}
-                    </select>
-
-                    <a href="campaign?id={{ campaign.id }}&tab_name={{ tab_name}}" uk-icon="icon: close"></a>
-                    <button class="uk-button uk-button-link" type="button" onclick="submit()">
-                        <span uk-icon="icon: check"></span>
-                    </button>
-                </div>
-            </form>
-
-            {% else %}
-            <div>
-                <a class="uk-link-reset" href="/role_playing_games/games/game?id={{ campaign.game_id }}">
-                    {% if let Some(external_logo_url) = campaign.game_external_logo_url %}
-                    <span class="uk-visible@m uk-margin-right">{{ campaign.game_name }}</span>
-                    <img src="{{ external_logo_url }}" class="uk-height-max-small" style="max-height:50px; width:auto;" alt="">
-
-                    {% else %}
-                    {{ campaign.game_name }}
-                    {% endif %}
-                </a>
-            </div>
-            {% endif %}
-        </div>
-
-        {% if editable || campaign.external_image_url.is_some() || campaign.description.len() > 0 %}
-        <h3 class="uk-heading-divider">
-            <span>Image et description</span>
-
-            {% if editable && ! field_edited.eq("info") %}
-            <a href="campaign?id={{ campaign.id }}&tab_name=info&edit=true&field_edited=info" uk-icon="icon: pencil"></a>
-            {% endif %}
-        </h3>
-
-        <div>
-            {% if edit_mode && field_edited.eq("info") %}
-            <form method="post" autocomplete="off" class="uk-form-stacked">
-                <input type="hidden" name="id" value="{{ campaign.id }}">
-                <input type="hidden" name="tab_name" value="info">
-
-                <div class="uk-margin">
-                    <label class="uk-form-label" for="external_image_url">Url de l'image de la campagne</label>
-                    <div class="uk-form-controls">
-                        <input class="uk-input uk-form-width-large"
-                               id="external_image_url"
-                               name="external_image_url"
-                               type="url"
-
-                               {% if let Some(external_image_url) = campaign.external_image_url %}
-                               value="{{ external_image_url }}"
-                               {% endif %}
-
-                               placeholder="Url de l'image de la campagne..."
-                               aria-label="">
-                    </div>
-                </div>
-
-                <div class="uk-margin">
-                    <label class="uk-form-label" for="description">Description de la campagne</label>
-                    <div class="uk-form-controls">
-                        <textarea class="rich_text_zone"
-                                  id="description"
-                                  name="description"
-                                  placeholder="Description..."
-                                  aria-label="">
-                            {{ campaign.description }}
-                        </textarea>
-                    </div>
-                </div>
-
-                <div class="uk-margin-top">
-                    <a class="uk-button uk-button-default" href="campaign?id={{ campaign.id }}&tab_name={{ tab_name}}">Annuler</a>
-
-                    <button class="uk-button uk-button-primary uk-margin-left"
-                            type="button"
-                            onclick="submit()">
-                        Sauvegarder
-                    </button>
-                </div>
-            </form>
-
-            {% else %}
-
-            {% if let Some(external_image_url) = campaign.external_image_url %}
-            <img src="{{ external_image_url }}" class="uk-float-left uk-margin-right uk-margin-bottom" width="50%" alt="">
-            {% endif %}
-
-            <p>{{ campaign.description|escape("none") }}</p>
-
-            {% endif %}
-        </div>
         {% endif %}
     </div>
+    {% endif %}
+</div>
 
-    {% elif tab_name.eq("sessions") %}
-    <div>
-        <div class="uk-child-width-1-2@xl uk-margin-top"
-             {% if editable %} uk-sortable="handle: .arc-handle" {% endif %}
-             uk-grid
-        >
-            {% for arc_with_sessions in arcs_with_sessions %}
-            <div>
-                <h4>
-                    {% if editable %}
-                    <span class="arc-handle uk-margin-right" uk-icon="icon: arrow-down-arrow-up"></span>
-                    {% endif %}
-
-                    <a class="uk-link-reset" href="/role_playing_games/campaigns/arc?id={{ arc_with_sessions.arc.id }}">
-                        <span>{{ arc_with_sessions.arc.indexed_name() }}</span>
-                    </a>
-                </h4>
-
-                <ul class="uk-list" data-arc-id="{{ arc_with_sessions.arc.id }}"
-                     {% if editable %} uk-sortable="group: sessions; handle: .session-handle" {% endif %}
-                >
-                    {% for session in arc_with_sessions.sessions %}
-                    <li data-session-id="{{ session.id }}" class="uk-margin">
-                        {% if editable %}
-                        <span class="session-handle uk-margin-right" uk-icon="icon: arrow-down-arrow-up"></span>
-                        {% endif %}
-
-                        <a class="uk-link-reset" href="/role_playing_games/campaigns/session?id={{ session.id }}">
-                            <span>{{ session.indexed_name() }}</span>
-                        </a>
-                    </li>
-                    {% endfor %}
-                </ul>
-
+{% elif tab_name.eq("sessions") %}
+<div>
+    <div class="uk-child-width-1-2@xl uk-margin-top"
+         {% if editable %} uk-sortable="handle: .arc-handle" {% endif %}
+         uk-grid
+    >
+        {% for arc_with_sessions in arcs_with_sessions %}
+        <div>
+            <h4>
                 {% if editable %}
-                <div class="cls-no-drag uk-margin-top">
-                    <button class="uk-button uk-button-primary"
-                            type="button"
-                            uk-toggle="target: #modal-add_session-to_arc{{ arc_with_sessions.arc.id }}">
-                        Créer une nouvelle session
-                    </button>
-
-                    <div id="modal-add_session-to_arc{{ arc_with_sessions.arc.id }}" uk-modal>
-                        <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
-                            <h2 class="uk-modal-title">Création d'une nouvelle session</h2>
-                            <p>Vous êtes sur le point de créer une nouvelle session de jeu.</p>
-                            <p>
-                            <form id="add_session_form-to_arc{{ arc_with_sessions.arc.id }}" action="/role_playing_games/campaigns/new_session" method="post" autocomplete="off" class="uk-form-stacked">
-                                <input type="hidden" name="campaign_id" value="{{ campaign.id }}">
-                                <input type="hidden" name="arc_id" value="{{ arc_with_sessions.arc.id }}">
-
-                                <div class="uk-margin">
-                                    <label class="uk-form-label" for="name">Quel est son nom ?</label>
-                                    <div class="uk-form-controls">
-                                        <input class="uk-input"
-                                               name="name"
-                                               type="text"
-                                               placeholder="Nom de a session..."
-                                               aria-label="">
-                                    </div>
-                                </div>
-                            </form>
-                            </p>
-                            <p class="uk-text-right">
-                                <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
-                                <button class="uk-button uk-button-primary"
-                                        onclick="document.getElementById('add_session_form-to_arc{{ arc_with_sessions.arc.id }}').submit()">
-                                    Créer
-                                </button>
-                            </p>
-                        </div>
-                    </div>
-                </div>
+                <span class="arc-handle uk-margin-right" uk-icon="icon: arrow-down-arrow-up"></span>
                 {% endif %}
-            </div>
-            {% endfor %}
+
+                <a class="uk-link-reset" href="/role_playing_games/campaigns/arc?id={{ arc_with_sessions.arc.id }}">
+                    <span>{{ arc_with_sessions.arc.indexed_name() }}</span>
+                </a>
+            </h4>
+
+            <ul class="uk-list" data-arc-id="{{ arc_with_sessions.arc.id }}"
+                 {% if editable %} uk-sortable="group: sessions; handle: .session-handle" {% endif %}
+            >
+                {% for session in arc_with_sessions.sessions %}
+                <li data-session-id="{{ session.id }}" class="uk-margin">
+                    {% if editable %}
+                    <span class="session-handle uk-margin-right" uk-icon="icon: arrow-down-arrow-up"></span>
+                    {% endif %}
+
+                    <a class="uk-link-reset" href="/role_playing_games/campaigns/session?id={{ session.id }}">
+                        <span>{{ session.indexed_name() }}</span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
 
             {% if editable %}
-            <div class="cls-no-drag">
+            <div class="cls-no-drag uk-margin-top">
                 <button class="uk-button uk-button-primary"
                         type="button"
-                        uk-toggle="target: #modal-add_arc">
-                    Créer un nouvel arc
+                        uk-toggle="target: #modal-add_session-to_arc{{ arc_with_sessions.arc.id }}">
+                    Créer une nouvelle session
                 </button>
 
-                <div id="modal-add_arc" uk-modal>
+                <div id="modal-add_session-to_arc{{ arc_with_sessions.arc.id }}" uk-modal>
                     <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
-                        <h2 class="uk-modal-title">Création d'un nouvel arc narratif</h2>
-                        <p>Vous êtes sur le point de créer un nouvel arc narratif.</p>
+                        <h2 class="uk-modal-title">Création d'une nouvelle session</h2>
+                        <p>Vous êtes sur le point de créer une nouvelle session de jeu.</p>
                         <p>
-                        <form id="add_arc_form" action="/role_playing_games/campaigns/new_arc" method="post" autocomplete="off" class="uk-form-stacked">
+                        <form id="add_session_form-to_arc{{ arc_with_sessions.arc.id }}" action="/role_playing_games/campaigns/new_session" method="post" autocomplete="off" class="uk-form-stacked">
                             <input type="hidden" name="campaign_id" value="{{ campaign.id }}">
+                            <input type="hidden" name="arc_id" value="{{ arc_with_sessions.arc.id }}">
 
                             <div class="uk-margin">
                                 <label class="uk-form-label" for="name">Quel est son nom ?</label>
@@ -282,7 +240,7 @@
                                     <input class="uk-input"
                                            name="name"
                                            type="text"
-                                           placeholder="Nom de l'arc..."
+                                           placeholder="Nom de a session..."
                                            aria-label="">
                                 </div>
                             </div>
@@ -291,7 +249,7 @@
                         <p class="uk-text-right">
                             <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
                             <button class="uk-button uk-button-primary"
-                                    onclick="document.getElementById('add_arc_form').submit()">
+                                    onclick="document.getElementById('add_session_form-to_arc{{ arc_with_sessions.arc.id }}').submit()">
                                 Créer
                             </button>
                         </p>
@@ -300,145 +258,186 @@
             </div>
             {% endif %}
         </div>
+        {% endfor %}
 
         {% if editable %}
-        <script>
-            async function saveCampaignStructure() {
-
-                const arcs = [];
-
-                document
-                    .querySelectorAll('[data-arc-id]')
-                    .forEach((arcEl, arcPosition) => {
-
-                        const arc = {
-                            arcId: Number(arcEl.dataset.arcId),
-                            position: arcPosition,
-                            sessions: []
-                        };
-
-                        arcEl
-                            .querySelectorAll('[data-session-id]')
-                            .forEach((sessionEl, sessionPosition) => {
-
-                                arc.sessions.push({
-                                    sessionId: Number(sessionEl.dataset.sessionId),
-                                    position: sessionPosition
-                                });
-
-                            });
-
-                        arcs.push(arc);
-                    });
-
-                try {
-
-                    /*const response = await fetch('/api/campaigns/1/reorder', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(arcs)
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('Save failed');
-                    }*/
-
-                    console.log('saved');
-
-                } catch (err) {
-
-                    console.error(err);
-
-                }
-            }
-
-            UIkit.util.on(
-                '[uk-sortable]',
-                'stop',
-                function () {
-
-                    saveCampaignStructure();
-
-                }
-            );
-        </script>
-        {% endif %}
-    </div>
-
-    {% elif tab_name.eq("notes") && editable %}
-    <div>
-        <h3 class="uk-heading-divider">
-            <span>Notes</span>
-            {% if editable && ! field_edited.eq("notes") %}
-            <a href="campaign?id={{ campaign.id }}&tab_name=notes&edit=true&field_edited=notes" uk-icon="icon: pencil"></a>
-            {% endif %}
-        </h3>
-
-        <div>
-            {% if edit_mode && field_edited.eq("notes") %}
-            <form method="post" autocomplete="off" class="uk-form-stacked">
-                <input type="hidden" name="id" value="{{ campaign.id }}">
-                <input type="hidden" name="tab_name" value="notes">
-
-                <div class="uk-margin">
-                    <div class="uk-form-controls">
-                        <textarea class="rich_text_zone"
-                                  id="notes"
-                                  name="notes"
-                                  placeholder="Notes..."
-                                  aria-label="">
-                            {{ campaign.notes }}
-                        </textarea>
-                    </div>
-                </div>
-
-                <div class="uk-margin-top">
-                    <a class="uk-button uk-button-default" href="campaign?id={{ campaign.id }}&tab_name={{ tab_name}}">Annuler</a>
-
-                    <button class="uk-button uk-button-primary uk-margin-left"
-                            type="button"
-                            onclick="submit()">
-                        Sauvegarder
-                    </button>
-                </div>
-            </form>
-
-            {% else %}
-            <div class="uk-overflow-auto">
-                {{ campaign.notes|escape("none") }}
-            </div>
-            {% endif %}
-        </div>
-    </div>
-    {% endif %}
-
-    {% if deletable %}
-    <div class="uk-margin-medium-top">
-        <form id="delete_form" action="./delete" method="post" autocomplete="off">
-            <input name="id" type="hidden" value="{{ campaign.id }}">
-
-            <button class="uk-button uk-button-danger"
+        <div class="cls-no-drag">
+            <button class="uk-button uk-button-primary"
                     type="button"
-                    uk-toggle="target: #modal-delete">Supprimer</button>
+                    uk-toggle="target: #modal-add_arc">
+                Créer un nouvel arc
+            </button>
 
-            <div id="modal-delete" uk-modal>
+            <div id="modal-add_arc" uk-modal>
                 <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
-                    <h2 class="uk-modal-title">Suppression de la campagne en cours</h2>
-                    <p>Confirmez-vous la suppression de la campagne ?</p>
+                    <h2 class="uk-modal-title">Création d'un nouvel arc narratif</h2>
+                    <p>Vous êtes sur le point de créer un nouvel arc narratif.</p>
+                    <p>
+                    <form id="add_arc_form" action="/role_playing_games/campaigns/new_arc" method="post" autocomplete="off" class="uk-form-stacked">
+                        <input type="hidden" name="campaign_id" value="{{ campaign.id }}">
+
+                        <div class="uk-margin">
+                            <label class="uk-form-label" for="name">Quel est son nom ?</label>
+                            <div class="uk-form-controls">
+                                <input class="uk-input"
+                                       name="name"
+                                       type="text"
+                                       placeholder="Nom de l'arc..."
+                                       aria-label="">
+                            </div>
+                        </div>
+                    </form>
+                    </p>
                     <p class="uk-text-right">
                         <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
-                        <button class="uk-button uk-button-danger"
-                                onclick="document.getElementById('delete_form').submit()">
-                            Confirmer
+                        <button class="uk-button uk-button-primary"
+                                onclick="document.getElementById('add_arc_form').submit()">
+                            Créer
                         </button>
                     </p>
                 </div>
             </div>
-        </form>
+        </div>
+        {% endif %}
     </div>
-    {% endif %}
 
+    {% if editable %}
+    <script>
+        async function saveCampaignStructure() {
+
+            const arcs = [];
+
+            document
+                .querySelectorAll('[data-arc-id]')
+                .forEach((arcEl, arcPosition) => {
+
+                    const arc = {
+                        arcId: Number(arcEl.dataset.arcId),
+                        position: arcPosition,
+                        sessions: []
+                    };
+
+                    arcEl
+                        .querySelectorAll('[data-session-id]')
+                        .forEach((sessionEl, sessionPosition) => {
+
+                            arc.sessions.push({
+                                sessionId: Number(sessionEl.dataset.sessionId),
+                                position: sessionPosition
+                            });
+
+                        });
+
+                    arcs.push(arc);
+                });
+
+            try {
+
+                /*const response = await fetch('/api/campaigns/1/reorder', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(arcs)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Save failed');
+                }*/
+
+                console.log('saved');
+
+            } catch (err) {
+
+                console.error(err);
+
+            }
+        }
+
+        UIkit.util.on(
+            '[uk-sortable]',
+            'stop',
+            function () {
+
+                saveCampaignStructure();
+
+            }
+        );
+    </script>
+    {% endif %}
 </div>
+
+{% elif tab_name.eq("notes") && editable %}
+<div>
+    <h3 class="uk-heading-divider">
+        <span>Notes</span>
+        {% if editable && ! field_edited.eq("notes") %}
+        <a href="campaign?id={{ campaign.id }}&tab_name=notes&edit=true&field_edited=notes" uk-icon="icon: pencil"></a>
+        {% endif %}
+    </h3>
+
+    <div>
+        {% if edit_mode && field_edited.eq("notes") %}
+        <form method="post" autocomplete="off" class="uk-form-stacked">
+            <input type="hidden" name="id" value="{{ campaign.id }}">
+            <input type="hidden" name="tab_name" value="notes">
+
+            <div class="uk-margin">
+                <div class="uk-form-controls">
+                    <textarea class="rich_text_zone"
+                              id="notes"
+                              name="notes"
+                              placeholder="Notes..."
+                              aria-label="">
+                        {{ campaign.notes }}
+                    </textarea>
+                </div>
+            </div>
+
+            <div class="uk-margin-top">
+                <a class="uk-button uk-button-default" href="campaign?id={{ campaign.id }}&tab_name={{ tab_name}}">Annuler</a>
+
+                <button class="uk-button uk-button-primary uk-margin-left"
+                        type="button"
+                        onclick="submit()">
+                    Sauvegarder
+                </button>
+            </div>
+        </form>
+
+        {% else %}
+        <div class="uk-overflow-auto">
+            {{ campaign.notes|escape("none") }}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% if deletable %}
+<div class="uk-margin-medium-top">
+    <form id="delete_form" action="./delete" method="post" autocomplete="off">
+        <input name="id" type="hidden" value="{{ campaign.id }}">
+
+        <button class="uk-button uk-button-danger"
+                type="button"
+                uk-toggle="target: #modal-delete">Supprimer</button>
+
+        <div id="modal-delete" uk-modal>
+            <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                <h2 class="uk-modal-title">Suppression de la campagne en cours</h2>
+                <p>Confirmez-vous la suppression de la campagne ?</p>
+                <p class="uk-text-right">
+                    <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                    <button class="uk-button uk-button-danger"
+                            onclick="document.getElementById('delete_form').submit()">
+                        Confirmer
+                    </button>
+                </p>
+            </div>
+        </div>
+    </form>
+</div>
+{% endif %}
+
 {% endblock %}

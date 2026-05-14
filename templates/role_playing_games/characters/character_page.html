@@ -9,21 +9,86 @@
 {% endblock %}
 
 {% block body %}
-<div>
-    <h2>
-        {% if edit_mode && field_edited.eq("name") %}
-        <form method="post" autocomplete="off">
-            <input type="hidden" name="id" value="{{ character.id }}">
-            <input type="hidden" name="tab_name" value="{{ tab_name }}">
 
-            <div>
-                <input class="uk-input uk-form-width-large"
-                       id="name"
-                       name="name"
-                       type="text"
-                       value="{{ character.name }}"
-                       placeholder="Nom du personnage..."
-                       aria-label="">
+<h2>
+    {% if edit_mode && field_edited.eq("name") %}
+    <form method="post" autocomplete="off">
+        <input type="hidden" name="id" value="{{ character.id }}">
+        <input type="hidden" name="tab_name" value="{{ tab_name }}">
+
+        <div>
+            <input class="uk-input uk-form-width-large"
+                   id="name"
+                   name="name"
+                   type="text"
+                   value="{{ character.name }}"
+                   placeholder="Nom du personnage..."
+                   aria-label="">
+
+            <a href="character?id={{ character.id }}&tab_name={{ tab_name}}" uk-icon="icon: close"></a>
+            <button class="uk-button uk-button-link" type="button" onclick="submit()">
+                <span uk-icon="icon: check"></span>
+            </button>
+        </div>
+    </form>
+
+    {% elif editable %}
+    <a class="uk-link-reset" href="character?id={{ character.id }}&tab_name={{ tab_name}}&edit=true&field_edited=name">
+        {{ character.name }}
+    </a>
+    <a href="character?id={{ character.id }}&tab_name={{ tab_name}}&edit=true&field_edited=name" uk-icon="icon: pencil"></a>
+
+    {% else %}
+    {{ character.name }}
+    {% endif %}
+</h2>
+
+<div class="uk-margin-medium-bottom">
+    <ul class="uk-child-width-expand" uk-tab>
+        <li {% if tab_name.eq("info") %}class="uk-active"{% endif %}>
+            <a href="character?id={{ character.id }}&tab_name=info" uk-icon="icon: info">
+                <span class="uk-visible@m">Informations</span>
+            </a>
+        </li>
+
+        <li {% if tab_name.eq("profile") %}class="uk-active"{% endif %}>
+            <a href="character?id={{ character.id }}&tab_name=profile" uk-icon="icon: file-text">
+                <span class="uk-visible@m">Profil</span>
+            </a>
+        </li>
+
+        <li {% if tab_name.eq("notes") %}class="uk-active"{% endif %}>
+            <a href="character?id={{ character.id }}&tab_name=notes" uk-icon="icon: file-edit">
+                <span class="uk-visible@m">Notes</span>
+            </a>
+        </li>
+    </ul>
+</div>
+
+{% if tab_name.eq("info") %}
+<div>
+    <h3 class="uk-heading-divider">
+        <span>Jeu</span>
+
+        {% if editable && ! field_edited.eq("game") %}
+        <a href="character?id={{ character.id }}&tab_name=info&edit=true&field_edited=game" uk-icon="icon: pencil"></a>
+        {% endif %}
+    </h3>
+
+    <div>
+        {% if edit_mode && field_edited.eq("game") %}
+        <form method="post" autocomplete="off" class="uk-form-stacked">
+            <input type="hidden" name="id" value="{{ character.id }}">
+            <input type="hidden" name="tab_name" value="info">
+
+            <div class="uk-inline">
+                <select class="uk-select uk-form-width-large" id="game_id" name="game_id">
+                    {% for game in games %}
+                    <option value="{{ game.id }}" {% if game.id.eq(character.game_id) %} selected {% endif %}>
+                        {{ game.name }}
+                    </option>
+                    {% endfor %}
+                </select>
 
                 <a href="character?id={{ character.id }}&tab_name={{ tab_name}}" uk-icon="icon: close"></a>
                 <button class="uk-button uk-button-link" type="button" onclick="submit()">
@@ -32,296 +97,230 @@
             </div>
         </form>
 
-        {% elif editable %}
-        <a class="uk-link-reset" href="character?id={{ character.id }}&tab_name={{ tab_name}}&edit=true&field_edited=name">
-            {{ character.name }}
-        </a>
-        <a href="character?id={{ character.id }}&tab_name={{ tab_name}}&edit=true&field_edited=name" uk-icon="icon: pencil"></a>
+        {% else %}
+        <div>
+            <a class="uk-link-reset" href="/role_playing_games/games/game?id={{ character.game_id }}">
+                {% if let Some(external_logo_url) = character.game_external_logo_url %}
+                <span class="uk-visible@m uk-margin-right">{{ character.game_name }}</span>
+                <img src="{{ external_logo_url }}" class="uk-height-max-small" style="max-height:50px; width:auto;" alt="">
+
+                {% else %}
+                {{ character.game_name }}
+                {% endif %}
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if editable || character.external_image_url.is_some() || character.description.len() > 0 %}
+    <h3 class="uk-heading-divider">
+        <span>Image et description</span>
+
+        {% if editable && ! field_edited.eq("info") %}
+        <a href="character?id={{ character.id }}&tab_name=info&edit=true&field_edited=info" uk-icon="icon: pencil"></a>
+        {% endif %}
+    </h3>
+
+    <div>
+        {% if edit_mode && field_edited.eq("info") %}
+        <form method="post" autocomplete="off" class="uk-form-stacked">
+            <input type="hidden" name="id" value="{{ character.id }}">
+            <input type="hidden" name="tab_name" value="info">
+
+            <div class="uk-margin">
+                <label class="uk-form-label" for="external_image_url">Url de l'image du personnage</label>
+                <div class="uk-form-controls">
+                    <input class="uk-input uk-form-width-large"
+                           id="external_image_url"
+                           name="external_image_url"
+                           type="url"
+
+                           {% if let Some(external_image_url) = character.external_image_url %}
+                           value="{{ external_image_url }}"
+                           {% endif %}
+
+                           placeholder="Url de l'image du personnage..."
+                           aria-label="">
+                </div>
+            </div>
+
+            <div class="uk-margin">
+                <label class="uk-form-label" for="description">Description du personnage</label>
+                <div class="uk-form-controls">
+                    <textarea class="rich_text_zone"
+                              id="description"
+                              name="description"
+                              placeholder="Description..."
+                              aria-label="">
+                        {{ character.description }}
+                    </textarea>
+                </div>
+            </div>
+
+            <div class="uk-margin-top">
+                <a class="uk-button uk-button-default" href="character?id={{ character.id }}&tab_name={{ tab_name}}">Annuler</a>
+
+                <button class="uk-button uk-button-primary uk-margin-left"
+                        type="button"
+                        onclick="submit()">
+                    Sauvegarder
+                </button>
+            </div>
+        </form>
 
         {% else %}
-        {{ character.name }}
+
+        {% if let Some(external_image_url) = character.external_image_url %}
+        <img src="{{ external_image_url }}" class="uk-float-left uk-margin-right uk-margin-bottom" width="50%" alt="">
         {% endif %}
-    </h2>
 
-    <div class="uk-margin-medium-bottom">
-        <ul class="uk-child-width-expand" uk-tab>
-            <li {% if tab_name.eq("info") %}class="uk-active"{% endif %}>
-                <a href="character?id={{ character.id }}&tab_name=info" uk-icon="icon: info">
-                    <span class="uk-visible@m">Informations</span>
-                </a>
-            </li>
+        <p>{{ character.description|escape("none") }}</p>
 
-            <li {% if tab_name.eq("profile") %}class="uk-active"{% endif %}>
-                <a href="character?id={{ character.id }}&tab_name=profile" uk-icon="icon: file-text">
-                    <span class="uk-visible@m">Profil</span>
-                </a>
-            </li>
-
-            <li {% if tab_name.eq("notes") %}class="uk-active"{% endif %}>
-                <a href="character?id={{ character.id }}&tab_name=notes" uk-icon="icon: file-edit">
-                    <span class="uk-visible@m">Notes</span>
-                </a>
-            </li>
-        </ul>
+        {% endif %}
     </div>
+    {% endif %}
+</div>
 
-    {% if tab_name.eq("info") %}
+{% elif tab_name.eq("profile") %}
+<div>
+    {% if editable || character.profile.len() > 0 %}
+    <h3 class="uk-heading-divider">
+        <span>Profil du personnage</span>
+        {% if editable && ! field_edited.eq("profile") %}
+        <a href="character?id={{ character.id }}&tab_name=profile&edit=true&field_edited=profile" uk-icon="icon: pencil"></a>
+        {% endif %}
+    </h3>
+
     <div>
-        <h3 class="uk-heading-divider">
-            <span>Jeu</span>
+        {% if edit_mode && field_edited.eq("profile") %}
+        <form method="post" autocomplete="off" class="uk-form-stacked">
+            <input type="hidden" name="id" value="{{ character.id }}">
+            <input type="hidden" name="tab_name" value="profile">
 
-            {% if editable && ! field_edited.eq("game") %}
-            <a href="character?id={{ character.id }}&tab_name=info&edit=true&field_edited=game" uk-icon="icon: pencil"></a>
-            {% endif %}
-        </h3>
-
-        <div>
-            {% if edit_mode && field_edited.eq("game") %}
-            <form method="post" autocomplete="off" class="uk-form-stacked">
-                <input type="hidden" name="id" value="{{ character.id }}">
-                <input type="hidden" name="tab_name" value="info">
-
-                <div class="uk-inline">
-                    <select class="uk-select uk-form-width-large" id="game_id" name="game_id">
-                        {% for game in games %}
-                        <option value="{{ game.id }}" {% if game.id.eq(character.game_id) %} selected {% endif %}>
-                            {{ game.name }}
-                        </option>
-                        {% endfor %}
-                    </select>
-
-                    <a href="character?id={{ character.id }}&tab_name={{ tab_name}}" uk-icon="icon: close"></a>
-                    <button class="uk-button uk-button-link" type="button" onclick="submit()">
-                        <span uk-icon="icon: check"></span>
-                    </button>
+            <div class="uk-margin">
+                <div class="uk-form-controls">
+                    <textarea class="rich_text_zone"
+                              id="profile"
+                              name="profile"
+                              placeholder="Profil du personnage..."
+                              aria-label="">
+                        {{ character.profile }}
+                    </textarea>
                 </div>
-            </form>
-
-            {% else %}
-            <div>
-                <a class="uk-link-reset" href="/role_playing_games/games/game?id={{ character.game_id }}">
-                    {% if let Some(external_logo_url) = character.game_external_logo_url %}
-                    <span class="uk-visible@m uk-margin-right">{{ character.game_name }}</span>
-                    <img src="{{ external_logo_url }}" class="uk-height-max-small" style="max-height:50px; width:auto;" alt="">
-
-                    {% else %}
-                    {{ character.game_name }}
-                    {% endif %}
-                </a>
             </div>
-            {% endif %}
-        </div>
 
-        {% if editable || character.external_image_url.is_some() || character.description.len() > 0 %}
-        <h3 class="uk-heading-divider">
-            <span>Image et description</span>
+            <div class="uk-margin-top">
+                <a class="uk-button uk-button-default" href="character?id={{ character.id }}&tab_name={{ tab_name}}">Annuler</a>
 
-            {% if editable && ! field_edited.eq("info") %}
-            <a href="character?id={{ character.id }}&tab_name=info&edit=true&field_edited=info" uk-icon="icon: pencil"></a>
-            {% endif %}
-        </h3>
+                <button class="uk-button uk-button-primary uk-margin-left"
+                        type="button"
+                        onclick="submit()">
+                    Sauvegarder
+                </button>
+            </div>
+        </form>
 
-        <div>
-            {% if edit_mode && field_edited.eq("info") %}
-            <form method="post" autocomplete="off" class="uk-form-stacked">
-                <input type="hidden" name="id" value="{{ character.id }}">
-                <input type="hidden" name="tab_name" value="info">
-
-                <div class="uk-margin">
-                    <label class="uk-form-label" for="external_image_url">Url de l'image du personnage</label>
-                    <div class="uk-form-controls">
-                        <input class="uk-input uk-form-width-large"
-                               id="external_image_url"
-                               name="external_image_url"
-                               type="url"
-
-                               {% if let Some(external_image_url) = character.external_image_url %}
-                               value="{{ external_image_url }}"
-                               {% endif %}
-
-                               placeholder="Url de l'image du personnage..."
-                               aria-label="">
-                    </div>
-                </div>
-
-                <div class="uk-margin">
-                    <label class="uk-form-label" for="description">Description du personnage</label>
-                    <div class="uk-form-controls">
-                        <textarea class="rich_text_zone"
-                                  id="description"
-                                  name="description"
-                                  placeholder="Description..."
-                                  aria-label="">
-                            {{ character.description }}
-                        </textarea>
-                    </div>
-                </div>
-
-                <div class="uk-margin-top">
-                    <a class="uk-button uk-button-default" href="character?id={{ character.id }}&tab_name={{ tab_name}}">Annuler</a>
-
-                    <button class="uk-button uk-button-primary uk-margin-left"
-                            type="button"
-                            onclick="submit()">
-                        Sauvegarder
-                    </button>
-                </div>
-            </form>
-
-            {% else %}
-
-            {% if let Some(external_image_url) = character.external_image_url %}
-            <img src="{{ external_image_url }}" class="uk-float-left uk-margin-right uk-margin-bottom" width="50%" alt="">
-            {% endif %}
-
-            <p>{{ character.description|escape("none") }}</p>
-
-            {% endif %}
+        {% else %}
+        <div class="uk-overflow-auto">
+            {{ character.profile|escape("none") }}
         </div>
         {% endif %}
     </div>
+    {% endif %}
+</div>
 
-    {% elif tab_name.eq("profile") %}
-    <div>
-        {% if editable || character.profile.len() > 0 %}
-        <h3 class="uk-heading-divider">
-            <span>Profil du personnage</span>
-            {% if editable && ! field_edited.eq("profile") %}
-            <a href="character?id={{ character.id }}&tab_name=profile&edit=true&field_edited=profile" uk-icon="icon: pencil"></a>
-            {% endif %}
-        </h3>
-
-        <div>
-            {% if edit_mode && field_edited.eq("profile") %}
-            <form method="post" autocomplete="off" class="uk-form-stacked">
-                <input type="hidden" name="id" value="{{ character.id }}">
-                <input type="hidden" name="tab_name" value="profile">
-
-                <div class="uk-margin">
-                    <div class="uk-form-controls">
-                        <textarea class="rich_text_zone"
-                                  id="profile"
-                                  name="profile"
-                                  placeholder="Profil du personnage..."
-                                  aria-label="">
-                            {{ character.profile }}
-                        </textarea>
-                    </div>
-                </div>
-
-                <div class="uk-margin-top">
-                    <a class="uk-button uk-button-default" href="character?id={{ character.id }}&tab_name={{ tab_name}}">Annuler</a>
-
-                    <button class="uk-button uk-button-primary uk-margin-left"
-                            type="button"
-                            onclick="submit()">
-                        Sauvegarder
-                    </button>
-                </div>
-            </form>
-
-            {% else %}
-            <div class="uk-overflow-auto">
-                {{ character.profile|escape("none") }}
-            </div>
-            {% endif %}
-        </div>
+{% elif tab_name.eq("notes") %}
+<div>
+    {% if editable || character.public_note.len() > 0 %}
+    <h3 class="uk-heading-divider">
+        <span>Notes publiques</span>
+        {% if editable && ! field_edited.eq("public_note") %}
+        <a href="character?id={{ character.id }}&tab_name=notes&edit=true&field_edited=public_note" uk-icon="icon: pencil"></a>
         {% endif %}
-    </div>
+    </h3>
 
-    {% elif tab_name.eq("notes") %}
     <div>
-        {% if editable || character.public_note.len() > 0 %}
-        <h3 class="uk-heading-divider">
-            <span>Notes publiques</span>
-            {% if editable && ! field_edited.eq("public_note") %}
-            <a href="character?id={{ character.id }}&tab_name=notes&edit=true&field_edited=public_note" uk-icon="icon: pencil"></a>
-            {% endif %}
-        </h3>
+        {% if edit_mode && field_edited.eq("public_note") %}
+        <form method="post" autocomplete="off" class="uk-form-stacked">
+            <input type="hidden" name="id" value="{{ character.id }}">
+            <input type="hidden" name="tab_name" value="notes">
 
-        <div>
-            {% if edit_mode && field_edited.eq("public_note") %}
-            <form method="post" autocomplete="off" class="uk-form-stacked">
-                <input type="hidden" name="id" value="{{ character.id }}">
-                <input type="hidden" name="tab_name" value="notes">
-
-                <div class="uk-margin">
-                    <div class="uk-form-controls">
-                        <textarea class="rich_text_zone"
-                                  id="public_note"
-                                  name="public_note"
-                                  placeholder="Notes publiques..."
-                                  aria-label="">
-                            {{ character.public_note }}
-                        </textarea>
-                    </div>
+            <div class="uk-margin">
+                <div class="uk-form-controls">
+                    <textarea class="rich_text_zone"
+                              id="public_note"
+                              name="public_note"
+                              placeholder="Notes publiques..."
+                              aria-label="">
+                        {{ character.public_note }}
+                    </textarea>
                 </div>
-
-                <div class="uk-margin-top">
-                    <a class="uk-button uk-button-default" href="character?id={{ character.id }}&tab_name={{ tab_name}}">Annuler</a>
-
-                    <button class="uk-button uk-button-primary uk-margin-left"
-                            type="button"
-                            onclick="submit()">
-                        Sauvegarder
-                    </button>
-                </div>
-            </form>
-
-            {% else %}
-            <div class="uk-overflow-auto">
-                {{ character.public_note|escape("none") }}
             </div>
-            {% endif %}
-        </div>
-        {% endif %}
 
-        {% if is_owner %}
-        <h3 class="uk-heading-divider">
-            <span>Notes privées</span>
-            {% if editable && ! field_edited.eq("private_note") %}
-            <a href="character?id={{ character.id }}&tab_name=notes&edit=true&field_edited=private_note" uk-icon="icon: pencil"></a>
-            {% endif %}
-        </h3>
+            <div class="uk-margin-top">
+                <a class="uk-button uk-button-default" href="character?id={{ character.id }}&tab_name={{ tab_name}}">Annuler</a>
 
-        <div>
-            {% if edit_mode && field_edited.eq("private_note") %}
-            <form method="post" autocomplete="off" class="uk-form-stacked">
-                <input type="hidden" name="id" value="{{ character.id }}">
-                <input type="hidden" name="tab_name" value="notes">
-
-                <div class="uk-margin">
-                    <div class="uk-form-controls">
-                        <textarea class="rich_text_zone"
-                                  id="private_note"
-                                  name="private_note"
-                                  placeholder="Notes privées..."
-                                  aria-label="">
-                            {{ character.private_note }}
-                        </textarea>
-                    </div>
-                </div>
-
-                <div class="uk-margin-top">
-                    <a class="uk-button uk-button-default" href="character?id={{ character.id }}&tab_name={{ tab_name}}">Annuler</a>
-
-                    <button class="uk-button uk-button-primary uk-margin-left"
-                            type="button"
-                            onclick="submit()">
-                        Sauvegarder
-                    </button>
-                </div>
-            </form>
-
-            {% else %}
-            <div class="uk-overflow-auto">
-                {{ character.private_note|escape("none") }}
+                <button class="uk-button uk-button-primary uk-margin-left"
+                        type="button"
+                        onclick="submit()">
+                    Sauvegarder
+                </button>
             </div>
-            {% endif %}
+        </form>
+
+        {% else %}
+        <div class="uk-overflow-auto">
+            {{ character.public_note|escape("none") }}
         </div>
         {% endif %}
     </div>
     {% endif %}
 
+    {% if is_owner %}
+    <h3 class="uk-heading-divider">
+        <span>Notes privées</span>
+        {% if editable && ! field_edited.eq("private_note") %}
+        <a href="character?id={{ character.id }}&tab_name=notes&edit=true&field_edited=private_note" uk-icon="icon: pencil"></a>
+        {% endif %}
+    </h3>
+
+    <div>
+        {% if edit_mode && field_edited.eq("private_note") %}
+        <form method="post" autocomplete="off" class="uk-form-stacked">
+            <input type="hidden" name="id" value="{{ character.id }}">
+            <input type="hidden" name="tab_name" value="notes">
+
+            <div class="uk-margin">
+                <div class="uk-form-controls">
+                    <textarea class="rich_text_zone"
+                              id="private_note"
+                              name="private_note"
+                              placeholder="Notes privées..."
+                              aria-label="">
+                        {{ character.private_note }}
+                    </textarea>
+                </div>
+            </div>
+
+            <div class="uk-margin-top">
+                <a class="uk-button uk-button-default" href="character?id={{ character.id }}&tab_name={{ tab_name}}">Annuler</a>
+
+                <button class="uk-button uk-button-primary uk-margin-left"
+                        type="button"
+                        onclick="submit()">
+                    Sauvegarder
+                </button>
+            </div>
+        </form>
+
+        {% else %}
+        <div class="uk-overflow-auto">
+            {{ character.private_note|escape("none") }}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
 </div>
+{% endif %}
+
 {% endblock %}

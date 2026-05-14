@@ -1,5 +1,6 @@
 use crate::AppState;
 use crate::app::templates::blood_bowl;
+use crate::data::blood_bowl::competitions::Competition;
 use crate::data::users::User;
 use axum::Router;
 use axum::extract::{OriginalUri, State};
@@ -31,13 +32,44 @@ pub async fn home(
     State(app_state): State<AppState>,
     profile: Option<User>,
 ) -> Result<blood_bowl::HomePage, Redirect> {
+    let redirect_if_error = Redirect::to("/");
+
+    let playing_games = crate::data::blood_bowl::games::select_all_playing(&app_state)
+        .await
+        .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
+
     if let Some(connected_user) = profile {
-        let home_page = blood_bowl::HomePage::get(&app_state, &connected_user, &uri)
+        let scheduled_games = if let Some(user_id) = connected_user.id {
+            crate::data::blood_bowl::games::select_scheduled_for_coach(&app_state, &user_id)
+                .await
+                .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?
+        } else {
+            Vec::new()
+        };
+
+        let owned_competitions = Competition::select_owned(&app_state, connected_user.clone())
             .await
-            .or_else(|error| Err(error.log_and_redirect(Redirect::to("/"))))?;
+            .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
+
+        let owned_teams =
+            crate::data::blood_bowl::teams::select_owned(&app_state, connected_user.clone())
+                .await
+                .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
+
+        let home_page = blood_bowl::HomePage::get(
+            &app_state,
+            &connected_user,
+            &uri,
+            playing_games,
+            scheduled_games,
+            owned_competitions,
+            owned_teams,
+        )
+        .await
+        .or_else(|error| Err(error.log_and_redirect(redirect_if_error)))?;
 
         Ok(home_page)
     } else {
-        Err(Redirect::to("/"))
+        Err(redirect_if_error)
     }
 }
