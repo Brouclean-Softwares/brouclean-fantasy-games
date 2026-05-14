@@ -1426,7 +1426,7 @@ pub async fn update_after_event(
         sqlx::query(
             "UPDATE bb_competitions
             SET last_updated = CURRENT_TIMESTAMP
-            USING bb_competitions_stages_schedule
+            FROM bb_competitions_stages_schedule
             WHERE bb_competitions_stages_schedule.game_id = $1
             AND bb_competitions_stages_schedule.competition_id = bb_competitions.id",
         )
