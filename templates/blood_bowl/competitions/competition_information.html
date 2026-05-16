@@ -138,6 +138,7 @@
                     <th>Nom</th>
                     <th>Roster</th>
                     <th uk-tooltip="Valeur d'Equipe">VE</th>
+                    <th uk-tooltip="Valeur d'Equipe Actuelle">VEA</th>
                     <th>Coach</th>
 
                     {% if profile.is_some() && ! competition.started %}
@@ -180,6 +181,11 @@
                     <td class="uk-table-link">
                         <a class="uk-link-reset" href="{{ team_url }}">
                             {{ team.value / 1000 }}k
+                        </a>
+                    </td>
+                    <td class="uk-table-link">
+                        <a class="uk-link-reset" href="{{ team_url }}">
+                            {{ team.current_value / 1000 }}k
                         </a>
                     </td>
                     <td class="uk-table-link">
