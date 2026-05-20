@@ -9,7 +9,9 @@ use crate::data::blood_bowl::competitions::Competition;
 use crate::data::blood_bowl::competitions::registrations::TeamRegistration;
 use crate::data::blood_bowl::competitions::schedule::CompetitionSchedule;
 use crate::data::blood_bowl::competitions::stages::{CompetitionStage, CompetitionStageType};
-use crate::data::blood_bowl::competitions::standings::CompetitionStandings;
+use crate::data::blood_bowl::competitions::standings::{
+    CompetingForPositionStandings, CompetitionStandings,
+};
 use crate::data::blood_bowl::teams::TeamLogo;
 use crate::data::users::User;
 use crate::errors::AppError;
@@ -80,6 +82,16 @@ pub struct CompetitionPage {
 }
 
 impl CompetitionPage {
+    pub fn tab_name_for_competition(competition: &Competition) -> String {
+        if competition.closed {
+            "standings".to_owned()
+        } else if competition.started {
+            "schedule".to_owned()
+        } else {
+            "info".to_owned()
+        }
+    }
+
     pub async fn get(
         app_state: AppState,
         profile: Option<User>,
@@ -136,7 +148,9 @@ impl CompetitionPage {
                 competition_id,
                 editable,
             },
-            standings: CompetitionStandingsTab { standings },
+            standings: CompetitionStandingsTab {
+                competition_standings: standings,
+            },
             statistics: CompetitionStatisticsTab {
                 teams_top_statistics,
                 players_top_statistics,
@@ -172,7 +186,48 @@ pub struct CompetitionStagesBloc {
 #[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/competitions/competition_standings.html")]
 pub struct CompetitionStandingsTab {
-    standings: CompetitionStandings,
+    competition_standings: CompetitionStandings,
+}
+
+impl CompetitionStandingsTab {
+    pub fn position_text_for_team_standings_in_stage(
+        &self,
+        stage_index: &usize,
+        position_standings: &CompetingForPositionStandings,
+        team_index: &usize,
+    ) -> String {
+        let is_last_stage =
+            stage_index.eq(&(self.competition_standings.stages_standings.len() - 1));
+
+        let winner = "🏆".to_string();
+        let second = "🥈".to_string();
+        let third = "🥉".to_string();
+        let other_position = |pos| format!("<span class=\"uk-text-meta\">#{}</span>", pos);
+
+        let team_position = match self.competition_standings.stages_standings[*stage_index]
+            .stage
+            .stage_type
+        {
+            CompetitionStageType::Championship => {
+                position_standings.position_teams_are_competing_for + team_index
+            }
+            CompetitionStageType::Cup => position_standings.position_teams_are_competing_for,
+        };
+
+        if is_last_stage {
+            if team_position == 1 {
+                winner
+            } else if team_position == 2 {
+                second
+            } else if team_position == 3 {
+                third
+            } else {
+                other_position(team_position)
+            }
+        } else {
+            other_position(team_position)
+        }
+    }
 }
 
 #[derive(Template, WebTemplate)]

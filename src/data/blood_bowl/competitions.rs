@@ -91,6 +91,14 @@ impl Competition {
         }
     }
 
+    pub fn result(&self) -> String {
+        if self.closed {
+            "🏆 <Vainqueur...>".to_string()
+        } else {
+            self.progress_status()
+        }
+    }
+
     pub fn progress_status(&self) -> String {
         if let (Some(playing_stage_name), Some(playing_round_name)) =
             (&self.playing_stage_name, &self.playing_round_name)

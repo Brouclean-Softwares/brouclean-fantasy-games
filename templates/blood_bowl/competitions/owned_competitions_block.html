@@ -10,7 +10,7 @@
         <tbody>
         {% for competition in owned_competitions %}
 
-        {% let competition_url = format!("/blood_bowl/competitions/competition?id={}&tab_name=info", competition.id) %}
+        {% let competition_url = format!("/blood_bowl/competitions/competition?id={}&tab_name={}", competition.id, CompetitionPage::tab_name_for_competition(competition)) %}
 
         <tr>
             <td class="uk-table-link">
@@ -20,7 +20,7 @@
             </td>
             <td class="uk-table-link">
                 <a class="uk-link-reset" href="{{ competition_url }}">
-                    {{ competition.progress_status() }}
+                    {{ competition.result() }}
                 </a>
             </td>
         </tr>
