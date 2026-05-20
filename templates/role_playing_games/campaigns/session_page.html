@@ -170,6 +170,10 @@
             <tr>
                 <th>Nom</th>
                 <th>Joueur</th>
+
+                {% if editable %}
+                <th>Actions</th>
+                {% endif %}
             </tr>
             </thead>
 
@@ -190,6 +194,25 @@
                         {% endif %}
                     </a>
                 </td>
+
+                {% if editable %}
+                <td>
+                    <div class="uk-flex-inline">
+                        <form action="./unlink_character_from_session" method="post" autocomplete="off">
+                            <input name="session_id" type="hidden" value="{{ session.id }}">
+                            <input name="character_to_unlink_id" type="hidden" value="{{ character.id }}">
+
+                            <button class="uk-button uk-button-link"
+                                    type="button"
+                                    uk-toggle="target: #modal-unlink-character-{{ character.id }}"
+                                    onclick="submit()">
+                                <span uk-icon="icon: minus-circle"></span>
+                            </button>
+                        </form>
+                    </div>
+                </td>
+                {% endif %}
+
             </tr>
             {% endfor %}
             </tbody>

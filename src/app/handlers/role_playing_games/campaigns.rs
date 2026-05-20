@@ -27,6 +27,10 @@ pub fn init_router() -> Router<AppState> {
             "/link_character_to_session",
             post(sessions::link_character_to_session),
         )
+        .route(
+            "/unlink_character_from_session",
+            post(sessions::unlink_character_from_session),
+        )
 }
 
 pub async fn campaigns(

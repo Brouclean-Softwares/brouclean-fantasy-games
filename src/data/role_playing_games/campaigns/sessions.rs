@@ -472,3 +472,37 @@ pub async fn link_character_to_session(
 
     Ok(())
 }
+
+pub async fn unlink_character_from_session(
+    state: &AppState,
+    connected_user: &User,
+    session_id: i32,
+    character_id: i32,
+) -> Result<(), AppError> {
+    tracing::debug!(
+        "unlink_character_from_session with session_id={} and character_id={}",
+        session_id,
+        character_id
+    );
+
+    if let Some(connected_user_id) = connected_user.id {
+        sqlx::query(
+            "DELETE
+                FROM rpg_sessions_characters
+                USING rpg_sessions, rpg_arcs, rpg_campaigns
+                WHERE rpg_sessions.id = rpg_sessions_characters.session_id
+                AND rpg_arcs.id = rpg_sessions.arc_id
+                AND rpg_campaigns.id = rpg_arcs.campaign_id
+                AND rpg_campaigns.game_master_id = $3
+                AND rpg_sessions_characters.session_id = $1
+                AND rpg_sessions_characters.character_id = $2",
+        )
+        .bind(session_id.clone())
+        .bind(character_id.clone())
+        .bind(connected_user_id.clone())
+        .execute(&state.db)
+        .await?;
+    }
+
+    Ok(())
+}

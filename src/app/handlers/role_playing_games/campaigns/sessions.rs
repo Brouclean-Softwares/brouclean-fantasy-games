@@ -239,3 +239,32 @@ pub async fn link_character_to_session(
 
     Ok(Redirect::to(&format!("./session?id={}", form.session_id)))
 }
+
+#[derive(Deserialize)]
+pub struct UnlinkCharacterForm {
+    pub session_id: i32,
+    pub character_to_unlink_id: i32,
+}
+
+pub async fn unlink_character_from_session(
+    State(app_state): State<AppState>,
+    profile: Option<User>,
+    Form(form): Form<UnlinkCharacterForm>,
+) -> Result<Redirect, Redirect> {
+    let error_handler = |error: AppError| {
+        error.log_and_redirect(Redirect::to(&format!("./session?id={}", form.session_id)))
+    };
+
+    if let Some(connected_user) = profile {
+        sessions::unlink_character_from_session(
+            &app_state,
+            &connected_user,
+            form.session_id,
+            form.character_to_unlink_id,
+        )
+        .await
+        .map_err(error_handler)?;
+    }
+
+    Ok(Redirect::to(&format!("./session?id={}", form.session_id)))
+}
