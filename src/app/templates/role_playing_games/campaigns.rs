@@ -1,10 +1,12 @@
 use crate::AppState;
+use crate::app::templates::role_playing_games::characters::CharacterSelector;
 use crate::app::templates::{BreadCrumb, NavigationBar, UrlLink, role_playing_games};
 use crate::data::role_playing_games::campaigns::arcs::{
     NarrativeArc, NarrativeArcWithGameSessions,
 };
-use crate::data::role_playing_games::campaigns::sessions::{CampaignSession, GameSession};
+use crate::data::role_playing_games::campaigns::sessions::{GameSession, GameSessionWithCampaign};
 use crate::data::role_playing_games::campaigns::{Campaign, CampaignRow};
+use crate::data::role_playing_games::characters::CharacterRow;
 use crate::data::role_playing_games::games::Game;
 use crate::data::users::User;
 use askama::Template;
@@ -165,6 +167,8 @@ pub struct GameSessionPage {
     editable: bool,
     edit_mode: bool,
     field_edited: String,
+    characters: Vec<CharacterRow>,
+    character_selector: CharacterSelector,
 }
 
 impl GameSessionPage {
@@ -172,6 +176,7 @@ impl GameSessionPage {
         app_state: AppState,
         profile: Option<User>,
         uri: &Uri,
+        game_id: i32,
         session: GameSession,
         previous_session: Option<GameSession>,
         next_session: Option<GameSession>,
@@ -180,6 +185,7 @@ impl GameSessionPage {
         editable: bool,
         edit_mode: bool,
         field_edited: Option<String>,
+        characters: Vec<CharacterRow>,
     ) -> Self {
         let session_date_input = if let Some(date) = session.playing_at {
             Some(date.format("%Y-%m-%dT%H:%M").to_string())
@@ -214,6 +220,8 @@ impl GameSessionPage {
             editable,
             edit_mode,
             field_edited: field_edited.unwrap_or_default(),
+            characters,
+            character_selector: CharacterSelector::get("character_to_link_id".to_string(), game_id),
         }
     }
 }
@@ -221,11 +229,11 @@ impl GameSessionPage {
 #[derive(Template, WebTemplate)]
 #[template(path = "role_playing_games/campaigns/campaign_sessions_table.html")]
 pub struct CampaignSessionTable {
-    pub campaign_sessions: Vec<CampaignSession>,
+    pub campaign_sessions: Vec<GameSessionWithCampaign>,
 }
 
 impl CampaignSessionTable {
-    pub fn from_campaign_sessions(campaign_sessions: Vec<CampaignSession>) -> Self {
+    pub fn from_campaign_sessions(campaign_sessions: Vec<GameSessionWithCampaign>) -> Self {
         Self { campaign_sessions }
     }
 }

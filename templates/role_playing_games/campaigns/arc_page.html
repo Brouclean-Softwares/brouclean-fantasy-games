@@ -47,6 +47,12 @@
     <li class="uk-margin">
         <a class="uk-link-reset" href="/role_playing_games/campaigns/session?id={{ session.id }}">
             <span>{{ session.indexed_name() }}</span>
+
+            {% if session.characters_number > 0 %}
+            <span class="uk-margin-medium-left uk-text-meta" uk-icon="icon: users">
+                {{ session.characters_number }}
+            </span>
+            {% endif %}
         </a>
     </li>
     {% endfor %}

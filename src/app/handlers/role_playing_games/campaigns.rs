@@ -23,6 +23,10 @@ pub fn init_router() -> Router<AppState> {
         .route("/new_session", post(sessions::new))
         .route("/delete_session", post(sessions::delete))
         .route("/session", get(sessions::session).post(sessions::update))
+        .route(
+            "/link_character_to_session",
+            post(sessions::link_character_to_session),
+        )
 }
 
 pub async fn campaigns(

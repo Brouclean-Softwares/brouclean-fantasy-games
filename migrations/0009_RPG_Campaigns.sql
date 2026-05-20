@@ -40,5 +40,6 @@ CREATE TABLE IF NOT EXISTS rpg_sessions (
 
 CREATE TABLE IF NOT EXISTS rpg_sessions_characters (
     session_id INTEGER NOT NULL REFERENCES rpg_sessions ON DELETE CASCADE,
-    character_id INTEGER NOT NULL REFERENCES rpg_characters ON DELETE RESTRICT
+    character_id INTEGER NOT NULL REFERENCES rpg_characters ON DELETE RESTRICT,
+    UNIQUE (session_id, character_id)
 )

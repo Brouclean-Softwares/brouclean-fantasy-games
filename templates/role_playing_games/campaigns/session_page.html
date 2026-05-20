@@ -159,6 +159,73 @@
         {% endif %}
     </div>
     {% endif %}
+
+    <h3 class="uk-heading-divider uk-margin-medium-top">
+        Personages
+    </h3>
+    {% if characters.len() > 0 %}
+    <div class="uk-overflow-auto uk-margin-top">
+        <table class="uk-table uk-table-striped uk-table-small uk-table-hover">
+            <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Joueur</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            {% for character in characters %}
+            <tr>
+                <td class="uk-table-link">
+                    <a class="uk-link-reset" href="/role_playing_games/characters/character?id={{ character.id }}">
+                        {{ character.name }}
+                    </a>
+                </td>
+                <td class="uk-table-link">
+                    <a class="uk-link-reset" href="/role_playing_games/characters/character?id={{ character.id }}">
+                        {% if let Some(user_name) = character.user_name %}
+                        {{ user_name }}
+                        {% else %}
+                        <span>Personne</span>
+                        {% endif %}
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <span>Aucun</span>
+    {% endif %}
+
+    {% if editable %}
+    <div class="uk-margin-top">
+        <form id="link_character_form" action="./link_character_to_session" method="post" autocomplete="off">
+            <input name="session_id" type="hidden" value="{{ session.id }}">
+            <input id="character_to_link_id" name="character_to_link_id" type="hidden">
+
+            <button class="uk-button uk-button-primary"
+                    type="button"
+                    uk-toggle="target: #modal-link-character">Ajouter un personnage</button>
+
+            <div id="modal-link-character" uk-modal>
+                <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                    <h2 class="uk-modal-title">Ajouter un personnage</h2>
+                    <p>Quel personnage souhaitez-vous ajouter à la session ?</p>
+                    <p>{{ character_selector|escape("none") }}</p>
+                    <p class="uk-text-right">
+                        <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                        <button class="uk-button uk-button-danger"
+                                onclick="document.getElementById('link_character_form').submit()">
+                            Ajouter
+                        </button>
+                    </p>
+                </div>
+            </div>
+        </form>
+    </div>
+    {% endif %}
 </div>
 
 {% elif tab_name.eq("notes") && editable %}

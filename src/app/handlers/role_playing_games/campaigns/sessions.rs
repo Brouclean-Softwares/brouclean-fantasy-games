@@ -1,8 +1,9 @@
 use crate::AppState;
 use crate::app::templates::role_playing_games::campaigns::GameSessionPage;
-use crate::data::role_playing_games::campaigns;
 use crate::data::role_playing_games::campaigns::{arcs, sessions};
+use crate::data::role_playing_games::{campaigns, characters};
 use crate::data::users::User;
+use crate::errors::AppError;
 use axum::Form;
 use axum::extract::{OriginalUri, Query, State};
 use axum::response::Redirect;
@@ -71,6 +72,10 @@ pub async fn session(
         .await
         .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
 
+    let characters_in_session = characters::select_for_session(&app_state, session.id)
+        .await
+        .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
+
     let is_owner = match (&campaign.game_master, &profile) {
         (Some(owner), Some(connected_user)) => owner.id.eq(&connected_user.id),
         (_, _) => false,
@@ -80,6 +85,7 @@ pub async fn session(
         app_state,
         profile.clone(),
         &uri,
+        campaign.game_id,
         session,
         previous_session,
         next_session,
@@ -88,6 +94,7 @@ pub async fn session(
         is_owner,
         params.edit.unwrap_or(false) && profile.is_some(),
         params.field_edited,
+        characters_in_session,
     ))
 }
 
@@ -202,4 +209,33 @@ pub async fn delete(
     }
 
     Err(redirect_when_error)
+}
+
+#[derive(Deserialize)]
+pub struct LinkCharacterForm {
+    pub session_id: i32,
+    pub character_to_link_id: i32,
+}
+
+pub async fn link_character_to_session(
+    State(app_state): State<AppState>,
+    profile: Option<User>,
+    Form(form): Form<LinkCharacterForm>,
+) -> Result<Redirect, Redirect> {
+    let error_handler = |error: AppError| {
+        error.log_and_redirect(Redirect::to(&format!("./session?id={}", form.session_id)))
+    };
+
+    if let Some(connected_user) = profile {
+        sessions::link_character_to_session(
+            &app_state,
+            &connected_user,
+            form.session_id,
+            form.character_to_link_id,
+        )
+        .await
+        .map_err(error_handler)?;
+    }
+
+    Ok(Redirect::to(&format!("./session?id={}", form.session_id)))
 }

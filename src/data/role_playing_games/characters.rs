@@ -195,6 +195,86 @@ pub async fn select_for_game(
     Ok(character_rows)
 }
 
+pub async fn select_filtered_for_game(
+    state: &AppState,
+    filter: String,
+    game_id: i32,
+) -> Result<Vec<CharacterRow>, AppError> {
+    tracing::debug!(
+        "select_filtered_for_game with filter={} and game_id={}",
+        filter,
+        game_id
+    );
+
+    let character_rows: Vec<CharacterRow> = sqlx::query_as(
+        "SELECT rpg_characters.id,
+                    rpg_characters.name,
+                    rpg_characters.external_image_url,
+                    rpg_characters.description,
+                    rpg_characters.profile,
+                    rpg_characters.private_note,
+                    rpg_characters.public_note,
+                    rpg_games.id as game_id,
+                    rpg_games.name as game_name,
+                    rpg_games.external_logo_url as game_external_logo_url,
+                    users.id as user_id,
+                    users.name as user_name
+            FROM rpg_characters
+            INNER JOIN rpg_games
+            ON rpg_games.id = rpg_characters.game_id
+            LEFT OUTER JOIN users
+            ON users.id = rpg_characters.user_id
+            WHERE rpg_characters.game_id = $1
+            AND (
+                LOWER(rpg_characters.name) LIKE $2
+                OR LOWER(users.name) LIKE $2
+            )
+            ORDER BY rpg_characters.name ASC",
+    )
+    .bind(game_id.clone())
+    .bind(format!("%{}%", filter.to_lowercase()))
+    .fetch_all(&state.db)
+    .await?;
+
+    Ok(character_rows)
+}
+
+pub async fn select_for_session(
+    state: &AppState,
+    session_id: i32,
+) -> Result<Vec<CharacterRow>, AppError> {
+    tracing::debug!("select_for_session with session_id={}", session_id);
+
+    let character_rows: Vec<CharacterRow> = sqlx::query_as(
+        "SELECT rpg_characters.id,
+                    rpg_characters.name,
+                    rpg_characters.external_image_url,
+                    rpg_characters.description,
+                    rpg_characters.profile,
+                    rpg_characters.private_note,
+                    rpg_characters.public_note,
+                    rpg_games.id as game_id,
+                    rpg_games.name as game_name,
+                    rpg_games.external_logo_url as game_external_logo_url,
+                    users.id as user_id,
+                    users.name as user_name
+            FROM rpg_characters
+            INNER JOIN rpg_sessions_characters
+            ON rpg_sessions_characters.character_id = rpg_characters.id
+            INNER JOIN rpg_games
+            ON rpg_games.id = rpg_characters.game_id
+            LEFT OUTER JOIN users
+            ON users.id = rpg_characters.user_id
+            WHERE rpg_sessions_characters.session_id = $1
+            ORDER BY rpg_characters.name ASC",
+    )
+    .bind(session_id.clone())
+    .fetch_all(&state.db)
+    .await?;
+
+    Ok(character_rows)
+}
+
 pub async fn create(state: &AppState, user: &User, character: &Character) -> Result<i32, AppError> {
     tracing::debug!(
         "create for user={:?} the following character={:?}",

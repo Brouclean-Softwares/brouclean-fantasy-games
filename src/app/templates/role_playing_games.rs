@@ -8,7 +8,7 @@ use crate::app::templates::role_playing_games::characters::{
 };
 use crate::app::templates::{BreadCrumb, NavigationBar, UrlLink};
 use crate::data::role_playing_games::campaigns::CampaignRow;
-use crate::data::role_playing_games::campaigns::sessions::CampaignSession;
+use crate::data::role_playing_games::campaigns::sessions::GameSessionWithCampaign;
 use crate::data::role_playing_games::characters::CharacterRow;
 use crate::data::role_playing_games::games::Game;
 use crate::data::users::User;
@@ -30,7 +30,7 @@ pub fn breadcrumb() -> BreadCrumb {
 pub struct HomePage {
     navigation_bar: NavigationBar,
     breadcrumb: BreadCrumb,
-    scheduled_campaign_sessions: Vec<CampaignSession>,
+    scheduled_campaign_sessions: Vec<GameSessionWithCampaign>,
     owned_characters_block: Option<OwnedCharactersBlock>,
     owned_campaigns_block: Option<OwnedCampaignsBlock>,
 }
@@ -40,7 +40,7 @@ impl HomePage {
         app_state: &AppState,
         profile: &User,
         uri: &Uri,
-        scheduled_campaign_sessions: Vec<CampaignSession>,
+        scheduled_campaign_sessions: Vec<GameSessionWithCampaign>,
         owned_characters: Vec<CharacterRow>,
         owned_campaigns: Vec<CampaignRow>,
         games: Vec<Game>,

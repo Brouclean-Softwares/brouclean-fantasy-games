@@ -18,6 +18,7 @@ pub struct GameSession {
     pub notes: String,
     pub campaign_id: i32,
     pub arc_id: i32,
+    pub characters_number: i64,
 }
 
 impl GameSession {
@@ -27,7 +28,7 @@ impl GameSession {
 }
 
 #[derive(Deserialize, sqlx::FromRow, Clone, Debug)]
-pub struct CampaignSession {
+pub struct GameSessionWithCampaign {
     pub id: i32,
     pub playing_at: Option<NaiveDateTime>,
     pub campaign_name: String,
@@ -62,11 +63,15 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<GameSession, AppE
                     rpg_sessions.description,
                     rpg_sessions.notes,
                     rpg_arcs.campaign_id,
-                    rpg_sessions.arc_id
+                    rpg_sessions.arc_id,
+                    COUNT(rpg_sessions_characters.character_id) as characters_number
             FROM rpg_sessions
             INNER JOIN rpg_arcs
             ON rpg_sessions.arc_id = rpg_arcs.id
-            WHERE rpg_sessions.id = $1",
+            LEFT OUTER JOIN rpg_sessions_characters
+            ON rpg_sessions_characters.session_id = rpg_sessions.id
+            WHERE rpg_sessions.id = $1
+            GROUP BY rpg_sessions.id, rpg_arcs.position, rpg_arcs.campaign_id",
     )
     .bind(id.clone())
     .fetch_one(&state.db)
@@ -88,11 +93,15 @@ pub async fn select_for_arc(state: &AppState, arc_id: i32) -> Result<Vec<GameSes
                     rpg_sessions.description,
                     rpg_sessions.notes,
                     rpg_arcs.campaign_id,
-                    rpg_sessions.arc_id
+                    rpg_sessions.arc_id,
+                    COUNT(rpg_sessions_characters.character_id) as characters_number
             FROM rpg_sessions
             INNER JOIN rpg_arcs
             ON rpg_sessions.arc_id = rpg_arcs.id
+            LEFT OUTER JOIN rpg_sessions_characters
+            ON rpg_sessions_characters.session_id = rpg_sessions.id
             WHERE rpg_arcs.id = $1
+            GROUP BY rpg_sessions.id, rpg_arcs.position, rpg_arcs.campaign_id
             ORDER BY rpg_sessions.position ASC",
     )
     .bind(arc_id.clone())
@@ -118,12 +127,16 @@ pub async fn select_previous_session(
                     rpg_sessions.description,
                     rpg_sessions.notes,
                     rpg_arcs.campaign_id,
-                    rpg_sessions.arc_id
+                    rpg_sessions.arc_id,
+                    COUNT(rpg_sessions_characters.character_id) as characters_number
             FROM rpg_sessions
             INNER JOIN rpg_arcs
             ON rpg_sessions.arc_id = rpg_arcs.id
+            LEFT OUTER JOIN rpg_sessions_characters
+            ON rpg_sessions_characters.session_id = rpg_sessions.id
             WHERE (rpg_sessions.position < $1 AND rpg_arcs.position = $2)
             OR rpg_arcs.position < $2
+            GROUP BY rpg_sessions.id, rpg_arcs.position, rpg_arcs.campaign_id
             ORDER BY rpg_arcs.position DESC,
                      rpg_sessions.position DESC
             LIMIT 1",
@@ -152,12 +165,16 @@ pub async fn select_next_session(
                     rpg_sessions.description,
                     rpg_sessions.notes,
                     rpg_arcs.campaign_id,
-                    rpg_sessions.arc_id
+                    rpg_sessions.arc_id,
+                    COUNT(rpg_sessions_characters.character_id) as characters_number
             FROM rpg_sessions
             INNER JOIN rpg_arcs
             ON rpg_sessions.arc_id = rpg_arcs.id
+            LEFT OUTER JOIN rpg_sessions_characters
+            ON rpg_sessions_characters.session_id = rpg_sessions.id
             WHERE (rpg_sessions.position > $1 AND rpg_arcs.position = $2)
             OR rpg_arcs.position > $2
+            GROUP BY rpg_sessions.id, rpg_arcs.position, rpg_arcs.campaign_id
             ORDER BY rpg_arcs.position ASC,
                      rpg_sessions.position ASC
             LIMIT 1",
@@ -173,10 +190,10 @@ pub async fn select_next_session(
 pub async fn select_schedule_sessions_for_user(
     state: &AppState,
     user_id: i32,
-) -> Result<Vec<CampaignSession>, AppError> {
+) -> Result<Vec<GameSessionWithCampaign>, AppError> {
     tracing::debug!("select_schedule_sessions_for_user for user_id={}", user_id);
 
-    let sessions: Vec<CampaignSession> = sqlx::query_as(
+    let sessions: Vec<GameSessionWithCampaign> = sqlx::query_as(
         "SELECT rpg_sessions.id,
                     rpg_sessions.playing_at,
                     rpg_campaigns.name as campaign_name,
@@ -416,4 +433,42 @@ pub async fn delete(
     }
 
     Ok(true)
+}
+
+pub async fn link_character_to_session(
+    state: &AppState,
+    connected_user: &User,
+    session_id: i32,
+    character_id: i32,
+) -> Result<(), AppError> {
+    tracing::debug!(
+        "link_character_to_session with session_id={} and character_id={}",
+        session_id,
+        character_id
+    );
+
+    if let Some(connected_user_id) = connected_user.id {
+        sqlx::query(
+            "INSERT INTO rpg_sessions_characters (
+                    session_id,
+                    character_id)
+                SELECT rpg_sessions.id,
+                       $2
+                FROM rpg_sessions
+                INNER JOIN rpg_arcs
+                ON rpg_arcs.id = rpg_sessions.arc_id
+                INNER JOIN rpg_campaigns
+                ON rpg_campaigns.id = rpg_arcs.campaign_id
+                WHERE rpg_campaigns.game_master_id = $3
+                AND rpg_sessions.id = $1
+                ON CONFLICT (session_id, character_id) DO NOTHING",
+        )
+        .bind(session_id.clone())
+        .bind(character_id.clone())
+        .bind(connected_user_id.clone())
+        .execute(&state.db)
+        .await?;
+    }
+
+    Ok(())
 }

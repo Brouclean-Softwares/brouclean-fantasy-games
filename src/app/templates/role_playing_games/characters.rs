@@ -93,3 +93,37 @@ impl CharacterPage {
         }
     }
 }
+
+#[derive(Template, WebTemplate)]
+#[template(path = "role_playing_games/characters/character_selector.html")]
+pub struct CharacterSelector {
+    character_filtered_list: CharacterFilteredList,
+    input_id_to_change: String,
+    game_id: i32,
+}
+
+impl CharacterSelector {
+    pub fn get(input_id_to_change: String, game_id: i32) -> Self {
+        Self {
+            character_filtered_list: CharacterFilteredList::get(vec![], input_id_to_change.clone()),
+            input_id_to_change,
+            game_id,
+        }
+    }
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "role_playing_games/characters/character_filtered_list.html")]
+pub struct CharacterFilteredList {
+    characters: Vec<CharacterRow>,
+    input_id_to_change: String,
+}
+
+impl CharacterFilteredList {
+    pub fn get(characters: Vec<CharacterRow>, input_id_to_change: String) -> Self {
+        Self {
+            characters,
+            input_id_to_change,
+        }
+    }
+}

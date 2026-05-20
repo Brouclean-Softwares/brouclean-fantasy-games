@@ -3,7 +3,7 @@ use crate::app::templates::blood_bowl::games::GameCard;
 use crate::app::templates::blood_bowl::games::GamesScheduleTable;
 use crate::app::templates::role_playing_games::campaigns::CampaignSessionTable;
 use crate::data::blood_bowl::games::GameSummary;
-use crate::data::role_playing_games::campaigns::sessions::CampaignSession;
+use crate::data::role_playing_games::campaigns::sessions::GameSessionWithCampaign;
 use crate::data::users::User;
 use askama::Template;
 use askama_web::WebTemplate;
@@ -24,7 +24,7 @@ pub struct HomePage {
     google_connection_url: String,
     bb_playing_games: Vec<GameSummary>,
     bb_scheduled_games: Vec<GameSummary>,
-    rpg_scheduled_campaign_sessions: Vec<CampaignSession>,
+    rpg_scheduled_campaign_sessions: Vec<GameSessionWithCampaign>,
 }
 
 impl HomePage {

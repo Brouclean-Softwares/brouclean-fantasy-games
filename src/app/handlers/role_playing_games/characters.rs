@@ -1,17 +1,20 @@
 use crate::AppState;
-use crate::app::templates::role_playing_games::characters::{CharacterPage, CharactersPage};
+use crate::app::templates::role_playing_games::characters::{
+    CharacterFilteredList, CharacterPage, CharactersPage,
+};
 use crate::data::role_playing_games::characters::Character;
 use crate::data::role_playing_games::{characters, games};
 use crate::data::users::User;
 use axum::extract::{OriginalUri, Query, State};
 use axum::response::Redirect;
-use axum::routing::get;
+use axum::routing::{get, post};
 use axum::{Form, Router};
 use serde::Deserialize;
 
 pub fn init_router() -> Router<AppState> {
     Router::new()
         .route("/", get(characters).post(add_new))
+        .route("/filtered_list", post(filtered_list))
         .route("/character", get(character).post(update))
 }
 
@@ -31,6 +34,34 @@ pub async fn characters(
     Ok(CharactersPage::get(
         app_state, profile, &uri, characters, games,
     ))
+}
+
+#[derive(Deserialize)]
+pub struct CharacterFilteredListForm {
+    pub filter: Option<String>,
+    pub game_id: i32,
+    pub input_id_to_change: String,
+}
+
+pub async fn filtered_list(
+    State(app_state): State<AppState>,
+    Form(form): Form<CharacterFilteredListForm>,
+) -> CharacterFilteredList {
+    if let Some(filter) = form.filter {
+        CharacterFilteredList::get(
+            characters::select_filtered_for_game(&app_state, filter, form.game_id)
+                .await
+                .unwrap_or_default(),
+            form.input_id_to_change,
+        )
+    } else {
+        CharacterFilteredList::get(
+            characters::select_for_game(&app_state, form.game_id)
+                .await
+                .unwrap_or_default(),
+            form.input_id_to_change,
+        )
+    }
 }
 
 #[derive(Deserialize)]

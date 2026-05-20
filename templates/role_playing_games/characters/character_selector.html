@@ -1,0 +1,25 @@
+<div>
+    <div class="uk-margin">
+        <form class="uk-search uk-search-default">
+            <input name="input_id_to_change" type="hidden" value="{{ input_id_to_change }}">
+            <input name="game_id" type="hidden" value="{{ game_id }}">
+
+            <input class="uk-search-input uk-form-width-large"
+                   type="search"
+                   name="filter"
+                   placeholder="Personnage ou utilisateur à rechercher..."
+                   hx-post="/role_playing_games/characters/filtered_list"
+                   hx-include="[name='input_id_to_change'], [name='game_id']"
+                   hx-trigger="keyup changed delay:500ms"
+                   hx-target="#filtered_characters"
+                   aria-label="Search">
+            <span class="uk-search-icon-flip" uk-search-icon></span>
+        </form>
+    </div>
+
+    <form method="post" autocomplete="off">
+        <div id="filtered_characters">
+            {{ character_filtered_list|escape("none") }}
+        </div>
+    </form>
+</div>
