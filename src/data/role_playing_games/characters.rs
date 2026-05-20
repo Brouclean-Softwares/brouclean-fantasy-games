@@ -17,6 +17,7 @@ pub struct CharacterRow {
     pub game_external_logo_url: Option<String>,
     pub user_id: Option<i32>,
     pub user_name: Option<String>,
+    pub sessions_number: i64,
 }
 
 impl CharacterRow {
@@ -69,7 +70,8 @@ pub async fn select_all(state: &AppState) -> Result<Vec<CharacterRow>, AppError>
                     rpg_games.name as game_name,
                     rpg_games.external_logo_url as game_external_logo_url,
                     users.id as user_id,
-                    users.name as user_name
+                    users.name as user_name,
+                    (SELECT COUNT(session_id) from rpg_sessions_characters WHERE character_id = rpg_characters.id) as sessions_number
             FROM rpg_characters
             INNER JOIN rpg_games
             ON rpg_games.id = rpg_characters.game_id
@@ -98,7 +100,8 @@ pub async fn select_owned(state: &AppState, user: &User) -> Result<Vec<Character
                     rpg_games.name as game_name,
                     rpg_games.external_logo_url as game_external_logo_url,
                     users.id as user_id,
-                    users.name as user_name
+                    users.name as user_name,
+                    (SELECT COUNT(session_id) from rpg_sessions_characters WHERE character_id = rpg_characters.id) as sessions_number
             FROM rpg_characters
             INNER JOIN rpg_games
             ON rpg_games.id = rpg_characters.game_id
@@ -129,7 +132,8 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<Character, AppErr
                     rpg_games.name as game_name,
                     rpg_games.external_logo_url as game_external_logo_url,
                     users.id as user_id,
-                    users.name as user_name
+                    users.name as user_name,
+                    (SELECT COUNT(session_id) from rpg_sessions_characters WHERE character_id = rpg_characters.id) as sessions_number
             FROM rpg_characters
             INNER JOIN rpg_games
             ON rpg_games.id = rpg_characters.game_id
@@ -180,7 +184,8 @@ pub async fn select_for_game(
                     rpg_games.name as game_name,
                     rpg_games.external_logo_url as game_external_logo_url,
                     users.id as user_id,
-                    users.name as user_name
+                    users.name as user_name,
+                    (SELECT COUNT(session_id) from rpg_sessions_characters WHERE character_id = rpg_characters.id) as sessions_number
             FROM rpg_characters
             INNER JOIN rpg_games
             ON rpg_games.id = rpg_characters.game_id
@@ -218,7 +223,8 @@ pub async fn select_filtered_for_game(
                     rpg_games.name as game_name,
                     rpg_games.external_logo_url as game_external_logo_url,
                     users.id as user_id,
-                    users.name as user_name
+                    users.name as user_name,
+                    (SELECT COUNT(session_id) from rpg_sessions_characters WHERE character_id = rpg_characters.id) as sessions_number
             FROM rpg_characters
             INNER JOIN rpg_games
             ON rpg_games.id = rpg_characters.game_id
@@ -233,6 +239,89 @@ pub async fn select_filtered_for_game(
     )
     .bind(game_id.clone())
     .bind(format!("%{}%", filter.to_lowercase()))
+    .fetch_all(&state.db)
+    .await?;
+
+    Ok(character_rows)
+}
+
+pub async fn select_for_campaign(
+    state: &AppState,
+    campaign_id: i32,
+) -> Result<Vec<CharacterRow>, AppError> {
+    tracing::debug!("select_for_campaign with campaign_id={}", campaign_id);
+
+    let character_rows: Vec<CharacterRow> = sqlx::query_as(
+        "SELECT rpg_characters.id,
+                    rpg_characters.name,
+                    rpg_characters.external_image_url,
+                    rpg_characters.description,
+                    rpg_characters.profile,
+                    rpg_characters.private_note,
+                    rpg_characters.public_note,
+                    rpg_games.id as game_id,
+                    rpg_games.name as game_name,
+                    rpg_games.external_logo_url as game_external_logo_url,
+                    users.id as user_id,
+                    users.name as user_name,
+                    (SELECT COUNT(session_id) from rpg_sessions_characters WHERE character_id = rpg_characters.id) as sessions_number
+            FROM rpg_characters
+            INNER JOIN rpg_games
+            ON rpg_games.id = rpg_characters.game_id
+            LEFT OUTER JOIN users
+            ON users.id = rpg_characters.user_id
+            WHERE rpg_characters.id in (
+                SELECT rpg_sessions_characters.character_id
+                FROM rpg_sessions_characters
+                INNER JOIN rpg_sessions
+                ON rpg_sessions.id = rpg_sessions_characters.session_id
+                INNER JOIN rpg_arcs
+                ON rpg_arcs.id = rpg_sessions.arc_id
+                WHERE rpg_sessions_characters.character_id = rpg_characters.id
+                AND rpg_arcs.campaign_id = $1
+            )
+            ORDER BY rpg_characters.name ASC",
+    )
+    .bind(campaign_id.clone())
+    .fetch_all(&state.db)
+    .await?;
+
+    Ok(character_rows)
+}
+
+pub async fn select_for_arc(state: &AppState, arc_id: i32) -> Result<Vec<CharacterRow>, AppError> {
+    tracing::debug!("select_for_arc with arc_id={}", arc_id);
+
+    let character_rows: Vec<CharacterRow> = sqlx::query_as(
+        "SELECT rpg_characters.id,
+                    rpg_characters.name,
+                    rpg_characters.external_image_url,
+                    rpg_characters.description,
+                    rpg_characters.profile,
+                    rpg_characters.private_note,
+                    rpg_characters.public_note,
+                    rpg_games.id as game_id,
+                    rpg_games.name as game_name,
+                    rpg_games.external_logo_url as game_external_logo_url,
+                    users.id as user_id,
+                    users.name as user_name,
+                    (SELECT COUNT(session_id) from rpg_sessions_characters WHERE character_id = rpg_characters.id) as sessions_number
+            FROM rpg_characters
+            INNER JOIN rpg_games
+            ON rpg_games.id = rpg_characters.game_id
+            LEFT OUTER JOIN users
+            ON users.id = rpg_characters.user_id
+            WHERE rpg_characters.id in (
+                SELECT rpg_sessions_characters.character_id
+                FROM rpg_sessions_characters
+                INNER JOIN rpg_sessions
+                ON rpg_sessions.id = rpg_sessions_characters.session_id
+                WHERE rpg_sessions_characters.character_id = rpg_characters.id
+                AND rpg_sessions.arc_id = $1
+            )
+            ORDER BY rpg_characters.name ASC",
+    )
+    .bind(arc_id.clone())
     .fetch_all(&state.db)
     .await?;
 
@@ -257,7 +346,8 @@ pub async fn select_for_session(
                     rpg_games.name as game_name,
                     rpg_games.external_logo_url as game_external_logo_url,
                     users.id as user_id,
-                    users.name as user_name
+                    users.name as user_name,
+                    (SELECT COUNT(session_id) from rpg_sessions_characters WHERE character_id = rpg_characters.id) as sessions_number
             FROM rpg_characters
             INNER JOIN rpg_sessions_characters
             ON rpg_sessions_characters.character_id = rpg_characters.id

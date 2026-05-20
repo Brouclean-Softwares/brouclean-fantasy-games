@@ -1,7 +1,7 @@
 use crate::AppState;
 use crate::app::templates::role_playing_games::campaigns::{CampaignPage, CampaignsPage};
 use crate::data::role_playing_games::campaigns::Campaign;
-use crate::data::role_playing_games::{campaigns, games};
+use crate::data::role_playing_games::{campaigns, characters, games};
 use crate::data::users::User;
 use axum::extract::{OriginalUri, Query, State};
 use axum::response::Redirect;
@@ -87,6 +87,10 @@ pub async fn campaign(
 
     let deletable = is_owner && arcs_with_sessions.is_empty();
 
+    let characters = characters::select_for_campaign(&app_state, campaign.id)
+        .await
+        .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
+
     Ok(CampaignPage::get(
         app_state,
         profile.clone(),
@@ -99,6 +103,7 @@ pub async fn campaign(
         params.field_edited,
         games,
         arcs_with_sessions,
+        characters,
     ))
 }
 

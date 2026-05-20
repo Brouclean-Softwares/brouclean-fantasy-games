@@ -71,6 +71,7 @@ pub struct CampaignPage {
     field_edited: String,
     games: Vec<Game>,
     arcs_with_sessions: Vec<NarrativeArcWithGameSessions>,
+    characters: Vec<CharacterRow>,
 }
 
 impl CampaignPage {
@@ -86,6 +87,7 @@ impl CampaignPage {
         field_edited: Option<String>,
         games: Vec<Game>,
         arcs_with_sessions: Vec<NarrativeArcWithGameSessions>,
+        characters: Vec<CharacterRow>,
     ) -> Self {
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile, uri),
@@ -98,6 +100,7 @@ impl CampaignPage {
             field_edited: field_edited.unwrap_or_default(),
             games,
             arcs_with_sessions,
+            characters,
         }
     }
 }
@@ -114,6 +117,7 @@ pub struct NarrativeArcPage {
     editable: bool,
     edit_mode: bool,
     field_edited: String,
+    characters: Vec<CharacterRow>,
 }
 
 impl NarrativeArcPage {
@@ -128,6 +132,7 @@ impl NarrativeArcPage {
         editable: bool,
         edit_mode: bool,
         field_edited: Option<String>,
+        characters: Vec<CharacterRow>,
     ) -> Self {
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile, uri),
@@ -145,6 +150,7 @@ impl NarrativeArcPage {
             editable,
             edit_mode,
             field_edited: field_edited.unwrap_or_default(),
+            characters,
         }
     }
 }

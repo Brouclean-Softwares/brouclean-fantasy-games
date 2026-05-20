@@ -52,6 +52,9 @@
     </div>
 </div>
 
+<h3 class="uk-heading-divider uk-margin-medium-top">
+    Sessions
+</h3>
 <ul class="uk-list uk-margin-medium-top">
     {% for session in sessions %}
     <li class="uk-margin">
@@ -67,6 +70,51 @@
     </li>
     {% endfor %}
 </ul>
+
+<h3 class="uk-heading-divider uk-margin-medium-top">
+    Personnages
+</h3>
+{% if characters.len() > 0 %}
+<div class="uk-overflow-auto uk-margin-top">
+    <table class="uk-table uk-table-striped uk-table-small uk-table-hover">
+        <thead>
+        <tr>
+            <th>Nom</th>
+            <th>Joueur</th>
+            <th>Sessions</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        {% for character in characters %}
+        <tr>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="/role_playing_games/characters/character?id={{ character.id }}">
+                    {{ character.name }}
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="/role_playing_games/characters/character?id={{ character.id }}">
+                    {% if let Some(user_name) = character.user_name %}
+                    {{ user_name }}
+                    {% else %}
+                    <span>Personne</span>
+                    {% endif %}
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="/role_playing_games/characters/character?id={{ character.id }}">
+                    {{ character.sessions_number }}
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<span>Aucun</span>
+{% endif %}
 
 {% if deletable %}
 <div class="uk-margin-medium-top">

@@ -1,7 +1,7 @@
 use crate::AppState;
 use crate::app::templates::role_playing_games::campaigns::NarrativeArcPage;
-use crate::data::role_playing_games::campaigns;
 use crate::data::role_playing_games::campaigns::{arcs, sessions};
+use crate::data::role_playing_games::{campaigns, characters};
 use crate::data::users::User;
 use axum::Form;
 use axum::extract::{OriginalUri, Query, State};
@@ -71,6 +71,10 @@ pub async fn arc(
 
     let deletable = is_owner && sessions.is_empty();
 
+    let characters = characters::select_for_arc(&app_state, arc.id)
+        .await
+        .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
+
     Ok(NarrativeArcPage::get(
         app_state,
         profile.clone(),
@@ -82,6 +86,7 @@ pub async fn arc(
         is_owner,
         params.edit.unwrap_or(false) && profile.is_some(),
         params.field_edited,
+        characters,
     ))
 }
 
