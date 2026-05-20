@@ -75,6 +75,7 @@ pub async fn arc(
         app_state,
         profile.clone(),
         &uri,
+        campaign,
         arc,
         sessions,
         deletable,

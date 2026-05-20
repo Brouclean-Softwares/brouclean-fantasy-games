@@ -10,38 +10,48 @@
 
 {% block body %}
 
-<h2>
-    {% if edit_mode && field_edited.eq("name") %}
-    <form method="post" autocomplete="off">
-        <input type="hidden" name="id" value="{{ campaign.id }}">
-        <input type="hidden" name="tab_name" value="{{ tab_name }}">
+<div class="uk-grid-small uk-flex-middle uk-margin-medium-bottom">
+    <div class="uk-width-expand">
+        <h2 class="uk-margin-remove-bottom">
+            {% if edit_mode && field_edited.eq("name") %}
+            <form method="post" autocomplete="off">
+                <input type="hidden" name="id" value="{{ campaign.id }}">
+                <input type="hidden" name="tab_name" value="{{ tab_name }}">
 
-        <div>
-            <input class="uk-input uk-form-width-large"
-                   id="name"
-                   name="name"
-                   type="text"
-                   value="{{ campaign.name }}"
-                   placeholder="Nom de la campagne..."
-                   aria-label="">
+                <div>
+                    <input class="uk-input uk-form-width-large"
+                           id="name"
+                           name="name"
+                           type="text"
+                           value="{{ campaign.name }}"
+                           placeholder="Nom de la campagne..."
+                           aria-label="">
 
-            <a href="campaign?id={{ campaign.id }}&tab_name={{ tab_name}}" uk-icon="icon: close"></a>
-            <button class="uk-button uk-button-link" type="button" onclick="submit()">
-                <span uk-icon="icon: check"></span>
-            </button>
-        </div>
-    </form>
+                    <a href="campaign?id={{ campaign.id }}&tab_name={{ tab_name}}" uk-icon="icon: close"></a>
+                    <button class="uk-button uk-button-link" type="button" onclick="submit()">
+                        <span uk-icon="icon: check"></span>
+                    </button>
+                </div>
+            </form>
 
-    {% elif editable %}
-    <a class="uk-link-reset" href="campaign?id={{ campaign.id }}&tab_name={{ tab_name}}&edit=true&field_edited=name">
-        {{ campaign.name }}
-    </a>
-    <a href="campaign?id={{ campaign.id }}&tab_name={{ tab_name}}&edit=true&field_edited=name" uk-icon="icon: pencil"></a>
+            {% elif editable %}
+            <a class="uk-link-reset" href="campaign?id={{ campaign.id }}&tab_name={{ tab_name}}&edit=true&field_edited=name">
+                {{ campaign.name }}
+            </a>
+            <a href="campaign?id={{ campaign.id }}&tab_name={{ tab_name}}&edit=true&field_edited=name" uk-icon="icon: pencil"></a>
 
-    {% else %}
-    {{ campaign.name }}
-    {% endif %}
-</h2>
+            {% else %}
+            {{ campaign.name }}
+            {% endif %}
+        </h2>
+
+        <p class="uk-margin-remove-top">
+            <a class="uk-link-reset" href="/role_playing_games/games/game?id={{ campaign.game_id }}">
+                {{ campaign.game_name }}
+            </a>
+        </p>
+    </div>
+</div>
 
 <div class="uk-margin-medium-bottom">
     <ul class="uk-child-width-expand" uk-tab>

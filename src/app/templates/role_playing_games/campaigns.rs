@@ -107,6 +107,7 @@ impl CampaignPage {
 pub struct NarrativeArcPage {
     navigation_bar: NavigationBar,
     breadcrumb: BreadCrumb,
+    campaign: Campaign,
     arc: NarrativeArc,
     sessions: Vec<GameSession>,
     deletable: bool,
@@ -120,6 +121,7 @@ impl NarrativeArcPage {
         app_state: AppState,
         profile: Option<User>,
         uri: &Uri,
+        campaign: Campaign,
         arc: NarrativeArc,
         sessions: Vec<GameSession>,
         deletable: bool,
@@ -136,6 +138,7 @@ impl NarrativeArcPage {
                     arc.campaign_id
                 ),
             )),
+            campaign,
             arc,
             sessions,
             deletable,
@@ -158,6 +161,7 @@ pub struct GameSessionPagination {
 pub struct GameSessionPage {
     navigation_bar: NavigationBar,
     breadcrumb: BreadCrumb,
+    campaign: Campaign,
     session: GameSession,
     session_pagination: GameSessionPagination,
     session_date_input: Option<String>,
@@ -176,7 +180,7 @@ impl GameSessionPage {
         app_state: AppState,
         profile: Option<User>,
         uri: &Uri,
-        game_id: i32,
+        campaign: Campaign,
         session: GameSession,
         previous_session: Option<GameSession>,
         next_session: Option<GameSession>,
@@ -199,6 +203,8 @@ impl GameSessionPage {
             None
         };
 
+        let game_id = campaign.game_id;
+
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile, uri),
             breadcrumb: breadcrumb().plus_link(UrlLink::from(
@@ -208,6 +214,7 @@ impl GameSessionPage {
                     session.campaign_id
                 ),
             )),
+            campaign,
             session,
             session_pagination: GameSessionPagination {
                 previous_session,

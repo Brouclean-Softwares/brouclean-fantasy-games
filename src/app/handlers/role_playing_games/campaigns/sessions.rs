@@ -85,7 +85,7 @@ pub async fn session(
         app_state,
         profile.clone(),
         &uri,
-        campaign.game_id,
+        campaign,
         session,
         previous_session,
         next_session,
