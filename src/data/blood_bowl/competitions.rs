@@ -409,6 +409,38 @@ impl Competition {
         Ok(competitions)
     }
 
+    pub async fn select_for_team(state: &AppState, team_id: i32) -> Result<Vec<Self>, AppError> {
+        tracing::debug!("select_for_team for team_id={}", team_id);
+
+        let rows: Vec<CompetitionRow> = sqlx::query_as(
+            "SELECT bb_competitions.id,
+                    bb_competitions.name,
+                    bb_competitions.edition_number,
+                    bb_competitions.director,
+                    bb_competitions.version,
+                    bb_competitions.description,
+                    bb_competitions.started_at IS NOT NULL as started,
+                    bb_competitions.closed_at IS NOT NULL as closed
+            FROM bb_competitions
+            INNER JOIN bb_competitions_teams
+            ON bb_competitions_teams.competition_id = bb_competitions.id
+            WHERE bb_competitions_teams.team_id = $1
+            AND bb_competitions_teams.validated = TRUE
+            ORDER BY last_updated DESC",
+        )
+        .bind(team_id.clone())
+        .fetch_all(&state.db)
+        .await?;
+
+        let mut competitions: Vec<Competition> = Vec::with_capacity(rows.len());
+
+        for row in rows {
+            competitions.push(row.into_competition(state).await?);
+        }
+
+        Ok(competitions)
+    }
+
     async fn select_progress_for_id(
         state: &AppState,
         competition_id: i32,

@@ -2,6 +2,7 @@ use crate::AppState;
 use crate::app::templates::blood_bowl::games::GameCard;
 use crate::app::templates::blood_bowl::statistics::PlayersTopStatisticsLists;
 use crate::app::templates::{AlertMessage, BreadCrumb, NavigationBar, UrlLink, blood_bowl};
+use crate::data::blood_bowl::competitions::Competition;
 use crate::data::blood_bowl::games::GameSummary;
 use crate::data::blood_bowl::statistics::players::PlayersTopStatistics;
 use crate::data::blood_bowl::statistics::teams::TeamStatistics;
@@ -124,6 +125,7 @@ impl TeamPage {
         team_statistics: TeamStatistics,
         players_top_statistics: PlayersTopStatistics,
         former_players: Vec<(i32, Player)>,
+        competitions: Vec<Competition>,
     ) -> Self {
         let mut is_playing_game = false;
         if let Some(game) = game_playing.clone() {
@@ -182,6 +184,7 @@ impl TeamPage {
                 losses,
                 team_statistics,
                 players_top_statistics: players_top_statistics.into(),
+                competitions,
             },
             former_players: FormerPlayersTab {
                 team,
@@ -220,6 +223,7 @@ struct TeamStatisticsTab {
     losses: usize,
     team_statistics: TeamStatistics,
     players_top_statistics: PlayersTopStatisticsLists,
+    competitions: Vec<Competition>,
 }
 
 #[derive(Template, WebTemplate)]
