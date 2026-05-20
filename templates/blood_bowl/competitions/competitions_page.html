@@ -29,7 +29,7 @@
         <tbody>
         {% for competition in competitions_in_progress %}
 
-        {% let competition_url = format!("competitions/competition?id={}&tab=schedule", competition.id) %}
+        {% let competition_url = format!("competitions/competition?id={}&tab_name=schedule", competition.id) %}
 
         <tr>
             <td class="uk-table-link">
@@ -66,7 +66,7 @@
         <tbody>
         {% for competition in competitions_preparing %}
 
-        {% let competition_url = format!("competitions/competition?id={}&tab=info", competition.id) %}
+        {% let competition_url = format!("competitions/competition?id={}&tab_name=info", competition.id) %}
 
         <tr>
             <td class="uk-table-link">
@@ -109,7 +109,7 @@
         <tbody>
         {% for competition in competitions_closed %}
 
-        {% let competition_url = format!("competitions/competition?id={}&tab=standings", competition.id) %}
+        {% let competition_url = format!("competitions/competition?id={}&tab_name=standings", competition.id) %}
 
         <tr>
             <td class="uk-table-link">

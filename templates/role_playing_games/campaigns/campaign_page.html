@@ -56,22 +56,22 @@
 <div class="uk-margin-medium-bottom">
     <ul class="uk-child-width-expand" uk-tab>
         <li {% if tab_name.eq("info") %}class="uk-active"{% endif %}>
-        <a href="campaign?id={{ campaign.id }}&tab_name=info" uk-icon="icon: info">
-            <span class="uk-visible@m">Informations</span>
-        </a>
+            <a href="campaign?id={{ campaign.id }}&tab_name=info" uk-icon="icon: info">
+                <span class="uk-visible@m">Informations</span>
+            </a>
         </li>
 
         <li {% if tab_name.eq("sessions") %}class="uk-active"{% endif %}>
-        <a href="campaign?id={{ campaign.id }}&tab_name=sessions" uk-icon="icon: list">
-            <span class="uk-visible@m">Sessions</span>
-        </a>
+            <a href="campaign?id={{ campaign.id }}&tab_name=sessions" uk-icon="icon: list">
+                <span class="uk-visible@m">Sessions</span>
+            </a>
         </li>
 
         {% if editable %}
         <li {% if tab_name.eq("notes") %}class="uk-active"{% endif %}>
-        <a href="campaign?id={{ campaign.id }}&tab_name=notes" uk-icon="icon: file-edit">
-            <span class="uk-visible@m">Notes</span>
-        </a>
+            <a href="campaign?id={{ campaign.id }}&tab_name=notes" uk-icon="icon: file-edit">
+                <span class="uk-visible@m">Notes</span>
+            </a>
         </li>
         {% endif %}
     </ul>

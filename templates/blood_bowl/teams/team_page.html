@@ -15,131 +15,137 @@
 {% endblock %}
 
 {% block body %}
-<div x-data="{ tab: 'sheet' }">
     
-    <div class="uk-grid-small uk-flex-middle uk-margin-medium-bottom" uk-grid>
-        <div class="uk-width-auto">
-            <img src="{{ TeamLogo::from(team).url }}" width="75" height="75" alt="">
-        </div>
-        <div class="uk-width-expand">
-            <h2 class="uk-margin-remove-bottom">
+<div class="uk-grid-small uk-flex-middle uk-margin-medium-bottom" uk-grid>
+    <div class="uk-width-auto">
+        <img src="{{ TeamLogo::from(team).url }}" width="75" height="75" alt="">
+    </div>
+    <div class="uk-width-expand">
+        <h2 class="uk-margin-remove-bottom">
 
-                {% if edit_mode && field_edited.eq("name") %}
-                    <form method="post" autocomplete="off">
-                        <div class="uk-inline">
-                            <input class="uk-input uk-form-width-large"
-                                   id="team_name"
-                                   name="team_name"
-                                   type="text"
-                                   value="{{ team.name }}"
-                                   placeholder="Nom de l'équipe..."
-                                   aria-label="">
+            {% if edit_mode && field_edited.eq("name") %}
+                <form method="post" autocomplete="off">
+                    <div class="uk-inline">
+                        <input class="uk-input uk-form-width-large"
+                               id="team_name"
+                               name="team_name"
+                               type="text"
+                               value="{{ team.name }}"
+                               placeholder="Nom de l'équipe..."
+                               aria-label="">
 
-                            <a href="team?id={{ team.id }}" uk-icon="icon: close"></a>
-                            <button class="uk-button uk-button-link" type="button" onclick="submit()">
-                                <span uk-icon="icon: check"></span>
-                            </button>
-                        </div>
-                    </form>
-                {% elif editable %}
-                <a class="uk-link-reset" href="team?id={{ team.id }}&edit=true&field_edited=name">
-                    {{ team.name }}
-                </a>
-                <a href="team?id={{ team.id }}&edit=true&field_edited=name" uk-icon="icon: pencil"></a>
-                {% else %}
-                    {{ team.name }}
+                        <a href="team?id={{ team.id }}" uk-icon="icon: close"></a>
+                        <button class="uk-button uk-button-link" type="button" onclick="submit()">
+                            <span uk-icon="icon: check"></span>
+                        </button>
+                    </div>
+                </form>
+            {% elif editable %}
+            <a class="uk-link-reset" href="team?id={{ team.id }}&edit=true&field_edited=name">
+                {{ team.name }}
+            </a>
+            <a href="team?id={{ team.id }}&edit=true&field_edited=name" uk-icon="icon: pencil"></a>
+            {% else %}
+                {{ team.name }}
+            {% endif %}
+
+        </h2>
+        <p class="uk-margin-remove-top">
+            <a class="uk-link-reset" href="../rosters/roster?version={{ team.version.type_name() }}&roster={{ team.roster.type_name() }}">
+                {{ team.roster.name("fr") }}
+
+                {% if team.version.ne(&Version::LAST_VERSION) %}
+                <span class="uk-text-meta"> ({{ team.version.name("fr") }})</span>
                 {% endif %}
+            </a>
+        </p>
+    </div>
+</div>
 
-            </h2>
-            <p class="uk-margin-remove-top">
-                <a class="uk-link-reset" href="../rosters/roster?version={{ team.version.type_name() }}&roster={{ team.roster.type_name() }}">
-                    {{ team.roster.name("fr") }}
+{% if upgradable %}
+{% if let Some(next_version) = team.version.next() %}
+<div class="uk-margin-medium-bottom">
+    <button class="uk-button uk-button-danger" uk-toggle="target: #modal-upgrade" type="button">
+        Passer en {{ next_version.name("fr") }}
+    </button>
 
-                    {% if team.version.ne(&Version::LAST_VERSION) %}
-                    <span class="uk-text-meta"> ({{ team.version.name("fr") }})</span>
-                    {% endif %}
-                </a>
+    <div id="modal-upgrade" uk-modal>
+        <form id="upgrade_form" action="./upgrade" method="post" autocomplete="off">
+            <input id="id" name="id" type="hidden" value="{{ team.id }}">
+        </form>
+
+        <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+            <h2 class="uk-modal-title">Montée de version de l'équipe en cours</h2>
+            <p>Si vous changez de version, vous pourrez alors jouer contre d'autres équipes de cette même version, mais plus contre celles de l'ancienne.</p>
+            <p>Si c'est bien ce que vous souhaitez, alors :
+                <ul>
+                    <li>Votre trésorerie sera revue par rapport aux changements de prix des postes et des staffs</li>
+                    <li>Si certains postes n'ont plus la même limite maximum, alors votre trésorerie sera créditée du prix des postes en trop</li>
+                    <li>Ce sera alors à vous d'enlever manuellement les joueurs en trop</li>
+                    <li>Les améliorations des joueurs seront enlevées et à re-choisir</li>
+                </ul>
+            </p>
+            <p>Confirmez-vous le passage de l'équipe en version : <span class="uk-text-bold">{{ next_version.name("fr") }} ?</span></p>
+            <p class="uk-text-right">
+                <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                <button class="uk-button uk-button-danger"
+                        onclick="document.getElementById('upgrade_form').submit()">
+                    Confirmer
+                </button>
             </p>
         </div>
     </div>
-
-    {% if upgradable %}
-    {% if let Some(next_version) = team.version.next() %}
-    <div class="uk-margin-medium-bottom">
-        <button class="uk-button uk-button-danger" uk-toggle="target: #modal-upgrade" type="button">
-            Passer en {{ next_version.name("fr") }}
-        </button>
-
-        <div id="modal-upgrade" uk-modal>
-            <form id="upgrade_form" action="./upgrade" method="post" autocomplete="off">
-                <input id="id" name="id" type="hidden" value="{{ team.id }}">
-            </form>
-
-            <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
-                <h2 class="uk-modal-title">Montée de version de l'équipe en cours</h2>
-                <p>Si vous changez de version, vous pourrez alors jouer contre d'autres équipes de cette même version, mais plus contre celles de l'ancienne.</p>
-                <p>Si c'est bien ce que vous souhaitez, alors :
-                    <ul>
-                        <li>Votre trésorerie sera revue par rapport aux changements de prix des postes et des staffs</li>
-                        <li>Si certains postes n'ont plus la même limite maximum, alors votre trésorerie sera créditée du prix des postes en trop</li>
-                        <li>Ce sera alors à vous d'enlever manuellement les joueurs en trop</li>
-                        <li>Les améliorations des joueurs seront enlevées et à re-choisir</li>
-                    </ul>
-                </p>
-                <p>Confirmez-vous le passage de l'équipe en version : <span class="uk-text-bold">{{ next_version.name("fr") }} ?</span></p>
-                <p class="uk-text-right">
-                    <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
-                    <button class="uk-button uk-button-danger"
-                            onclick="document.getElementById('upgrade_form').submit()">
-                        Confirmer
-                    </button>
-                </p>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-    {% endif %}
-
-    <div class="uk-margin-medium-bottom">
-        <ul class="uk-child-width-expand" uk-tab>
-            <li class="uk-active">
-                <a href="#" uk-icon="icon: file-text" x-on:click="tab='sheet'">
-                    <span class="uk-visible@m">Feuille d'équipe</span>
-                </a>
-            </li>
-            <li>
-                <a href="#" uk-icon="icon: calendar" x-on:click="tab='results'">
-                    <span class="uk-visible@m">Résultats</span>
-                </a>
-            </li>
-            <li>
-                <a href="#" uk-icon="icon: info" x-on:click="tab='stats'">
-                    <span class="uk-visible@m">Statistiques</span>
-                </a>
-            </li>
-            <li>
-                <a href="#" uk-icon="icon: users" x-on:click="tab='former_players'">
-                    <span class="uk-visible@m">Anciens joueurs</span>
-                </a>
-            </li>
-        </ul>
-    </div>
-
-    <div x-show="tab==='sheet'">
-        {{ sheet|escape("none") }}
-    </div>
-
-    <div x-show="tab==='results'">
-        {{ results|escape("none") }}
-    </div>
-
-    <div x-show="tab==='stats'">
-        {{ statistics|escape("none") }}
-    </div>
-
-    <div x-show="tab==='former_players'">
-        {{ former_players|escape("none") }}
-    </div>
-
 </div>
+{% endif %}
+{% endif %}
+
+<div class="uk-margin-medium-bottom">
+    <ul class="uk-child-width-expand" uk-tab>
+        <li {% if tab_name.eq("sheet") %}class="uk-active"{% endif %}>
+            <a href="team?id={{ team.id }}&tab_name=sheet" uk-icon="icon: file-text">
+                <span class="uk-visible@m">Feuille d'équipe</span>
+            </a>
+        </li>
+        <li {% if tab_name.eq("results") %}class="uk-active"{% endif %}>
+            <a href="team?id={{ team.id }}&tab_name=results" uk-icon="icon: calendar">
+                <span class="uk-visible@m">Résultats</span>
+            </a>
+        </li>
+        <li {% if tab_name.eq("stats") %}class="uk-active"{% endif %}>
+            <a href="team?id={{ team.id }}&tab_name=stats" uk-icon="icon: info">
+                <span class="uk-visible@m">Statistiques</span>
+            </a>
+        </li>
+        <li {% if tab_name.eq("former_players") %}class="uk-active"{% endif %}>
+            <a href="team?id={{ team.id }}&tab_name=former_players" uk-icon="icon: users">
+                <span class="uk-visible@m">Anciens joueurs</span>
+            </a>
+        </li>
+    </ul>
+</div>
+
+{% if tab_name.eq("sheet") %}
+<div>
+    {{ sheet|escape("none") }}
+</div>
+{% endif %}
+
+{% if tab_name.eq("results") %}
+<div>
+    {{ results|escape("none") }}
+</div>
+{% endif %}
+
+{% if tab_name.eq("stats") %}
+<div>
+    {{ statistics|escape("none") }}
+</div>
+{% endif %}
+
+{% if tab_name.eq("former_players") %}
+<div>
+    {{ former_players|escape("none") }}
+</div>
+{% endif %}
+
 {% endblock %}

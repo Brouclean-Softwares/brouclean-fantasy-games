@@ -65,10 +65,10 @@ pub async fn competitions(
 #[derive(Deserialize)]
 pub struct CompetitionQueryParams {
     pub id: Option<i32>,
+    pub tab_name: Option<String>,
     pub edit: Option<bool>,
     pub field_edited: Option<String>,
     pub alert_message: Option<String>,
-    pub tab: Option<String>,
 }
 
 pub async fn competition(
@@ -108,11 +108,11 @@ pub async fn competition(
             &uri,
             alert_message,
             competition,
+            params.tab_name,
             teams_top_statistics.into(),
             players_top_statistics.into(),
             params.edit.unwrap_or(false),
             params.field_edited,
-            params.tab,
         )
         .await
         .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?)

@@ -56,6 +56,12 @@ impl CompetitionsPage {
 }
 
 #[derive(Template, WebTemplate)]
+#[template(path = "blood_bowl/competitions/owned_competitions_block.html")]
+pub struct OwnedCompetitionsBlock {
+    pub owned_competitions: Vec<Competition>,
+}
+
+#[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/competitions/competition_page.html")]
 pub struct CompetitionPage {
     navigation_bar: NavigationBar,
@@ -65,18 +71,12 @@ pub struct CompetitionPage {
     editable: bool,
     edit_mode: bool,
     field_edited: String,
-    tab: Option<String>,
+    tab_name: String,
     link_url: String,
     information: CompetitionInformationTab,
     standings: CompetitionStandingsTab,
     schedule: CompetitionScheduleTab,
     statistics: CompetitionStatisticsTab,
-}
-
-#[derive(Template, WebTemplate)]
-#[template(path = "blood_bowl/competitions/owned_competitions_block.html")]
-pub struct OwnedCompetitionsBlock {
-    pub owned_competitions: Vec<Competition>,
 }
 
 impl CompetitionPage {
@@ -86,11 +86,11 @@ impl CompetitionPage {
         uri: &Uri,
         alert_message: Option<AlertMessage>,
         competition: Competition,
+        tab_name: Option<String>,
         teams_top_statistics: TeamsTopStatisticsLists,
         players_top_statistics: PlayersTopStatisticsLists,
         edit_mode: bool,
         field_edited: Option<String>,
-        tab: Option<String>,
     ) -> Result<Self, AppError> {
         let competition_id = competition.id;
         let editable = User::optional_user_eq_other(&profile, &competition.director);
@@ -112,7 +112,7 @@ impl CompetitionPage {
             editable,
             edit_mode,
             field_edited: field_edited.clone().unwrap_or_default(),
-            tab,
+            tab_name: tab_name.unwrap_or("info".to_owned()),
             link_url: link_url.clone(),
             information: CompetitionInformationTab {
                 competition,

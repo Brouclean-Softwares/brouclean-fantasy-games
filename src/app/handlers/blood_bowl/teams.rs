@@ -181,6 +181,7 @@ pub async fn create(
 #[derive(Deserialize)]
 pub struct TeamQueryParams {
     pub id: i32,
+    pub tab_name: Option<String>,
     pub alert_message: Option<String>,
     pub edit: Option<bool>,
     pub field_edited: Option<String>,
@@ -270,6 +271,7 @@ pub async fn team(
         &uri,
         alert_message,
         team,
+        params.tab_name,
         games_scheduled,
         game_playing,
         games_played,

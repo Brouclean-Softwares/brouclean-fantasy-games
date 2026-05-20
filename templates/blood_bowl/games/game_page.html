@@ -86,7 +86,7 @@
 
         <div class="uk-width-1-1 uk-text-center uk-margin">
             {% if let Some(competition) = competition %}
-            <a class="uk-link-reset" href="/blood_bowl/competitions/competition?id={{ competition.id }}&tab=standings">
+            <a class="uk-link-reset" href="/blood_bowl/competitions/competition?id={{ competition.id }}&tab_name=standings">
                 <span class="uk-text-lead">{{ competition.name }}</span>
             </a>
             {% else %}

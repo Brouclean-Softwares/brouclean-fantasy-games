@@ -16,88 +16,93 @@
 
 {% block body %}
 
-{% let tab_name = tab.clone().unwrap_or("info".to_string()) %}
+<h2 class="uk-margin-medium-bottom">
+    {% if edit_mode && field_edited.eq("name") %}
+    <form method="post" autocomplete="off">
+        <div class="uk-inline">
+            <input class="uk-input uk-form-width-large"
+                   name="competition_name"
+                   type="text"
+                   value="{{ competition.name }}"
+                   placeholder="Nom de la compétition..."
+                   aria-label="">
+        </div>
 
-<div x-data="{ tab: '{{ tab_name }}' }">
+        <a href="{{ link_url }}" uk-icon="icon: close"></a>
+        <button class="uk-button uk-button-link" type="button" onclick="submit()">
+            <span uk-icon="icon: check"></span>
+        </button>
+    </form>
 
-    <h2 class="uk-margin-medium-bottom">
-        {% if edit_mode && field_edited.eq("name") %}
-        <form method="post" autocomplete="off">
-            <div class="uk-inline">
-                <input class="uk-input uk-form-width-large"
-                       name="competition_name"
-                       type="text"
-                       value="{{ competition.name }}"
-                       placeholder="Nom de la compétition..."
-                       aria-label="">
-            </div>
+    {% elif editable %}
+    <a class="uk-link-reset" href="{{ link_url }}&edit=true&field_edited=name">
+        {{ competition.name() }}
+    </a>
+    <a href="{{ link_url }}&edit=true&field_edited=name" uk-icon="icon: pencil"></a>
 
-            <a href="{{ link_url }}" uk-icon="icon: close"></a>
-            <button class="uk-button uk-button-link" type="button" onclick="submit()">
-                <span uk-icon="icon: check"></span>
-            </button>
-        </form>
+    {% else %}
+        {{ competition.name() }}
+    {% endif %}
+</h2>
 
-        {% elif editable %}
-        <a class="uk-link-reset" href="{{ link_url }}&edit=true&field_edited=name">
-            {{ competition.name() }}
-        </a>
-        <a href="{{ link_url }}&edit=true&field_edited=name" uk-icon="icon: pencil"></a>
-
-        {% else %}
-            {{ competition.name() }}
-        {% endif %}
-    </h2>
-
-    <div class="uk-margin-medium-bottom">
-        <ul class="uk-child-width-expand" uk-tab>
-            <li {% if tab_name.eq("info") %}class="uk-active"{% endif %}>
-                <a href="#" uk-icon="icon: file-text" x-on:click="tab='info'">
-                    <span class="uk-visible@m">Informations</span>
-                </a>
-            </li>
-            <li {% if tab_name.eq("standings") %}class="uk-active"{% endif %}>
-                <a href="#" uk-icon="icon: list" x-on:click="tab='standings'">
-                    <span class="uk-visible@m">Classements</span>
-                </a>
-            </li>
-            <li {% if tab_name.eq("schedule") %}class="uk-active"{% endif %}>
-                <a href="#" uk-icon="icon: calendar" x-on:click="tab='schedule'">
-                    <span class="uk-visible@m">Calendrier</span>
-                </a>
-            </li>
-            <li {% if tab_name.eq("stats") %}class="uk-active"{% endif %}>
-                <a href="#" uk-icon="icon: info" x-on:click="tab='statistics'">
-                    <span class="uk-visible@m">Statistiques</span>
-                </a>
-            </li>
-            <li {% if tab_name.eq("history") %}class="uk-active"{% endif %}>
-                <a href="#" uk-icon="icon: history" x-on:click="tab='history'">
-                    <span class="uk-visible@m">Historique</span>
-                </a>
-            </li>
-        </ul>
-    </div>
-
-    <div x-show="tab==='info'">
-        {{ information|escape("none") }}
-    </div>
-
-    <div x-show="tab==='standings'">
-        {{ standings|escape("none") }}
-    </div>
-
-    <div x-show="tab==='schedule'">
-        {{ schedule|escape("none") }}
-    </div>
-
-    <div x-show="tab==='statistics'">
-        {{ statistics|escape("none") }}
-    </div>
-
-    <div x-show="tab==='history'">
-        A venir...
-    </div>
-
+<div class="uk-margin-medium-bottom">
+    <ul class="uk-child-width-expand" uk-tab>
+        <li {% if tab_name.eq("info") %}class="uk-active"{% endif %}>
+            <a href="competition?id={{ competition.id }}&tab_name=info" uk-icon="icon: file-text">
+                <span class="uk-visible@m">Informations</span>
+            </a>
+        </li>
+        <li {% if tab_name.eq("standings") %}class="uk-active"{% endif %}>
+            <a href="competition?id={{ competition.id }}&tab_name=standings" uk-icon="icon: list">
+                <span class="uk-visible@m">Classements</span>
+            </a>
+        </li>
+        <li {% if tab_name.eq("schedule") %}class="uk-active"{% endif %}>
+            <a href="competition?id={{ competition.id }}&tab_name=schedule" uk-icon="icon: calendar">
+                <span class="uk-visible@m">Calendrier</span>
+            </a>
+        </li>
+        <li {% if tab_name.eq("stats") %}class="uk-active"{% endif %}>
+            <a href="competition?id={{ competition.id }}&tab_name=stats" uk-icon="icon: info">
+                <span class="uk-visible@m">Statistiques</span>
+            </a>
+        </li>
+        <li {% if tab_name.eq("history") %}class="uk-active"{% endif %}>
+            <a href="competition?id={{ competition.id }}&tab_name=history" uk-icon="icon: history">
+                <span class="uk-visible@m">Historique</span>
+            </a>
+        </li>
+    </ul>
 </div>
+
+{% if tab_name.eq("info") %}
+<div>
+    {{ information|escape("none") }}
+</div>
+{% endif %}
+
+{% if tab_name.eq("standings") %}
+<div>
+    {{ standings|escape("none") }}
+</div>
+{% endif %}
+
+{% if tab_name.eq("schedule") %}
+<div>
+    {{ schedule|escape("none") }}
+</div>
+{% endif %}
+
+{% if tab_name.eq("stats") %}
+<div>
+    {{ statistics|escape("none") }}
+</div>
+{% endif %}
+
+{% if tab_name.eq("history") %}
+<div>
+    A venir...
+</div>
+{% endif %}
+
 {% endblock %}

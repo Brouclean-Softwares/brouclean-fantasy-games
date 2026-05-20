@@ -91,9 +91,10 @@
                 </tr>
                 </thead>
 
+                <tbody>
                 {% for competition in competitions %}
 
-                {% let competition_url = format!("/blood_bowl/competitions/competition?id={}&tab=standings", competition.id) %}
+                {% let competition_url = format!("/blood_bowl/competitions/competition?id={}&tab_name=standings", competition.id) %}
 
                 <tr>
                     <td class="uk-table-link">
@@ -107,8 +108,9 @@
                         </a>
                     </td>
                 </tr>
+
                 {% endfor %}
-                <tbody>
+                </tbody>
             </table>
         </div>
     </div>
