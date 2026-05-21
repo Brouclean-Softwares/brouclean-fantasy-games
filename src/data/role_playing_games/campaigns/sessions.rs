@@ -382,6 +382,43 @@ pub async fn update(
     Ok(())
 }
 
+pub async fn reorder_session(
+    state: &AppState,
+    connected_user: &User,
+    session_id: i32,
+    arc_id: i32,
+    new_position: i32,
+) -> Result<(), AppError> {
+    tracing::debug!(
+        "reorder_session with id={} and position={} by user={:?}",
+        session_id,
+        new_position,
+        connected_user
+    );
+
+    if let Some(connected_user_id) = connected_user.id {
+        sqlx::query(
+            "UPDATE rpg_sessions
+            SET arc_id = $3,
+                position = $4,
+                last_updated = CURRENT_TIMESTAMP
+            FROM rpg_campaigns, rpg_arcs
+            WHERE rpg_sessions.id = $1
+            AND rpg_arcs.id = rpg_sessions.arc_id
+            AND rpg_campaigns.id = rpg_arcs.campaign_id
+            AND rpg_campaigns.game_master_id = $2",
+        )
+        .bind(session_id.clone())
+        .bind(connected_user_id.clone())
+        .bind(arc_id.clone())
+        .bind(new_position.clone())
+        .execute(&state.db)
+        .await?;
+    }
+
+    Ok(())
+}
+
 pub async fn delete(
     state: &AppState,
     connected_user: &User,

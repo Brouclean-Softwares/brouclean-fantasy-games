@@ -214,6 +214,57 @@ pub async fn update(
     Ok(())
 }
 
+pub async fn reorder_arc(
+    state: &AppState,
+    connected_user: &User,
+    arc_id: i32,
+    new_position: i32,
+) -> Result<(), AppError> {
+    tracing::debug!(
+        "reorder_arc with id={} and position={} by user={:?}",
+        arc_id,
+        new_position,
+        connected_user
+    );
+
+    if let Some(connected_user_id) = connected_user.id {
+        let mut transaction = state.db.begin().await?;
+
+        let campaign_id: Option<i32> = sqlx::query_scalar(
+            "UPDATE rpg_arcs
+            SET position = $3,
+                last_updated = CURRENT_TIMESTAMP
+            FROM rpg_campaigns
+            WHERE rpg_arcs.id = $1
+            AND rpg_campaigns.id = rpg_arcs.campaign_id
+            AND rpg_campaigns.game_master_id = $2
+            RETURNING rpg_campaigns.id",
+        )
+        .bind(arc_id.clone())
+        .bind(connected_user_id.clone())
+        .bind(new_position.clone())
+        .fetch_optional(&mut *transaction)
+        .await?;
+
+        if let Some(campaign_id) = campaign_id {
+            sqlx::query(
+                "UPDATE rpg_campaigns
+                    SET last_updated = CURRENT_TIMESTAMP
+                    WHERE id = $1
+                    AND game_master_id = $2",
+            )
+            .bind(campaign_id.clone())
+            .bind(connected_user_id.clone())
+            .execute(&mut *transaction)
+            .await?;
+        }
+
+        transaction.commit().await?;
+    }
+
+    Ok(())
+}
+
 pub async fn delete(
     state: &AppState,
     connected_user: &User,

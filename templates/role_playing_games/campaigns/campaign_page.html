@@ -245,7 +245,7 @@
          uk-grid
     >
         {% for arc_with_sessions in arcs_with_sessions %}
-        <div>
+        <div data-arc-id="{{ arc_with_sessions.arc.id }}">
             <h4>
                 {% if editable %}
                 <span class="arc-handle uk-margin-right" uk-icon="icon: arrow-down-arrow-up"></span>
@@ -256,7 +256,7 @@
                 </a>
             </h4>
 
-            <ul class="uk-list" data-arc-id="{{ arc_with_sessions.arc.id }}"
+            <ul class="uk-list"
                  {% if editable %} uk-sortable="group: sessions; handle: .session-handle" {% endif %}
             >
                 {% for session in arc_with_sessions.sessions %}
@@ -280,7 +280,7 @@
 
             {% if editable %}
             <div class="cls-no-drag uk-margin-top">
-                <button class="uk-button uk-button-primary"
+                <button class="uk-button uk-button-primary uk-button-small"
                         type="button"
                         uk-toggle="target: #modal-add_session-to_arc{{ arc_with_sessions.arc.id }}">
                     Créer une nouvelle session
@@ -367,13 +367,14 @@
         async function saveCampaignStructure() {
 
             const arcs = [];
+            const arc_ids = [];
 
-            document
-                .querySelectorAll('[data-arc-id]')
-                .forEach((arcEl, arcPosition) => {
+            document.querySelectorAll('[data-arc-id]').forEach((arcEl, arcPosition) => {
+                let arc_id = Number(arcEl.dataset.arcId);
 
+                if (! arc_ids.includes(arc_id)) {
                     const arc = {
-                        arcId: Number(arcEl.dataset.arcId),
+                        arc_id: Number(arcEl.dataset.arcId),
                         position: arcPosition,
                         sessions: []
                     };
@@ -383,28 +384,34 @@
                         .forEach((sessionEl, sessionPosition) => {
 
                             arc.sessions.push({
-                                sessionId: Number(sessionEl.dataset.sessionId),
+                                session_id: Number(sessionEl.dataset.sessionId),
                                 position: sessionPosition
                             });
 
                         });
 
                     arcs.push(arc);
-                });
+                    arc_ids.push(arc_id);
+                }
+            });
+
+            const campaign = {
+                campaign_id: {{ campaign.id }},
+                arcs: arcs
+            };
 
             try {
-
-                /*const response = await fetch('/api/campaigns/1/reorder', {
+                const response = await fetch('/role_playing_games/campaigns/reorder_campaign_sessions', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(arcs)
+                    body: JSON.stringify(campaign)
                 });
 
                 if (!response.ok) {
                     throw new Error('Save failed');
-                }*/
+                }
 
                 console.log('saved');
 
@@ -413,15 +420,15 @@
                 console.error(err);
 
             }
+
+            window.location.href = window.location.href;
         }
 
         UIkit.util.on(
             '[uk-sortable]',
             'stop',
             function () {
-
                 saveCampaignStructure();
-
             }
         );
     </script>

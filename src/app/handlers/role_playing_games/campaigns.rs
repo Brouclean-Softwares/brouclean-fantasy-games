@@ -6,7 +6,7 @@ use crate::data::users::User;
 use axum::extract::{OriginalUri, Query, State};
 use axum::response::Redirect;
 use axum::routing::{get, post};
-use axum::{Form, Router};
+use axum::{Form, Json, Router};
 use serde::Deserialize;
 
 pub mod arcs;
@@ -30,6 +30,10 @@ pub fn init_router() -> Router<AppState> {
         .route(
             "/unlink_character_from_session",
             post(sessions::unlink_character_from_session),
+        )
+        .route(
+            "/reorder_campaign_sessions",
+            post(reorder_campaign_sessions),
         )
 }
 
@@ -242,4 +246,61 @@ pub async fn delete(
     }
 
     Err(redirect_when_error)
+}
+
+#[derive(Deserialize)]
+pub struct CampaignOrder {
+    campaign_id: i32,
+    arcs: Vec<ArcOrder>,
+}
+
+#[derive(Deserialize)]
+pub struct ArcOrder {
+    arc_id: i32,
+    position: i32,
+    sessions: Vec<SessionOrder>,
+}
+
+#[derive(Deserialize)]
+pub struct SessionOrder {
+    session_id: i32,
+    position: i32,
+}
+
+pub async fn reorder_campaign_sessions(
+    State(app_state): State<AppState>,
+    profile: Option<User>,
+    Json(campaign_order): Json<CampaignOrder>,
+) -> Result<Redirect, Redirect> {
+    let redirect = Redirect::to(&format!(
+        "/role_playing_games/campaigns/campaign?id={}&tab_name=sessions",
+        campaign_order.campaign_id
+    ));
+
+    let updating_user = profile.ok_or(redirect.clone())?;
+
+    for arc_order in campaign_order.arcs {
+        campaigns::arcs::reorder_arc(
+            &app_state,
+            &updating_user,
+            arc_order.arc_id,
+            arc_order.position,
+        )
+        .await
+        .map_err(|error| error.log_and_redirect(redirect.clone()))?;
+
+        for session_order in arc_order.sessions {
+            campaigns::sessions::reorder_session(
+                &app_state,
+                &updating_user,
+                session_order.session_id,
+                arc_order.arc_id,
+                session_order.position,
+            )
+            .await
+            .map_err(|error| error.log_and_redirect(redirect.clone()))?;
+        }
+    }
+
+    Ok(redirect)
 }
