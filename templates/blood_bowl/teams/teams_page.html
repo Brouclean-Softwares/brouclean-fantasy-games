@@ -1,5 +1,12 @@
 {% extends "page_base.html" %}
 
+{% block head %}
+<link rel="stylesheet" href="https://cdn.datatables.net/2.3.8/css/dataTables.dataTables.css" />
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/2.3.8/js/dataTables.js"></script>
+{% endblock %}
+
 {% block navbar %}
 {{ navigation_bar|escape("none") }}
 {% endblock %}
@@ -14,7 +21,7 @@
 </h2>
 
 <div class="uk-overflow-auto">
-    <table class="uk-table uk-table-striped uk-table-small uk-table-hover">
+    <table id="teams" class="uk-table uk-table-striped uk-table-small uk-table-hover">
         <thead>
         <tr>
             <th>Nom</th>
@@ -28,7 +35,7 @@
         <tbody>
         {% for team in teams %}
         <tr>
-            <td class="uk-table-link">
+            <td class="uk-table-link" data-order="{{ team.name }}">
                 <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ team.id }}">
                     <img src="{{ TeamLogo::from(*team).url }}" width="25" height="25" alt="">
                     {{ team.name }}
@@ -43,12 +50,12 @@
                     {% endif %}
                 </a>
             </td>
-            <td class="uk-table-link">
+            <td class="uk-table-link" data-order="{{ team.value }}">
                 <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ team.id }}">
                     {{ team.value / 1000 }}k
                 </a>
             </td>
-            <td class="uk-table-link">
+            <td class="uk-table-link" data-order="{{ team.current_value }}">
                 <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ team.id }}">
                     {{ team.current_value / 1000 }}k
                 </a>
@@ -71,5 +78,12 @@
     </a>
 </div>
 {% endif %}
+
+<script>
+    new DataTable('#teams', {
+        pageLength: 10,
+        lengthMenu: [10, 25, 50, 100]
+    });
+</script>
 
 {% endblock %}
