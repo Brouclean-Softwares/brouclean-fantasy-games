@@ -2,6 +2,7 @@ use crate::AppState;
 use crate::app::templates::role_playing_games::characters::{
     CharacterFilteredList, CharacterPage, CharactersPage,
 };
+use crate::data::role_playing_games::campaigns::sessions;
 use crate::data::role_playing_games::characters::Character;
 use crate::data::role_playing_games::{characters, games};
 use crate::data::users::User;
@@ -93,6 +94,11 @@ pub async fn character(
         .await
         .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
 
+    let sessions_with_campaign =
+        sessions::select_for_character_with_campaign(&app_state, character.id)
+            .await
+            .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
+
     Ok(CharacterPage::get(
         app_state,
         profile.clone(),
@@ -103,6 +109,7 @@ pub async fn character(
         params.edit.unwrap_or(false) && profile.is_some(),
         params.field_edited,
         games,
+        sessions_with_campaign,
     ))
 }
 

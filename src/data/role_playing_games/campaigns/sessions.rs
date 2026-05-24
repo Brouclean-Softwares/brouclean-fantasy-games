@@ -1,5 +1,6 @@
 use crate::AppState;
 use crate::data::role_playing_games::campaigns;
+use crate::data::role_playing_games::campaigns::arcs;
 use crate::data::role_playing_games::campaigns::arcs::NarrativeArc;
 use crate::data::users::User;
 use crate::errors::AppError;
@@ -30,11 +31,27 @@ impl GameSession {
 #[derive(Deserialize, sqlx::FromRow, Clone, Debug)]
 pub struct GameSessionWithCampaign {
     pub id: i32,
+    pub position: i32,
+    pub name: String,
     pub playing_at: Option<NaiveDateTime>,
+    pub campaign_id: i32,
     pub campaign_name: String,
+    pub arc_id: i32,
+    pub arc_name: String,
+    pub arc_position: i32,
     pub game_name: String,
     pub game_external_logo_url: Option<String>,
     pub game_master_name: Option<String>,
+}
+
+impl GameSessionWithCampaign {
+    pub fn arc_indexed_name(&self) -> String {
+        arcs::indexed_name(self.arc_position, &self.arc_name)
+    }
+
+    pub fn session_indexed_name(&self) -> String {
+        session_indexed_name(self.arc_position, self.position, &self.name)
+    }
 }
 
 pub fn session_indexed_name(
@@ -187,6 +204,51 @@ pub async fn select_next_session(
     Ok(session)
 }
 
+pub async fn select_for_character_with_campaign(
+    state: &AppState,
+    character_id: i32,
+) -> Result<Vec<GameSessionWithCampaign>, AppError> {
+    tracing::debug!(
+        "select_for_character_with_campaign for character_id={}",
+        character_id
+    );
+
+    let sessions: Vec<GameSessionWithCampaign> = sqlx::query_as(
+        "SELECT rpg_sessions.id,
+                    rpg_sessions.position,
+                    rpg_sessions.name,
+                    rpg_sessions.playing_at,
+                    rpg_campaigns.id as campaign_id,
+                    rpg_campaigns.name as campaign_name,
+                    rpg_arcs.id as arc_id,
+                    rpg_arcs.name as arc_name,
+                    rpg_arcs.position as arc_position,
+                    rpg_games.name as game_name,
+                    rpg_games.external_logo_url as game_external_logo_url,
+                    users.name as game_master_name
+            FROM rpg_sessions_characters
+            INNER JOIN rpg_sessions
+            ON rpg_sessions.id = rpg_sessions_characters.session_id
+            INNER JOIN rpg_arcs
+            ON rpg_sessions.arc_id = rpg_arcs.id
+            INNER JOIN rpg_campaigns
+            ON rpg_arcs.campaign_id = rpg_campaigns.id
+            INNER JOIN rpg_games
+            ON rpg_games.id = rpg_campaigns.game_id
+            LEFT OUTER JOIN users
+            ON users.id = rpg_campaigns.game_master_id
+            WHERE rpg_sessions_characters.character_id = $1
+            ORDER BY rpg_campaigns.created_at ASC,
+                     rpg_arcs.position ASC,
+                     rpg_sessions.position ASC",
+    )
+    .bind(character_id.clone())
+    .fetch_all(&state.db)
+    .await?;
+
+    Ok(sessions)
+}
+
 pub async fn select_schedule_sessions_for_user(
     state: &AppState,
     user_id: i32,
@@ -195,8 +257,14 @@ pub async fn select_schedule_sessions_for_user(
 
     let sessions: Vec<GameSessionWithCampaign> = sqlx::query_as(
         "SELECT rpg_sessions.id,
+                    rpg_sessions.position,
+                    rpg_sessions.name,
                     rpg_sessions.playing_at,
+                    rpg_campaigns.id as campaign_id,
                     rpg_campaigns.name as campaign_name,
+                    rpg_arcs.id as arc_id,
+                    rpg_arcs.name as arc_name,
+                    rpg_arcs.position as arc_position,
                     rpg_games.name as game_name,
                     rpg_games.external_logo_url as game_external_logo_url,
                     users.name as game_master_name

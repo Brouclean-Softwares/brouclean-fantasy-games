@@ -60,6 +60,12 @@
             </a>
         </li>
 
+        <li {% if tab_name.eq("sessions") %}class="uk-active"{% endif %}>
+        <a href="character?id={{ character.id }}&tab_name=sessions" uk-icon="icon: list">
+            <span class="uk-visible@m">Sessions</span>
+        </a>
+        </li>
+
         <li {% if tab_name.eq("profile") %}class="uk-active"{% endif %}>
             <a href="character?id={{ character.id }}&tab_name=profile" uk-icon="icon: file-text">
                 <span class="uk-visible@m">Profil</span>
@@ -188,6 +194,36 @@
         {% endif %}
     </div>
     {% endif %}
+</div>
+
+{% elif tab_name.eq("sessions") %}
+<div>
+    {% for campaign_with_arcs in campaigns_with_arcs_and_sessions %}
+    <h3 class="uk-heading-divider">
+        <a class="uk-link-reset" href="/role_playing_games/campaigns/campaign?id={{ campaign_with_arcs.0 }}&tab_name=sessions">
+            <span>{{ campaign_with_arcs.1 }}</span>
+        </a>
+    </h3>
+
+    {% for arc_with_sessions in campaign_with_arcs.2 %}
+    <h4>
+        <a class="uk-link-reset" href="/role_playing_games/campaigns/arc?id={{ arc_with_sessions.0 }}">
+            <span>{{ arc_with_sessions.1 }}</span>
+        </a>
+    </h4>
+
+    <ul class="uk-list">
+        {% for session in arc_with_sessions.2 %}
+        <li class="uk-margin">
+            <a class="uk-link-reset" href="/role_playing_games/campaigns/session?id={{ session.0 }}">
+                <span>{{ session.1 }}</span>
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+    {% endfor %}
+
+    {% endfor %}
 </div>
 
 {% elif tab_name.eq("profile") %}

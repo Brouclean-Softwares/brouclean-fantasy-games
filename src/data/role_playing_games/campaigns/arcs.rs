@@ -18,13 +18,17 @@ pub struct NarrativeArc {
 
 impl NarrativeArc {
     pub fn indexed_name(&self) -> String {
-        format!("{}. {}", self.position + 1, self.name)
+        indexed_name(self.position, &self.name)
     }
 }
 
 pub struct NarrativeArcWithGameSessions {
     pub arc: NarrativeArc,
     pub sessions: Vec<GameSession>,
+}
+
+pub fn indexed_name(position: i32, name: &String) -> String {
+    format!("{}. {}", position + 1, name)
 }
 
 pub async fn select_by_id(state: &AppState, id: i32) -> Result<NarrativeArc, AppError> {

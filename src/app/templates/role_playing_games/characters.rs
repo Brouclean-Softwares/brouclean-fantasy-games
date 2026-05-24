@@ -1,5 +1,6 @@
 use crate::AppState;
 use crate::app::templates::{BreadCrumb, NavigationBar, UrlLink, role_playing_games};
+use crate::data::role_playing_games::campaigns::sessions::GameSessionWithCampaign;
 use crate::data::role_playing_games::characters::{Character, CharacterRow};
 use crate::data::role_playing_games::games::Game;
 use crate::data::users::User;
@@ -66,6 +67,7 @@ pub struct CharacterPage {
     field_edited: String,
     is_owner: bool,
     games: Vec<Game>,
+    campaigns_with_arcs_and_sessions: Vec<(i32, String, Vec<(i32, String, Vec<(i32, String)>)>)>,
 }
 
 impl CharacterPage {
@@ -79,6 +81,7 @@ impl CharacterPage {
         edit_mode: bool,
         field_edited: Option<String>,
         games: Vec<Game>,
+        sessions_with_campaign: Vec<GameSessionWithCampaign>,
     ) -> Self {
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile, uri),
@@ -90,7 +93,55 @@ impl CharacterPage {
             field_edited: field_edited.unwrap_or_default(),
             is_owner: editable,
             games,
+            campaigns_with_arcs_and_sessions: Self::extract_campaigns_with_arcs_and_sessions(
+                sessions_with_campaign,
+            ),
         }
+    }
+
+    fn extract_campaigns_with_arcs_and_sessions(
+        sessions_with_campaign: Vec<GameSessionWithCampaign>,
+    ) -> Vec<(i32, String, Vec<(i32, String, Vec<(i32, String)>)>)> {
+        let mut campaigns_with_arcs_and_sessions = Vec::new();
+
+        let mut campaign_with_arcs = (0, String::new(), Vec::new());
+        let mut arc_with_sessions = (0, String::new(), Vec::new());
+
+        for (index, session_with_campaign) in sessions_with_campaign.iter().enumerate() {
+            if campaign_with_arcs.0 != 0
+                && campaign_with_arcs.0 != session_with_campaign.campaign_id
+            {
+                campaigns_with_arcs_and_sessions.push(campaign_with_arcs.clone());
+
+                campaign_with_arcs.2 = Vec::new();
+            }
+
+            campaign_with_arcs.0 = session_with_campaign.campaign_id.clone();
+            campaign_with_arcs.1 = session_with_campaign.campaign_name.clone();
+
+            if arc_with_sessions.0 != 0 && arc_with_sessions.0 != session_with_campaign.arc_id {
+                campaign_with_arcs.2.push(arc_with_sessions.clone());
+
+                arc_with_sessions.2 = Vec::new();
+            }
+
+            arc_with_sessions.0 = session_with_campaign.arc_id.clone();
+            arc_with_sessions.1 = session_with_campaign.arc_indexed_name();
+
+            arc_with_sessions.2.push((
+                session_with_campaign.id,
+                session_with_campaign.session_indexed_name(),
+            ));
+
+            if index == sessions_with_campaign.len() - 1 {
+                campaign_with_arcs.2.push(arc_with_sessions.clone());
+                campaigns_with_arcs_and_sessions.push(campaign_with_arcs.clone());
+            }
+        }
+
+        tracing::error!("Sessions: {:?}", campaigns_with_arcs_and_sessions);
+
+        campaigns_with_arcs_and_sessions
     }
 }
 
