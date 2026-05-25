@@ -60,15 +60,15 @@ pub async fn session(
         .await
         .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
 
-    let campaign = campaigns::select_by_id(&app_state, session.campaign_id)
-        .await
-        .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
-
     let previous_session = sessions::select_previous_session(&app_state, &session)
         .await
         .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
 
     let next_session = sessions::select_next_session(&app_state, &session)
+        .await
+        .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
+
+    let campaign = campaigns::select_by_id(&app_state, session.campaign_id)
         .await
         .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
 
