@@ -151,8 +151,11 @@ pub async fn select_previous_session(
             ON rpg_sessions.arc_id = rpg_arcs.id
             LEFT OUTER JOIN rpg_sessions_characters
             ON rpg_sessions_characters.session_id = rpg_sessions.id
-            WHERE (rpg_sessions.position < $1 AND rpg_arcs.position = $2)
-            OR rpg_arcs.position < $2
+            WHERE rpg_arcs.campaign_id = $3
+            AND (
+                (rpg_sessions.position < $1 AND rpg_arcs.position = $2)
+                OR rpg_arcs.position < $2
+            )
             GROUP BY rpg_sessions.id, rpg_arcs.position, rpg_arcs.campaign_id
             ORDER BY rpg_arcs.position DESC,
                      rpg_sessions.position DESC
@@ -160,6 +163,7 @@ pub async fn select_previous_session(
     )
     .bind(session.position.clone())
     .bind(session.arc_position.clone())
+    .bind(session.campaign_id.clone())
     .fetch_optional(&state.db)
     .await?;
 
@@ -189,8 +193,11 @@ pub async fn select_next_session(
             ON rpg_sessions.arc_id = rpg_arcs.id
             LEFT OUTER JOIN rpg_sessions_characters
             ON rpg_sessions_characters.session_id = rpg_sessions.id
-            WHERE (rpg_sessions.position > $1 AND rpg_arcs.position = $2)
-            OR rpg_arcs.position > $2
+            WHERE rpg_arcs.campaign_id = $3
+            AND (
+                (rpg_sessions.position > $1 AND rpg_arcs.position = $2)
+                OR rpg_arcs.position > $2
+            )
             GROUP BY rpg_sessions.id, rpg_arcs.position, rpg_arcs.campaign_id
             ORDER BY rpg_arcs.position ASC,
                      rpg_sessions.position ASC
@@ -198,6 +205,7 @@ pub async fn select_next_session(
     )
     .bind(session.position.clone())
     .bind(session.arc_position.clone())
+    .bind(session.campaign_id.clone())
     .fetch_optional(&state.db)
     .await?;
 
