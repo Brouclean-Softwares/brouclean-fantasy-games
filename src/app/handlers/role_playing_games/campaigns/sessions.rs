@@ -151,6 +151,8 @@ pub async fn update(
                     },
                 )?,
             );
+        } else {
+            session.playing_at = None;
         }
     }
 
