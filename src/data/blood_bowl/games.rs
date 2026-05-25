@@ -1294,7 +1294,9 @@ pub async fn update_after_event(
 
         for event in game.events.iter() {
             if let GameEvent::Injury {
-                player_id, injury, ..
+                team_id,
+                player_id,
+                injury,
             } = event
             {
                 if injury.remains_after_game() {
@@ -1303,11 +1305,18 @@ pub async fn update_after_event(
                                 player_id,
                                 game_id,
                                 injury)
-                            VALUES ($1, $2, $3)",
+                            SELECT bb_teams_players.player_id,
+                                   $2,
+                                   $3
+                            FROM bb_teams_players
+                            WHERE bb_teams_players.player_id = $1
+                            AND bb_teams_players.team_id = $4
+                            AND bb_teams_players.contract_end IS NULL",
                     )
                     .bind(player_id.clone())
                     .bind(game.id.clone())
                     .bind(injury.clone())
+                    .bind(team_id.clone())
                     .execute(&mut *transaction)
                     .await?;
                 }
@@ -1328,7 +1337,9 @@ pub async fn update_after_event(
 
         for event in game.events.iter() {
             if let GameEvent::Hatred {
-                player_id, keyword, ..
+                team_id,
+                player_id,
+                keyword,
             } = event
             {
                 sqlx::query(
@@ -1336,11 +1347,18 @@ pub async fn update_after_event(
                             player_id,
                             game_id,
                             keyword)
-                        VALUES ($1, $2, $3)",
+                        SELECT bb_teams_players.player_id,
+                               $2,
+                               $3
+                        FROM bb_teams_players
+                        WHERE bb_teams_players.player_id = $1
+                        AND bb_teams_players.team_id = $4
+                        AND bb_teams_players.contract_end IS NULL",
                 )
                 .bind(player_id.clone())
                 .bind(game.id.clone())
                 .bind(keyword.clone())
+                .bind(team_id.clone())
                 .execute(&mut *transaction)
                 .await?;
             }
@@ -1541,6 +1559,19 @@ pub async fn delete(state: &AppState, profile: &User, game_id: i32) -> Result<()
             update_after_event(state, profile, &game, &event).await?;
         }
     }
+
+    sqlx::query(
+        "DELETE
+            FROM bb_players_hatred
+            USING bb_games
+            WHERE bb_games.id = bb_players_hatred.game_id
+            AND bb_games.id = $1
+            AND (bb_games.created_by = $2 OR bb_games.first_coach_id = $2 OR bb_games.second_coach_id = $2)",
+    )
+        .bind(game.id.clone())
+        .bind(profile.id.unwrap_or(-1).clone())
+        .execute(&mut *transaction)
+        .await?;
 
     sqlx::query(
         "DELETE
