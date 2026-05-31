@@ -1,5 +1,5 @@
-use crate::app::templates::blood_bowl::games::GameStatus;
 use crate::app::templates::blood_bowl::games::Weather;
+use crate::app::templates::blood_bowl::games::{GamePage, GameStatus};
 use crate::data::blood_bowl::teams::TeamLogo;
 use crate::errors::AppError;
 use askama::Template;
@@ -63,6 +63,10 @@ pub struct GameEvents {
 impl GameEvents {
     pub fn from_game(game: &Game) -> Self {
         Self { game: game.clone() }
+    }
+
+    pub fn player_in_game_url(&self, team_id: &i32, player_id: &i32) -> String {
+        GamePage::player_in_game_url(&self.game.id, team_id, player_id)
     }
 }
 

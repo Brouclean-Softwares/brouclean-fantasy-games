@@ -160,6 +160,13 @@ impl GamePage {
             second_team_statistics,
         })
     }
+
+    pub fn player_in_game_url(game_id: &i32, team_id: &i32, player_id: &i32) -> String {
+        format!(
+            "../players/added_player?player_id_in_game={}&team_id={}&game_id={}",
+            player_id, team_id, game_id
+        )
+    }
 }
 
 #[derive(Template, WebTemplate)]
@@ -168,6 +175,12 @@ struct TeamStatistics {
     game: Game,
     team: Team,
     players_statistics: Vec<(i32, Player, PlayerStatistics)>,
+}
+
+impl TeamStatistics {
+    pub fn player_in_game_url(&self, player_id: &i32) -> String {
+        GamePage::player_in_game_url(&self.game.id, &self.team.id, player_id)
+    }
 }
 
 #[derive(Template, WebTemplate)]

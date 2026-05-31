@@ -28,39 +28,33 @@
 
             <tbody>
             {% for (number, player, player_statistics) in players_statistics %}
-
-            {% let team_id = team.id %}
-            {% let game_id = game.id %}
-
-            {% let added_player_url = format!("../players/added_player?player_id_in_game={}&team_id={}&game_id={}", player.id, team_id, game_id) %}
-
             <tr>
                 <td class="uk-table-link">
-                    <a class="uk-link-reset" href="{{ added_player_url }}">
+                    <a class="uk-link-reset" href="{{ player_in_game_url(player.id) }}">
                         {{ number }}
                     </a>
                 </td>
                 <td class="uk-table-link">
-                    <a class="uk-link-reset" href="{{ added_player_url }}">
+                    <a class="uk-link-reset" href="{{ player_in_game_url(player.id) }}">
                         {{ player.position.name("fr") }}
                     </a>
                 </td>
                 <td class="uk-table-link">
-                    <a class="uk-link-reset" href="{{ added_player_url }}">
+                    <a class="uk-link-reset" href="{{ player_in_game_url(player.id) }}">
                         {{ game.suffered_injuries_names(team.id.clone(), player.id.clone(), "fr") }}
                     </a>
                 </td>
 
                 {% if Keyword::list(game.version).len() > 0 %}
                 <td class="uk-table-link">
-                    <a class="uk-link-reset" href="{{ added_player_url }}">
+                    <a class="uk-link-reset" href="{{ player_in_game_url(player.id) }}">
                         {{ game.suffered_hatred_names(team.id.clone(), player.id.clone(), "fr") }}
                     </a>
                 </td>
                 {% endif %}
 
                 <td class="uk-table-link">
-                    <a class="uk-link-reset" href="{{ added_player_url }}">
+                    <a class="uk-link-reset" href="{{ player_in_game_url(player.id) }}">
                         {% if game.player_has_been_sent_off(team.id.clone(), player.id.clone()) %}
                         <span>Expulsé</span>
                         {% endif %}
@@ -69,49 +63,49 @@
 
                 {% let pas = player_statistics.passing_completions.clone() %}
                 <td class="uk-table-link">
-                    <a class="uk-link-reset" href="{{ added_player_url }}">
+                    <a class="uk-link-reset" href="{{ player_in_game_url(player.id) }}">
                         {% if pas > 0 %}{{ pas }}{% endif %}
                     </a>
                 </td>
 
                 {% let thr = player_statistics.throwing_completions.clone() %}
                 <td class="uk-table-link">
-                    <a class="uk-link-reset" href="{{ added_player_url }}">
+                    <a class="uk-link-reset" href="{{ player_in_game_url(player.id) }}">
                         {% if thr > 0 %}{{ thr }}{% endif %}
                     </a>
                 </td>
 
                 {% let inte = player_statistics.interceptions.clone() %}
                 <td class="uk-table-link">
-                    <a class="uk-link-reset" href="{{ added_player_url }}">
+                    <a class="uk-link-reset" href="{{ player_in_game_url(player.id) }}">
                         {% if inte > 0 %}{{ inte }}{% endif %}
                     </a>
                 </td>
 
                 {% let cas = player_statistics.casualties.clone() %}
                 <td class="uk-table-link">
-                    <a class="uk-link-reset" href="{{ added_player_url }}">
+                    <a class="uk-link-reset" href="{{ player_in_game_url(player.id) }}">
                         {% if cas > 0 %}{{ cas }}{% endif %}
                     </a>
                 </td>
 
                 {% let td = player_statistics.touchdowns.clone() %}
                 <td class="uk-table-link">
-                    <a class="uk-link-reset" href="{{ added_player_url }}">
+                    <a class="uk-link-reset" href="{{ player_in_game_url(player.id) }}">
                         {% if td > 0 %}{{ td }}{% endif %}
                     </a>
                 </td>
 
                 {% let mvp = player_statistics.most_valuable_player.clone() %}
                 <td class="uk-table-link">
-                    <a class="uk-link-reset" href="{{ added_player_url }}">
+                    <a class="uk-link-reset" href="{{ player_in_game_url(player.id) }}">
                         {% if mvp > 0 %}{{ mvp }}{% endif %}
                     </a>
                 </td>
 
                 {% let spp = player_statistics.star_player_points.clone() %}
-                <td class="uk-table-link">
-                    <a class="uk-link-reset" href="{{ added_player_url }}">
+                <td class="uk-table-link uk-text-bold">
+                    <a class="uk-link-reset" href="{{ player_in_game_url(player.id) }}">
                         {% if spp > 0 %}{{ spp }}{% endif %}
                     </a>
                 </td>
