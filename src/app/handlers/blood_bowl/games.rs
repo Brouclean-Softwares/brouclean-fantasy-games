@@ -16,6 +16,7 @@ use blood_bowl_rs::injuries::Injury;
 use blood_bowl_rs::positions::Keyword;
 use blood_bowl_rs::prayers::PrayerToNuffle;
 use blood_bowl_rs::teams::Team;
+use blood_bowl_rs::translation::TranslatedName;
 use blood_bowl_rs::weather::Weather;
 use chrono::NaiveDateTime;
 use http::Uri;
@@ -101,6 +102,9 @@ pub struct GameForm {
     pub sent_off: Option<bool>,
     pub success: Option<Success>,
     pub half_time: Option<String>,
+    pub extra_time: Option<String>,
+    pub first_team_penalties_score: Option<usize>,
+    pub second_team_penalties_score: Option<usize>,
     pub end_game: Option<String>,
     pub first_team_winnings: Option<String>,
     pub first_team_stalled: Option<bool>,
@@ -251,7 +255,7 @@ pub async fn update(
                 &uri,
                 Some(&game_before_update),
                 &competition,
-                err.to_string(),
+                err.name("fr"),
             )
         })?;
     }
@@ -268,7 +272,7 @@ pub async fn update(
                     &uri,
                     Some(&game_before_update),
                     &competition,
-                    err.to_string(),
+                    err.name("fr"),
                 )
             })?;
         } else {
@@ -297,7 +301,7 @@ pub async fn update(
                         &uri,
                         Some(&game_before_update),
                         &competition,
-                        err.to_string(),
+                        err.name("fr"),
                     )
                 })?;
 
@@ -310,7 +314,7 @@ pub async fn update(
                         &uri,
                         Some(&game_before_update),
                         &competition,
-                        err.to_string(),
+                        err.name("fr"),
                     )
                 })?;
         }
@@ -330,7 +334,7 @@ pub async fn update(
                     &uri,
                     Some(&game_before_update),
                     &competition,
-                    err.to_string(),
+                    err.name("fr"),
                 )
             })?;
         } else {
@@ -341,7 +345,7 @@ pub async fn update(
                     &uri,
                     Some(&game_before_update),
                     &competition,
-                    err.to_string(),
+                    err.name("fr"),
                 )
             })?;
         }
@@ -360,7 +364,7 @@ pub async fn update(
                 &uri,
                 Some(&game_before_update),
                 &competition,
-                err.to_string(),
+                err.name("fr"),
             )
         })?;
 
@@ -391,7 +395,7 @@ pub async fn update(
                     &uri,
                     Some(&game_before_update),
                     &competition,
-                    err.to_string(),
+                    err.name("fr"),
                 )
             })?;
 
@@ -421,7 +425,7 @@ pub async fn update(
                     &uri,
                     Some(&game_before_update),
                     &competition,
-                    err.to_string(),
+                    err.name("fr"),
                 )
             })?;
 
@@ -445,7 +449,7 @@ pub async fn update(
                     &uri,
                     Some(&game_before_update),
                     &competition,
-                    err.to_string(),
+                    err.name("fr"),
                 )
             })?;
 
@@ -468,7 +472,7 @@ pub async fn update(
                     &uri,
                     Some(&game_before_update),
                     &competition,
-                    err.to_string(),
+                    err.name("fr"),
                 )
             })?;
 
@@ -487,7 +491,7 @@ pub async fn update(
                     &uri,
                     Some(&game_before_update),
                     &competition,
-                    err.to_string(),
+                    err.name("fr"),
                 )
             })?;
         } else {
@@ -500,7 +504,7 @@ pub async fn update(
                         &uri,
                         Some(&game_before_update),
                         &competition,
-                        err.to_string(),
+                        err.name("fr"),
                     )
                 })?;
         }
@@ -520,7 +524,7 @@ pub async fn update(
                     &uri,
                     Some(&game_before_update),
                     &competition,
-                    err.to_string(),
+                    err.name("fr"),
                 )
             })?;
 
@@ -542,7 +546,7 @@ pub async fn update(
                     &uri,
                     Some(&game_before_update),
                     &competition,
-                    err.to_string(),
+                    err.name("fr"),
                 )
             })?;
 
@@ -564,7 +568,7 @@ pub async fn update(
                     &uri,
                     Some(&game_before_update),
                     &competition,
-                    err.to_string(),
+                    err.name("fr"),
                 )
             })?;
 
@@ -586,7 +590,7 @@ pub async fn update(
                     &uri,
                     Some(&game_before_update),
                     &competition,
-                    err.to_string(),
+                    err.name("fr"),
                 )
             })?;
 
@@ -608,7 +612,7 @@ pub async fn update(
                     &uri,
                     Some(&game_before_update),
                     &competition,
-                    err.to_string(),
+                    err.name("fr"),
                 )
             })?;
 
@@ -626,9 +630,50 @@ pub async fn update(
                 &uri,
                 Some(&game_before_update),
                 &competition,
-                err.to_string(),
+                err.name("fr"),
             )
         })?;
+
+        if let Some(last_event) = game_to_update.events.last() {
+            event = Some(last_event.clone());
+        }
+    }
+
+    // Extra-time
+    if form.extra_time.is_some() {
+        game_to_update.start_extra_time().map_err(|err| {
+            redirect_when_update_ko(
+                &app_state,
+                &profile,
+                &uri,
+                Some(&game_before_update),
+                &competition,
+                err.name("fr"),
+            )
+        })?;
+
+        if let Some(last_event) = game_to_update.events.last() {
+            event = Some(last_event.clone());
+        }
+    }
+
+    // Penalties
+    if let (Some(first_team_penalties_score), Some(second_team_penalties_score)) = (
+        form.first_team_penalties_score,
+        form.second_team_penalties_score,
+    ) {
+        game_to_update
+            .push_penalties(first_team_penalties_score, second_team_penalties_score)
+            .map_err(|err| {
+                redirect_when_update_ko(
+                    &app_state,
+                    &profile,
+                    &uri,
+                    Some(&game_before_update),
+                    &competition,
+                    err.name("fr"),
+                )
+            })?;
 
         if let Some(last_event) = game_to_update.events.last() {
             event = Some(last_event.clone());
@@ -644,7 +689,7 @@ pub async fn update(
                 &uri,
                 Some(&game_before_update),
                 &competition,
-                err.to_string(),
+                err.name("fr"),
             )
         })?;
 
@@ -668,7 +713,7 @@ pub async fn update(
                         &uri,
                         Some(&game_before_update),
                         &competition,
-                        err.to_string(),
+                        err.name("fr"),
                     )
                 })?;
         } else {
@@ -690,7 +735,7 @@ pub async fn update(
                             &uri,
                             Some(&game_before_update),
                             &competition,
-                            err.to_string(),
+                            err.name("fr"),
                         )
                     })?;
             }
@@ -713,7 +758,7 @@ pub async fn update(
                             &uri,
                             Some(&game_before_update),
                             &competition,
-                            err.to_string(),
+                            err.name("fr"),
                         )
                     })?;
             }
@@ -738,7 +783,7 @@ pub async fn update(
                         &uri,
                         Some(&game_before_update),
                         &competition,
-                        err.to_string(),
+                        err.name("fr"),
                     )
                 })?;
         } else {
@@ -764,7 +809,7 @@ pub async fn update(
                             &uri,
                             Some(&game_before_update),
                             &competition,
-                            err.to_string(),
+                            err.name("fr"),
                         )
                     })?;
             }
@@ -791,7 +836,7 @@ pub async fn update(
                             &uri,
                             Some(&game_before_update),
                             &competition,
-                            err.to_string(),
+                            err.name("fr"),
                         )
                     })?;
             }
@@ -817,7 +862,7 @@ pub async fn update(
                     &uri,
                     Some(&game_before_update),
                     &competition,
-                    err.to_string(),
+                    err.name("fr"),
                 )
             })?;
 
@@ -840,7 +885,7 @@ pub async fn update(
                     &uri,
                     Some(&game_before_update),
                     &competition,
-                    err.to_string(),
+                    err.name("fr"),
                 )
             })?;
 
@@ -873,7 +918,7 @@ pub async fn update(
                         &uri,
                         Some(&game_before_update),
                         &competition,
-                        err.to_string(),
+                        err.name("fr"),
                     )
                 })?;
         }
@@ -899,7 +944,7 @@ pub async fn update(
                         &uri,
                         Some(&game_before_update),
                         &competition,
-                        err.to_string(),
+                        err.name("fr"),
                     )
                 })?;
         }
@@ -918,7 +963,7 @@ pub async fn update(
                 &uri,
                 Some(&game_before_update),
                 &competition,
-                err.to_string(),
+                err.name("fr"),
             )
         })?;
 

@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS bb_games (
     game_at TIMESTAMP NOT NULL,
     started_at TIMESTAMP WITH TIME ZONE,
     closed_at TIMESTAMP WITH TIME ZONE,
+    needs_winner BOOLEAN NOT NULL DEFAULT FALSE,
     first_coach_id INTEGER REFERENCES users ON DELETE SET NULL,
     first_team_id INTEGER REFERENCES bb_teams ON DELETE RESTRICT,
     first_team_score INTEGER NOT NULL DEFAULT 0,

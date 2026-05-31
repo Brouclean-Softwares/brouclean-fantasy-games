@@ -31,10 +31,80 @@
                    type="hidden"
                    value="true">
 
-            <button class="uk-button uk-button-primary">
-                Mi-temps
-            </button>
+            <button class="uk-button uk-button-primary">Mi-temps</button>
         </form>
+    </div>
+    {% elif game.needs_winner && ! game.is_having_winner() && ! game.second_half_finished() %}
+    <div class="uk-flex uk-margin-medium-top">
+        <form method="post" autocomplete="off">
+            <input name="game_id"
+                   type="hidden"
+                   value="{{ game.id }}">
+
+            <input name="extra_time"
+                   type="hidden"
+                   value="true">
+
+            <button class="uk-button uk-button-primary">Prolongations</button>
+        </form>
+    </div>
+    {% elif game.needs_winner && ! game.is_having_winner() && game.second_half_finished() %}
+    <div class="uk-flex uk-margin-medium-top">
+        <button class="uk-button uk-button-primary"
+                type="button"
+                uk-toggle="target: #modal-penalties">
+            Tirs au but
+        </button>
+
+        <div id="modal-penalties" uk-modal>
+            <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                <h2 class="uk-modal-title">Tirs aux but</h2>
+                <p>Aucune équipe ne s'est départagée. Il est temps de gérer les tirs aux buts.</p>
+                <p>Faites 5 jets de dés l'un contre l'autre (relancez en cas d'égalité) et ajoutez un point à chaque fois pour l'équipe qui a fait le plus.</p>
+                <p>
+                <form id="penalties_score_form" method="post" autocomplete="off" class="uk-form-stacked">
+                    <input name="game_id"
+                           type="hidden"
+                           value="{{ game.id }}">
+
+                    <div class="uk-margin">
+                        <label class="uk-form-label" for="first_team_penalties_score">
+                            <img src="{{ TeamLogo::from(game.first_team.clone()).url }}" width="40" height="40" alt="">
+                            <span class="uk-text-bold">{{ game.first_team.name }}</span>
+                        </label>
+                        <div class="uk-form-controls">
+                            <input class="uk-input"
+                                   id="first_team_penalties_score"
+                                   name="first_team_penalties_score"
+                                   type="number"
+                                   value="0">
+                        </div>
+                    </div>
+
+                    <div class="uk-margin">
+                        <label class="uk-form-label" for="second_team_penalties_score">
+                            <img src="{{ TeamLogo::from(game.second_team.clone()).url }}" width="40" height="40" alt="">
+                            <span class="uk-text-bold">{{ game.second_team.name }}</span>
+                        </label>
+                        <div class="uk-form-controls">
+                            <input class="uk-input"
+                                   id="second_team_penalties_score"
+                                   name="second_team_penalties_score"
+                                   type="number"
+                                   value="0">
+                        </div>
+                    </div>
+                </form>
+                </p>
+                <p class="uk-text-right">
+                    <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                    <button class="uk-button uk-button-primary"
+                            onclick="document.getElementById('penalties_score_form').submit()">
+                        Fin
+                    </button>
+                </p>
+            </div>
+        </div>
     </div>
     {% else %}
     <div class="uk-flex uk-margin-medium-top">
@@ -70,9 +140,7 @@
                type="hidden"
                value="true">
 
-        <button class="uk-button uk-button-danger">
-            Annuler le dernier évènement
-        </button>
+        <button class="uk-button uk-button-danger">Annuler le dernier évènement</button>
     </form>
     {% endif %}
 </div>

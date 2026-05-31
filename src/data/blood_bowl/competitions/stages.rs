@@ -278,6 +278,13 @@ impl CompetitionStageType {
             CompetitionStageType::Cup => vec![CompetitionStageRule::WithRanking],
         }
     }
+
+    pub fn needs_game_winner(&self) -> bool {
+        match self {
+            CompetitionStageType::Championship => false,
+            CompetitionStageType::Cup => true,
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]

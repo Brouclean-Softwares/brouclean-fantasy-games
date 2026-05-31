@@ -546,7 +546,7 @@ pub async fn insert_games(
 ) -> Result<Redirect, Redirect> {
     let error_handler = |error: AppError| {
         error.log_and_redirect(Redirect::to(&format!(
-            "./competition?id={}&tab=schedule&alert_message={}",
+            "./competition?id={}&tab_name=schedule&alert_message={}",
             form.competition_id,
             error.to_string()
         )))
@@ -556,7 +556,7 @@ pub async fn insert_games(
         .map_err(|error| {
             tracing::error!("{}", error);
             Redirect::to(&format!(
-                "./competition?id={}&tab=schedule&alert_message=Veuillez remplir la date et l'heure des matchs.",
+                "./competition?id={}&tab_name=schedule&alert_message=Veuillez remplir la date et l'heure des matchs.",
                 form.competition_id
             ))
         })?;
@@ -586,7 +586,7 @@ pub async fn insert_games(
     }
 
     Ok(Redirect::to(&format!(
-        "./competition?id={}&tab=schedule",
+        "./competition?id={}&tab_name=schedule",
         form.competition_id
     )))
 }

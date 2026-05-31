@@ -1,6 +1,7 @@
 <div>
     <div class="uk-margin-medium-top">
-    {% for event in game.events.iter().rev() %}
+        {% for event in game.events.iter().rev() %}
+
         {% match event %}
 
         {% when GameEvent::FanFactor { team_id: team_id, fan_factor: fan_factor } %}
@@ -229,6 +230,21 @@
             </a>
         </p>
         {% endif %}
+        {% match success %}
+        {% when Success::Touchdown %}
+        <p class="uk-text-center">
+            <span class="uk-text-large">🏉</span>
+            <br>
+            <span class="uk-text-bold">Touchdown !</span>
+        </p>
+        {% when Success::Casualty %}
+        <p class="uk-text-center">
+            <span class="uk-text-large">💥</span>
+            <br>
+            <span class="uk-text-bold">Élimination !</span>
+        </p>
+        {% else %}
+        {% endmatch %}
 
 
 
@@ -236,6 +252,22 @@
         <h4 class="uk-heading-line uk-text-center uk-margin-large-top">
             <span>Mi-temps</span>
         </h4>
+
+
+
+        {% when GameEvent::ExtraTime %}
+        <h4 class="uk-heading-line uk-text-center uk-margin-large-top">
+            <span>Fin du temps réglementaire</span>
+        </h4>
+
+
+
+        {% when GameEvent::Penalties { first_team_score: first_team_score, second_team_score: second_team_score } %}
+        <p class="uk-text-center">
+            <span class="uk-text-large">🏉</span>
+            <br>
+            <span class="uk-text-bold">Tirs aux buts : {{ first_team_score }} - {{ second_team_score }} </span>
+        </p>
 
 
 
@@ -312,6 +344,7 @@
         </p>
 
         {% endmatch %}
-    {% endfor %}
+
+        {% endfor %}
     </div>
 </div>

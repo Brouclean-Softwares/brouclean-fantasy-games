@@ -68,6 +68,7 @@ struct GameRow {
     game_at: NaiveDateTime,
     started: bool,
     closed: bool,
+    needs_winner: bool,
     first_team_id: i32,
     first_team_score: i32,
     first_team_casualties: i32,
@@ -139,6 +140,7 @@ impl GameRow {
             first_team,
             second_team,
             events: serde_json::from_str(&self.events)?,
+            needs_winner: self.needs_winner,
         };
 
         if let Some(players_str) = self.playing_players {
@@ -174,6 +176,7 @@ pub async fn select_all_scheduled(state: &AppState) -> Result<Vec<GameSummary>, 
                     bb_games.game_at,
                     bb_games.started_at IS NOT NULL AS started,
                     bb_games.closed_at IS NOT NULL AS closed,
+                    bb_games.needs_winner,
                     bb_games.first_team_id,
                     bb_games.first_team_score,
                     bb_games.first_team_casualties,
@@ -220,6 +223,7 @@ pub async fn select_all_played(state: &AppState) -> Result<Vec<GameSummary>, App
                     bb_games.game_at,
                     bb_games.started_at IS NOT NULL AS started,
                     bb_games.closed_at IS NOT NULL AS closed,
+                    bb_games.needs_winner,
                     bb_games.first_team_id,
                     bb_games.first_team_score,
                     bb_games.first_team_casualties,
@@ -265,6 +269,7 @@ pub async fn select_all_playing(state: &AppState) -> Result<Vec<GameSummary>, Ap
                     bb_games.game_at,
                     bb_games.started_at IS NOT NULL AS started,
                     bb_games.closed_at IS NOT NULL AS closed,
+                    bb_games.needs_winner,
                     bb_games.first_team_id,
                     bb_games.first_team_score,
                     bb_games.first_team_casualties,
@@ -314,6 +319,7 @@ pub async fn select_all_for_competition_stage(
                     bb_games.game_at,
                     bb_games.started_at IS NOT NULL AS started,
                     bb_games.closed_at IS NOT NULL AS closed,
+                    bb_games.needs_winner,
                     bb_games.first_team_id,
                     bb_games.first_team_score,
                     bb_games.first_team_casualties,
@@ -363,6 +369,7 @@ pub async fn select_played_by_team(
                     bb_games.game_at,
                     bb_games.started_at IS NOT NULL AS started,
                     bb_games.closed_at IS NOT NULL AS closed,
+                    bb_games.needs_winner,
                     bb_games.first_team_id,
                     bb_games.first_team_score,
                     bb_games.first_team_casualties,
@@ -413,6 +420,7 @@ pub async fn select_scheduled_for_team(
                     bb_games.game_at,
                     bb_games.started_at IS NOT NULL AS started,
                     bb_games.closed_at IS NOT NULL AS closed,
+                    bb_games.needs_winner,
                     bb_games.first_team_id,
                     bb_games.first_team_score,
                     bb_games.first_team_casualties,
@@ -464,6 +472,7 @@ pub async fn select_playing_by_team(
                     bb_games.game_at,
                     bb_games.started_at IS NOT NULL AS started,
                     bb_games.closed_at IS NOT NULL AS closed,
+                    bb_games.needs_winner,
                     bb_games.first_team_id,
                     bb_games.first_team_score,
                     bb_games.first_team_casualties,
@@ -515,6 +524,7 @@ pub async fn select_scheduled_for_coach(
                     bb_games.game_at,
                     bb_games.started_at IS NOT NULL AS started,
                     bb_games.closed_at IS NOT NULL AS closed,
+                    bb_games.needs_winner,
                     bb_games.first_team_id,
                     bb_games.first_team_score,
                     bb_games.first_team_casualties,
@@ -566,6 +576,7 @@ pub async fn select_playing_by_coach(
                     bb_games.game_at,
                     bb_games.started_at IS NOT NULL AS started,
                     bb_games.closed_at IS NOT NULL AS closed,
+                    bb_games.needs_winner,
                     bb_games.first_team_id,
                     bb_games.first_team_score,
                     bb_games.first_team_casualties,
@@ -644,6 +655,7 @@ pub async fn select_by_id(state: &AppState, id: i32) -> Result<Game, AppError> {
                     bb_games.game_at,
                     bb_games.started_at IS NOT NULL AS started,
                     bb_games.closed_at IS NOT NULL AS closed,
+                    bb_games.needs_winner,
                     bb_games.first_team_id,
                     bb_games.first_team_score,
                     bb_games.first_team_casualties,
@@ -689,6 +701,7 @@ pub async fn select_summary_by_id(
                     bb_games.game_at,
                     bb_games.started_at IS NOT NULL AS started,
                     bb_games.closed_at IS NOT NULL AS closed,
+                    bb_games.needs_winner,
                     bb_games.first_team_id,
                     bb_games.first_team_score,
                     bb_games.first_team_casualties,
@@ -931,6 +944,7 @@ pub async fn create_friendly(
         None,
         None,
         None,
+        false,
     )
     .await
 }
@@ -943,29 +957,32 @@ pub async fn create_for_competition_stage_round(
     round_schedule: RoundSchedule,
     scheduled_at: NaiveDateTime,
 ) -> Result<(), AppError> {
-    let games_to_create = round_schedule.games_that_can_be_created();
+    if let Some(competition_stage) = CompetitionStage::select_by_id(state, stage_id).await? {
+        let games_to_create = round_schedule.games_that_can_be_created();
 
-    for game_schedule in games_to_create {
-        if let (Some(home_team), Some(away_team)) =
-            (game_schedule.home_team, game_schedule.away_team)
-        {
-            let first_team =
-                teams::select_by_id_without_staff_nor_players(state, home_team.id).await?;
+        for game_schedule in games_to_create {
+            if let (Some(home_team), Some(away_team)) =
+                (game_schedule.home_team, game_schedule.away_team)
+            {
+                let first_team =
+                    teams::select_by_id_without_staff_nor_players(state, home_team.id).await?;
 
-            let second_team =
-                teams::select_by_id_without_staff_nor_players(state, away_team.id).await?;
+                let second_team =
+                    teams::select_by_id_without_staff_nor_players(state, away_team.id).await?;
 
-            create(
-                state,
-                profile,
-                &first_team,
-                &second_team,
-                scheduled_at,
-                Some(competition_id),
-                Some(stage_id),
-                Some(round_schedule.name.clone()),
-            )
-            .await?;
+                create(
+                    state,
+                    profile,
+                    &first_team,
+                    &second_team,
+                    scheduled_at,
+                    Some(competition_id),
+                    Some(stage_id),
+                    Some(round_schedule.name.clone()),
+                    competition_stage.stage_type.needs_game_winner(),
+                )
+                .await?;
+            }
         }
     }
 
@@ -981,6 +998,7 @@ pub async fn create(
     competition_id: Option<i32>,
     stage_id: Option<i32>,
     round_name: Option<String>,
+    needs_winner: bool,
 ) -> Result<i32, AppError> {
     tracing::debug!(
         "create by coach={:?} to play at {} for the following teams: team_a_id={} and team_b_id={} on behalf of competition_id={:?} and stage_id={:?} and round_name={:?}",
@@ -1000,6 +1018,7 @@ pub async fn create(
         game_at,
         &first_team,
         &second_team,
+        needs_winner,
     )?;
 
     let _ = can_be_saved(state, profile, &game).await?;
@@ -1011,17 +1030,19 @@ pub async fn create(
                 version,
                 created_by,
                 game_at,
+                needs_winner,
                 first_coach_id,
                 first_team_id,
                 second_coach_id,
                 second_team_id,
                 events)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING id",
     )
     .bind(game.version.clone())
     .bind(profile.id.clone())
     .bind(game.game_at.clone())
+    .bind(game.needs_winner.clone())
     .bind(first_team.coach.id.unwrap_or_default().clone())
     .bind(first_team.id.clone())
     .bind(second_team.coach.id.unwrap_or_default().clone())
@@ -1224,6 +1245,8 @@ pub async fn update_after_event(
         GameEvent::Hatred { .. } => false,
         GameEvent::SentOff { .. } => false,
         GameEvent::HalfTime { .. } => false,
+        GameEvent::ExtraTime { .. } => false,
+        GameEvent::Penalties { .. } => false,
         GameEvent::GameEnd => false,
         GameEvent::Winnings { .. } => true,
         GameEvent::DedicatedFansUpdate { .. } => true,
@@ -1271,6 +1294,8 @@ pub async fn update_after_event(
         GameEvent::Hatred { .. } => true,
         GameEvent::SentOff { .. } => false,
         GameEvent::HalfTime { .. } => false,
+        GameEvent::ExtraTime { .. } => false,
+        GameEvent::Penalties { .. } => false,
         GameEvent::GameEnd => false,
         GameEvent::Winnings { .. } => false,
         GameEvent::DedicatedFansUpdate { .. } => false,
