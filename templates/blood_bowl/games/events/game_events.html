@@ -100,7 +100,7 @@
 
 
         {% when GameEvent::KickingTeam { team_id: team_id } %}
-        <h4 class="uk-heading-line uk-text-center uk-margin-large-top">
+        <h4 class="uk-heading-line uk-text-center uk-margin-xlarge-top">
             <span>Fin de la séquence d'avant match</span>
         </h4>
         {% if game.first_team.id.eq(team_id.into()) %}
@@ -232,7 +232,7 @@
         {% endif %}
         {% match success %}
         {% when Success::Touchdown %}
-        <p class="uk-text-center">
+        <p class="uk-text-center uk-margin-large-top uk-margin-large-bottom">
             <span class="uk-text-large">🏉</span>
             <br>
             <span class="uk-text-bold">Touchdown !</span>
@@ -242,7 +242,7 @@
             <span class="uk-text-meta">{{ game_event_with_score_and_casulaties.casualties.0}} - {{ game_event_with_score_and_casulaties.casualties.1}}</span>
         </p>
         {% when Success::Casualty %}
-        <p class="uk-text-center">
+        <p class="uk-text-center uk-margin-large-top uk-margin-large-bottom">
             <span class="uk-text-large">💥</span>
             <br>
             <span class="uk-text-bold">Élimination !</span>
@@ -257,14 +257,14 @@
 
 
         {% when GameEvent::HalfTime %}
-        <h4 class="uk-heading-line uk-text-center uk-margin-large-top">
+        <h4 class="uk-heading-line uk-text-center uk-margin-xlarge-top">
             <span>Mi-temps</span>
         </h4>
 
 
 
         {% when GameEvent::ExtraTime %}
-        <h4 class="uk-heading-line uk-text-center uk-margin-large-top">
+        <h4 class="uk-heading-line uk-text-center uk-margin-xlarge-top">
             <span>Fin du temps réglementaire</span>
         </h4>
 
@@ -272,7 +272,7 @@
 
         {% when GameEvent::Penalties { first_team_score: first_team_score, second_team_score: second_team_score } %}
         <p class="uk-text-center">
-            <span class="uk-text-large">🏉</span>
+            <span class="uk-text-large uk-margin-large-top uk-margin-large-bottom">🏉</span>
             <br>
             <span class="uk-text-bold">Tirs aux buts : {{ first_team_score }} - {{ second_team_score }} </span>
         </p>
@@ -280,7 +280,7 @@
 
 
         {% when GameEvent::GameEnd %}
-        <h4 class="uk-heading-line uk-text-center uk-margin-large-top">
+        <h4 class="uk-heading-line uk-text-center uk-margin-xlarge-top">
             <span>Fin du match</span>
         </h4>
 
