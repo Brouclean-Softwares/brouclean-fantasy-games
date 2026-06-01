@@ -1,8 +1,8 @@
 <div>
     <div class="uk-margin-medium-top">
-        {% for event in game.events.iter().rev() %}
+        {% for game_event_with_score_and_casulaties in events_sequence_with_score_and_casualties.iter().rev() %}
 
-        {% match event %}
+        {% match game_event_with_score_and_casulaties.game_event %}
 
         {% when GameEvent::FanFactor { team_id: team_id, fan_factor: fan_factor } %}
         {% if game.first_team.id.eq(team_id.into()) %}
@@ -236,12 +236,20 @@
             <span class="uk-text-large">🏉</span>
             <br>
             <span class="uk-text-bold">Touchdown !</span>
+            <br>
+            <span>{{ game_event_with_score_and_casulaties.score.0}} - {{ game_event_with_score_and_casulaties.score.1}}</span>
+            <br>
+            <span class="uk-text-meta">{{ game_event_with_score_and_casulaties.casualties.0}} - {{ game_event_with_score_and_casulaties.casualties.1}}</span>
         </p>
         {% when Success::Casualty %}
         <p class="uk-text-center">
             <span class="uk-text-large">💥</span>
             <br>
             <span class="uk-text-bold">Élimination !</span>
+            <br>
+            <span>{{ game_event_with_score_and_casulaties.score.0}} - {{ game_event_with_score_and_casulaties.score.1}}</span>
+            <br>
+            <span class="uk-text-meta">{{ game_event_with_score_and_casulaties.casualties.0}} - {{ game_event_with_score_and_casulaties.casualties.1}}</span>
         </p>
         {% else %}
         {% endmatch %}
@@ -340,7 +348,7 @@
 
         {% when _ %}
         <p>
-            {{ format!("{:?}", event) }}
+            {{ format!("{:?}", game_event_with_score_and_casulaties.game_event) }}
         </p>
 
         {% endmatch %}

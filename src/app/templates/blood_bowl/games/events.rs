@@ -5,7 +5,7 @@ use crate::errors::AppError;
 use askama::Template;
 use askama_web::WebTemplate;
 use blood_bowl_rs::actions::Success;
-use blood_bowl_rs::events::GameEvent;
+use blood_bowl_rs::events::{GameEvent, GameEventWithScoreAndCasualties};
 use blood_bowl_rs::games::Game;
 use blood_bowl_rs::inducements::{Inducement, TreasuryAndPettyCash};
 use blood_bowl_rs::injuries::Injury;
@@ -58,11 +58,16 @@ impl PreGameSequence {
 #[template(path = "blood_bowl/games/events/game_events.html")]
 pub struct GameEvents {
     game: Game,
+    events_sequence_with_score_and_casualties: Vec<GameEventWithScoreAndCasualties>,
 }
 
 impl GameEvents {
     pub fn from_game(game: &Game) -> Self {
-        Self { game: game.clone() }
+        Self {
+            game: game.clone(),
+            events_sequence_with_score_and_casualties: game
+                .events_sequence_with_score_and_casualties(),
+        }
     }
 
     pub fn player_in_game_url(&self, team_id: &i32, player_id: &i32) -> String {
