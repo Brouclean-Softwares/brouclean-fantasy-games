@@ -232,24 +232,50 @@
         {% endif %}
         {% match success %}
         {% when Success::Touchdown %}
-        <p class="uk-text-center uk-margin-large-top uk-margin-large-bottom">
+        <p class="uk-text-center uk-margin-large-top">
             <span class="uk-text-large">🏉</span>
             <br>
             <span class="uk-text-bold">Touchdown !</span>
+        </p>
+        <p class="uk-text-center uk-margin-large-bottom">
+            <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
+            <span class="uk-margin-large-left uk-margin-large-right">
+                {% if game.first_team.id.eq(team_id.into()) %}
+                <span class="uk-text-bold">{{ game_event_with_score_and_casulaties.score.0}}</span>
+                <span> - {{ game_event_with_score_and_casulaties.score.1}}</span>
+                {% else %}
+                <span>{{ game_event_with_score_and_casulaties.score.0}} - </span>
+                <span class="uk-text-bold"> {{ game_event_with_score_and_casulaties.score.1}}</span>
+                {% endif %}
+            </span>
+            <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
             <br>
-            <span>{{ game_event_with_score_and_casulaties.score.0}} - {{ game_event_with_score_and_casulaties.score.1}}</span>
-            <br>
-            <span class="uk-text-meta">{{ game_event_with_score_and_casulaties.casualties.0}} - {{ game_event_with_score_and_casulaties.casualties.1}}</span>
+            <span class="uk-text-meta">
+                {{ game_event_with_score_and_casulaties.casualties.0}} - {{ game_event_with_score_and_casulaties.casualties.1}}
+            </span>
         </p>
         {% when Success::Casualty %}
-        <p class="uk-text-center uk-margin-large-top uk-margin-large-bottom">
+        <p class="uk-text-center uk-margin-large-top">
             <span class="uk-text-large">💥</span>
             <br>
             <span class="uk-text-bold">Élimination !</span>
+        </p>
+        <p class="uk-text-center uk-margin-large-bottom">
+            <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
+            <span class="uk-margin-large-left uk-margin-large-right">
+                {{ game_event_with_score_and_casulaties.score.0}} - {{ game_event_with_score_and_casulaties.score.1}}
+            </span>
+            <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
             <br>
-            <span>{{ game_event_with_score_and_casulaties.score.0}} - {{ game_event_with_score_and_casulaties.score.1}}</span>
-            <br>
-            <span class="uk-text-meta">{{ game_event_with_score_and_casulaties.casualties.0}} - {{ game_event_with_score_and_casulaties.casualties.1}}</span>
+            <span class="uk-text-meta">
+                {% if game.first_team.id.eq(team_id.into()) %}
+                <span class="uk-text-bold">{{ game_event_with_score_and_casulaties.casualties.0}}</span>
+                <span> - {{ game_event_with_score_and_casulaties.casualties.1}}</span>
+                {% else %}
+                <span>{{ game_event_with_score_and_casulaties.casualties.0}} - </span>
+                <span class="uk-text-bold"> {{ game_event_with_score_and_casulaties.casualties.1}}</span>
+                {% endif %}
+            </span>
         </p>
         {% else %}
         {% endmatch %}
