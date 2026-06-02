@@ -5,7 +5,6 @@ use dotenv::dotenv;
 use reqwest::Client;
 use sqlx::PgPool;
 use std::env;
-use std::sync::Arc;
 use tower_http::services::{ServeDir, ServeFile};
 use tracing::Level;
 
@@ -80,8 +79,6 @@ fn init_router(state: AppState) -> Router {
         )
         .with_state(state)
 }
-
-pub type SharedState = Arc<AppState>;
 
 #[derive(Clone)]
 pub struct AppState {
