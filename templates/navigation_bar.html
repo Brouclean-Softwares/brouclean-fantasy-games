@@ -101,10 +101,12 @@
                     </ul>
                 </div>
             {% else %}
-                <form action="/auth/sign_in" method="post">
-                    <input type="hidden" name="redirection_uri" value="{{ redirection_uri }}">
+                <form action="/auth/sign_in" method="post"
+                      onsubmit="this.redirection_uri.value = window.location.pathname + window.location.search;">
 
-                    <button class="uk-button uk-button-link" type="button" onclick="submit()">
+                    <input type="hidden" name="redirection_uri">
+
+                    <button class="uk-button uk-button-link" type="submit">
                         <span  uk-icon="icon: sign-in"></span>
                         <span class="uk-visible@m">Se connecter</span>
                     </button>

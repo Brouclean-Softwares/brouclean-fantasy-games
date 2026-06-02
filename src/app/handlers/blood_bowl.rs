@@ -1,9 +1,9 @@
 use crate::AppState;
 use crate::app::templates::blood_bowl;
 use crate::data::blood_bowl::competitions::Competition;
-use crate::data::users::User;
+use crate::data::users::MayBeUser;
 use axum::Router;
-use axum::extract::{OriginalUri, State};
+use axum::extract::State;
 use axum::response::Redirect;
 use axum::routing::get;
 
@@ -28,9 +28,8 @@ pub fn init_router() -> Router<AppState> {
 }
 
 pub async fn home(
-    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
 ) -> Result<blood_bowl::HomePage, Redirect> {
     let redirect_if_error = Redirect::to("/");
 
@@ -59,7 +58,6 @@ pub async fn home(
         let home_page = blood_bowl::HomePage::get(
             &app_state,
             &connected_user,
-            &uri,
             playing_games,
             scheduled_games,
             owned_competitions,

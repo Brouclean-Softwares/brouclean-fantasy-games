@@ -48,7 +48,6 @@ pub async fn callback(
         .await?;
 
     let access_token = token.access_token().secret();
-    let _refresh_token = token.refresh_token().and_then(|token| Some(token.secret()));
 
     let profile = app_state
         .http_requester
@@ -115,8 +114,8 @@ pub fn build_oauth_client() -> GoogleOAuthClient {
     client
 }
 
-pub fn connection_url(app_state: &AppState) -> (String, String) {
-    let (url, csrf_token) = app_state
+pub fn connection_url(app_state: &AppState) -> String {
+    let (url, _) = app_state
         .google_oauth_client
         .authorize_url(CsrfToken::new_random)
         .add_scope(Scope::new("openid".to_string()))
@@ -124,5 +123,5 @@ pub fn connection_url(app_state: &AppState) -> (String, String) {
         .add_scope(Scope::new("email".to_string()))
         .url();
 
-    (url.to_string(), csrf_token.secret().to_string())
+    url.to_string()
 }

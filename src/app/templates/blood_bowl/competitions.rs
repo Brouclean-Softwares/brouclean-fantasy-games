@@ -20,7 +20,6 @@ use askama_web::WebTemplate;
 use blood_bowl_rs::translation::TranslatedName;
 use blood_bowl_rs::translation::TypeName;
 use blood_bowl_rs::versions::Version;
-use http::Uri;
 
 pub fn breadcrumb() -> BreadCrumb {
     blood_bowl::breadcrumb().plus_link(UrlLink::from("Compétitions", "/blood_bowl/competitions"))
@@ -41,13 +40,12 @@ impl CompetitionsPage {
     pub fn get(
         app_state: AppState,
         profile: Option<User>,
-        uri: &Uri,
         competitions_preparing: Vec<Competition>,
         competitions_in_progress: Vec<Competition>,
         competitions_closed: Vec<Competition>,
     ) -> Self {
         Self {
-            navigation_bar: NavigationBar::get(&app_state, &profile, uri),
+            navigation_bar: NavigationBar::get(&app_state, &profile),
             breadcrumb: blood_bowl::breadcrumb(),
             profile,
             competitions_preparing,
@@ -95,7 +93,6 @@ impl CompetitionPage {
     pub async fn get(
         app_state: AppState,
         profile: Option<User>,
-        uri: &Uri,
         alert_message: Option<AlertMessage>,
         competition: Competition,
         tab_name: Option<String>,
@@ -117,7 +114,7 @@ impl CompetitionPage {
         let (schedule, standings) = competition.schedule_and_standings(&app_state).await?;
 
         Ok(Self {
-            navigation_bar: NavigationBar::get(&app_state, &profile, uri),
+            navigation_bar: NavigationBar::get(&app_state, &profile),
             alert_message,
             breadcrumb: breadcrumb(),
             competition: competition.clone(),

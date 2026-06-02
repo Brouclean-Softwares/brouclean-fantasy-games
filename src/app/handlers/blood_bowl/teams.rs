@@ -7,9 +7,9 @@ use crate::data::blood_bowl::competitions::Competition;
 use crate::data::blood_bowl::statistics;
 use crate::data::blood_bowl::statistics::players::PlayersTopStatistics;
 use crate::data::blood_bowl::{games, players, staff, teams};
-use crate::data::users::User;
+use crate::data::users::{MayBeUser, User};
 use crate::errors::AppError;
-use axum::extract::{OriginalUri, Query, State};
+use axum::extract::{Query, State};
 use axum::response::Redirect;
 use axum::routing::{get, post};
 use axum::{Form, Router};
@@ -33,15 +33,14 @@ pub fn init_router() -> Router<AppState> {
 }
 
 pub async fn teams(
-    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
 ) -> Result<TeamsPage, Redirect> {
     let teams = teams::select_all(&app_state)
         .await
         .or_else(|error| Err(error.log_and_redirect(Redirect::to("/"))))?;
 
-    Ok(TeamsPage::get(app_state, profile, &uri, teams))
+    Ok(TeamsPage::get(app_state, profile, teams))
 }
 
 #[derive(Deserialize)]
@@ -76,12 +75,11 @@ pub struct NewTeamQueryParams {
 }
 
 pub async fn new(
-    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
     profile: User,
     Query(params): Query<NewTeamQueryParams>,
 ) -> NewTeamPage {
-    NewTeamPage::get(app_state, profile, &uri, params.version, params.roster)
+    NewTeamPage::get(app_state, profile, params.version, params.roster)
 }
 
 #[derive(Deserialize)]
@@ -116,7 +114,6 @@ impl NewTeamForm {
 }
 
 pub async fn create(
-    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
     profile: User,
     Form(form): Form<NewTeamForm>,
@@ -145,7 +142,6 @@ pub async fn create(
         NewTeamPage::get_with_message(
             app_state.clone(),
             profile.clone(),
-            &uri,
             form.version,
             form.roster,
             Some(AlertMessage {
@@ -166,7 +162,6 @@ pub async fn create(
             Err(NewTeamPage::get_with_message(
                 app_state,
                 profile,
-                &uri,
                 form.version,
                 form.roster,
                 Some(AlertMessage {
@@ -188,9 +183,8 @@ pub struct TeamQueryParams {
 }
 
 pub async fn team(
-    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Query(params): Query<TeamQueryParams>,
 ) -> Result<TeamPage, Redirect> {
     let error_handler = |error: AppError| error.log_and_redirect(Redirect::to("../teams"));
@@ -268,7 +262,6 @@ pub async fn team(
     Ok(TeamPage::get(
         app_state,
         profile,
-        &uri,
         alert_message,
         team,
         params.tab_name,
@@ -300,7 +293,7 @@ pub struct TeamForm {
 
 pub async fn update(
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Query(params): Query<TeamQueryParams>,
     Form(form): Form<TeamForm>,
 ) -> Result<Redirect, Redirect> {

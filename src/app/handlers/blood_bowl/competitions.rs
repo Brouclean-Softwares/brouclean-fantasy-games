@@ -8,9 +8,9 @@ use crate::data::blood_bowl::competitions::stages::{
 use crate::data::blood_bowl::games;
 use crate::data::blood_bowl::statistics::players::PlayersTopStatistics;
 use crate::data::blood_bowl::statistics::teams::TeamsTopStatistics;
-use crate::data::users::User;
+use crate::data::users::{MayBeUser, User};
 use crate::errors::AppError;
-use axum::extract::{OriginalUri, Query, State};
+use axum::extract::{Query, State};
 use axum::response::Redirect;
 use axum::routing::{get, post};
 use axum::{Form, Router};
@@ -34,9 +34,8 @@ pub fn init_router() -> Router<AppState> {
 }
 
 pub async fn competitions(
-    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
 ) -> Result<CompetitionsPage, Redirect> {
     let redirect_if_error = Redirect::to("..");
 
@@ -55,7 +54,6 @@ pub async fn competitions(
     Ok(CompetitionsPage::get(
         app_state,
         profile,
-        &uri,
         competitions_preparing,
         competitions_in_progress,
         competitions_closed,
@@ -72,9 +70,8 @@ pub struct CompetitionQueryParams {
 }
 
 pub async fn competition(
-    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Query(params): Query<CompetitionQueryParams>,
 ) -> Result<CompetitionPage, Redirect> {
     if let Some(competition_id) = params.id {
@@ -105,7 +102,6 @@ pub async fn competition(
         Ok(CompetitionPage::get(
             app_state,
             profile,
-            &uri,
             alert_message,
             competition,
             params.tab_name,
@@ -233,7 +229,7 @@ pub struct AddStageForm {
 
 pub async fn add_stage(
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Form(form): Form<AddStageForm>,
 ) -> Result<Redirect, Redirect> {
     let error_handler = |error: AppError| {
@@ -280,7 +276,7 @@ pub struct DeleteStageForm {
 
 pub async fn delete_stage(
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Form(form): Form<DeleteStageForm>,
 ) -> Result<Redirect, Redirect> {
     let error_handler = |error: AppError| {
@@ -317,7 +313,7 @@ pub struct AddRuleForm {
 
 pub async fn add_rule(
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Form(form): Form<AddRuleForm>,
 ) -> Result<Redirect, Redirect> {
     let error_handler = |error: AppError| {
@@ -373,7 +369,7 @@ pub struct DeleteRuleForm {
 
 pub async fn delete_rule(
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Form(form): Form<DeleteRuleForm>,
 ) -> Result<Redirect, Redirect> {
     let error_handler = |error: AppError| {
@@ -430,7 +426,7 @@ pub struct RegisterTeamForm {
 
 pub async fn register_team(
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Form(form): Form<RegisterTeamForm>,
 ) -> Result<Redirect, Redirect> {
     let error_handler = |error: AppError| {
@@ -466,7 +462,7 @@ pub struct UnregisterTeamForm {
 
 pub async fn unregister_team(
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Form(form): Form<UnregisterTeamForm>,
 ) -> Result<Redirect, Redirect> {
     let error_handler = |error: AppError| {
@@ -503,7 +499,7 @@ pub struct TeamValidationForm {
 
 pub async fn update_team_validation(
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Form(form): Form<TeamValidationForm>,
 ) -> Result<Redirect, Redirect> {
     let error_handler = |error: AppError| {
@@ -541,7 +537,7 @@ pub struct InsertGamesForm {
 
 pub async fn insert_games(
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Form(form): Form<InsertGamesForm>,
 ) -> Result<Redirect, Redirect> {
     let error_handler = |error: AppError| {

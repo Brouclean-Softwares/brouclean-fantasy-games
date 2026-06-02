@@ -5,6 +5,7 @@ use dotenv::dotenv;
 use reqwest::Client;
 use sqlx::PgPool;
 use std::env;
+use std::sync::Arc;
 use tower_http::services::{ServeDir, ServeFile};
 use tracing::Level;
 
@@ -69,7 +70,7 @@ async fn main() {
 
 fn init_router(state: AppState) -> Router {
     Router::new()
-        .nest("/", app::init_router())
+        .merge(app::init_router())
         .nest("/auth", auth::init_router())
         .nest_service("/assets", ServeDir::new("assets"))
         .nest_service("/favicon.ico", ServeFile::new("assets/favicon.ico"))
@@ -80,6 +81,8 @@ fn init_router(state: AppState) -> Router {
         .with_state(state)
 }
 
+pub type SharedState = Arc<AppState>;
+
 #[derive(Clone)]
 pub struct AppState {
     db: PgPool,
@@ -89,7 +92,12 @@ pub struct AppState {
     admin_email: String,
 }
 
-// this impl tells `SignedCookieJar` how to access the key from our state
+impl From<AppState> for Key {
+    fn from(state: AppState) -> Self {
+        state.key.clone()
+    }
+}
+
 impl FromRef<AppState> for Key {
     fn from_ref(state: &AppState) -> Self {
         state.key.clone()

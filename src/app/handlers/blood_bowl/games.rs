@@ -3,9 +3,9 @@ use crate::app::templates::blood_bowl::games::{GamePage, GamesPage, NewGamePage}
 use crate::app::templates::{AlertMessage, AlertType};
 use crate::data::blood_bowl::competitions::Competition;
 use crate::data::blood_bowl::{games, teams};
-use crate::data::users::User;
+use crate::data::users::{MayBeUser, User};
 use crate::errors::AppError;
-use axum::extract::{OriginalUri, Query, State};
+use axum::extract::{Query, State};
 use axum::response::{IntoResponse, Redirect, Response};
 use axum::routing::{get, post};
 use axum::{Form, Router};
@@ -19,7 +19,6 @@ use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::translation::TranslatedName;
 use blood_bowl_rs::weather::Weather;
 use chrono::NaiveDateTime;
-use http::Uri;
 use serde::Deserialize;
 
 pub fn init_router() -> Router<AppState> {
@@ -31,9 +30,8 @@ pub fn init_router() -> Router<AppState> {
 }
 
 pub async fn games(
-    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
 ) -> Result<GamesPage, AppError> {
     let games_playing = games::select_all_playing(&app_state).await?;
     let games_scheduled = games::select_all_scheduled(&app_state).await?;
@@ -42,7 +40,6 @@ pub async fn games(
     GamesPage::get(
         app_state,
         profile,
-        &uri,
         games_playing,
         games_scheduled,
         games_played,
@@ -56,9 +53,8 @@ pub struct GameQueryParams {
 }
 
 pub async fn game(
-    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Query(params): Query<GameQueryParams>,
 ) -> Result<GamePage, AppError> {
     let game = games::select_by_id(&app_state, params.id).await?;
@@ -70,7 +66,6 @@ pub async fn game(
     Ok(GamePage::get(
         app_state,
         profile,
-        &uri,
         game,
         competition,
         edit_mode,
@@ -122,7 +117,6 @@ pub struct GameForm {
 fn redirect_when_update_ko(
     app_state: &AppState,
     profile: &User,
-    uri: &Uri,
     game: Option<&Game>,
     competition: &Option<Competition>,
     error_message: String,
@@ -131,7 +125,6 @@ fn redirect_when_update_ko(
         GamePage::get_with_message(
             app_state.clone(),
             Some(profile.clone()),
-            uri,
             Some(AlertMessage {
                 alert_type: AlertType::Danger,
                 message: error_message,
@@ -148,7 +141,6 @@ fn redirect_when_update_ko(
 }
 
 pub async fn update(
-    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
     profile: User,
     Form(form): Form<GameForm>,
@@ -158,7 +150,7 @@ pub async fn update(
     let game_before_update = games::select_by_id(&app_state, form.game_id)
         .await
         .map_err(|err| {
-            redirect_when_update_ko(&app_state, &profile, &uri, None, &None, err.to_string())
+            redirect_when_update_ko(&app_state, &profile, None, &None, err.to_string())
         })?;
 
     let mut game_to_update = game_before_update.clone();
@@ -166,7 +158,7 @@ pub async fn update(
     let competition = Competition::select_for_game_id(&app_state, game_to_update.id)
         .await
         .map_err(|err| {
-            redirect_when_update_ko(&app_state, &profile, &uri, None, &None, err.to_string())
+            redirect_when_update_ko(&app_state, &profile, None, &None, err.to_string())
         })?;
 
     let mut event: Option<GameEvent> = None;
@@ -178,7 +170,6 @@ pub async fn update(
                 redirect_when_update_ko(
                     &app_state,
                     &profile,
-                    &uri,
                     Some(&game_before_update),
                     &competition,
                     err.to_string(),
@@ -191,7 +182,6 @@ pub async fn update(
                 redirect_when_update_ko(
                     &app_state,
                     &profile,
-                    &uri,
                     Some(&game_before_update),
                     &competition,
                     err.to_string(),
@@ -206,7 +196,6 @@ pub async fn update(
                 redirect_when_update_ko(
                     &app_state,
                     &profile,
-                    &uri,
                     Some(&game_before_update),
                     &competition,
                     err.to_string(),
@@ -222,7 +211,6 @@ pub async fn update(
                 redirect_when_update_ko(
                     &app_state,
                     &profile,
-                    &uri,
                     Some(&game_before_update),
                     &competition,
                     err.to_string(),
@@ -238,7 +226,6 @@ pub async fn update(
                 redirect_when_update_ko(
                     &app_state,
                     &profile,
-                    &uri,
                     Some(&game_before_update),
                     &competition,
                     err.to_string(),
@@ -252,7 +239,6 @@ pub async fn update(
             redirect_when_update_ko(
                 &app_state,
                 &profile,
-                &uri,
                 Some(&game_before_update),
                 &competition,
                 err.name("fr"),
@@ -269,7 +255,6 @@ pub async fn update(
                 redirect_when_update_ko(
                     &app_state,
                     &profile,
-                    &uri,
                     Some(&game_before_update),
                     &competition,
                     err.name("fr"),
@@ -279,7 +264,7 @@ pub async fn update(
             let first_fan_factor: u8 = first_fan_factor.parse().map_err(|_| {
                 redirect_when_update_ko(
                     &app_state, &profile,
-                    &uri, Some(&game_before_update), &competition,
+                    Some(&game_before_update), &competition,
                     "Veuillez remplir la valeur de fan factor (D3 + fans dévoués) ou bien générer en automatique".to_string(),
                 )
             })?;
@@ -287,7 +272,7 @@ pub async fn update(
             let second_fan_factor: u8 = second_fan_factor.parse().map_err(|_| {
                 redirect_when_update_ko(
                     &app_state, &profile,
-                    &uri, Some(&game_before_update), &competition,
+                    Some(&game_before_update), &competition,
                     "Veuillez remplir la valeur de fan factor (D3 + fans dévoués) ou bien générer en automatique".to_string(),
                 )
             })?;
@@ -298,7 +283,6 @@ pub async fn update(
                     redirect_when_update_ko(
                         &app_state,
                         &profile,
-                        &uri,
                         Some(&game_before_update),
                         &competition,
                         err.name("fr"),
@@ -311,7 +295,6 @@ pub async fn update(
                     redirect_when_update_ko(
                         &app_state,
                         &profile,
-                        &uri,
                         Some(&game_before_update),
                         &competition,
                         err.name("fr"),
@@ -331,7 +314,6 @@ pub async fn update(
                 redirect_when_update_ko(
                     &app_state,
                     &profile,
-                    &uri,
                     Some(&game_before_update),
                     &competition,
                     err.name("fr"),
@@ -342,7 +324,6 @@ pub async fn update(
                 redirect_when_update_ko(
                     &app_state,
                     &profile,
-                    &uri,
                     Some(&game_before_update),
                     &competition,
                     err.name("fr"),
@@ -361,7 +342,6 @@ pub async fn update(
             redirect_when_update_ko(
                 &app_state,
                 &profile,
-                &uri,
                 Some(&game_before_update),
                 &competition,
                 err.name("fr"),
@@ -379,7 +359,6 @@ pub async fn update(
             redirect_when_update_ko(
                 &app_state,
                 &profile,
-                &uri,
                 Some(&game_before_update),
                 &competition,
                 err.to_string(),
@@ -392,7 +371,6 @@ pub async fn update(
                 redirect_when_update_ko(
                     &app_state,
                     &profile,
-                    &uri,
                     Some(&game_before_update),
                     &competition,
                     err.name("fr"),
@@ -409,7 +387,6 @@ pub async fn update(
             redirect_when_update_ko(
                 &app_state,
                 &profile,
-                &uri,
                 Some(&game_before_update),
                 &competition,
                 err.to_string(),
@@ -422,7 +399,6 @@ pub async fn update(
                 redirect_when_update_ko(
                     &app_state,
                     &profile,
-                    &uri,
                     Some(&game_before_update),
                     &competition,
                     err.name("fr"),
@@ -446,7 +422,6 @@ pub async fn update(
                 redirect_when_update_ko(
                     &app_state,
                     &profile,
-                    &uri,
                     Some(&game_before_update),
                     &competition,
                     err.name("fr"),
@@ -469,7 +444,6 @@ pub async fn update(
                 redirect_when_update_ko(
                     &app_state,
                     &profile,
-                    &uri,
                     Some(&game_before_update),
                     &competition,
                     err.name("fr"),
@@ -488,7 +462,6 @@ pub async fn update(
                 redirect_when_update_ko(
                     &app_state,
                     &profile,
-                    &uri,
                     Some(&game_before_update),
                     &competition,
                     err.name("fr"),
@@ -501,7 +474,6 @@ pub async fn update(
                     redirect_when_update_ko(
                         &app_state,
                         &profile,
-                        &uri,
                         Some(&game_before_update),
                         &competition,
                         err.name("fr"),
@@ -521,7 +493,6 @@ pub async fn update(
                 redirect_when_update_ko(
                     &app_state,
                     &profile,
-                    &uri,
                     Some(&game_before_update),
                     &competition,
                     err.name("fr"),
@@ -543,7 +514,6 @@ pub async fn update(
                 redirect_when_update_ko(
                     &app_state,
                     &profile,
-                    &uri,
                     Some(&game_before_update),
                     &competition,
                     err.name("fr"),
@@ -565,7 +535,6 @@ pub async fn update(
                 redirect_when_update_ko(
                     &app_state,
                     &profile,
-                    &uri,
                     Some(&game_before_update),
                     &competition,
                     err.name("fr"),
@@ -587,7 +556,6 @@ pub async fn update(
                 redirect_when_update_ko(
                     &app_state,
                     &profile,
-                    &uri,
                     Some(&game_before_update),
                     &competition,
                     err.name("fr"),
@@ -609,7 +577,6 @@ pub async fn update(
                 redirect_when_update_ko(
                     &app_state,
                     &profile,
-                    &uri,
                     Some(&game_before_update),
                     &competition,
                     err.name("fr"),
@@ -627,7 +594,6 @@ pub async fn update(
             redirect_when_update_ko(
                 &app_state,
                 &profile,
-                &uri,
                 Some(&game_before_update),
                 &competition,
                 err.name("fr"),
@@ -645,7 +611,6 @@ pub async fn update(
             redirect_when_update_ko(
                 &app_state,
                 &profile,
-                &uri,
                 Some(&game_before_update),
                 &competition,
                 err.name("fr"),
@@ -668,7 +633,6 @@ pub async fn update(
                 redirect_when_update_ko(
                     &app_state,
                     &profile,
-                    &uri,
                     Some(&game_before_update),
                     &competition,
                     err.name("fr"),
@@ -686,7 +650,6 @@ pub async fn update(
             redirect_when_update_ko(
                 &app_state,
                 &profile,
-                &uri,
                 Some(&game_before_update),
                 &competition,
                 err.name("fr"),
@@ -710,7 +673,6 @@ pub async fn update(
                     redirect_when_update_ko(
                         &app_state,
                         &profile,
-                        &uri,
                         Some(&game_before_update),
                         &competition,
                         err.name("fr"),
@@ -721,7 +683,7 @@ pub async fn update(
                 let winnings: u32 = winnings.parse().map_err(|_| {
                     redirect_when_update_ko(
                         &app_state, &profile,
-                        &uri, Some(&game_before_update), &competition,
+                        Some(&game_before_update), &competition,
                         "Veuillez remplir la valeur des gains (10000 * TD + Fans + 1 si non temporisé / 2) ou bien générer en automatique".to_string(),
                     )
                 })?;
@@ -732,7 +694,6 @@ pub async fn update(
                         redirect_when_update_ko(
                             &app_state,
                             &profile,
-                            &uri,
                             Some(&game_before_update),
                             &competition,
                             err.name("fr"),
@@ -744,7 +705,7 @@ pub async fn update(
                 let winnings: u32 = winnings.parse().map_err(|_| {
                     redirect_when_update_ko(
                         &app_state, &profile,
-                        &uri, Some(&game_before_update), &competition,
+                        Some(&game_before_update), &competition,
                         "Veuillez remplir la valeur des gains (10000 * TD + Fans / 2) ou bien générer en automatique".to_string(),
                     )
                 })?;
@@ -755,7 +716,6 @@ pub async fn update(
                         redirect_when_update_ko(
                             &app_state,
                             &profile,
-                            &uri,
                             Some(&game_before_update),
                             &competition,
                             err.name("fr"),
@@ -780,7 +740,6 @@ pub async fn update(
                     redirect_when_update_ko(
                         &app_state,
                         &profile,
-                        &uri,
                         Some(&game_before_update),
                         &competition,
                         err.name("fr"),
@@ -792,7 +751,6 @@ pub async fn update(
                     redirect_when_update_ko(
                         &app_state,
                         &profile,
-                        &uri,
                         Some(&game_before_update),
                         &competition,
                         "Veuillez remplir le delta en terme de fans dévoués (0, +1 ou -1)"
@@ -806,7 +764,6 @@ pub async fn update(
                         redirect_when_update_ko(
                             &app_state,
                             &profile,
-                            &uri,
                             Some(&game_before_update),
                             &competition,
                             err.name("fr"),
@@ -819,7 +776,6 @@ pub async fn update(
                     redirect_when_update_ko(
                         &app_state,
                         &profile,
-                        &uri,
                         Some(&game_before_update),
                         &competition,
                         "Veuillez remplir le delta en terme de fans dévoués (0, +1 ou -1)"
@@ -833,7 +789,6 @@ pub async fn update(
                         redirect_when_update_ko(
                             &app_state,
                             &profile,
-                            &uri,
                             Some(&game_before_update),
                             &competition,
                             err.name("fr"),
@@ -859,7 +814,6 @@ pub async fn update(
                 redirect_when_update_ko(
                     &app_state,
                     &profile,
-                    &uri,
                     Some(&game_before_update),
                     &competition,
                     err.name("fr"),
@@ -882,7 +836,6 @@ pub async fn update(
                 redirect_when_update_ko(
                     &app_state,
                     &profile,
-                    &uri,
                     Some(&game_before_update),
                     &competition,
                     err.name("fr"),
@@ -902,7 +855,6 @@ pub async fn update(
                 redirect_when_update_ko(
                     &app_state,
                     &profile,
-                    &uri,
                     Some(&game_before_update),
                     &competition,
                     "Veuillez remplir la valeur des pertes liées aux erreurs coûteuses".to_string(),
@@ -915,7 +867,6 @@ pub async fn update(
                     redirect_when_update_ko(
                         &app_state,
                         &profile,
-                        &uri,
                         Some(&game_before_update),
                         &competition,
                         err.name("fr"),
@@ -928,7 +879,6 @@ pub async fn update(
                 redirect_when_update_ko(
                     &app_state,
                     &profile,
-                    &uri,
                     Some(&game_before_update),
                     &competition,
                     "Veuillez remplir la valeur des pertes liées aux erreurs coûteuses".to_string(),
@@ -941,7 +891,6 @@ pub async fn update(
                     redirect_when_update_ko(
                         &app_state,
                         &profile,
-                        &uri,
                         Some(&game_before_update),
                         &competition,
                         err.name("fr"),
@@ -960,7 +909,6 @@ pub async fn update(
             redirect_when_update_ko(
                 &app_state,
                 &profile,
-                &uri,
                 Some(&game_before_update),
                 &competition,
                 err.name("fr"),
@@ -980,7 +928,6 @@ pub async fn update(
                 redirect_when_update_ko(
                     &app_state,
                     &profile,
-                    &uri,
                     Some(&game_before_update),
                     &competition,
                     err.to_string(),
@@ -998,7 +945,6 @@ pub struct NewGameQueryParams {
 }
 
 pub async fn new(
-    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
     profile: User,
     Query(params): Query<NewGameQueryParams>,
@@ -1015,7 +961,7 @@ pub async fn new(
         second_team = Some(teams::select_by_id_with_staff_and_players(&app_state, id).await?);
     }
 
-    let new_game_page = NewGamePage::get(app_state, profile, &uri, first_team, second_team);
+    let new_game_page = NewGamePage::get(app_state, profile, first_team, second_team);
 
     Ok(new_game_page)
 }
@@ -1028,7 +974,6 @@ pub struct NewGameForm {
 }
 
 pub async fn create(
-    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
     profile: User,
     Form(form): Form<NewGameForm>,
@@ -1065,7 +1010,6 @@ pub async fn create(
                     NewGamePage::get_with_message(
                         app_state.clone(),
                         profile.clone(),
-                        &uri,
                         Some(AlertMessage {
                             alert_type: AlertType::Danger,
                             message: "la première équipe est introuvable.".to_string(),
@@ -1084,7 +1028,6 @@ pub async fn create(
                         NewGamePage::get_with_message(
                             app_state.clone(),
                             profile.clone(),
-                            &uri,
                             Some(AlertMessage {
                                 alert_type: AlertType::Danger,
                                 message: "la deuxième équipe est introuvable.".to_string(),
@@ -1101,7 +1044,6 @@ pub async fn create(
                     NewGamePage::get_with_message(
                         app_state.clone(),
                         profile.clone(),
-                        &uri,
                         Some(AlertMessage {
                             alert_type: AlertType::Danger,
                             message: "Veuillez remplir la date et l'heure du match.".to_string(),
@@ -1125,7 +1067,6 @@ pub async fn create(
                 NewGamePage::get_with_message(
                     app_state.clone(),
                     profile.clone(),
-                    &uri,
                     Some(AlertMessage {
                         alert_type: AlertType::Danger,
                         message: error.to_string(),

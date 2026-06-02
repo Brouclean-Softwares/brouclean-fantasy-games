@@ -11,7 +11,6 @@ use crate::data::users::User;
 use crate::errors::AppError;
 use askama::Template;
 use askama_web::WebTemplate;
-use http::Uri;
 
 pub mod competitions;
 pub mod games;
@@ -40,7 +39,6 @@ impl HomePage {
     pub async fn get(
         app_state: &AppState,
         profile: &User,
-        uri: &Uri,
         playing_games: Vec<GameSummary>,
         scheduled_games: Vec<GameSummary>,
         owned_competitions: Vec<Competition>,
@@ -55,7 +53,7 @@ impl HomePage {
         let owned_teams_block = OwnedTeamsBlock { owned_teams };
 
         Ok(Self {
-            navigation_bar: NavigationBar::get(&app_state, &Some(profile.clone()), uri),
+            navigation_bar: NavigationBar::get(&app_state, &Some(profile.clone())),
             breadcrumb: BreadCrumb::only_home(),
             playing_games,
             scheduled_games,

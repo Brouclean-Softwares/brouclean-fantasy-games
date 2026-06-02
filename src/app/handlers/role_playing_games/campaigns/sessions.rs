@@ -2,10 +2,10 @@ use crate::AppState;
 use crate::app::templates::role_playing_games::campaigns::GameSessionPage;
 use crate::data::role_playing_games::campaigns::{arcs, sessions};
 use crate::data::role_playing_games::{campaigns, characters};
-use crate::data::users::User;
+use crate::data::users::MayBeUser;
 use crate::errors::AppError;
 use axum::Form;
-use axum::extract::{OriginalUri, Query, State};
+use axum::extract::{Query, State};
 use axum::response::Redirect;
 use chrono::NaiveDateTime;
 use serde::Deserialize;
@@ -19,7 +19,7 @@ pub struct NewGameSessionForm {
 
 pub async fn new(
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Form(form): Form<NewGameSessionForm>,
 ) -> Result<Redirect, Redirect> {
     let redirect = Redirect::to(&format!(
@@ -49,9 +49,8 @@ pub struct GameSessionQueryParams {
 }
 
 pub async fn session(
-    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Query(params): Query<GameSessionQueryParams>,
 ) -> Result<GameSessionPage, Redirect> {
     let redirect_if_error = Redirect::to("/role_playing_games/campaigns");
@@ -84,7 +83,6 @@ pub async fn session(
     Ok(GameSessionPage::get(
         app_state,
         profile.clone(),
-        &uri,
         campaign,
         session,
         previous_session,
@@ -111,7 +109,7 @@ pub struct UpdateGameSessionForm {
 
 pub async fn update(
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Form(form): Form<UpdateGameSessionForm>,
 ) -> Result<Redirect, Redirect> {
     let redirect_when_error = Redirect::to(&format!(
@@ -190,7 +188,7 @@ pub struct DeleteGameSessionForm {
 
 pub async fn delete(
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Form(form): Form<DeleteGameSessionForm>,
 ) -> Result<Redirect, Redirect> {
     let redirect_when_error = Redirect::to(&format!(
@@ -221,7 +219,7 @@ pub struct LinkCharacterForm {
 
 pub async fn link_character_to_session(
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Form(form): Form<LinkCharacterForm>,
 ) -> Result<Redirect, Redirect> {
     let error_handler = |error: AppError| {
@@ -250,7 +248,7 @@ pub struct UnlinkCharacterForm {
 
 pub async fn unlink_character_from_session(
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Form(form): Form<UnlinkCharacterForm>,
 ) -> Result<Redirect, Redirect> {
     let error_handler = |error: AppError| {

@@ -16,7 +16,6 @@ use blood_bowl_rs::rosters::{Roster, RosterDefinition, SpecialRule};
 use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::translation::{TranslatedName, TypeName};
 use blood_bowl_rs::versions::Version;
-use http::Uri;
 
 pub fn breadcrumb() -> BreadCrumb {
     blood_bowl::breadcrumb().plus_link(UrlLink::from("Équipes", "/blood_bowl/teams"))
@@ -32,14 +31,9 @@ pub struct TeamsPage {
 }
 
 impl TeamsPage {
-    pub fn get(
-        app_state: AppState,
-        profile: Option<User>,
-        uri: &Uri,
-        teams: Vec<TeamSummary>,
-    ) -> Self {
+    pub fn get(app_state: AppState, profile: Option<User>, teams: Vec<TeamSummary>) -> Self {
         Self {
-            navigation_bar: NavigationBar::get(&app_state, &profile, uri),
+            navigation_bar: NavigationBar::get(&app_state, &profile),
             breadcrumb: blood_bowl::breadcrumb(),
             profile,
             teams,
@@ -59,26 +53,19 @@ pub struct NewTeamPage {
 }
 
 impl NewTeamPage {
-    pub fn get(
-        app_state: AppState,
-        profile: User,
-        uri: &Uri,
-        version: Version,
-        roster: Roster,
-    ) -> Self {
-        Self::get_with_message(app_state, profile, uri, version, roster, None)
+    pub fn get(app_state: AppState, profile: User, version: Version, roster: Roster) -> Self {
+        Self::get_with_message(app_state, profile, version, roster, None)
     }
 
     pub fn get_with_message(
         app_state: AppState,
         profile: User,
-        uri: &Uri,
         version: Version,
         roster: Roster,
         message: Option<AlertMessage>,
     ) -> Self {
         Self {
-            navigation_bar: NavigationBar::get(&app_state, &Some(profile), uri),
+            navigation_bar: NavigationBar::get(&app_state, &Some(profile)),
             alert_message: message,
             breadcrumb: breadcrumb(),
             version,
@@ -110,7 +97,6 @@ impl TeamPage {
     pub fn get(
         app_state: AppState,
         profile: Option<User>,
-        uri: &Uri,
         alert_message: Option<AlertMessage>,
         team: Team,
         tab_name: Option<String>,
@@ -157,7 +143,7 @@ impl TeamPage {
         };
 
         Self {
-            navigation_bar: NavigationBar::get(&app_state, &profile, uri),
+            navigation_bar: NavigationBar::get(&app_state, &profile),
             alert_message,
             breadcrumb: breadcrumb(),
             team: team.clone(),

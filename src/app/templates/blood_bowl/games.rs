@@ -18,7 +18,6 @@ use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::translation::TranslatedName;
 use blood_bowl_rs::weather::Weather;
 use chrono::Datelike;
-use http::Uri;
 
 pub mod events;
 
@@ -40,7 +39,6 @@ impl GamesPage {
     pub fn get(
         app_state: AppState,
         profile: Option<User>,
-        uri: &Uri,
         games_playing: Vec<GameSummary>,
         games_scheduled: Vec<GameSummary>,
         games_played: Vec<GameSummary>,
@@ -49,7 +47,7 @@ impl GamesPage {
         other_games.extend(games_played);
 
         Ok(Self {
-            navigation_bar: NavigationBar::get(&app_state, &profile, uri),
+            navigation_bar: NavigationBar::get(&app_state, &profile),
             breadcrumb: blood_bowl::breadcrumb(),
             games_playing,
             other_games,
@@ -85,18 +83,16 @@ impl GamePage {
     pub fn get(
         app_state: AppState,
         profile: Option<User>,
-        uri: &Uri,
         game: Game,
         competition: Option<Competition>,
         edit_mode: bool,
     ) -> Result<Self, AppError> {
-        Self::get_with_message(app_state, profile, uri, None, game, competition, edit_mode)
+        Self::get_with_message(app_state, profile, None, game, competition, edit_mode)
     }
 
     pub fn get_with_message(
         app_state: AppState,
         profile: Option<User>,
-        uri: &Uri,
         alert_message: Option<AlertMessage>,
         game: Game,
         competition: Option<Competition>,
@@ -140,7 +136,7 @@ impl GamePage {
         };
 
         Ok(Self {
-            navigation_bar: NavigationBar::get(&app_state, &profile, uri),
+            navigation_bar: NavigationBar::get(&app_state, &profile),
             alert_message,
             breadcrumb: breadcrumb(),
             tab_displayed,
@@ -201,17 +197,15 @@ impl NewGamePage {
     pub fn get(
         app_state: AppState,
         profile: User,
-        uri: &Uri,
         first_team: Option<Team>,
         second_team: Option<Team>,
     ) -> Self {
-        Self::get_with_message(app_state, profile, uri, None, first_team, second_team)
+        Self::get_with_message(app_state, profile, None, first_team, second_team)
     }
 
     pub fn get_with_message(
         app_state: AppState,
         profile: User,
-        uri: &Uri,
         alert_message: Option<AlertMessage>,
         first_team: Option<Team>,
         second_team: Option<Team>,
@@ -233,7 +227,7 @@ impl NewGamePage {
             second_team.and_then(|team| Some(TeamCard::get_with_details(team, true)));
 
         Self {
-            navigation_bar: NavigationBar::get(&app_state, &Some(profile), uri),
+            navigation_bar: NavigationBar::get(&app_state, &Some(profile)),
             alert_message,
             breadcrumb: breadcrumb(),
             first_team_id,

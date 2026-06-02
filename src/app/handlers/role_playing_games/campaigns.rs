@@ -2,8 +2,8 @@ use crate::AppState;
 use crate::app::templates::role_playing_games::campaigns::{CampaignPage, CampaignsPage};
 use crate::data::role_playing_games::campaigns::Campaign;
 use crate::data::role_playing_games::{campaigns, characters, games};
-use crate::data::users::User;
-use axum::extract::{OriginalUri, Query, State};
+use crate::data::users::MayBeUser;
+use axum::extract::{Query, State};
 use axum::response::Redirect;
 use axum::routing::{get, post};
 use axum::{Form, Json, Router};
@@ -38,9 +38,8 @@ pub fn init_router() -> Router<AppState> {
 }
 
 pub async fn campaigns(
-    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
 ) -> Result<CampaignsPage, Redirect> {
     let campaigns = campaigns::select_all(&app_state)
         .await
@@ -50,9 +49,7 @@ pub async fn campaigns(
         .await
         .or_else(|error| Err(error.log_and_redirect(Redirect::to("/"))))?;
 
-    Ok(CampaignsPage::get(
-        app_state, profile, &uri, campaigns, games,
-    ))
+    Ok(CampaignsPage::get(app_state, profile, campaigns, games))
 }
 
 #[derive(Deserialize)]
@@ -64,9 +61,8 @@ pub struct CampaignQueryParams {
 }
 
 pub async fn campaign(
-    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Query(params): Query<CampaignQueryParams>,
 ) -> Result<CampaignPage, Redirect> {
     let redirect_if_error = Redirect::to("/role_playing_games/campaigns");
@@ -98,7 +94,6 @@ pub async fn campaign(
     Ok(CampaignPage::get(
         app_state,
         profile.clone(),
-        &uri,
         campaign,
         params.tab_name,
         deletable,
@@ -119,7 +114,7 @@ pub struct NewCampaignForm {
 
 pub async fn add_new(
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Form(form): Form<NewCampaignForm>,
 ) -> Result<Redirect, Redirect> {
     let redirect_if_error = Redirect::to("/role_playing_games/campaigns");
@@ -165,7 +160,7 @@ pub struct UpdateCampaignForm {
 
 pub async fn update(
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Form(form): Form<UpdateCampaignForm>,
 ) -> Result<Redirect, Redirect> {
     let redirect_when_error = Redirect::to(&format!(
@@ -228,7 +223,7 @@ pub struct DeleteCampaignForm {
 
 pub async fn delete(
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Form(form): Form<DeleteCampaignForm>,
 ) -> Result<Redirect, Redirect> {
     let redirect_when_error = Redirect::to(&format!(
@@ -269,7 +264,7 @@ pub struct SessionOrder {
 
 pub async fn reorder_campaign_sessions(
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Json(campaign_order): Json<CampaignOrder>,
 ) -> Result<Redirect, Redirect> {
     let redirect = Redirect::to(&format!(

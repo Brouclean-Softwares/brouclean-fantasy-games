@@ -5,8 +5,8 @@ use crate::app::templates::role_playing_games::characters::{
 use crate::data::role_playing_games::campaigns::sessions;
 use crate::data::role_playing_games::characters::Character;
 use crate::data::role_playing_games::{characters, games};
-use crate::data::users::User;
-use axum::extract::{OriginalUri, Query, State};
+use crate::data::users::MayBeUser;
+use axum::extract::{Query, State};
 use axum::response::Redirect;
 use axum::routing::{get, post};
 use axum::{Form, Router};
@@ -20,9 +20,8 @@ pub fn init_router() -> Router<AppState> {
 }
 
 pub async fn characters(
-    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
 ) -> Result<CharactersPage, Redirect> {
     let characters = characters::select_all(&app_state)
         .await
@@ -32,9 +31,7 @@ pub async fn characters(
         .await
         .or_else(|error| Err(error.log_and_redirect(Redirect::to("/"))))?;
 
-    Ok(CharactersPage::get(
-        app_state, profile, &uri, characters, games,
-    ))
+    Ok(CharactersPage::get(app_state, profile, characters, games))
 }
 
 #[derive(Deserialize)]
@@ -74,9 +71,8 @@ pub struct CharacterQueryParams {
 }
 
 pub async fn character(
-    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Query(params): Query<CharacterQueryParams>,
 ) -> Result<CharacterPage, Redirect> {
     let redirect_if_error = Redirect::to("/role_playing_games/characters");
@@ -102,7 +98,6 @@ pub async fn character(
     Ok(CharacterPage::get(
         app_state,
         profile.clone(),
-        &uri,
         character,
         params.tab_name,
         is_owner,
@@ -121,7 +116,7 @@ pub struct NewCharacterForm {
 
 pub async fn add_new(
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Form(form): Form<NewCharacterForm>,
 ) -> Result<Redirect, Redirect> {
     let redirect_if_error = Redirect::to("/role_playing_games/characters");
@@ -171,7 +166,7 @@ pub struct UpdateCharacterForm {
 
 pub async fn update(
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Form(form): Form<UpdateCharacterForm>,
 ) -> Result<Redirect, Redirect> {
     let redirect_when_error = Redirect::to(&format!(

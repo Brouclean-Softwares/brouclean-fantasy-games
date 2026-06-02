@@ -15,7 +15,6 @@ use crate::data::users::User;
 use crate::errors::AppError;
 use askama::Template;
 use askama_web::WebTemplate;
-use http::Uri;
 
 pub mod campaigns;
 pub mod characters;
@@ -39,7 +38,6 @@ impl HomePage {
     pub async fn get(
         app_state: &AppState,
         profile: &User,
-        uri: &Uri,
         scheduled_campaign_sessions: Vec<GameSessionWithCampaign>,
         owned_characters: Vec<CharacterRow>,
         owned_campaigns: Vec<CampaignRow>,
@@ -70,7 +68,7 @@ impl HomePage {
         };
 
         Ok(Self {
-            navigation_bar: NavigationBar::get(&app_state, &Some(profile.clone()), uri),
+            navigation_bar: NavigationBar::get(&app_state, &Some(profile.clone())),
             breadcrumb: BreadCrumb::only_home(),
             scheduled_campaign_sessions,
             owned_characters_block,

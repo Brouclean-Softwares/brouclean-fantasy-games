@@ -2,9 +2,9 @@ use crate::AppState;
 use crate::app::templates::role_playing_games::campaigns::NarrativeArcPage;
 use crate::data::role_playing_games::campaigns::{arcs, sessions};
 use crate::data::role_playing_games::{campaigns, characters};
-use crate::data::users::User;
+use crate::data::users::MayBeUser;
 use axum::Form;
-use axum::extract::{OriginalUri, Query, State};
+use axum::extract::{Query, State};
 use axum::response::Redirect;
 use serde::Deserialize;
 
@@ -16,7 +16,7 @@ pub struct NewNarrativeArcForm {
 
 pub async fn new(
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Form(form): Form<NewNarrativeArcForm>,
 ) -> Result<Redirect, Redirect> {
     let redirect = Redirect::to(&format!(
@@ -45,9 +45,8 @@ pub struct NarrativeArcQueryParams {
 }
 
 pub async fn arc(
-    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Query(params): Query<NarrativeArcQueryParams>,
 ) -> Result<NarrativeArcPage, Redirect> {
     let redirect_if_error = Redirect::to("/role_playing_games/campaigns");
@@ -78,7 +77,6 @@ pub async fn arc(
     Ok(NarrativeArcPage::get(
         app_state,
         profile.clone(),
-        &uri,
         campaign,
         arc,
         sessions,
@@ -101,7 +99,7 @@ pub struct UpdateNarrativeArcForm {
 
 pub async fn update(
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Form(form): Form<UpdateNarrativeArcForm>,
 ) -> Result<Redirect, Redirect> {
     let redirect_when_error =
@@ -163,7 +161,7 @@ pub struct DeleteNarrativeArcForm {
 
 pub async fn delete(
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Form(form): Form<DeleteNarrativeArcForm>,
 ) -> Result<Redirect, Redirect> {
     let redirect_when_error = Redirect::to(&format!(

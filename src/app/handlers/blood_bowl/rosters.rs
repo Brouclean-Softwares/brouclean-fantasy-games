@@ -1,8 +1,8 @@
 use crate::AppState;
 use crate::app::templates::blood_bowl::rosters::{RosterPage, RostersPage};
-use crate::data::users::User;
+use crate::data::users::MayBeUser;
 use axum::Router;
-use axum::extract::{OriginalUri, Query, State};
+use axum::extract::{Query, State};
 use axum::routing::get;
 use blood_bowl_rs::rosters::Roster;
 use blood_bowl_rs::translation::TranslatedName;
@@ -16,11 +16,10 @@ pub fn init_router() -> Router<AppState> {
 }
 
 pub async fn rosters(
-    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
 ) -> RostersPage {
-    RostersPage::get(app_state, profile, &uri)
+    RostersPage::get(app_state, profile)
 }
 
 #[derive(Deserialize)]
@@ -30,9 +29,8 @@ pub struct RosterQueryParams {
 }
 
 pub async fn roster(
-    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Query(params): Query<RosterQueryParams>,
 ) -> RosterPage {
     let version = params.version.unwrap_or(Version::LAST_VERSION);
@@ -58,7 +56,6 @@ pub async fn roster(
     RosterPage::get(
         app_state,
         profile,
-        &uri,
         version,
         params.roster,
         stars_available,

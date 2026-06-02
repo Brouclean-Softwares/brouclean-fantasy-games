@@ -3,9 +3,9 @@ use crate::app::templates::blood_bowl::players::PlayerPage;
 use crate::app::templates::{AlertMessage, AlertType};
 use crate::data::blood_bowl::statistics::players::PlayerStatistics;
 use crate::data::blood_bowl::{games, players, statistics, teams};
-use crate::data::users::User;
+use crate::data::users::MayBeUser;
 use crate::errors::AppError;
-use axum::extract::{OriginalUri, Query, State};
+use axum::extract::{Query, State};
 use axum::response::Redirect;
 use axum::routing::get;
 use axum::{Form, Router};
@@ -27,9 +27,8 @@ pub struct PlayerQueryParams {
 }
 
 pub async fn player(
-    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Query(params): Query<PlayerQueryParams>,
 ) -> Result<PlayerPage, Redirect> {
     let error_handler = |error: AppError| error.log_and_redirect(Redirect::to("../teams"));
@@ -85,7 +84,6 @@ pub async fn player(
     Ok(PlayerPage::get(
         app_state,
         profile,
-        &uri,
         alert_message,
         format!("player?player_id={}&team_id={}", player.id, team.id),
         number,
@@ -111,7 +109,7 @@ pub struct PlayerForm {
 
 pub async fn update_player(
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Query(params): Query<PlayerQueryParams>,
     Form(form): Form<PlayerForm>,
 ) -> Result<Redirect, Redirect> {
@@ -219,9 +217,8 @@ pub struct AddedPlayerQueryParams {
 }
 
 pub async fn added_player(
-    OriginalUri(uri): OriginalUri,
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Query(params): Query<AddedPlayerQueryParams>,
 ) -> Result<PlayerPage, Redirect> {
     let error_handler = |error: AppError| {
@@ -304,7 +301,6 @@ pub async fn added_player(
     Ok(PlayerPage::get(
         app_state,
         profile,
-        &uri,
         alert_message,
         format!(
             "added_player?player_id_in_game={}&team_id={}&game_id={}",
@@ -331,7 +327,7 @@ pub struct AddedPlayerForm {
 
 pub async fn update_added_player(
     State(app_state): State<AppState>,
-    profile: Option<User>,
+    MayBeUser(profile): MayBeUser,
     Query(params): Query<AddedPlayerQueryParams>,
     Form(form): Form<AddedPlayerForm>,
 ) -> Result<Redirect, Redirect> {

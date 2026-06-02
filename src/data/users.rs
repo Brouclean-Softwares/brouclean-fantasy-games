@@ -1,7 +1,7 @@
 use crate::AppState;
 use crate::auth::SESSION_ID;
 use crate::errors::AppError;
-use axum::extract::FromRequestParts;
+use axum::extract::{FromRef, FromRequestParts};
 use axum_extra::extract::PrivateCookieJar;
 use blood_bowl_rs::coaches::Coach;
 use http::request::Parts;
@@ -17,32 +17,47 @@ pub struct User {
     pub picture: String,
 }
 
-#[axum::async_trait]
-impl FromRequestParts<AppState> for User {
+impl<S> FromRequestParts<S> for User
+where
+    S: Send + Sync,
+    AppState: FromRef<S>,
+{
     type Rejection = AppError;
 
-    async fn from_request_parts(
-        parts: &mut Parts,
-        state: &AppState,
-    ) -> Result<Self, Self::Rejection> {
-        let state = state.to_owned();
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let MayBeUser(profile) = MayBeUser::from_request_parts(parts, state).await?;
 
-        let cookie_jar: PrivateCookieJar =
-            PrivateCookieJar::from_request_parts(&mut parts.clone(), &state).await?;
+        profile.ok_or(AppError::Unauthorized)
+    }
+}
 
-        let Some(cookie) = cookie_jar
-            .get(SESSION_ID)
-            .map(|cookie| cookie.value().to_owned())
-        else {
-            return Err(AppError::Unauthorized);
-        };
+pub struct MayBeUser(pub Option<User>);
 
-        if let Some(connected_user) = User::select_connected_user(&state, &cookie).await? {
-            connected_user.extend_session(&state, &cookie).await?;
+impl<S> FromRequestParts<S> for MayBeUser
+where
+    S: Send + Sync,
+    AppState: FromRef<S>,
+{
+    type Rejection = AppError;
 
-            Ok(connected_user)
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let state = AppState::from_ref(state);
+
+        let cookie_jar: PrivateCookieJar<AppState> =
+            PrivateCookieJar::from_request_parts(parts, &state).await?;
+
+        let cookie = cookie_jar.get(SESSION_ID).map(|c| c.value().to_owned());
+
+        if let Some(cookie) = cookie {
+            let user = User::select_connected_user(&state, &cookie).await?;
+
+            if let Some(user) = &user {
+                user.extend_session(&state, &cookie).await?;
+            }
+
+            Ok(MayBeUser(user))
         } else {
-            Err(AppError::Unauthorized)
+            Ok(MayBeUser(None))
         }
     }
 }

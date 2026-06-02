@@ -1,7 +1,7 @@
 use crate::AppState;
 use crate::app::templates::users::UserPage;
-use crate::data::users::User;
-use axum::extract::{OriginalUri, State};
+use crate::data::users::MayBeUser;
+use axum::extract::State;
 use axum::routing::{get, post};
 use axum::{
     Form, Router,
@@ -25,11 +25,10 @@ pub fn init_router() -> Router<AppState> {
 }
 
 pub async fn profile(
-    OriginalUri(uri): OriginalUri,
-    profile: Option<User>,
     State(app_state): State<AppState>,
-) -> UserPage {
-    UserPage::from(app_state, profile, &uri)
+    MayBeUser(profile): MayBeUser,
+) -> impl IntoResponse {
+    UserPage::from(app_state, profile).into_response()
 }
 
 #[derive(Deserialize)]
@@ -38,18 +37,23 @@ pub struct SignInForm {
 }
 
 pub async fn sign_in(
-    profile: Option<User>,
     State(app_state): State<AppState>,
+    MayBeUser(profile): MayBeUser,
     jar: PrivateCookieJar,
     Form(form): Form<SignInForm>,
 ) -> impl IntoResponse {
-    let (url, csrf_token) = google::connection_url(&app_state);
-
-    let jar = jar.add(Cookie::new(REDIRECT_URI_AFTER_AUTH, csrf_token));
+    let redirection_uri_when_connected = form.redirection_uri;
 
     if profile.is_some() {
-        Redirect::to(&form.redirection_uri).into_response()
+        Redirect::to(&redirection_uri_when_connected).into_response()
     } else {
+        let url = google::connection_url(&app_state);
+
+        let jar = jar.add(Cookie::new(
+            REDIRECT_URI_AFTER_AUTH,
+            redirection_uri_when_connected,
+        ));
+
         (jar, Redirect::to(&url)).into_response()
     }
 }

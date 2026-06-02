@@ -11,7 +11,6 @@ use crate::data::role_playing_games::games::Game;
 use crate::data::users::User;
 use askama::Template;
 use askama_web::WebTemplate;
-use http::Uri;
 
 pub fn breadcrumb() -> BreadCrumb {
     role_playing_games::breadcrumb()
@@ -31,12 +30,11 @@ impl CampaignsPage {
     pub fn get(
         app_state: AppState,
         profile: Option<User>,
-        uri: &Uri,
         campaigns: Vec<CampaignRow>,
         games: Vec<Game>,
     ) -> Self {
         Self {
-            navigation_bar: NavigationBar::get(&app_state, &profile, uri),
+            navigation_bar: NavigationBar::get(&app_state, &profile),
             breadcrumb: role_playing_games::breadcrumb(),
             campaigns,
             add_new_campaign_button: AddNewCampaignButton { profile, games },
@@ -78,7 +76,6 @@ impl CampaignPage {
     pub fn get(
         app_state: AppState,
         profile: Option<User>,
-        uri: &Uri,
         campaign: Campaign,
         tab_name: Option<String>,
         deletable: bool,
@@ -90,7 +87,7 @@ impl CampaignPage {
         characters: Vec<CharacterRow>,
     ) -> Self {
         Self {
-            navigation_bar: NavigationBar::get(&app_state, &profile, uri),
+            navigation_bar: NavigationBar::get(&app_state, &profile),
             breadcrumb: breadcrumb(),
             campaign,
             tab_name: tab_name.unwrap_or("info".to_owned()),
@@ -124,7 +121,6 @@ impl NarrativeArcPage {
     pub fn get(
         app_state: AppState,
         profile: Option<User>,
-        uri: &Uri,
         campaign: Campaign,
         arc: NarrativeArc,
         sessions: Vec<GameSession>,
@@ -135,7 +131,7 @@ impl NarrativeArcPage {
         characters: Vec<CharacterRow>,
     ) -> Self {
         Self {
-            navigation_bar: NavigationBar::get(&app_state, &profile, uri),
+            navigation_bar: NavigationBar::get(&app_state, &profile),
             breadcrumb: breadcrumb().plus_link(UrlLink::from(
                 "Campagne",
                 &format!(
@@ -185,7 +181,6 @@ impl GameSessionPage {
     pub fn get(
         app_state: AppState,
         profile: Option<User>,
-        uri: &Uri,
         campaign: Campaign,
         session: GameSession,
         previous_session: Option<GameSession>,
@@ -212,7 +207,7 @@ impl GameSessionPage {
         let game_id = campaign.game_id;
 
         Self {
-            navigation_bar: NavigationBar::get(&app_state, &profile, uri),
+            navigation_bar: NavigationBar::get(&app_state, &profile),
             breadcrumb: breadcrumb().plus_link(UrlLink::from(
                 "Campagne",
                 &format!(
