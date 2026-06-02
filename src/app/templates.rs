@@ -67,7 +67,7 @@ impl HomePage {
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile, &uri),
             profile,
-            google_connection_url: crate::auth::google::connection_url(app_state),
+            google_connection_url: crate::auth::google::connection_url(&app_state).0,
             bb_playing_games,
             bb_scheduled_games,
             rpg_scheduled_campaign_sessions,

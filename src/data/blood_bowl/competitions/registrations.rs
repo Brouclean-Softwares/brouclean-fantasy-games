@@ -37,24 +37,32 @@ impl TeamRegistration {
     ) -> Result<Vec<TeamRegistration>, AppError> {
         tracing::debug!("select_for_competition for id={}", competition.id);
 
-        let order = if competition.started {
-            "bb_teams.value DESC"
-        } else {
-            "bb_teams.coach_id ASC, bb_teams.value DESC"
-        };
-
-        let registration_rows: Vec<TeamRegistrationRow> = sqlx::query_as(&format!(
-            "SELECT bb_competitions_teams.team_id,
+        let query_as = if competition.started {
+            sqlx::query_as(
+                "SELECT bb_competitions_teams.team_id,
                     bb_competitions_teams.validated
                 FROM bb_competitions_teams
                 INNER JOIN bb_teams
                 ON bb_teams.id = bb_competitions_teams.team_id
                 WHERE bb_competitions_teams.competition_id = $1
-                ORDER BY {order}",
-        ))
-        .bind(competition.id.clone())
-        .fetch_all(&state.db)
-        .await?;
+                ORDER BY bb_teams.value DESC",
+            )
+        } else {
+            sqlx::query_as(
+                "SELECT bb_competitions_teams.team_id,
+                    bb_competitions_teams.validated
+                FROM bb_competitions_teams
+                INNER JOIN bb_teams
+                ON bb_teams.id = bb_competitions_teams.team_id
+                WHERE bb_competitions_teams.competition_id = $1
+                ORDER BY bb_teams.coach_id ASC, bb_teams.value DESC",
+            )
+        };
+
+        let registration_rows: Vec<TeamRegistrationRow> = query_as
+            .bind(competition.id.clone())
+            .fetch_all(&state.db)
+            .await?;
 
         let mut registrations: Vec<TeamRegistration> = Vec::with_capacity(registration_rows.len());
 

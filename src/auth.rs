@@ -43,15 +43,14 @@ pub async fn sign_in(
     jar: PrivateCookieJar,
     Form(form): Form<SignInForm>,
 ) -> impl IntoResponse {
-    let jar = jar.add(Cookie::new(
-        REDIRECT_URI_AFTER_AUTH,
-        form.redirection_uri.clone(),
-    ));
+    let (url, csrf_token) = google::connection_url(&app_state);
+
+    let jar = jar.add(Cookie::new(REDIRECT_URI_AFTER_AUTH, csrf_token));
 
     if profile.is_some() {
         Redirect::to(&form.redirection_uri).into_response()
     } else {
-        (jar, Redirect::to(&google::connection_url(app_state))).into_response()
+        (jar, Redirect::to(&url)).into_response()
     }
 }
 

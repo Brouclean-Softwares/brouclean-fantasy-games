@@ -1,7 +1,7 @@
+use crate::auth::google::GoogleOAuthClient;
 use axum::{Router, extract::FromRef};
 use axum_extra::extract::cookie::Key;
 use dotenv::dotenv;
-use oauth2::basic::BasicClient;
 use reqwest::Client;
 use sqlx::PgPool;
 use std::env;
@@ -85,7 +85,7 @@ pub struct AppState {
     db: PgPool,
     http_requester: Client,
     key: Key,
-    google_oauth_client: BasicClient,
+    google_oauth_client: GoogleOAuthClient,
     admin_email: String,
 }
 

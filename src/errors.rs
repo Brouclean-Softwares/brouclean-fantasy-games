@@ -1,6 +1,9 @@
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Redirect, Response};
 use blood_bowl_rs::translation::TranslatedName;
+use oauth2::HttpClientError;
+use oauth2::basic::BasicErrorResponse;
+use reqwest::Error;
 use std::fmt::{Display, Formatter};
 use thiserror::Error;
 
@@ -8,13 +11,7 @@ use thiserror::Error;
 pub enum AppError {
     SQL(#[from] sqlx::Error),
     Request(#[from] reqwest::Error),
-    TokenError(
-        #[from]
-        oauth2::RequestTokenError<
-            oauth2::reqwest::Error<reqwest::Error>,
-            oauth2::StandardErrorResponse<oauth2::basic::BasicErrorResponseType>,
-        >,
-    ),
+    TokenError(#[from] oauth2::RequestTokenError<HttpClientError<Error>, BasicErrorResponse>),
     Unauthorized,
     OptionError,
     ParseIntError(#[from] std::num::TryFromIntError),

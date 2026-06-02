@@ -7,9 +7,13 @@ use axum::extract::{Query, State};
 use axum::response::{IntoResponse, Redirect};
 use axum_extra::extract::PrivateCookieJar;
 use axum_extra::extract::cookie::{Cookie, SameSite};
+use oauth2::basic::{
+    BasicClient, BasicErrorResponse, BasicRevocationErrorResponse, BasicTokenIntrospectionResponse,
+    BasicTokenResponse,
+};
 use oauth2::{
-    AuthUrl, AuthorizationCode, ClientId, ClientSecret, RedirectUrl, TokenResponse, TokenUrl,
-    basic::BasicClient, reqwest::async_http_client,
+    AuthUrl, AuthorizationCode, Client, ClientId, ClientSecret, CsrfToken, EndpointNotSet,
+    EndpointSet, RedirectUrl, Scope, StandardRevocableToken, TokenResponse, TokenUrl,
 };
 use serde::Deserialize;
 use std::env;
@@ -19,6 +23,19 @@ pub struct AuthRequest {
     code: String,
 }
 
+pub type GoogleOAuthClient = Client<
+    BasicErrorResponse,
+    BasicTokenResponse,
+    BasicTokenIntrospectionResponse,
+    StandardRevocableToken,
+    BasicRevocationErrorResponse,
+    EndpointSet,
+    EndpointNotSet,
+    EndpointNotSet,
+    EndpointNotSet,
+    EndpointSet,
+>;
+
 pub async fn callback(
     State(app_state): State<AppState>,
     jar: PrivateCookieJar,
@@ -27,7 +44,7 @@ pub async fn callback(
     let token = app_state
         .google_oauth_client
         .exchange_code(AuthorizationCode::new(query.code))
-        .request_async(async_http_client)
+        .request_async(&app_state.http_requester)
         .await?;
 
     let access_token = token.access_token().secret();
@@ -73,7 +90,7 @@ pub async fn callback(
     Ok((jar.add(cookie), Redirect::to(&redirect_uri)))
 }
 
-pub fn build_oauth_client() -> BasicClient {
+pub fn build_oauth_client() -> GoogleOAuthClient {
     let client_id = env::var("GOOGLE_OAUTH_CLIENT_ID").expect("GOOGLE_OAUTH_CLIENT_ID must be set");
 
     let client_secret =
@@ -89,22 +106,23 @@ pub fn build_oauth_client() -> BasicClient {
     let token_url = TokenUrl::new("https://oauth2.googleapis.com/token".to_string())
         .expect("Invalid token endpoint URL");
 
-    BasicClient::new(
-        ClientId::new(client_id),
-        Some(ClientSecret::new(client_secret)),
-        auth_url,
-        Some(token_url),
-    )
-    .set_redirect_uri(RedirectUrl::new(redirect_url).unwrap())
+    let client = BasicClient::new(ClientId::new(client_id))
+        .set_client_secret(ClientSecret::new(client_secret))
+        .set_auth_uri(auth_url)
+        .set_token_uri(token_url)
+        .set_redirect_uri(RedirectUrl::new(redirect_url).unwrap());
+
+    client
 }
 
-pub fn connection_url(app_state: AppState) -> String {
-    let oauth_client = app_state.google_oauth_client;
+pub fn connection_url(app_state: &AppState) -> (String, String) {
+    let (url, csrf_token) = app_state
+        .google_oauth_client
+        .authorize_url(CsrfToken::new_random)
+        .add_scope(Scope::new("openid".to_string()))
+        .add_scope(Scope::new("profile".to_string()))
+        .add_scope(Scope::new("email".to_string()))
+        .url();
 
-    format!(
-        "{}?scope=openid%20profile%20email&client_id={}&response_type=code&access_type=offline&redirect_uri={}",
-        oauth_client.auth_url().to_string(),
-        oauth_client.client_id().to_string(),
-        oauth_client.redirect_url().unwrap().to_string()
-    )
+    (url.to_string(), csrf_token.secret().to_string())
 }
