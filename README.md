@@ -74,14 +74,6 @@ pg_dump -Fc -h <host> -U <user> <db> > dump.dump
 pg_restore --clean --if-exists --no-owner --no-acl -U devapp -d brouclean_fantasy_games dump.dump
 ```
 
-## VSCode extensions
-
-- rust-analyzer
-- Even Better TOML
-- Tailwind CSS IntelliSense
-
-## Env variables
-
 For the app to run locally you need to create a .env file containing
 
 ```
@@ -116,13 +108,5 @@ To start the app
 
 ```
 ./target/release/brouclean-fantasy-games
-```
-
-## To deploy on Leapcell
-
-Command to make it work with ssl
-
-```
-apt-get update && apt-get install -y pkg-config libssl-dev && cargo build --release
 ```
 
