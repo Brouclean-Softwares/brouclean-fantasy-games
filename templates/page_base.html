@@ -52,6 +52,19 @@
         {% block body %}{% endblock %}
     </div>
 </div>
+
+<script>
+    window.addEventListener("pageshow", function (event) {
+        const nav = performance.getEntriesByType("navigation")[0];
+
+        const fromBack = event.persisted || nav?.type === "back_forward";
+
+        if (fromBack) {
+            document.documentElement.style.display = "none";
+            window.location.reload();
+        }
+    });
+</script>
 </body>
 
 </html>
