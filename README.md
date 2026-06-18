@@ -81,6 +81,7 @@ For the app to run locally you need to create a .env file containing
 APP_URL=<URL of the app, ex: http://localhost:8000>
 ADMIN_EMAIL=<Your admin email>
 LOG_LEVEL=INFO
+COOKIE_KEY=<a generated hex key>
 
 # Database
 DATABASE_URL=postgres://devapp:<db user password>@localhost:5432/brouclean_fantasy_games
@@ -89,6 +90,8 @@ DATABASE_URL=postgres://devapp:<db user password>@localhost:5432/brouclean_fanta
 GOOGLE_OAUTH_CLIENT_ID=<Your client id>
 GOOGLE_OAUTH_CLIENT_SECRET=<Your client secret>
 ```
+
+To generate the COOKIE_KEY value, you can use the following project [https://github.com/Brouclean-Softwares/key_generator]
 
 ## To build and run the app
 

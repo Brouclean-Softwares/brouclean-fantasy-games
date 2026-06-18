@@ -318,6 +318,7 @@ dependencies = [
  "blood-bowl-rs",
  "chrono",
  "dotenv",
+ "hex",
  "http",
  "lazy_static",
  "oauth2",

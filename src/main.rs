@@ -43,6 +43,9 @@ async fn main() {
 
     let admin_email = env::var("ADMIN_EMAIL").expect("ADMIN_EMAIL must be set");
 
+    let key_bytes = std::env::var("COOKIE_KEY").expect("COOKIE_KEY must be set");
+    let key = Key::from(&hex::decode(key_bytes).expect("COOKIE_KEY must be valid hex"));
+
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let db = PgPool::connect(&database_url).await.unwrap();
 
@@ -54,7 +57,7 @@ async fn main() {
     let state = AppState {
         db,
         http_requester: Client::new(),
-        key: Key::generate(),
+        key,
         google_oauth_client: auth::google::build_oauth_client(),
         admin_email,
     };
