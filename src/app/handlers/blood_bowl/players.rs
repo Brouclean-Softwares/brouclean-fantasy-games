@@ -54,7 +54,10 @@ pub async fn player(
 
     let editable = !is_playing_game
         && match profile.clone() {
-            Some(user) => team.coach.eq(&user.into()),
+            Some(user) => team.coach.eq(&user
+                .try_into_coach(&app_state)
+                .await
+                .map_err(error_handler)?),
             None => false,
         };
 
@@ -267,7 +270,10 @@ pub async fn added_player(
         && game.started
         && !game.game_finished()
         && match profile.clone() {
-            Some(user) => team.coach.eq(&user.into()),
+            Some(user) => team.coach.eq(&user
+                .try_into_coach(&app_state)
+                .await
+                .map_err(error_handler)?),
             None => false,
         };
 
@@ -281,7 +287,10 @@ pub async fn added_player(
         && is_last_game_for_team
         && team.can_buy_journeyman()
         && match profile.clone() {
-            Some(user) => team.coach.eq(&user.into()),
+            Some(user) => team.coach.eq(&user
+                .try_into_coach(&app_state)
+                .await
+                .map_err(error_handler)?),
             None => false,
         };
 

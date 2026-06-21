@@ -1,11 +1,11 @@
 use crate::app::templates::{BreadCrumb, NavigationBar};
+use crate::data::blood_bowl::coaches::EloRanking;
 use crate::data::blood_bowl::statistics::players::PlayersTopStatistics;
 use crate::data::blood_bowl::statistics::teams::TeamsTopStatistics;
 use crate::data::blood_bowl::statistics::{StatisticElement, Statistics};
 use crate::data::blood_bowl::teams::TeamLogo;
 use askama::Template;
 use askama_web::WebTemplate;
-use blood_bowl_rs::coaches::Coach;
 use blood_bowl_rs::translation::TranslatedName;
 
 #[derive(Template, WebTemplate)]
@@ -154,11 +154,15 @@ impl StatisticList {
 #[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/statistics/coaches_elo_ranking.html")]
 pub struct CoachesEloRanking {
-    pub coaches: Vec<Coach>,
+    pub coaches_elo_ranking: Vec<EloRanking>,
+    pub is_admin_profile: bool,
 }
 
-impl From<Vec<Coach>> for CoachesEloRanking {
-    fn from(coaches: Vec<Coach>) -> Self {
-        Self { coaches }
+impl CoachesEloRanking {
+    pub fn from(coaches_elo_ranking: Vec<EloRanking>, is_admin_profile: bool) -> Self {
+        Self {
+            coaches_elo_ranking,
+            is_admin_profile,
+        }
     }
 }

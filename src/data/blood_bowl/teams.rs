@@ -1,6 +1,6 @@
 use crate::AppState;
 use crate::data::blood_bowl::competitions::schedule::BYE;
-use crate::data::blood_bowl::{games, players, staff, teams};
+use crate::data::blood_bowl::{coaches, games, players, staff, teams};
 use crate::data::users::User;
 use crate::errors::AppError;
 use blood_bowl_rs::coaches::Coach;
@@ -269,16 +269,20 @@ async fn select_by_id(
         vec![]
     };
 
+    let coach = coaches::select_by_id(state, team.coach_id)
+        .await?
+        .unwrap_or(Coach {
+            id: team.coach_id,
+            name: team.coach_name,
+            elo: None,
+        });
+
     let team = Team {
         id: team.id,
         version: team.version,
         roster: team.roster,
         name: team.name,
-        coach: Coach {
-            id: team.coach_id,
-            name: team.coach_name,
-            elo: None,
-        },
+        coach,
         treasury: team.treasury,
         external_logo_url: team.external_logo_url,
         staff,
@@ -533,7 +537,10 @@ pub async fn upgrade(
         return Ok(false);
     }
 
-    if current_team.coach.eq(&connected_user.clone().into()) {
+    if current_team
+        .coach
+        .eq(&connected_user.clone().try_into_coach(state).await?)
+    {
         let Some(new_version) = current_team.version.next() else {
             return Ok(false);
         };

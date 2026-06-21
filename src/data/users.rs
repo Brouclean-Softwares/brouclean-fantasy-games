@@ -1,5 +1,6 @@
 use crate::AppState;
 use crate::auth::SESSION_ID;
+use crate::data::blood_bowl::coaches;
 use crate::errors::AppError;
 use axum::extract::{FromRef, FromRequestParts};
 use axum_extra::extract::PrivateCookieJar;
@@ -71,6 +72,10 @@ impl User {
         }
     }
 
+    pub fn has_optional_id(&self, optional_id: &Option<i32>) -> bool {
+        Self::optional_user_has_optional_id(&Some(self.clone()), optional_id)
+    }
+
     pub fn optional_user_has_optional_id(
         optional_user: &Option<User>,
         optional_id: &Option<i32>,
@@ -84,6 +89,16 @@ impl User {
         } else {
             false
         }
+    }
+
+    pub async fn try_into_coach(self, state: &AppState) -> Result<Coach, AppError> {
+        let elo = coaches::select_elo_for_user(state, &self.id).await?;
+
+        Ok(Coach {
+            id: self.id,
+            name: self.name,
+            elo,
+        })
     }
 
     pub fn is_admin(&self, state: &AppState) -> bool {
@@ -231,16 +246,6 @@ impl User {
                 .await?;
 
             Ok(inserted_user)
-        }
-    }
-}
-
-impl Into<Coach> for User {
-    fn into(self) -> Coach {
-        Coach {
-            id: self.id,
-            name: self.name,
-            elo: None,
         }
     }
 }

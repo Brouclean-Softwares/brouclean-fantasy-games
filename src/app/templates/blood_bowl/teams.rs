@@ -122,7 +122,7 @@ impl TeamPage {
 
         let editable = !is_playing_game
             && match profile.clone() {
-                Some(user) => team.coach.eq(&user.into()),
+                Some(user) => user.has_optional_id(&team.coach.id),
                 None => false,
             };
 

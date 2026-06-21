@@ -15,18 +15,18 @@
 
             <tbody>
 
-            {% for (i, coach) in coaches.iter().enumerate() %}
+            {% for (i, coach_elo) in coaches_elo_ranking.iter().enumerate() %}
             <tr>
                 <td>
                     <span class="uk-text-meta">#{{ i + 1 }}</span>
                 </td>
 
                 <td class="uk-text-truncate">
-                    <span>{{ coach.name }}</span>
+                    <span>{{ coach_elo.name }}</span>
                 </td>
 
                 <td>
-                    <span>{{ coach.elo.unwrap_or_default() }}</span>
+                    <span>{{ coach_elo.elo }}</span>
                 </td>
             </tr>
             {% endfor %}
@@ -34,4 +34,13 @@
             </tbody>
         </table>
     </div>
+
+    {% if is_admin_profile %}
+    <form action="statistics/regenerate_elo_ranking" method="post" autocomplete="off" class="uk-form-stacked uk-margin-medium-top">
+        <button class="uk-button uk-button-primary" type="submit">
+            Regénérer
+        </button>
+    </form>
+    {% endif %}
+
 </div>

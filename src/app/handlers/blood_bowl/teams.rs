@@ -128,8 +128,25 @@ pub async fn create(
         staff_quantities.insert(Staff::Apothecary, apothecary);
     }
 
+    let coach = profile
+        .clone()
+        .try_into_coach(&app_state)
+        .await
+        .map_err(|error| {
+            NewTeamPage::get_with_message(
+                app_state.clone(),
+                profile.clone(),
+                form.version,
+                form.roster,
+                Some(AlertMessage {
+                    alert_type: AlertType::Danger,
+                    message: error.to_string(),
+                }),
+            )
+        })?;
+
     let team = Team::create_new(
-        profile.clone().into(),
+        coach,
         form.version,
         form.roster,
         form.treasury,
@@ -413,7 +430,13 @@ pub async fn upgrade(
         .await
         .map_err(error_handler)?;
 
-    if team.coach.eq(&profile.clone().into()) {
+    let coach = profile
+        .clone()
+        .try_into_coach(&app_state)
+        .await
+        .map_err(error_handler)?;
+
+    if team.coach.eq(&coach) {
         teams::upgrade(&app_state, &profile, team)
             .await
             .or_else(|app_error| {

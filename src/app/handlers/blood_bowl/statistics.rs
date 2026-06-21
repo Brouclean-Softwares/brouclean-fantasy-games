@@ -1,5 +1,5 @@
 use crate::AppState;
-use crate::app::templates::blood_bowl::statistics::StatisticsPage;
+use crate::app::templates::blood_bowl::statistics::{CoachesEloRanking, StatisticsPage};
 use crate::app::templates::{NavigationBar, blood_bowl};
 use crate::data::blood_bowl::coaches;
 use crate::data::blood_bowl::statistics::players::PlayersTopStatistics;
@@ -9,11 +9,13 @@ use crate::errors::AppError;
 use axum::Router;
 use axum::extract::{Query, State};
 use axum::response::Redirect;
-use axum::routing::get;
+use axum::routing::{get, post};
 use serde::Deserialize;
 
 pub fn init_router() -> Router<AppState> {
-    Router::new().route("/", get(statistics))
+    Router::new()
+        .route("/", get(statistics))
+        .route("/regenerate_elo_ranking", post(regenerate_elo_ranking))
 }
 
 #[derive(Deserialize)]
@@ -29,6 +31,12 @@ pub async fn statistics(
     let error_redirect = |error: AppError| error.log_and_redirect(Redirect::to("/blood_bowl"));
 
     let tab_name = params.tab_name.unwrap_or("teams".to_string());
+
+    let is_admin_profile = if let Some(profile) = &profile {
+        profile.is_admin(&app_state)
+    } else {
+        false
+    };
 
     let teams_top_statistics = if tab_name.eq("teams") {
         Some(
@@ -53,12 +61,13 @@ pub async fn statistics(
     };
 
     let coaches_elo_ranking = if tab_name.eq("coaches") {
-        Some(
+        Some(CoachesEloRanking::from(
             coaches::select_elo_ranking(&app_state)
                 .await
                 .map_err(error_redirect)?
                 .into(),
-        )
+            is_admin_profile,
+        ))
     } else {
         None
     };
@@ -71,4 +80,21 @@ pub async fn statistics(
         players_top_statistics,
         coaches_elo_ranking,
     })
+}
+
+pub async fn regenerate_elo_ranking(
+    State(app_state): State<AppState>,
+    MayBeUser(profile): MayBeUser,
+) -> Result<Redirect, Redirect> {
+    let redirect = Redirect::to("/blood_bowl/statistics?tab_name=coaches");
+
+    if let Some(profile) = profile {
+        if profile.is_admin(&app_state) {
+            coaches::regenerate_elo_ranking(&app_state)
+                .await
+                .map_err(|error| error.log_and_redirect(redirect.clone()))?;
+        }
+    }
+
+    Ok(redirect)
 }

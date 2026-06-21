@@ -210,7 +210,7 @@ pub async fn select_all_scheduled(state: &AppState) -> Result<Vec<GameSummary>, 
     Ok(games)
 }
 
-async fn select_all_played(state: &AppState) -> Result<Vec<GameRow>, AppError> {
+pub async fn select_all_played(state: &AppState) -> Result<Vec<GameSummary>, AppError> {
     tracing::debug!("select_all_played");
 
     let game_rows: Vec<GameRow> = sqlx::query_as(
@@ -242,37 +242,15 @@ async fn select_all_played(state: &AppState) -> Result<Vec<GameRow>, AppError> {
             LEFT JOIN bb_competitions
             ON bb_competitions.id = bb_competitions_stages_schedule.competition_id
             WHERE bb_games.closed_at IS NOT NULL
-            ORDER BY bb_games.game_at DESC",
+            ORDER BY bb_games.closed_at ASC",
     )
     .fetch_all(&state.db)
     .await?;
-
-    Ok(game_rows)
-}
-
-pub async fn select_all_played_summaries(state: &AppState) -> Result<Vec<GameSummary>, AppError> {
-    tracing::debug!("select_all_played_summaries");
-
-    let game_rows = select_all_played(state).await?;
 
     let mut games = Vec::with_capacity(game_rows.len());
 
     for game in game_rows {
         games.push(game.into_game_summary(state).await?);
-    }
-
-    Ok(games)
-}
-
-pub async fn select_all_games_played(state: &AppState) -> Result<Vec<Game>, AppError> {
-    tracing::debug!("select_all_games_played");
-
-    let game_rows = select_all_played(state).await?;
-
-    let mut games = Vec::with_capacity(game_rows.len());
-
-    for game in game_rows {
-        games.push(game.into_game(state).await?);
     }
 
     Ok(games)
@@ -1035,7 +1013,7 @@ pub async fn create(
 
     let game = Game::create(
         -1,
-        Some(profile.clone().into()),
+        Some(profile.clone().try_into_coach(state).await?),
         first_team.version,
         game_at,
         &first_team,
@@ -1502,6 +1480,7 @@ pub async fn update_after_event(
 
     transaction.commit().await?;
 
+    coaches::insert_elo_ranking_after_game(state, &game).await?;
     teams::update_values(state, profile, game.first_team.id).await?;
     teams::update_values(state, profile, game.second_team.id).await?;
 
