@@ -18,21 +18,15 @@
             {% for (i, coach) in coaches.iter().enumerate() %}
             <tr>
                 <td>
-                    <a class="uk-link-reset" href="">
-                        <span class="uk-text-meta">#{{ i + 1 }}</span>
-                    </a>
+                    <span class="uk-text-meta">#{{ i + 1 }}</span>
                 </td>
 
                 <td class="uk-text-truncate">
-                    <a class="uk-link-reset" href="">
-                        <span>{{ coach.name }}</span>
-                    </a>
+                    <span>{{ coach.name }}</span>
                 </td>
 
                 <td>
-                    <a class="uk-link-reset" href="">
-                        <span>{{ coach.elo.unwrap_or_default() }}</span>
-                    </a>
+                    <span>{{ coach.elo.unwrap_or_default() }}</span>
                 </td>
             </tr>
             {% endfor %}
