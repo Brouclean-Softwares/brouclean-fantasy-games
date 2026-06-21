@@ -1,0 +1,43 @@
+<div>
+    <h5>
+        Classement ELO (calcul de la NAF)
+    </h5>
+
+    <div class="uk-overflow-auto">
+        <table class="uk-table uk-table-striped uk-table-small uk-table-hover uk-table-middle">
+            <thead>
+            <tr>
+                <th class="uk-table-shrink">#</th>
+                <th class="uk-table-expand">Nom</th>
+                <th class="uk-table-shrink">ELO</th>
+            </tr>
+            </thead>
+
+            <tbody>
+
+            {% for (i, coach) in coaches.iter().enumerate() %}
+            <tr>
+                <td>
+                    <a class="uk-link-reset" href="">
+                        <span class="uk-text-meta">#{{ i + 1 }}</span>
+                    </a>
+                </td>
+
+                <td class="uk-text-truncate">
+                    <a class="uk-link-reset" href="">
+                        <span>{{ coach.name }}</span>
+                    </a>
+                </td>
+
+                <td>
+                    <a class="uk-link-reset" href="">
+                        <span>{{ coach.elo.unwrap_or_default() }}</span>
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+
+            </tbody>
+        </table>
+    </div>
+</div>

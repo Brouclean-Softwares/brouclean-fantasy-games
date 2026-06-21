@@ -35,7 +35,7 @@ pub async fn games(
 ) -> Result<GamesPage, AppError> {
     let games_playing = games::select_all_playing(&app_state).await?;
     let games_scheduled = games::select_all_scheduled(&app_state).await?;
-    let games_played = games::select_all_played(&app_state).await?;
+    let games_played = games::select_all_played_summaries(&app_state).await?;
 
     GamesPage::get(
         app_state,

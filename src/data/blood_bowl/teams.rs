@@ -277,6 +277,7 @@ async fn select_by_id(
         coach: Coach {
             id: team.coach_id,
             name: team.coach_name,
+            elo: None,
         },
         treasury: team.treasury,
         external_logo_url: team.external_logo_url,

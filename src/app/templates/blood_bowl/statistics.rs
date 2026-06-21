@@ -5,6 +5,7 @@ use crate::data::blood_bowl::statistics::{StatisticElement, Statistics};
 use crate::data::blood_bowl::teams::TeamLogo;
 use askama::Template;
 use askama_web::WebTemplate;
+use blood_bowl_rs::coaches::Coach;
 use blood_bowl_rs::translation::TranslatedName;
 
 #[derive(Template, WebTemplate)]
@@ -14,6 +15,7 @@ pub struct StatisticsPage {
     pub breadcrumb: BreadCrumb,
     pub teams_top_statistics: TeamsTopStatisticsLists,
     pub players_top_statistics: PlayersTopStatisticsLists,
+    pub coaches_elo_ranking: CoachesEloRanking,
 }
 
 #[derive(Template, WebTemplate)]
@@ -145,5 +147,17 @@ impl StatisticList {
             statistics,
             element_url,
         }
+    }
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "blood_bowl/statistics/coaches_elo_ranking.html")]
+pub struct CoachesEloRanking {
+    pub coaches: Vec<Coach>,
+}
+
+impl From<Vec<Coach>> for CoachesEloRanking {
+    fn from(coaches: Vec<Coach>) -> Self {
+        Self { coaches }
     }
 }

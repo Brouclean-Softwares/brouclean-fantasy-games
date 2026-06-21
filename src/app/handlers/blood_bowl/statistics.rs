@@ -1,6 +1,7 @@
 use crate::AppState;
 use crate::app::templates::blood_bowl::statistics::StatisticsPage;
 use crate::app::templates::{NavigationBar, blood_bowl};
+use crate::data::blood_bowl::coaches;
 use crate::data::blood_bowl::statistics::players::PlayersTopStatistics;
 use crate::data::blood_bowl::statistics::teams::TeamsTopStatistics;
 use crate::data::users::MayBeUser;
@@ -28,10 +29,15 @@ pub async fn statistics(
         .await
         .map_err(error_redirect)?;
 
+    let coaches_elo_ranking = coaches::select_elo_ranking(&app_state)
+        .await
+        .map_err(error_redirect)?;
+
     Ok(StatisticsPage {
         navigation_bar: NavigationBar::get(&app_state, &profile),
         breadcrumb: blood_bowl::breadcrumb(),
         teams_top_statistics: teams_top_statistics.into(),
         players_top_statistics: players_top_statistics.into(),
+        coaches_elo_ranking: coaches_elo_ranking.into(),
     })
 }

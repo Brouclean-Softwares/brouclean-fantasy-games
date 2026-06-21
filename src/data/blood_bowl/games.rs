@@ -210,7 +210,7 @@ pub async fn select_all_scheduled(state: &AppState) -> Result<Vec<GameSummary>, 
     Ok(games)
 }
 
-pub async fn select_all_played(state: &AppState) -> Result<Vec<GameSummary>, AppError> {
+async fn select_all_played(state: &AppState) -> Result<Vec<GameRow>, AppError> {
     tracing::debug!("select_all_played");
 
     let game_rows: Vec<GameRow> = sqlx::query_as(
@@ -247,10 +247,32 @@ pub async fn select_all_played(state: &AppState) -> Result<Vec<GameSummary>, App
     .fetch_all(&state.db)
     .await?;
 
+    Ok(game_rows)
+}
+
+pub async fn select_all_played_summaries(state: &AppState) -> Result<Vec<GameSummary>, AppError> {
+    tracing::debug!("select_all_played_summaries");
+
+    let game_rows = select_all_played(state).await?;
+
     let mut games = Vec::with_capacity(game_rows.len());
 
     for game in game_rows {
         games.push(game.into_game_summary(state).await?);
+    }
+
+    Ok(games)
+}
+
+pub async fn select_all_games_played(state: &AppState) -> Result<Vec<Game>, AppError> {
+    tracing::debug!("select_all_games_played");
+
+    let game_rows = select_all_played(state).await?;
+
+    let mut games = Vec::with_capacity(game_rows.len());
+
+    for game in game_rows {
+        games.push(game.into_game(state).await?);
     }
 
     Ok(games)

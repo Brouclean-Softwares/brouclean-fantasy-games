@@ -24,6 +24,9 @@
             <li>
                 <a href="#" x-on:click="element='players'">Joueurs</a>
             </li>
+            <li>
+                <a href="#" x-on:click="element='coaches'">Coachs</a>
+            </li>
         </ul>
     </div>
 
@@ -33,6 +36,10 @@
 
     <div x-show="element==='players'" class="uk-child-width-1-2@m" uk-grid>
         {{ players_top_statistics|escape("none") }}
+    </div>
+
+    <div x-show="element==='coaches'">
+        {{ coaches_elo_ranking|escape("none") }}
     </div>
 </div>
 {% endblock %}

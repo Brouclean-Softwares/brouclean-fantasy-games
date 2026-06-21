@@ -240,6 +240,7 @@ impl Into<Coach> for User {
         Coach {
             id: self.id,
             name: self.name,
+            elo: None,
         }
     }
 }
