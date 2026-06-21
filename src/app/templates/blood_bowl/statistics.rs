@@ -13,9 +13,10 @@ use blood_bowl_rs::translation::TranslatedName;
 pub struct StatisticsPage {
     pub navigation_bar: NavigationBar,
     pub breadcrumb: BreadCrumb,
-    pub teams_top_statistics: TeamsTopStatisticsLists,
-    pub players_top_statistics: PlayersTopStatisticsLists,
-    pub coaches_elo_ranking: CoachesEloRanking,
+    pub tab_name: String,
+    pub teams_top_statistics: Option<TeamsTopStatisticsLists>,
+    pub players_top_statistics: Option<PlayersTopStatisticsLists>,
+    pub coaches_elo_ranking: Option<CoachesEloRanking>,
 }
 
 #[derive(Template, WebTemplate)]

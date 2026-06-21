@@ -9,37 +9,52 @@
 {% endblock %}
 
 {% block body %}
-<div x-data="{ element: 'teams' }">
-    <div class="uk-margin-medium-bottom">
-        <h2>
-            Statistiques
-        </h2>
-    </div>
+<h2 class="uk-margin-medium-bottom">
+    Statistiques
+</h2>
 
-    <div class="uk-margin-medium-bottom">
-        <ul class="uk-child-width-expand" uk-tab>
-            <li class="uk-active">
-                <a href="#" x-on:click="element='teams'">Équipes</a>
-            </li>
-            <li>
-                <a href="#" x-on:click="element='players'">Joueurs</a>
-            </li>
-            <li>
-                <a href="#" x-on:click="element='coaches'">Coachs</a>
-            </li>
-        </ul>
-    </div>
-
-    <div x-show="element==='teams'" class="uk-child-width-1-2@m" uk-grid>
-        {{ teams_top_statistics|escape("none") }}
-    </div>
-
-    <div x-show="element==='players'" class="uk-child-width-1-2@m" uk-grid>
-        {{ players_top_statistics|escape("none") }}
-    </div>
-
-    <div x-show="element==='coaches'">
-        {{ coaches_elo_ranking|escape("none") }}
-    </div>
+<div class="uk-margin-medium-bottom">
+    <ul class="uk-child-width-expand" uk-tab>
+        <li {% if tab_name.eq("teams") %}class="uk-active"{% endif %}>
+            <a href="statistics?tab_name=teams">
+                Équipes
+            </a>
+        </li>
+        <li {% if tab_name.eq("players") %}class="uk-active"{% endif %}>
+            <a href="statistics?tab_name=players">
+                Joueurs
+            </a>
+        </li>
+        <li {% if tab_name.eq("coaches") %}class="uk-active"{% endif %}>
+            <a href="statistics?tab_name=coaches">
+                Coachs
+            </a>
+        </li>
+    </ul>
 </div>
+
+{% if tab_name.eq("teams") %}
+<div class="uk-child-width-1-2@m" uk-grid>
+    {% if let Some(teams_top_statistics) = teams_top_statistics %}
+    {{ teams_top_statistics|escape("none") }}
+    {% endif %}
+</div>
+{% endif %}
+
+{% if tab_name.eq("players") %}
+<div class="uk-child-width-1-2@m" uk-grid>
+    {% if let Some(players_top_statistics) = players_top_statistics %}
+    {{ players_top_statistics|escape("none") }}
+    {% endif %}
+</div>
+{% endif %}
+
+{% if tab_name.eq("coaches") %}
+<div>
+    {% if let Some(coaches_elo_ranking) = coaches_elo_ranking %}
+    {{ coaches_elo_ranking|escape("none") }}
+    {% endif %}
+</div>
+{% endif %}
+
 {% endblock %}
