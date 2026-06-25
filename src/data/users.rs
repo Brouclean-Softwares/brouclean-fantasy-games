@@ -148,7 +148,7 @@ impl User {
     async fn extend_session(&self, state: &AppState, cookie: &String) -> Result<(), AppError> {
         sqlx::query(
             "UPDATE sessions
-                SET expires_at = CURRENT_TIMESTAMP + interval '4 hours'
+                SET expires_at = CURRENT_TIMESTAMP + interval '48 hours'
                 WHERE session_id = $1
                 AND user_id = $2
                 AND expires_at > CURRENT_TIMESTAMP",
@@ -205,48 +205,6 @@ impl User {
         .await?;
 
         Ok(user)
-    }
-
-    pub async fn upsert(&self, state: &AppState) -> Result<Self, AppError> {
-        let existing_user = Self::select_by_mail(state, &self.email).await?;
-
-        if let Some(user_id) = existing_user.and_then(|user| user.id) {
-            let updated_user: User = sqlx::query_as(
-                "UPDATE users
-                    SET name = $2,
-                        given_name = $3,
-                        family_name = $4,
-                        picture = $5,
-                        last_updated = CURRENT_TIMESTAMP
-                    WHERE id = $1
-                    RETURNING users.id, users.email, users.name, given_name, family_name, users.picture",
-            )
-                .bind(user_id.clone())
-                .bind(self.name.clone())
-                .bind(self.given_name.clone())
-                .bind(self.family_name.clone())
-                .bind(self.picture.clone())
-                .fetch_one(&state.db)
-                .await?;
-
-            Ok(updated_user)
-        } else {
-            let inserted_user: User = sqlx::query_as(
-                "INSERT INTO users (email, name, given_name, family_name, picture)
-                VALUES ($1, $2, $3, $4, $5)
-                ON CONFLICT (email) DO NOTHING
-                RETURNING users.id, users.email, users.name, given_name, family_name, users.picture",
-            )
-                .bind(self.email.clone())
-                .bind(self.name.clone())
-                .bind(self.given_name.clone())
-                .bind(self.family_name.clone())
-                .bind(self.picture.clone())
-                .fetch_one(&state.db)
-                .await?;
-
-            Ok(inserted_user)
-        }
     }
 }
 

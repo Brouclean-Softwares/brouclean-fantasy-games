@@ -22,6 +22,71 @@ use std::env;
 pub struct AuthRequest {
     code: String,
 }
+#[derive(Deserialize, Debug, sqlx::FromRow, Clone, Default)]
+pub struct GoogleUserInfo {
+    pub email: String,
+    pub name: Option<String>,
+    pub given_name: Option<String>,
+    pub family_name: Option<String>,
+    pub picture: Option<String>,
+}
+
+impl GoogleUserInfo {
+    fn name(&self) -> String {
+        match (&self.name, &self.given_name, &self.family_name) {
+            (Some(name), _, _) => name.clone(),
+            (_, _, _) => format!(
+                "{} {}",
+                self.given_name.clone().unwrap_or_default(),
+                self.family_name.clone().unwrap_or_default()
+            ),
+        }
+    }
+
+    pub async fn upsert(&self, state: &AppState) -> Result<User, AppError> {
+        tracing::debug!("upsert for email={}", self.email);
+
+        let existing_user = User::select_by_mail(state, &self.email).await?;
+
+        if let Some(user) = existing_user {
+            let updated_user: User = sqlx::query_as(
+                "UPDATE users
+                    SET name = $2,
+                        given_name = $3,
+                        family_name = $4,
+                        picture = $5,
+                        last_updated = CURRENT_TIMESTAMP
+                    WHERE id = $1
+                    RETURNING users.id, users.email, users.name, given_name, family_name, users.picture",
+            )
+                .bind(user.id.clone())
+                .bind(self.name().clone())
+                .bind(self.given_name.clone().unwrap_or_default())
+                .bind(self.family_name.clone().unwrap_or_default())
+                .bind(self.picture.clone().unwrap_or_default())
+                .fetch_one(&state.db)
+                .await?;
+
+            Ok(updated_user)
+        } else {
+            let inserted_user: User = sqlx::query_as(
+                "INSERT INTO users (email, name, given_name, family_name, picture)
+                VALUES ($1, $2, $3, $4, $5)
+                ON CONFLICT (email) DO NOTHING
+                RETURNING users.id, users.email, users.name, given_name, family_name, users.picture",
+            )
+                .bind(self.email.clone())
+                .bind(self.name().clone())
+                .bind(self.given_name.clone().unwrap_or_default())
+                .bind(self.family_name.clone().unwrap_or_default())
+                .bind(self.picture.clone().unwrap_or_default())
+                .fetch_one(&state.db)
+                .await?;
+
+            Ok(inserted_user)
+        }
+    }
+}
 
 pub type GoogleOAuthClient = Client<
     BasicErrorResponse,
@@ -49,14 +114,14 @@ pub async fn callback(
 
     let access_token = token.access_token().secret();
 
-    let profile = app_state
+    let google_user_info = app_state
         .http_requester
         .get("https://openidconnect.googleapis.com/v1/userinfo")
         .bearer_auth(access_token.to_owned())
         .send()
         .await?;
 
-    let profile = profile.json::<User>().await?;
+    let user = google_user_info.json::<GoogleUserInfo>().await?;
 
     let cookie = Cookie::build((SESSION_ID, access_token.to_owned()))
         .same_site(SameSite::Lax)
@@ -64,11 +129,11 @@ pub async fn callback(
         .secure(true)
         .http_only(true);
 
-    profile.upsert(&app_state).await?;
+    user.upsert(&app_state).await?;
 
     Session::upsert(
         &app_state,
-        profile.email,
+        user.email,
         token.access_token().secret().to_owned(),
     )
     .await?;
