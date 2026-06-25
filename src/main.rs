@@ -66,7 +66,7 @@ async fn main() {
 
     tracing::info!("Application binding on : {}", app_url);
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8081").await.unwrap();
     axum::serve(listener, router).await.unwrap();
 }
 
