@@ -137,6 +137,22 @@ pub async fn select_all(state: &AppState) -> Result<Vec<TeamSummary>, AppError> 
     Ok(teams)
 }
 
+pub async fn select_all_with_results(
+    state: &AppState,
+) -> Result<Vec<TeamSummaryWithResults>, AppError> {
+    tracing::debug!("select_all_with_results");
+
+    let teams = select_all(state).await?;
+
+    let mut teams_with_results = Vec::with_capacity(teams.len());
+
+    for team in teams {
+        teams_with_results.push(team.with_results(state).await?);
+    }
+
+    Ok(teams_with_results)
+}
+
 pub async fn select_all_filtered(
     state: &AppState,
     filter: String,
@@ -169,10 +185,7 @@ pub async fn select_all_filtered(
     Ok(teams)
 }
 
-pub async fn select_owned(
-    state: &AppState,
-    coach: User,
-) -> Result<Vec<TeamSummaryWithResults>, AppError> {
+pub async fn select_owned(state: &AppState, coach: User) -> Result<Vec<TeamSummary>, AppError> {
     tracing::debug!("select_owned for coach={:?}", coach);
 
     let teams: Vec<TeamSummary> = sqlx::query_as(
@@ -196,6 +209,17 @@ pub async fn select_owned(
     .bind(coach.id.clone())
     .fetch_all(&state.db)
     .await?;
+
+    Ok(teams)
+}
+
+pub async fn select_owned_with_results(
+    state: &AppState,
+    coach: User,
+) -> Result<Vec<TeamSummaryWithResults>, AppError> {
+    tracing::debug!("select_owned_with_results for coach={:?}", coach);
+
+    let teams = select_owned(state, coach).await?;
 
     let mut teams_with_results = Vec::with_capacity(teams.len());
 

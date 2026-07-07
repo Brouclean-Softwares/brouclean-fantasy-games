@@ -28,12 +28,20 @@
             <th>Roster</th>
             <th uk-tooltip="Valeur d'Equipe">VE</th>
             <th uk-tooltip="Valeur d'Equipe Actuelle">VEA</th>
+            <th uk-tooltip="Victoires">V</th>
+            <th uk-tooltip="Nuls">N</th>
+            <th uk-tooltip="Défaites">D</th>
             <th>Coach</th>
         </tr>
         </thead>
 
         <tbody>
-        {% for team in teams %}
+
+        {% for team_with_results in teams %}
+
+        {% let team = team_with_results.team %}
+        {% let results = team_with_results.results %}
+
         <tr>
             <td class="uk-table-link" data-order="{{ team.name }}">
                 <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ team.id }}">
@@ -58,6 +66,21 @@
             <td class="uk-table-link" data-order="{{ team.current_value }}">
                 <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ team.id }}">
                     {{ team.current_value / 1000 }}k
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ team.id }}">
+                    {{ results.victories }}
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ team.id }}">
+                    {{ results.draws }}
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ team.id }}">
+                    {{ results.losses }}
                 </a>
             </td>
             <td>

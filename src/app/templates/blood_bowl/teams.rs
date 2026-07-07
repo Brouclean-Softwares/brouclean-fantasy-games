@@ -27,11 +27,15 @@ pub struct TeamsPage {
     navigation_bar: NavigationBar,
     breadcrumb: BreadCrumb,
     profile: Option<User>,
-    teams: Vec<TeamSummary>,
+    teams: Vec<TeamSummaryWithResults>,
 }
 
 impl TeamsPage {
-    pub fn get(app_state: AppState, profile: Option<User>, teams: Vec<TeamSummary>) -> Self {
+    pub fn get(
+        app_state: AppState,
+        profile: Option<User>,
+        teams: Vec<TeamSummaryWithResults>,
+    ) -> Self {
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
             breadcrumb: blood_bowl::breadcrumb(),

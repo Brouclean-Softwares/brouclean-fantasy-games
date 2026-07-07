@@ -36,7 +36,7 @@ pub async fn teams(
     State(app_state): State<AppState>,
     MayBeUser(profile): MayBeUser,
 ) -> Result<TeamsPage, Redirect> {
-    let teams = teams::select_all(&app_state)
+    let teams = teams::select_all_with_results(&app_state)
         .await
         .or_else(|error| Err(error.log_and_redirect(Redirect::to("/"))))?;
 

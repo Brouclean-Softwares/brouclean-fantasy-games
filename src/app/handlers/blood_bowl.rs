@@ -50,10 +50,12 @@ pub async fn home(
             .await
             .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
 
-        let owned_teams =
-            crate::data::blood_bowl::teams::select_owned(&app_state, connected_user.clone())
-                .await
-                .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
+        let owned_teams = crate::data::blood_bowl::teams::select_owned_with_results(
+            &app_state,
+            connected_user.clone(),
+        )
+        .await
+        .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
 
         let home_page = blood_bowl::HomePage::get(
             &app_state,
