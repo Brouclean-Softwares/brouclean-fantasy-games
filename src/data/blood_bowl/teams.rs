@@ -1,5 +1,6 @@
 use crate::AppState;
 use crate::data::blood_bowl::competitions::schedule::BYE;
+use crate::data::blood_bowl::statistics::teams::TeamResults;
 use crate::data::blood_bowl::{coaches, games, players, staff, teams};
 use crate::data::users::User;
 use crate::errors::AppError;
@@ -51,6 +52,11 @@ impl From<Team> for TeamLogo {
     }
 }
 
+pub struct TeamSummaryWithResults {
+    pub team: TeamSummary,
+    pub results: TeamResults,
+}
+
 #[derive(Deserialize, sqlx::FromRow, Clone)]
 pub struct TeamSummary {
     pub id: i32,
@@ -92,6 +98,15 @@ impl PartialEq<Option<Self>> for TeamSummary {
 impl TeamSummary {
     pub fn list_into_list_with_option(team_list: &Vec<Self>) -> Vec<Option<Self>> {
         team_list.iter().map(|team| Some(team.clone())).collect()
+    }
+
+    pub async fn with_results(self, state: &AppState) -> Result<TeamSummaryWithResults, AppError> {
+        let results = super::statistics::teams::select_results(state, self.id).await?;
+
+        Ok(TeamSummaryWithResults {
+            team: self,
+            results,
+        })
     }
 }
 
@@ -154,7 +169,10 @@ pub async fn select_all_filtered(
     Ok(teams)
 }
 
-pub async fn select_owned(state: &AppState, coach: User) -> Result<Vec<TeamSummary>, AppError> {
+pub async fn select_owned(
+    state: &AppState,
+    coach: User,
+) -> Result<Vec<TeamSummaryWithResults>, AppError> {
     tracing::debug!("select_owned for coach={:?}", coach);
 
     let teams: Vec<TeamSummary> = sqlx::query_as(
@@ -179,7 +197,13 @@ pub async fn select_owned(state: &AppState, coach: User) -> Result<Vec<TeamSumma
     .fetch_all(&state.db)
     .await?;
 
-    Ok(teams)
+    let mut teams_with_results = Vec::with_capacity(teams.len());
+
+    for team in teams {
+        teams_with_results.push(team.with_results(state).await?);
+    }
+
+    Ok(teams_with_results)
 }
 
 pub async fn select_summary_by_id(state: &AppState, id: i32) -> Result<TeamSummary, AppError> {

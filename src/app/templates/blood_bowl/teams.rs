@@ -6,7 +6,7 @@ use crate::data::blood_bowl::competitions::Competition;
 use crate::data::blood_bowl::games::GameSummary;
 use crate::data::blood_bowl::statistics::players::PlayersTopStatistics;
 use crate::data::blood_bowl::statistics::teams::TeamStatistics;
-use crate::data::blood_bowl::teams::{TeamLogo, TeamSummary};
+use crate::data::blood_bowl::teams::{TeamLogo, TeamSummary, TeamSummaryWithResults};
 use crate::data::users::User;
 use askama::Template;
 use askama_web::WebTemplate;
@@ -225,7 +225,7 @@ struct FormerPlayersTab {
 #[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/teams/owned_teams_block.html")]
 pub struct OwnedTeamsBlock {
-    pub owned_teams: Vec<TeamSummary>,
+    pub owned_teams: Vec<TeamSummaryWithResults>,
 }
 
 #[derive(Template, WebTemplate)]

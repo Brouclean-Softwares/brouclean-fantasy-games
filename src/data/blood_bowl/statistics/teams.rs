@@ -4,6 +4,23 @@ use crate::errors::AppError;
 use serde::Deserialize;
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
+pub struct TeamResults {
+    pub victories: i64,
+    pub draws: i64,
+    pub losses: i64,
+}
+
+impl TeamResults {
+    pub fn new() -> Self {
+        Self {
+            victories: 0,
+            draws: 0,
+            losses: 0,
+        }
+    }
+}
+
+#[derive(Deserialize, sqlx::FromRow, Clone)]
 pub struct TeamStatistics {
     pub passing_completions: i64,
     pub throwing_completions: i64,
@@ -115,6 +132,53 @@ impl TeamsTopStatistics {
             teams_top_deaths: select_teams_deaths_top_for_competition_id(state, competition_id)
                 .await?,
         })
+    }
+}
+
+pub async fn select_results(state: &AppState, team_id: i32) -> Result<TeamResults, AppError> {
+    tracing::debug!("select_results for team_id={}", team_id);
+
+    let results: Option<TeamResults> = sqlx::query_as(
+        "SELECT
+                COALESCE(SUM(
+                    CASE
+                        WHEN (first_team_id = $1 AND first_team_is_winner = TRUE)
+                            OR (second_team_id = $1 AND second_team_is_winner = TRUE)
+                        THEN 1 ELSE 0
+                    END
+                ), 0) AS victories,
+            
+                COALESCE(SUM(
+                    CASE
+                        WHEN (
+                            (first_team_id = $1 OR second_team_id = $1)
+                            AND first_team_is_winner = FALSE
+                            AND second_team_is_winner = FALSE
+                        )
+                        THEN 1 ELSE 0
+                    END
+                ), 0) AS draws,
+            
+                COALESCE(SUM(
+                    CASE
+                        WHEN (first_team_id = $1 AND second_team_is_winner = TRUE)
+                            OR (second_team_id = $1 AND first_team_is_winner = TRUE)
+                        THEN 1 ELSE 0
+                    END
+                ), 0) AS losses
+            
+            FROM bb_games
+            WHERE first_team_id = $1
+            OR second_team_id = $1",
+    )
+    .bind(team_id.clone())
+    .fetch_optional(&state.db)
+    .await?;
+
+    if let Some(results) = results {
+        Ok(results.into())
+    } else {
+        Ok(TeamResults::new())
     }
 }
 

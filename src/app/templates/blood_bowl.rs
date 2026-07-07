@@ -6,7 +6,7 @@ use crate::app::templates::blood_bowl::teams::OwnedTeamsBlock;
 use crate::app::templates::{BreadCrumb, NavigationBar, UrlLink};
 use crate::data::blood_bowl::competitions::Competition;
 use crate::data::blood_bowl::games::GameSummary;
-use crate::data::blood_bowl::teams::TeamSummary;
+use crate::data::blood_bowl::teams::TeamSummaryWithResults;
 use crate::data::users::User;
 use crate::errors::AppError;
 use askama::Template;
@@ -42,7 +42,7 @@ impl HomePage {
         playing_games: Vec<GameSummary>,
         scheduled_games: Vec<GameSummary>,
         owned_competitions: Vec<Competition>,
-        owned_teams: Vec<TeamSummary>,
+        owned_teams: Vec<TeamSummaryWithResults>,
     ) -> Result<Self, AppError> {
         let owned_competitions_block = if owned_competitions.is_empty() {
             None
