@@ -51,7 +51,13 @@ pub async fn select_from_team(state: &AppState, team_id: i32) -> Result<Option<C
 pub struct EloRanking {
     pub id: i32,
     pub name: String,
-    pub elo: i32,
+    pub elo: f64,
+}
+
+impl EloRanking {
+    pub fn rounded_elo(&self) -> i32 {
+        self.elo.round() as i32
+    }
 }
 
 pub async fn select_elo_ranking(state: &AppState) -> Result<Vec<EloRanking>, AppError> {
@@ -88,11 +94,11 @@ pub async fn select_elo_ranking(state: &AppState) -> Result<Vec<EloRanking>, App
 pub async fn select_elo_for_user(
     state: &AppState,
     user_id: &Option<i32>,
-) -> Result<Option<i32>, AppError> {
+) -> Result<Option<f64>, AppError> {
     tracing::debug!("select_elo_for_user for user_id={:?}", user_id);
 
     if let Some(user_id) = user_id {
-        let elo: Option<i32> = sqlx::query_scalar(
+        let elo: Option<f64> = sqlx::query_scalar(
             "SELECT bb_coaches_elo.elo
             FROM bb_coaches_elo
             INNER JOIN bb_games
