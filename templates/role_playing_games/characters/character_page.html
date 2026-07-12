@@ -321,9 +321,10 @@
     </div>
     {% endif %}
 
-    {% if is_owner %}
+    {% if is_owner || is_game_master_of_character %}
     <h3 class="uk-heading-divider">
         <span>Notes privées</span>
+        <span class="uk-text-meta"> (partagées avec le maître de jeu uniquement)</span>
         {% if editable && ! field_edited.eq("private_note") %}
         <a href="character?id={{ character.id }}&tab_name=notes&edit=true&field_edited=private_note" uk-icon="icon: pencil"></a>
         {% endif %}

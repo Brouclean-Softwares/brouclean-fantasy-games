@@ -365,6 +365,32 @@ pub async fn select_for_session(
     Ok(character_rows)
 }
 
+pub async fn is_user_game_master_of_character(
+    state: &AppState,
+    user: &User,
+    character_id: i32,
+) -> Result<bool, AppError> {
+    let game_master_id: Option<i32> = sqlx::query_scalar(
+        "SELECT rpg_campaigns.game_master_id
+            FROM rpg_sessions_characters
+            INNER JOIN rpg_sessions
+            ON rpg_sessions_characters.session_id = rpg_sessions.id
+            INNER JOIN rpg_arcs
+            ON rpg_sessions.arc_id = rpg_arcs.id
+            INNER JOIN rpg_campaigns
+            ON rpg_arcs.campaign_id = rpg_campaigns.id
+            WHERE rpg_sessions_characters.character_id = $2
+            AND rpg_campaigns.game_master_id = $1
+            LIMIT 1",
+    )
+    .bind(user.id.clone())
+    .bind(character_id.clone())
+    .fetch_optional(&state.db)
+    .await?;
+
+    Ok(game_master_id.is_some())
+}
+
 pub async fn create(state: &AppState, user: &User, character: &Character) -> Result<i32, AppError> {
     tracing::debug!(
         "create for user={:?} the following character={:?}",

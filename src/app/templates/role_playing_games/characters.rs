@@ -64,6 +64,7 @@ pub struct CharacterPage {
     edit_mode: bool,
     field_edited: String,
     is_owner: bool,
+    is_game_master_of_character: bool,
     games: Vec<Game>,
     campaigns_with_arcs_and_sessions: Vec<(i32, String, Vec<(i32, String, Vec<(i32, String)>)>)>,
 }
@@ -72,6 +73,7 @@ impl CharacterPage {
     pub fn get(
         app_state: AppState,
         profile: Option<User>,
+        is_game_master_of_character: bool,
         character: Character,
         tab_name: Option<String>,
         editable: bool,
@@ -89,6 +91,7 @@ impl CharacterPage {
             edit_mode,
             field_edited: field_edited.unwrap_or_default(),
             is_owner: editable,
+            is_game_master_of_character,
             games,
             campaigns_with_arcs_and_sessions: Self::extract_campaigns_with_arcs_and_sessions(
                 sessions_with_campaign,
@@ -135,8 +138,6 @@ impl CharacterPage {
                 campaigns_with_arcs_and_sessions.push(campaign_with_arcs.clone());
             }
         }
-
-        tracing::error!("Sessions: {:?}", campaigns_with_arcs_and_sessions);
 
         campaigns_with_arcs_and_sessions
     }

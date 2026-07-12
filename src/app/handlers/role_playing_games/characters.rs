@@ -95,9 +95,20 @@ pub async fn character(
             .await
             .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?;
 
+    let is_game_master_of_character = match &profile {
+        Some(profile) => {
+            characters::is_user_game_master_of_character(&app_state, profile, character.id)
+                .await
+                .map_err(|error| error.log_and_redirect(redirect_if_error.clone()))?
+        }
+
+        None => false,
+    };
+
     Ok(CharacterPage::get(
         app_state,
         profile.clone(),
+        is_game_master_of_character,
         character,
         params.tab_name,
         is_owner,
