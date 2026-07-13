@@ -168,8 +168,8 @@ pub async fn select_results(state: &AppState, team_id: i32) -> Result<TeamResult
                 ), 0) AS losses
             
             FROM bb_games
-            WHERE first_team_id = $1
-            OR second_team_id = $1",
+            WHERE closed_at IS NOT NULL
+            AND (first_team_id = $1 OR second_team_id = $1)",
     )
     .bind(team_id.clone())
     .fetch_optional(&state.db)
