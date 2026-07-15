@@ -119,7 +119,10 @@
             </td>
             <td class="uk-table-link">
                 <a class="uk-link-reset" href="{{ competition_url }}">
-                    {{ competition.progress_status() }}
+                    {% if let Some(team) = competition.winner %}
+                    <img src="{{ TeamLogo::from(*team).url }}" width="25" height="25" alt="">
+                    {{ team.name }}
+                    {% endif %}
                 </a>
             </td>
         </tr>

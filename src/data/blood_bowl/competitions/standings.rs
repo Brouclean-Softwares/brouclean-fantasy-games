@@ -1,5 +1,5 @@
 use crate::data::blood_bowl::competitions::schedule::{BYE, GameSchedule};
-use crate::data::blood_bowl::competitions::stages::CompetitionStage;
+use crate::data::blood_bowl::competitions::stages::{CompetitionStage, CompetitionStageType};
 use crate::data::blood_bowl::games::GameSummary;
 use crate::data::blood_bowl::teams::TeamSummary;
 use std::cmp::Ordering;
@@ -22,6 +22,16 @@ impl CompetitionStandings {
 
         if let Some(last_stage_standings) = last_stage_standings {
             last_stage_standings.standings()
+        } else {
+            Vec::new()
+        }
+    }
+
+    pub fn teams_final_standings(&self) -> Vec<(usize, Option<TeamStandings>)> {
+        let last_stage_standings = self.stages_standings.last();
+
+        if let Some(last_stage_standings) = last_stage_standings {
+            last_stage_standings.teams_standings()
         } else {
             Vec::new()
         }
@@ -135,6 +145,33 @@ impl StageStandings {
         });
 
         standings
+    }
+
+    pub fn teams_standings(&self) -> Vec<(usize, Option<TeamStandings>)> {
+        let mut teams_ranking = Vec::new();
+
+        for competing_for_position_standings in self.standings() {
+            for (team_index, team_standings) in competing_for_position_standings
+                .standings()
+                .iter()
+                .enumerate()
+            {
+                let position = match self.stage.stage_type {
+                    CompetitionStageType::Championship => {
+                        competing_for_position_standings.position_teams_are_competing_for
+                            + team_index
+                    }
+
+                    CompetitionStageType::Cup => {
+                        competing_for_position_standings.position_teams_are_competing_for
+                    }
+                };
+
+                teams_ranking.push((position, team_standings.clone()));
+            }
+        }
+
+        teams_ranking
     }
 }
 

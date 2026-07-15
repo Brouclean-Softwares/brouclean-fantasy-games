@@ -37,9 +37,8 @@ CREATE TABLE IF NOT EXISTS bb_competitions_stages_schedule (
     round_name VARCHAR NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS bb_competitions_stages_standings (
+CREATE TABLE IF NOT EXISTS bb_competitions_final_ranking (
     competition_id INTEGER NOT NULL REFERENCES bb_competitions ON DELETE CASCADE,
-    stage_id INTEGER NOT NULL REFERENCES bb_competitions_stages ON DELETE CASCADE,
     team_id INTEGER REFERENCES bb_teams ON DELETE RESTRICT,
     position INTEGER NOT NULL
 );

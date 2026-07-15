@@ -57,7 +57,7 @@ pub struct TeamSummaryWithResults {
     pub results: TeamResults,
 }
 
-#[derive(Deserialize, sqlx::FromRow, Clone)]
+#[derive(Deserialize, sqlx::FromRow, Clone, Debug)]
 pub struct TeamSummary {
     pub id: i32,
     pub version: Version,

@@ -272,7 +272,7 @@ pub async fn team(
         .await
         .map_err(error_handler)?;
 
-    let competitions = Competition::select_for_team(&app_state, team.id)
+    let competitions_with_rank = Competition::select_for_team_with_rank(&app_state, team.id)
         .await
         .map_err(error_handler)?;
 
@@ -295,7 +295,7 @@ pub async fn team(
         team_statistics,
         players_top_statistics,
         former_players,
-        competitions,
+        competitions_with_rank,
     ))
 }
 

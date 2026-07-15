@@ -9,9 +9,7 @@ use crate::data::blood_bowl::competitions::Competition;
 use crate::data::blood_bowl::competitions::registrations::TeamRegistration;
 use crate::data::blood_bowl::competitions::schedule::CompetitionSchedule;
 use crate::data::blood_bowl::competitions::stages::{CompetitionStage, CompetitionStageType};
-use crate::data::blood_bowl::competitions::standings::{
-    CompetingForPositionStandings, CompetitionStandings,
-};
+use crate::data::blood_bowl::competitions::standings::CompetitionStandings;
 use crate::data::blood_bowl::teams::TeamLogo;
 use crate::data::users::User;
 use crate::errors::AppError;
@@ -23,6 +21,43 @@ use blood_bowl_rs::versions::Version;
 
 pub fn breadcrumb() -> BreadCrumb {
     blood_bowl::breadcrumb().plus_link(UrlLink::from("Compétitions", "/blood_bowl/competitions"))
+}
+
+pub fn rank_text(position: &usize, is_final_ranking: bool, is_meta: bool) -> String {
+    let winner = match is_meta {
+        false => "Vainqueur 🏆".to_string(),
+        true => "🏆".to_string(),
+    };
+
+    let second = match is_meta {
+        false => "2ème 🥈".to_string(),
+        true => "🥈".to_string(),
+    };
+
+    let third = match is_meta {
+        false => "3ème 🥉".to_string(),
+        true => "🥉".to_string(),
+    };
+
+    let other_position = |pos: &usize| match (pos, is_meta) {
+        (1, false) => "1er".to_string(),
+        (_, false) => format!("{}ème", pos),
+        (_, true) => format!("<span class=\"uk-text-meta\">#{}</span>", pos),
+    };
+
+    if is_final_ranking {
+        if position.eq(&1) {
+            winner
+        } else if position.eq(&2) {
+            second
+        } else if position.eq(&3) {
+            third
+        } else {
+            other_position(position)
+        }
+    } else {
+        other_position(position)
+    }
 }
 
 #[derive(Template, WebTemplate)]
@@ -113,6 +148,8 @@ impl CompetitionPage {
 
         let (schedule, standings) = competition.schedule_and_standings(&app_state).await?;
 
+        let competition_can_be_closed = !competition.closed && schedule.is_finished() && editable;
+
         Ok(Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
             alert_message,
@@ -147,6 +184,8 @@ impl CompetitionPage {
             },
             standings: CompetitionStandingsTab {
                 competition_standings: standings,
+                competition_id,
+                competition_can_be_closed,
             },
             statistics: CompetitionStatisticsTab {
                 teams_top_statistics,
@@ -184,46 +223,20 @@ pub struct CompetitionStagesBloc {
 #[template(path = "blood_bowl/competitions/competition_standings.html")]
 pub struct CompetitionStandingsTab {
     competition_standings: CompetitionStandings,
+    competition_id: i32,
+    competition_can_be_closed: bool,
 }
 
 impl CompetitionStandingsTab {
     pub fn position_text_for_team_standings_in_stage(
         &self,
         stage_index: &usize,
-        position_standings: &CompetingForPositionStandings,
-        team_index: &usize,
+        position: &usize,
     ) -> String {
         let is_last_stage =
             stage_index.eq(&(self.competition_standings.stages_standings.len() - 1));
 
-        let winner = "🏆".to_string();
-        let second = "🥈".to_string();
-        let third = "🥉".to_string();
-        let other_position = |pos| format!("<span class=\"uk-text-meta\">#{}</span>", pos);
-
-        let team_position = match self.competition_standings.stages_standings[*stage_index]
-            .stage
-            .stage_type
-        {
-            CompetitionStageType::Championship => {
-                position_standings.position_teams_are_competing_for + team_index
-            }
-            CompetitionStageType::Cup => position_standings.position_teams_are_competing_for,
-        };
-
-        if is_last_stage {
-            if team_position == 1 {
-                winner
-            } else if team_position == 2 {
-                second
-            } else if team_position == 3 {
-                third
-            } else {
-                other_position(team_position)
-            }
-        } else {
-            other_position(team_position)
-        }
+        rank_text(position, is_last_stage, true)
     }
 }
 

@@ -34,6 +34,14 @@ impl CompetitionSchedule {
             None
         }
     }
+
+    pub fn is_finished(&self) -> bool {
+        self.stages_schedule
+            .iter()
+            .filter(|&stage_schedule| !stage_schedule.is_finished())
+            .count()
+            == 0
+    }
 }
 
 pub struct StageSchedule {
@@ -69,6 +77,14 @@ impl StageSchedule {
         self.finished = self.finished && other.finished;
 
         self.rounds_schedule.extend(other.rounds_schedule);
+    }
+
+    pub fn is_finished(&self) -> bool {
+        self.rounds_schedule
+            .iter()
+            .filter(|&round_schedule| !round_schedule.is_finished())
+            .count()
+            == 0
     }
 }
 
@@ -128,6 +144,10 @@ impl RoundSchedule {
             .filter(|&game_schedule| game_schedule.can_be_created())
             .count()
             > 0
+    }
+
+    pub fn is_finished(&self) -> bool {
+        !self.games_can_be_created()
     }
 }
 

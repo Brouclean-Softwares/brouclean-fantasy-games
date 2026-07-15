@@ -117,7 +117,7 @@ impl TeamPage {
         team_statistics: TeamStatistics,
         players_top_statistics: PlayersTopStatistics,
         former_players: Vec<(i32, Player)>,
-        competitions: Vec<Competition>,
+        competitions_with_rank: Vec<(Competition, Option<usize>)>,
     ) -> Self {
         let mut is_playing_game = false;
         if let Some(game) = game_playing.clone() {
@@ -177,7 +177,7 @@ impl TeamPage {
                 losses,
                 team_statistics,
                 players_top_statistics: players_top_statistics.into(),
-                competitions,
+                competitions_with_rank,
             },
             former_players: FormerPlayersTab {
                 team,
@@ -216,7 +216,20 @@ struct TeamStatisticsTab {
     losses: usize,
     team_statistics: TeamStatistics,
     players_top_statistics: PlayersTopStatisticsLists,
-    competitions: Vec<Competition>,
+    competitions_with_rank: Vec<(Competition, Option<usize>)>,
+}
+
+impl TeamStatisticsTab {
+    pub fn rank_text(&self, competition: Competition, rank: Option<usize>) -> String {
+        if let Some(rank) = rank {
+            blood_bowl::competitions::rank_text(&rank, true, false)
+        } else {
+            format!(
+                "En cours <span class=\"uk-text-meta\">({})</span>",
+                competition.progress_status()
+            )
+        }
+    }
 }
 
 #[derive(Template, WebTemplate)]

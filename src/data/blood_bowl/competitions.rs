@@ -3,6 +3,7 @@ use crate::data::blood_bowl::competitions::registrations::TeamRegistration;
 use crate::data::blood_bowl::competitions::schedule::{CompetitionSchedule, StageSchedule};
 use crate::data::blood_bowl::competitions::stages::{CompetitionStage, CompetitionStageType};
 use crate::data::blood_bowl::competitions::standings::{CompetitionStandings, StageStandings};
+use crate::data::blood_bowl::teams;
 use crate::data::blood_bowl::teams::TeamSummary;
 use crate::data::users::User;
 use crate::errors::AppError;
@@ -43,6 +44,8 @@ impl CompetitionRow {
             playing_round_name = Some(progress.round_name);
         }
 
+        let winner = Competition::select_winner(state, self.id).await?;
+
         Ok(Competition {
             id: self.id,
             name: self.name,
@@ -54,6 +57,7 @@ impl CompetitionRow {
             closed: self.closed,
             playing_stage_name,
             playing_round_name,
+            winner,
         })
     }
 }
@@ -70,6 +74,7 @@ pub struct Competition {
     pub closed: bool,
     pub playing_stage_name: Option<String>,
     pub playing_round_name: Option<String>,
+    pub winner: Option<TeamSummary>,
 }
 
 impl Competition {
@@ -109,6 +114,15 @@ impl Competition {
         }
     }
 
+    pub fn prize(final_position: usize) -> i32 {
+        match final_position {
+            1 => 100000,
+            2 => 60000,
+            3 => 30000,
+            _ => 0,
+        }
+    }
+
     pub fn new(creator: User, name: String) -> Self {
         Self {
             id: 0,
@@ -121,6 +135,7 @@ impl Competition {
             closed: false,
             playing_stage_name: None,
             playing_round_name: None,
+            winner: None,
         }
     }
 
@@ -214,6 +229,130 @@ impl Competition {
         .await?;
 
         Ok(())
+    }
+
+    pub async fn close(&self, state: &AppState, connected_user: &User) -> Result<(), AppError> {
+        tracing::debug!("close by user={:?} with id={}", connected_user, self.id);
+
+        if let Some(director) = &self.director {
+            if connected_user.eq(director) && !self.closed {
+                let mut transaction = state.db.begin().await?;
+
+                sqlx::query(
+                    "DELETE
+                    FROM bb_competitions_final_ranking
+                    WHERE competition_id = $1",
+                )
+                .bind(self.id.clone())
+                .execute(&mut *transaction)
+                .await?;
+
+                let (schedule, standings) = self.schedule_and_standings(state).await?;
+
+                if schedule.is_finished() {
+                    sqlx::query(
+                        "UPDATE bb_competitions
+                            SET closed_at = CURRENT_TIMESTAMP,
+                                last_updated = CURRENT_TIMESTAMP
+                            WHERE id = $1",
+                    )
+                    .bind(self.id.clone())
+                    .execute(&mut *transaction)
+                    .await?;
+
+                    for (position, team_standings) in standings.teams_final_standings() {
+                        if let Some(team_standings) = team_standings {
+                            let team_id = team_standings.team.id;
+
+                            sqlx::query(
+                                "INSERT INTO bb_competitions_final_ranking (
+                                    competition_id,
+                                    team_id,
+                                    position
+                                )
+                                VALUES ($1, $2, $3)",
+                            )
+                            .bind(self.id.clone())
+                            .bind(team_id.clone())
+                            .bind(position.clone() as i32)
+                            .execute(&mut *transaction)
+                            .await?;
+
+                            let prize = Self::prize(position);
+
+                            if prize > 0 {
+                                sqlx::query(
+                                    "UPDATE bb_teams
+                                        SET treasury = treasury + $2,
+                                            last_updated = CURRENT_TIMESTAMP
+                                        WHERE id = $1",
+                                )
+                                .bind(team_id.clone())
+                                .bind(prize.clone())
+                                .execute(&mut *transaction)
+                                .await?;
+                            }
+                        }
+                    }
+                }
+
+                transaction.commit().await?;
+            }
+        }
+
+        Ok(())
+    }
+
+    async fn select_winner(
+        state: &AppState,
+        competition_id: i32,
+    ) -> Result<Option<TeamSummary>, AppError> {
+        tracing::debug!("select_winner for competition_id={}", competition_id);
+
+        let winner_id: Option<i32> = sqlx::query_scalar(
+            "SELECT team_id 
+                FROM bb_competitions_final_ranking 
+                WHERE competition_id = $1
+                AND position = 1
+                LIMIT 1",
+        )
+        .bind(competition_id.clone())
+        .fetch_optional(&state.db)
+        .await?;
+
+        if let Some(winner_id) = winner_id {
+            let team_summary = teams::select_summary_by_id(state, winner_id).await?;
+
+            Ok(Some(team_summary))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub async fn select_team_final_ranking(
+        &self,
+        state: &AppState,
+        team_id: i32,
+    ) -> Result<Option<usize>, AppError> {
+        tracing::debug!(
+            "select_team_final_ranking for competition_id={} and team_id={}",
+            self.id,
+            team_id
+        );
+
+        let position: Option<i32> = sqlx::query_scalar(
+            "SELECT position 
+                FROM bb_competitions_final_ranking 
+                WHERE competition_id = $1
+                AND team_id = $2
+                LIMIT 1",
+        )
+        .bind(self.id.clone())
+        .bind(team_id.clone())
+        .fetch_optional(&state.db)
+        .await?;
+
+        Ok(position.and_then(|position| Some(position as usize)))
     }
 
     pub async fn select_editions(&self, state: &AppState) -> Result<Vec<Self>, AppError> {
@@ -417,7 +556,10 @@ impl Competition {
         Ok(competitions)
     }
 
-    pub async fn select_for_team(state: &AppState, team_id: i32) -> Result<Vec<Self>, AppError> {
+    pub async fn select_for_team_with_rank(
+        state: &AppState,
+        team_id: i32,
+    ) -> Result<Vec<(Self, Option<usize>)>, AppError> {
         tracing::debug!("select_for_team for team_id={}", team_id);
 
         let rows: Vec<CompetitionRow> = sqlx::query_as(
@@ -440,10 +582,15 @@ impl Competition {
         .fetch_all(&state.db)
         .await?;
 
-        let mut competitions: Vec<Competition> = Vec::with_capacity(rows.len());
+        let mut competitions: Vec<(Self, Option<usize>)> = Vec::with_capacity(rows.len());
 
         for row in rows {
-            competitions.push(row.into_competition(state).await?);
+            let competition = row.into_competition(state).await?;
+            let position = competition
+                .select_team_final_ranking(state, team_id)
+                .await?;
+
+            competitions.push((competition, position));
         }
 
         Ok(competitions)

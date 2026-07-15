@@ -31,6 +31,7 @@ pub fn init_router() -> Router<AppState> {
         .route("/unregister_team", post(unregister_team))
         .route("/update_team_validation", post(update_team_validation))
         .route("/insert_games", post(insert_games))
+        .route("/close", post(close))
 }
 
 pub async fn competitions(
@@ -585,4 +586,39 @@ pub async fn insert_games(
         "./competition?id={}&tab_name=schedule",
         form.competition_id
     )))
+}
+
+#[derive(Deserialize)]
+pub struct CloseForm {
+    pub id: i32,
+}
+
+pub async fn close(
+    State(app_state): State<AppState>,
+    profile: User,
+    Form(form): Form<DeleteForm>,
+) -> Result<Redirect, Redirect> {
+    let redirect = Redirect::to(&format!("./competition?id={}&tab_name=standings", form.id));
+
+    let competition = Competition::select_by_id(&app_state, form.id)
+        .await
+        .or_else(|app_error| {
+            Err(app_error.log_and_redirect(Redirect::to(&format!(
+                "./competition?id={}&message={}",
+                form.id, app_error
+            ))))
+        })?
+        .ok_or_else(|| redirect.clone())?;
+
+    competition
+        .close(&app_state, &profile)
+        .await
+        .or_else(|app_error| {
+            Err(app_error.log_and_redirect(Redirect::to(&format!(
+                "./competition?id={}&message={}",
+                form.id, app_error
+            ))))
+        })?;
+
+    Ok(redirect)
 }
