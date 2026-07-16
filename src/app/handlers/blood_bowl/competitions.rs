@@ -611,7 +611,8 @@ pub async fn close(
         })?
         .ok_or_else(|| redirect.clone())?;
 
-    competition.close(&app_state, &profile)
+    competition
+        .close(&app_state, &profile)
         .await
         .or_else(|app_error| {
             Err(app_error.log_and_redirect(Redirect::to(&format!(
