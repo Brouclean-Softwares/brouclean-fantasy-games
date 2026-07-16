@@ -45,6 +45,10 @@
         <tr>
             <td class="uk-table-link" data-order="{{ team.name }}">
                 <a class="uk-link-reset" href="/blood_bowl/teams/team?id={{ team.id }}">
+                    {% if team.in_offseason %}
+                    <span uk-tooltip="Inter-saison" class="uk-margin-right">🏖️</span>
+                    {% endif %}
+
                     <img src="{{ TeamLogo::from(*team).url }}" width="25" height="25" alt="">
                     {{ team.name }}
                 </a>

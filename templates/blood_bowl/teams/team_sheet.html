@@ -44,7 +44,7 @@
             {% for staff_information in roster_definition.staff_information_sorted_by_name("fr") %}
             <dt>
                 <span>{{ staff_information.staff.name("fr") }}</span>
-                <span class="uk-text-meta"> ({{ staff_information.price(team.under_creation.clone()) / 1000 }}k)</span>
+                <span class="uk-text-meta"> ({{ staff_information.price / 1000 }}k)</span>
             </dt>
             <dd>
                 <form id="buy_{{ staff_information.staff.type_name() }}_form" method="post" autocomplete="off">
@@ -52,7 +52,7 @@
 
                     <span>{{ team.staff_quantity(staff_information.staff) }}</span>
 
-                    {% if editable && team.can_buy_staff(staff_information.staff) %}
+                    {% if able_to_buy_or_buyout && team.can_buy_staff(staff_information.staff) %}
                     <button class="uk-button uk-button-link uk-margin-left"
                             type="button"
                             uk-toggle="target: #modal-{{ staff_information.staff.type_name() }}">
@@ -62,7 +62,7 @@
                     <div id="modal-{{ staff_information.staff.type_name() }}" uk-modal>
                         <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
                             <h2 class="uk-modal-title">Achat de {{ staff_information.staff.lower_name("fr") }} en cours</h2>
-                            <p>Confirmez-vous l'achat pour {{ staff_information.price(team.under_creation.clone()) / 1000 }}k ?</p>
+                            <p>Confirmez-vous l'achat pour {{ staff_information.price_for_team(team) / 1000 }}k ?</p>
                             <p class="uk-text-right">
                                 <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
                                 <button class="uk-button uk-button-primary"
@@ -110,7 +110,7 @@
                     <th uk-tooltip="title: Nombre de Blessures Persistantes">BP</th>
                     <th>Valeur</th>
 
-                    {% if editable %}
+                    {% if able_to_buy_or_buyout %}
                     <th>Renvoi</th>
                     {% endif %}
                 </tr>
@@ -201,7 +201,7 @@
                         </a>
                     </td>
 
-                    {% if editable %}
+                    {% if able_to_buy_or_buyout %}
                     <td>
                         {% if team.can_buyout_player(player) %}
                         <form id="buyout_player_form-{{ player.id }}" method="post" autocomplete="off">
@@ -239,7 +239,7 @@
         </div>
     </div>
 
-    {% if editable %}
+    {% if able_to_buy_or_buyout %}
     <div class="uk-width-1-1@m uk-margin-medium-bottom">
         <h3 class="uk-heading-divider">
             Recrutement
@@ -315,47 +315,29 @@
     </div>
     {% endif %}
 
-    <div class="uk-width-1-1@m uk-margin">
-        {% if editable %}
-        <div class="uk-flex">
-            <div>
-                {% if edit_mode %}
-                <a href="./team?id={{ team.id }}" class="uk-button uk-button-primary">
-                    Visualiser
-                </a>
-                {% else %}
-                <a href="./team?id={{ team.id }}&edit=true" class="uk-button uk-button-primary">
-                    Modifier
-                </a>
-                {% endif %}
+    {% if deletable %}
+    <div class="uk-margin">
+        <form id="delete_form" action="./delete" method="post" autocomplete="off">
+            <input id="id" name="id" type="hidden" value="{{ team.id }}">
+
+            <button class="uk-button uk-button-danger"
+                    type="button"
+                    uk-toggle="target: #modal-delete">Supprimer</button>
+
+            <div id="modal-delete" uk-modal>
+                <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                    <h2 class="uk-modal-title">Suppression de l'équipe en cours</h2>
+                    <p>Confirmez-vous la suppression de l'équipe ?</p>
+                    <p class="uk-text-right">
+                        <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
+                        <button class="uk-button uk-button-danger"
+                                onclick="document.getElementById('delete_form').submit()">
+                            Confirmer
+                        </button>
+                    </p>
+                </div>
             </div>
-
-            {% if deletable %}
-            <div class="uk-margin-left">
-                <form id="delete_form" action="./delete" method="post" autocomplete="off">
-                    <input id="id" name="id" type="hidden" value="{{ team.id }}">
-
-                    <button class="uk-button uk-button-danger"
-                            type="button"
-                            uk-toggle="target: #modal-delete">Supprimer</button>
-
-                    <div id="modal-delete" uk-modal>
-                        <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
-                            <h2 class="uk-modal-title">Suppression de l'équipe en cours</h2>
-                            <p>Confirmez-vous la suppression de l'équipe ?</p>
-                            <p class="uk-text-right">
-                                <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
-                                <button class="uk-button uk-button-danger"
-                                        onclick="document.getElementById('delete_form').submit()">
-                                    Confirmer
-                                </button>
-                            </p>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            {% endif %}
-        </div>
-        {% endif %}
+        </form>
     </div>
+    {% endif %}
 </div>

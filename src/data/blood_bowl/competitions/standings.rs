@@ -27,7 +27,7 @@ impl CompetitionStandings {
         }
     }
 
-    pub fn teams_final_standings(&self) -> Vec<(usize, Option<TeamStandings>)> {
+    pub fn last_stage_teams_standings(&self) -> Vec<(usize, Option<TeamStandings>)> {
         let last_stage_standings = self.stages_standings.last();
 
         if let Some(last_stage_standings) = last_stage_standings {

@@ -18,6 +18,10 @@ impl TeamResults {
             losses: 0,
         }
     }
+
+    pub fn total_played(&self) -> i64 {
+        self.victories + self.draws + self.losses
+    }
 }
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
@@ -174,6 +178,64 @@ pub async fn select_results(state: &AppState, team_id: i32) -> Result<TeamResult
     .bind(team_id.clone())
     .fetch_optional(&state.db)
     .await?;
+
+    if let Some(results) = results {
+        Ok(results.into())
+    } else {
+        Ok(TeamResults::new())
+    }
+}
+
+pub async fn select_results_for_competition(
+    state: &AppState,
+    team_id: i32,
+    competition_id: i32,
+) -> Result<TeamResults, AppError> {
+    tracing::debug!(
+        "select_results_for_competition for team_id={} and competition_id={}",
+        team_id,
+        competition_id
+    );
+
+    let results: Option<TeamResults> = sqlx::query_as(
+        "SELECT
+                COALESCE(SUM(
+                    CASE
+                        WHEN (bb_games.first_team_id = $1 AND bb_games.first_team_is_winner = TRUE)
+                            OR (bb_games.second_team_id = $1 AND bb_games.second_team_is_winner = TRUE)
+                        THEN 1 ELSE 0
+                    END
+                ), 0) AS victories,
+            
+                COALESCE(SUM(
+                    CASE
+                        WHEN (
+                            (bb_games.first_team_id = $1 OR bb_games.second_team_id = $1)
+                            AND bb_games.first_team_is_winner = FALSE
+                            AND bb_games.second_team_is_winner = FALSE
+                        )
+                        THEN 1 ELSE 0
+                    END
+                ), 0) AS draws,
+            
+                COALESCE(SUM(
+                    CASE
+                        WHEN (bb_games.first_team_id = $1 AND bb_games.second_team_is_winner = TRUE)
+                            OR (bb_games.second_team_id = $1 AND bb_games.first_team_is_winner = TRUE)
+                        THEN 1 ELSE 0
+                    END
+                ), 0) AS losses
+            
+            FROM bb_games
+            INNER JOIN bb_competitions_stages_schedule
+            ON bb_competitions_stages_schedule.game_id = bb_games.id
+            WHERE bb_competitions_stages_schedule.competition_id = $2
+            AND bb_games.closed_at IS NOT NULL
+            AND (bb_games.first_team_id = $1 OR bb_games.second_team_id = $1)",
+    )
+        .bind(team_id.clone())
+        .fetch_optional(&state.db)
+        .await?;
 
     if let Some(results) = results {
         Ok(results.into())

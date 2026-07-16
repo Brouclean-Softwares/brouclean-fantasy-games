@@ -71,6 +71,7 @@ pub struct TeamSummary {
     pub treasury: i32,
     pub dedicated_fans: i32,
     pub under_creation: bool,
+    pub in_offseason: bool,
 }
 
 impl PartialEq<Self> for TeamSummary {
@@ -125,7 +126,14 @@ pub async fn select_all(state: &AppState) -> Result<Vec<TeamSummary>, AppError> 
                     bb_teams.current_value,
                     bb_teams.treasury,
                     bb_teams.dedicated_fans,
-                    bb_teams.under_creation
+                    bb_teams.under_creation,
+                    (
+                        SELECT COUNT(*) > 0
+                        FROM bb_competitions_teams_offseasons
+                        WHERE team_id = bb_teams.id
+                        AND closed_at IS NULL
+                        LIMIT 1
+                    ) as in_offseason
             FROM bb_teams
             LEFT JOIN users
             ON bb_teams.coach_id = users.id
@@ -171,7 +179,14 @@ pub async fn select_all_filtered(
                     bb_teams.current_value,
                     bb_teams.treasury,
                     bb_teams.dedicated_fans,
-                    bb_teams.under_creation
+                    bb_teams.under_creation,
+                    (
+                        SELECT COUNT(*) > 0
+                        FROM bb_competitions_teams_offseasons
+                        WHERE team_id = bb_teams.id
+                        AND closed_at IS NULL
+                        LIMIT 1
+                    ) as in_offseason
             FROM bb_teams
             LEFT JOIN users ON bb_teams.coach_id = users.id
             WHERE LOWER(bb_teams.name) LIKE $1
@@ -200,7 +215,14 @@ pub async fn select_owned(state: &AppState, coach: User) -> Result<Vec<TeamSumma
                     bb_teams.current_value,
                     bb_teams.treasury,
                     bb_teams.dedicated_fans,
-                    bb_teams.under_creation
+                    bb_teams.under_creation,
+                    (
+                        SELECT COUNT(*) > 0
+                        FROM bb_competitions_teams_offseasons
+                        WHERE team_id = bb_teams.id
+                        AND closed_at IS NULL
+                        LIMIT 1
+                    ) as in_offseason
             FROM bb_teams
             LEFT JOIN users ON bb_teams.coach_id = users.id
             WHERE coach_id = $1
@@ -245,7 +267,14 @@ pub async fn select_summary_by_id(state: &AppState, id: i32) -> Result<TeamSumma
                     bb_teams.current_value,
                     bb_teams.treasury,
                     bb_teams.dedicated_fans,
-                    bb_teams.under_creation
+                    bb_teams.under_creation,
+                    (
+                        SELECT COUNT(*) > 0
+                        FROM bb_competitions_teams_offseasons
+                        WHERE team_id = bb_teams.id
+                        AND closed_at IS NULL
+                        LIMIT 1
+                    ) as in_offseason
             FROM bb_teams
             LEFT JOIN users ON bb_teams.coach_id = users.id
             WHERE bb_teams.id = $1
@@ -296,7 +325,14 @@ async fn select_by_id(
                     bb_teams.current_value,
                     bb_teams.treasury,
                     bb_teams.dedicated_fans,
-                    bb_teams.under_creation
+                    bb_teams.under_creation,
+                    (
+                        SELECT COUNT(*) > 0
+                        FROM bb_competitions_teams_offseasons
+                        WHERE team_id = bb_teams.id
+                        AND closed_at IS NULL
+                        LIMIT 1
+                    ) as in_offseason
             FROM bb_teams
             LEFT JOIN users ON bb_teams.coach_id = users.id
             WHERE bb_teams.id = $1",
@@ -337,6 +373,7 @@ async fn select_by_id(
         players,
         dedicated_fans: team.dedicated_fans as u8,
         under_creation: team.under_creation,
+        in_offseason: team.in_offseason,
     };
 
     Ok(team)

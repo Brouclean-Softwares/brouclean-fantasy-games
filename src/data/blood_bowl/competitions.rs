@@ -3,6 +3,7 @@ use crate::data::blood_bowl::competitions::registrations::TeamRegistration;
 use crate::data::blood_bowl::competitions::schedule::{CompetitionSchedule, StageSchedule};
 use crate::data::blood_bowl::competitions::stages::{CompetitionStage, CompetitionStageType};
 use crate::data::blood_bowl::competitions::standings::{CompetitionStandings, StageStandings};
+use crate::data::blood_bowl::statistics::teams::TeamResults;
 use crate::data::blood_bowl::teams;
 use crate::data::blood_bowl::teams::{TeamLogo, TeamSummary};
 use crate::data::users::User;
@@ -10,7 +11,7 @@ use crate::errors::AppError;
 use blood_bowl_rs::versions::Version;
 use serde::Deserialize;
 
-pub mod offseason;
+pub mod offseasons;
 pub mod registrations;
 pub mod schedule;
 pub mod stages;
@@ -238,7 +239,7 @@ impl Competition {
         Ok(())
     }
 
-    pub async fn close(&self, state: &AppState, connected_user: &User) -> Result<(), AppError> {
+    pub async fn close(&mut self, state: &AppState, connected_user: &User) -> Result<(), AppError> {
         tracing::debug!("close by user={:?} with id={}", connected_user, self.id);
 
         if let Some(director) = &self.director {
@@ -267,7 +268,7 @@ impl Competition {
                     .execute(&mut *transaction)
                     .await?;
 
-                    for (position, team_standings) in standings.teams_final_standings() {
+                    for (position, team_standings) in standings.last_stage_teams_standings() {
                         if let Some(team_standings) = team_standings {
                             let team_id = team_standings.team.id;
 
@@ -300,6 +301,19 @@ impl Competition {
                                 .await?;
                             }
                         }
+                    }
+
+                    let is_closed: Option<bool> = sqlx::query_scalar(
+                        "SELECT closed_at IS NULL
+                            FROM bb_competitions
+                            WHERE id = $1",
+                    )
+                    .bind(self.id.clone())
+                    .fetch_optional(&mut *transaction)
+                    .await?;
+
+                    if let Some(is_closed) = is_closed {
+                        self.closed = is_closed;
                     }
                 }
 
@@ -563,7 +577,7 @@ impl Competition {
         Ok(competitions)
     }
 
-    pub async fn select_for_team_with_rank(
+    pub async fn select_played_by_team_with_rank(
         state: &AppState,
         team_id: i32,
     ) -> Result<Vec<(Self, Option<usize>)>, AppError> {
@@ -694,6 +708,17 @@ impl Competition {
         state: &AppState,
     ) -> Result<Vec<TeamSummary>, AppError> {
         TeamRegistration::select_validated_teams_for_competition(state, self).await
+    }
+
+    pub async fn select_team_results(
+        &self,
+        state: &AppState,
+        team_id: i32,
+    ) -> Result<TeamResults, AppError> {
+        crate::data::blood_bowl::statistics::teams::select_results_for_competition(
+            state, team_id, self.id,
+        )
+        .await
     }
 
     pub async fn schedule_and_standings(

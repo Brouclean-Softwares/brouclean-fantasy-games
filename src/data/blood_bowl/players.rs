@@ -1,4 +1,5 @@
 use crate::AppState;
+use crate::data::blood_bowl::competitions::offseasons;
 use crate::data::blood_bowl::games::select_playing_team_player_for_game;
 use crate::data::blood_bowl::{coaches, games, teams};
 use crate::data::users::User;
@@ -10,7 +11,9 @@ use blood_bowl_rs::positions::{Keyword, Position};
 use blood_bowl_rs::rosters::Roster;
 use blood_bowl_rs::translation::TypeName;
 use blood_bowl_rs::versions::Version;
+use chrono::{DateTime, Utc};
 use serde::Deserialize;
+use sqlx::{Executor, Postgres};
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
 struct PlayerDetail {
@@ -30,7 +33,7 @@ impl PlayerDetail {
         let advancements = select_advancements(state, self.id).await?;
         let hatred = select_player_hatred(state, self.id).await?;
 
-        Ok(Player {
+        let mut player = Player {
             id: self.id,
             version: self.version,
             position: self.position,
@@ -43,7 +46,19 @@ impl PlayerDetail {
             injuries: PlayerInjury::extract_current_injuries(&player_injuries),
             hatred,
             is_captain: self.is_captain,
-        })
+            seasons_played: 0,
+            seasons_played_with_experience: 0,
+        };
+
+        player.seasons_played = offseasons::select_seasons_played_by_player(state, &player).await?;
+
+        let seasons_played_without_experience =
+            offseasons::select_seasons_played_without_experience_by_player(state, &player).await?;
+
+        player.seasons_played_with_experience =
+            player.seasons_played - seasons_played_without_experience;
+
+        Ok(player)
     }
 }
 
@@ -287,57 +302,60 @@ pub async fn buy_position_for_team(
 
     if let Some(connected_user_id) = connected_user.id {
         let mut team = teams::select_by_id_with_staff_and_players(state, team_id).await?;
-        let (number, player) = team.buy_position(&position)?;
-        let team_value = team.value()?;
-        let team_current_value = team.current_value()?;
 
-        let mut transaction = state.db.begin().await?;
+        if !team.is_drafting() {
+            let (number, player) = team.buy_position(&position)?;
+            let team_value = team.value()?;
+            let team_current_value = team.current_value()?;
 
-        let new_player_id: i32 = sqlx::query_scalar(
-            "INSERT INTO bb_players (
+            let mut transaction = state.db.begin().await?;
+
+            let new_player_id: i32 = sqlx::query_scalar(
+                "INSERT INTO bb_players (
                 version,
                 name,
                 position)
             VALUES ($1, $2, $3)
             RETURNING id",
-        )
-        .bind(player.version.clone())
-        .bind(player.name.clone())
-        .bind(player.position.clone())
-        .fetch_one(&mut *transaction)
-        .await?;
+            )
+            .bind(player.version.clone())
+            .bind(player.name.clone())
+            .bind(player.position.clone())
+            .fetch_one(&mut *transaction)
+            .await?;
 
-        sqlx::query(
-            "INSERT INTO bb_teams_players (
+            sqlx::query(
+                "INSERT INTO bb_teams_players (
                 number,
                 team_id,
                 player_id)
             VALUES ($1, $2, $3)",
-        )
-        .bind(number.clone())
-        .bind(team_id.clone())
-        .bind(new_player_id.clone())
-        .execute(&mut *transaction)
-        .await?;
+            )
+            .bind(number.clone())
+            .bind(team_id.clone())
+            .bind(new_player_id.clone())
+            .execute(&mut *transaction)
+            .await?;
 
-        sqlx::query(
-            "UPDATE bb_teams
+            sqlx::query(
+                "UPDATE bb_teams
             SET treasury = $1,
                 value = $2,
                 current_value = $3,
                 last_updated = CURRENT_TIMESTAMP
             WHERE id = $4
             AND coach_id = $5",
-        )
-        .bind(team.treasury.clone())
-        .bind(team_value.clone() as i32)
-        .bind(team_current_value.clone() as i32)
-        .bind(team_id.clone())
-        .bind(connected_user_id.clone())
-        .execute(&mut *transaction)
-        .await?;
+            )
+            .bind(team.treasury.clone())
+            .bind(team_value.clone() as i32)
+            .bind(team_current_value.clone() as i32)
+            .bind(team_id.clone())
+            .bind(connected_user_id.clone())
+            .execute(&mut *transaction)
+            .await?;
 
-        transaction.commit().await?;
+            transaction.commit().await?;
+        }
     }
 
     Ok(())
@@ -452,24 +470,26 @@ pub async fn buyout_for_team(
 
     let team = teams::select_by_id_with_staff_and_players(state, team_id).await?;
 
-    if let Some((_, player)) = team.player_by_id(player_id) {
-        if team.can_buyout_player(&player) {
-            sqlx::query(
-                "UPDATE bb_teams_players
+    if !team.is_drafting() {
+        if let Some((_, player)) = team.player_by_id(player_id) {
+            if team.can_buyout_player(&player) {
+                sqlx::query(
+                    "UPDATE bb_teams_players
                     SET contract_end = CURRENT_TIMESTAMP
                     FROM bb_teams
                     WHERE bb_teams_players.player_id = $1
                     AND bb_teams_players.team_id = $2
                     AND bb_teams.id = bb_teams_players.team_id
                     AND bb_teams.coach_id = $3",
-            )
-            .bind(player_id.clone())
-            .bind(team_id.clone())
-            .bind(connected_user.id.clone())
-            .execute(&state.db)
-            .await?;
+                )
+                .bind(player_id.clone())
+                .bind(team_id.clone())
+                .bind(connected_user.id.clone())
+                .execute(&state.db)
+                .await?;
 
-            teams::update_values(state, connected_user, team_id).await?;
+                teams::update_values(state, connected_user, team_id).await?;
+            }
         }
     }
 
@@ -517,9 +537,11 @@ pub async fn name_captain_for_team(
 }
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
-struct PlayerInjury {
-    injury: Injury,
-    before_last_game: bool,
+pub struct PlayerInjury {
+    pub injury: Injury,
+    pub created_at: DateTime<Utc>,
+    pub before_last_game: bool,
+    pub before_last_offseason: bool,
 }
 
 impl PlayerInjury {
@@ -530,28 +552,30 @@ impl PlayerInjury {
                 match (
                     player_injury.injury.clone(),
                     player_injury.before_last_game.clone(),
+                    player_injury.before_last_offseason.clone(),
                 ) {
-                    (Injury::SeriouslyHurt, false)
-                    | (Injury::SeriousInjury, false)
-                    | (Injury::HeadInjury, false)
-                    | (Injury::SmashedKnee, false)
-                    | (Injury::BrokenArm, false)
-                    | (Injury::NeckInjury, false)
-                    | (Injury::DislocatedHip, false)
-                    | (Injury::DislocatedShoulder, false)
-                    | (Injury::Dead, _) => true,
+                    (Injury::SeriouslyHurt, false, false)
+                    | (Injury::SeriousInjury, false, false)
+                    | (Injury::HeadInjury, false, false)
+                    | (Injury::SmashedKnee, false, false)
+                    | (Injury::BrokenArm, false, false)
+                    | (Injury::NeckInjury, false, false)
+                    | (Injury::DislocatedHip, false, false)
+                    | (Injury::DislocatedShoulder, false, false)
+                    | (Injury::Dead, _, _) => true,
 
-                    (Injury::Stunned, _)
-                    | (Injury::KO, _)
-                    | (Injury::BadlyHurt, _)
-                    | (Injury::SeriouslyHurt, true)
-                    | (Injury::SeriousInjury, true)
-                    | (Injury::HeadInjury, true)
-                    | (Injury::SmashedKnee, true)
-                    | (Injury::BrokenArm, true)
-                    | (Injury::NeckInjury, true)
-                    | (Injury::DislocatedHip, true)
-                    | (Injury::DislocatedShoulder, true) => false,
+                    (_, _, true)
+                    | (Injury::Stunned, _, _)
+                    | (Injury::KO, _, _)
+                    | (Injury::BadlyHurt, _, _)
+                    | (Injury::SeriouslyHurt, true, false)
+                    | (Injury::SeriousInjury, true, false)
+                    | (Injury::HeadInjury, true, false)
+                    | (Injury::SmashedKnee, true, false)
+                    | (Injury::BrokenArm, true, false)
+                    | (Injury::NeckInjury, true, false)
+                    | (Injury::DislocatedHip, true, false)
+                    | (Injury::DislocatedShoulder, true, false) => false,
                 }
             })
             .count()
@@ -587,7 +611,7 @@ impl PlayerInjury {
     }
 }
 
-async fn select_player_injuries(
+pub async fn select_player_injuries(
     state: &AppState,
     player_id: i32,
 ) -> Result<Vec<PlayerInjury>, AppError> {
@@ -595,22 +619,58 @@ async fn select_player_injuries(
 
     let injuries: Vec<PlayerInjury> = sqlx::query_as(
         "SELECT bb_players_injuries.injury,
-                    bb_players_injuries.created_at < MAX(bb_games.started_at) as before_last_game
+                    bb_players_injuries.created_at,
+                    (
+                        SELECT COALESCE(bb_players_injuries.created_at < MAX(bb_games.started_at), FALSE)
+                        FROM bb_teams_players
+                        INNER JOIN bb_games
+                        ON (bb_teams_players.team_id = bb_games.first_team_id OR bb_teams_players.team_id = bb_games.second_team_id)
+                        WHERE bb_teams_players.player_id = bb_players_injuries.player_id
+                    ) as before_last_game,
+                    (
+                        SELECT COALESCE(bb_players_injuries.created_at < MAX(bb_competitions_teams_offseasons.created_at), FALSE)
+                        FROM bb_teams_players
+                        INNER JOIN bb_competitions_teams_offseasons
+                        ON bb_teams_players.team_id = bb_competitions_teams_offseasons.team_id
+                        WHERE bb_teams_players.player_id = bb_players_injuries.player_id
+                    ) as before_last_offseason
             FROM bb_players_injuries
-            INNER JOIN bb_teams_players
-            ON bb_teams_players.player_id = bb_players_injuries.player_id
-            INNER JOIN bb_games
-            ON (bb_teams_players.team_id = bb_games.first_team_id OR bb_teams_players.team_id = bb_games.second_team_id)
             WHERE bb_players_injuries.player_id = $1
-            AND bb_players_injuries.recovered_at IS NULL
-            GROUP BY bb_players_injuries.injury,
-            bb_players_injuries.created_at",
+            AND bb_players_injuries.recovered_at IS NULL",
     )
     .bind(player_id.clone())
     .fetch_all(&state.db)
     .await?;
 
     Ok(injuries)
+}
+
+pub async fn update_player_who_recovered_from_injury<'e, E>(
+    executor: E,
+    player_id: i32,
+    injury: &PlayerInjury,
+) -> Result<(), AppError>
+where
+    E: Executor<'e, Database = Postgres>,
+{
+    tracing::debug!(
+        "update_player_who_recover_from_injury with player_id={} for injury contracted the {}",
+        player_id,
+        injury.created_at
+    );
+
+    sqlx::query(
+        "UPDATE bb_players_injuries
+            SET recovered_at = CURRENT_TIMESTAMP
+            WHERE player_id = $1
+            AND created_at = $2",
+    )
+    .bind(player_id.clone())
+    .bind(injury.created_at.clone())
+    .execute(executor)
+    .await?;
+
+    Ok(())
 }
 
 async fn select_remaining_star_player_points(
@@ -822,11 +882,14 @@ pub async fn add_advancement(
 }
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
-struct PlayerHatred {
-    keyword: Keyword,
+pub struct PlayerHatred {
+    pub keyword: Keyword,
 }
 
-async fn select_player_hatred(state: &AppState, player_id: i32) -> Result<Vec<Keyword>, AppError> {
+pub async fn select_player_hatred(
+    state: &AppState,
+    player_id: i32,
+) -> Result<Vec<Keyword>, AppError> {
     tracing::debug!("select_player_hatred with id={}", player_id);
 
     let hatred: Vec<PlayerHatred> = sqlx::query_as(
@@ -845,4 +908,32 @@ async fn select_player_hatred(state: &AppState, player_id: i32) -> Result<Vec<Ke
         .collect();
 
     Ok(keywords)
+}
+
+pub async fn update_player_who_recovered_from_hatred<'e, E>(
+    executor: E,
+    player_id: i32,
+    keyword: &Keyword,
+) -> Result<(), AppError>
+where
+    E: Executor<'e, Database = Postgres>,
+{
+    tracing::debug!(
+        "update_player_who_recover_from_hatred with player_id={} for hatred keyword {:?}",
+        player_id,
+        keyword
+    );
+
+    sqlx::query(
+        "UPDATE bb_players_hatred
+            SET recovered_at = CURRENT_TIMESTAMP
+            WHERE player_id = $1
+            AND keyword = $2",
+    )
+    .bind(player_id.clone())
+    .bind(keyword.clone())
+    .execute(executor)
+    .await?;
+
+    Ok(())
 }

@@ -3,7 +3,7 @@ use crate::app::templates::blood_bowl::teams::{
     NewTeamPage, TeamFilteredList, TeamPage, TeamsPage,
 };
 use crate::app::templates::{AlertMessage, AlertType};
-use crate::data::blood_bowl::competitions::Competition;
+use crate::data::blood_bowl::competitions::{Competition, offseasons};
 use crate::data::blood_bowl::statistics;
 use crate::data::blood_bowl::statistics::players::PlayersTopStatistics;
 use crate::data::blood_bowl::{games, players, staff, teams};
@@ -272,7 +272,11 @@ pub async fn team(
         .await
         .map_err(error_handler)?;
 
-    let competitions_with_rank = Competition::select_for_team_with_rank(&app_state, team.id)
+    let competitions_with_rank = Competition::select_played_by_team_with_rank(&app_state, team.id)
+        .await
+        .map_err(error_handler)?;
+
+    let offseason_raised_funds = offseasons::select_raised_fund_for_team(&app_state, &team.id)
         .await
         .map_err(error_handler)?;
 
@@ -296,6 +300,7 @@ pub async fn team(
         players_top_statistics,
         former_players,
         competitions_with_rank,
+        offseason_raised_funds,
     ))
 }
 

@@ -54,7 +54,7 @@ impl CompetitionSchedule {
     }
 
     pub fn should_imply_offseason(&self) -> bool {
-        self.round_number() >= super::offseason::OFF_SEASON_COMPETITION_ROUND_THRESHOLD
+        self.round_number() >= super::offseasons::OFFSEASON_COMPETITION_ROUND_THRESHOLD
     }
 }
 
@@ -183,6 +183,7 @@ lazy_static::lazy_static! {
         treasury: 0,
         dedicated_fans: 0,
         under_creation: false,
+        in_offseason: false,
     };
 }
 

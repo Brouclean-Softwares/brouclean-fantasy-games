@@ -14,6 +14,10 @@
         {% for team in teams %}
         <tr onclick="update_input_id({{ team.id }})">
             <td>
+                {% if team.in_offseason %}
+                <span uk-tooltip="Inter-saison" class="uk-margin-right">🏖️</span>
+                {% endif %}
+                
                 <img src="{{ TeamLogo::from(*team).url }}" width="25" height="25" alt="">
                 {{ team.name }}
             </td>

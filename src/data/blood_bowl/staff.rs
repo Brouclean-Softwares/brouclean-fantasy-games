@@ -53,46 +53,48 @@ pub async fn buy_staff_for_team(
     if let Some(connected_user_id) = connected_user.id {
         let mut team = teams::select_by_id_with_staff_and_players(state, team_id).await?;
 
-        let new_staff_quantity = team.buy_staff(&staff)?;
+        if !team.is_drafting() {
+            let new_staff_quantity = team.buy_staff(&staff)?;
 
-        let team_value = team.value()?;
-        let team_current_value = team.current_value()?;
+            let team_value = team.value()?;
+            let team_current_value = team.current_value()?;
 
-        let mut transaction = state.db.begin().await?;
+            let mut transaction = state.db.begin().await?;
 
-        sqlx::query(
-            "UPDATE bb_teams_staff
-            SET number = $1
-            FROM bb_teams
-            WHERE bb_teams.id = bb_teams_staff.team_id
-            AND bb_teams.id = $2
-            AND bb_teams.coach_id = $3
-            AND bb_teams_staff.staff = $4",
-        )
-        .bind(new_staff_quantity.clone() as i32)
-        .bind(team_id.clone())
-        .bind(connected_user_id.clone())
-        .bind(staff.clone())
-        .execute(&mut *transaction)
-        .await?;
+            sqlx::query(
+                "UPDATE bb_teams_staff
+                SET number = $1
+                FROM bb_teams
+                WHERE bb_teams.id = bb_teams_staff.team_id
+                AND bb_teams.id = $2
+                AND bb_teams.coach_id = $3
+                AND bb_teams_staff.staff = $4",
+            )
+            .bind(new_staff_quantity.clone() as i32)
+            .bind(team_id.clone())
+            .bind(connected_user_id.clone())
+            .bind(staff.clone())
+            .execute(&mut *transaction)
+            .await?;
 
-        sqlx::query(
-            "UPDATE bb_teams
-            SET treasury = $1,
-                value = $2,
-                current_value = $3
-            WHERE id = $4
-            AND coach_id = $5",
-        )
-        .bind(team.treasury.clone())
-        .bind(team_value.clone() as i32)
-        .bind(team_current_value.clone() as i32)
-        .bind(team_id.clone())
-        .bind(connected_user_id.clone())
-        .execute(&mut *transaction)
-        .await?;
+            sqlx::query(
+                "UPDATE bb_teams
+                SET treasury = $1,
+                    value = $2,
+                    current_value = $3
+                WHERE id = $4
+                AND coach_id = $5",
+            )
+            .bind(team.treasury.clone())
+            .bind(team_value.clone() as i32)
+            .bind(team_current_value.clone() as i32)
+            .bind(team_id.clone())
+            .bind(connected_user_id.clone())
+            .execute(&mut *transaction)
+            .await?;
 
-        transaction.commit().await?;
+            transaction.commit().await?;
+        }
     }
 
     Ok(())

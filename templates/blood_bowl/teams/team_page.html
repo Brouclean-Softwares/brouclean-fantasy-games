@@ -5,6 +5,10 @@
 {% endblock %}
 
 {% block messages %}
+{% if let Some(alert_in_offseason) = alert_in_offseason %}
+{{ alert_in_offseason|escape("none") }}
+{% endif %}
+
 {% if let Some(alert_message) = alert_message %}
 {{ alert_message|escape("none") }}
 {% endif %}
@@ -106,6 +110,15 @@
                 <span class="uk-visible@m">Feuille d'équipe</span>
             </a>
         </li>
+        
+        {% if team.in_offseason && editable %}
+        <li {% if tab_name.eq("contracts") %}class="uk-active"{% endif %}>
+            <a href="team?id={{ team.id }}&tab_name=contracts" uk-icon="icon: file-edit">
+                <span class="uk-visible@m">Contrats</span>
+            </a>
+        </li>
+        {% endif %}
+        
         <li {% if tab_name.eq("results") %}class="uk-active"{% endif %}>
             <a href="team?id={{ team.id }}&tab_name=results" uk-icon="icon: calendar">
                 <span class="uk-visible@m">Résultats</span>
@@ -127,6 +140,12 @@
 {% if tab_name.eq("sheet") %}
 <div>
     {{ sheet|escape("none") }}
+</div>
+{% endif %}
+
+{% if tab_name.eq("contracts") %}
+<div>
+    {{ contracts|escape("none") }}
 </div>
 {% endif %}
 

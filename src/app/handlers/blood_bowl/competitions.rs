@@ -601,7 +601,7 @@ pub async fn close(
 ) -> Result<Redirect, Redirect> {
     let redirect = Redirect::to(&format!("./competition?id={}&tab_name=standings", form.id));
 
-    let competition = Competition::select_by_id(&app_state, form.id)
+    let mut competition = Competition::select_by_id(&app_state, form.id)
         .await
         .or_else(|app_error| {
             Err(app_error.log_and_redirect(Redirect::to(&format!(

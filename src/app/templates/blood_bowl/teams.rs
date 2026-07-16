@@ -1,7 +1,9 @@
 use crate::AppState;
 use crate::app::templates::blood_bowl::games::GameCard;
 use crate::app::templates::blood_bowl::statistics::PlayersTopStatisticsLists;
-use crate::app::templates::{AlertMessage, BreadCrumb, NavigationBar, UrlLink, blood_bowl};
+use crate::app::templates::{
+    AlertMessage, AlertType, BreadCrumb, NavigationBar, UrlLink, blood_bowl,
+};
 use crate::data::blood_bowl::competitions::Competition;
 use crate::data::blood_bowl::games::GameSummary;
 use crate::data::blood_bowl::statistics::players::PlayersTopStatistics;
@@ -84,6 +86,7 @@ impl NewTeamPage {
 pub struct TeamPage {
     navigation_bar: NavigationBar,
     breadcrumb: BreadCrumb,
+    alert_in_offseason: Option<AlertMessage>,
     alert_message: Option<AlertMessage>,
     team: Team,
     tab_name: String,
@@ -92,6 +95,7 @@ pub struct TeamPage {
     edit_mode: bool,
     field_edited: String,
     sheet: TeamSheetTab,
+    contracts: TeamContractsTab,
     results: TeamResultsTab,
     statistics: TeamStatisticsTab,
     former_players: FormerPlayersTab,
@@ -118,8 +122,10 @@ impl TeamPage {
         players_top_statistics: PlayersTopStatistics,
         former_players: Vec<(i32, Player)>,
         competitions_with_rank: Vec<(Competition, Option<usize>)>,
+        offseason_raised_funds: i32,
     ) -> Self {
         let mut is_playing_game = false;
+
         if let Some(game) = game_playing.clone() {
             is_playing_game = game.started && !game.finished;
         }
@@ -129,6 +135,8 @@ impl TeamPage {
                 Some(user) => user.has_optional_id(&team.coach.id),
                 None => false,
             };
+
+        let able_to_buy_or_buyout = editable && !team.in_offseason;
 
         let edit_mode = edit_mode && editable;
 
@@ -146,23 +154,51 @@ impl TeamPage {
             false
         };
 
+        let alert_in_offseason = if team.in_offseason {
+            Some(AlertMessage {
+                alert_type: AlertType::Warning,
+                message: "🏖️ L'équipe est en cours d'inter-saison. Gérez-la si vous voulez refaire des matchs.".into(),
+            })
+        } else {
+            None
+        };
+
+        let tab_name = if let Some(tab_name) = tab_name {
+            if tab_name.eq("contracts") && (!team.in_offseason || !editable) {
+                "sheet".to_owned()
+            } else {
+                tab_name
+            }
+        } else {
+            if team.in_offseason && editable {
+                "contracts".to_owned()
+            } else {
+                "sheet".to_owned()
+            }
+        };
+
         Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
+            alert_in_offseason,
             alert_message,
             breadcrumb: breadcrumb(),
             team: team.clone(),
-            tab_name: tab_name.unwrap_or("sheet".to_owned()),
+            tab_name,
             editable,
             upgradable,
             edit_mode,
             field_edited: field_edited.unwrap_or_default(),
             sheet: TeamSheetTab {
                 team: team.clone(),
-                roster_definition,
+                roster_definition: roster_definition.clone(),
+                able_to_buy_or_buyout,
                 deletable,
-                editable,
-                edit_mode,
                 positions_buyable,
+            },
+            contracts: TeamContractsTab {
+                team: team.clone(),
+                roster_definition,
+                offseason_raised_funds,
             },
             results: TeamResultsTab {
                 team: team.clone(),
@@ -192,10 +228,17 @@ impl TeamPage {
 struct TeamSheetTab {
     team: Team,
     roster_definition: RosterDefinition,
+    able_to_buy_or_buyout: bool,
     deletable: bool,
-    editable: bool,
-    edit_mode: bool,
     positions_buyable: Vec<(Position, u32, bool)>,
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "blood_bowl/teams/team_contracts.html")]
+struct TeamContractsTab {
+    team: Team,
+    roster_definition: RosterDefinition,
+    offseason_raised_funds: i32,
 }
 
 #[derive(Template, WebTemplate)]

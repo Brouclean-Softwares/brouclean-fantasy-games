@@ -8,6 +8,7 @@ use crate::errors::AppError;
 use crate::errors::AppError::BloodBowlAppError;
 use blood_bowl_rs::events::GameEvent;
 use blood_bowl_rs::games::Game;
+use blood_bowl_rs::injuries::Injury;
 use blood_bowl_rs::players::{Player, PlayerType};
 use blood_bowl_rs::positions::Position;
 use blood_bowl_rs::rosters::Roster;
@@ -763,6 +764,8 @@ impl GameTeamPlayer {
                 injuries: Vec::new(),
                 hatred: Vec::new(),
                 is_captain: false,
+                seasons_played: 0,
+                seasons_played_with_experience: 0,
             },
         )
     }
@@ -864,6 +867,12 @@ async fn can_be_saved(state: &AppState, profile: &User, game: &Game) -> Result<b
         profile,
         game.id,
     );
+
+    if game.first_team.in_offseason || game.second_team.in_offseason {
+        return Err(BloodBowlAppError(
+            "Impossible de créer un match avec des équipes en cours d'inter-saison".into(),
+        ));
+    }
 
     if game.first_team.coach.eq(&game.second_team.coach) {
         return Err(BloodBowlAppError(
@@ -1474,6 +1483,20 @@ pub async fn update_after_event(
             AND bb_competitions_stages_schedule.competition_id = bb_competitions.id",
         )
         .bind(game.id.clone())
+        .execute(&mut *transaction)
+        .await?;
+
+        sqlx::query(
+            "UPDATE bb_teams_players
+            SET contract_end = CURRENT_TIMESTAMP
+            FROM bb_players_injuries
+            WHERE bb_teams_players.player_id = bb_players_injuries.player_id
+            AND bb_teams_players.contract_end IS NULL
+            AND bb_players_injuries.game_id = $1
+            AND bb_players_injuries.injury = $2",
+        )
+        .bind(game.id.clone())
+        .bind(Injury::Dead.clone())
         .execute(&mut *transaction)
         .await?;
     }
