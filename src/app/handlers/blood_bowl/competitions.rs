@@ -611,17 +611,14 @@ pub async fn close(
         })?
         .ok_or_else(|| redirect.clone())?;
 
-    competition
-    .close(&app_state, &profile)
-    .await
-    .or_else(|app_error| {
-        Err(app_error.log_and_redirect(Redirect::to(&format!(
-            "./competition?id={}&message={}",
-            form.id, app_error
-        ))))
-    })?;
-
-
+    competition.close(&app_state, &profile)
+        .await
+        .or_else(|app_error| {
+            Err(app_error.log_and_redirect(Redirect::to(&format!(
+                "./competition?id={}&message={}",
+                form.id, app_error
+            ))))
+        })?;
 
     Ok(redirect)
 }
