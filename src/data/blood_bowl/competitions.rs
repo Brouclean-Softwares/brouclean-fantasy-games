@@ -4,12 +4,13 @@ use crate::data::blood_bowl::competitions::schedule::{CompetitionSchedule, Stage
 use crate::data::blood_bowl::competitions::stages::{CompetitionStage, CompetitionStageType};
 use crate::data::blood_bowl::competitions::standings::{CompetitionStandings, StageStandings};
 use crate::data::blood_bowl::teams;
-use crate::data::blood_bowl::teams::TeamSummary;
+use crate::data::blood_bowl::teams::{TeamLogo, TeamSummary};
 use crate::data::users::User;
 use crate::errors::AppError;
 use blood_bowl_rs::versions::Version;
 use serde::Deserialize;
 
+pub mod offseason;
 pub mod registrations;
 pub mod schedule;
 pub mod stages;
@@ -96,9 +97,15 @@ impl Competition {
         }
     }
 
-    pub fn result(&self) -> String {
-        if self.closed {
-            "🏆 <Vainqueur...>".to_string()
+    pub fn html_result(&self) -> String {
+        if let Some(team) = &self.winner {
+            let team_name = team.name.clone();
+
+            format!(
+                "<img src=\"{}\" width=\"25\" height=\"25\" alt=\"\"> {} 🏆",
+                TeamLogo::from(team).url,
+                team_name,
+            )
         } else {
             self.progress_status()
         }

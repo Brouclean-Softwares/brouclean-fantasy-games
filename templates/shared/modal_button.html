@@ -1,0 +1,25 @@
+<button class="uk-button uk-button-{{ button_level }}" uk-toggle="target: #{{ modal_id }}" type="button">
+    {{ button_name }}
+</button>
+
+<div id="{{ modal_id }}" uk-modal bg-close="false">
+    <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+        <form action="{{ form_action }}" method="post" autocomplete="off" class="uk-form-stacked">
+            <h2 class="uk-modal-title">
+                {{ modal_title }}
+            </h2>
+
+            {{ modal_content|escape("none") }}
+
+            <p class="uk-text-right">
+                <button class="uk-button uk-button-default uk-modal-close" type="button">
+                    Annuler
+                </button>
+
+                <button class="uk-button uk-button-{{ button_level }}" type="submit">
+                    {{ action_button_name }}
+                </button>
+            </p>
+        </form>
+    </div>
+</div>

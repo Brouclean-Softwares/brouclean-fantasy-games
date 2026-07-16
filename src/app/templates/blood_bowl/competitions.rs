@@ -4,6 +4,7 @@ use crate::app::templates::blood_bowl::statistics::{
     PlayersTopStatisticsLists, TeamsTopStatisticsLists,
 };
 use crate::app::templates::blood_bowl::teams::TeamSelector;
+use crate::app::templates::shared::ModalButton;
 use crate::app::templates::{AlertMessage, BreadCrumb, NavigationBar, UrlLink, blood_bowl};
 use crate::data::blood_bowl::competitions::Competition;
 use crate::data::blood_bowl::competitions::registrations::TeamRegistration;
@@ -150,6 +151,23 @@ impl CompetitionPage {
 
         let competition_can_be_closed = !competition.closed && schedule.is_finished() && editable;
 
+        let competition_should_have_offseason = schedule.should_imply_offseason();
+
+        let close_modal_button = ModalButton::from(
+            "primary",
+            "Clôturer la compétition",
+            "close_modal",
+            "Clôture de la compétition",
+            CloseCompetitionModalButton {
+                competition_id,
+                competition_should_have_offseason,
+            }
+            .render()
+            .unwrap(),
+            "Clôturer",
+            "./close",
+        );
+
         Ok(Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
             alert_message,
@@ -184,8 +202,8 @@ impl CompetitionPage {
             },
             standings: CompetitionStandingsTab {
                 competition_standings: standings,
-                competition_id,
                 competition_can_be_closed,
+                close_modal_button,
             },
             statistics: CompetitionStatisticsTab {
                 teams_top_statistics,
@@ -223,8 +241,8 @@ pub struct CompetitionStagesBloc {
 #[template(path = "blood_bowl/competitions/competition_standings.html")]
 pub struct CompetitionStandingsTab {
     competition_standings: CompetitionStandings,
-    competition_id: i32,
     competition_can_be_closed: bool,
+    close_modal_button: ModalButton,
 }
 
 impl CompetitionStandingsTab {
@@ -238,6 +256,13 @@ impl CompetitionStandingsTab {
 
         rank_text(position, is_last_stage, true)
     }
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "blood_bowl/competitions/close_competition_modal_button.html")]
+struct CloseCompetitionModalButton {
+    competition_id: i32,
+    competition_should_have_offseason: bool,
 }
 
 #[derive(Template, WebTemplate)]

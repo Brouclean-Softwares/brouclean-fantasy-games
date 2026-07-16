@@ -42,6 +42,20 @@ impl CompetitionSchedule {
             .count()
             == 0
     }
+
+    pub fn round_number(&self) -> usize {
+        let mut round_number = 0;
+
+        for stage_schedule in &self.stages_schedule {
+            round_number += stage_schedule.round_number();
+        }
+
+        round_number
+    }
+
+    pub fn should_imply_offseason(&self) -> bool {
+        self.round_number() >= super::offseason::OFF_SEASON_COMPETITION_ROUND_THRESHOLD
+    }
 }
 
 pub struct StageSchedule {
@@ -85,6 +99,10 @@ impl StageSchedule {
             .filter(|&round_schedule| !round_schedule.is_finished())
             .count()
             == 0
+    }
+
+    pub fn round_number(&self) -> usize {
+        self.rounds_schedule.len()
     }
 }
 

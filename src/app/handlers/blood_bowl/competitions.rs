@@ -591,12 +591,13 @@ pub async fn insert_games(
 #[derive(Deserialize)]
 pub struct CloseForm {
     pub id: i32,
+    pub start_offseason: bool,
 }
 
 pub async fn close(
     State(app_state): State<AppState>,
     profile: User,
-    Form(form): Form<DeleteForm>,
+    Form(form): Form<CloseForm>,
 ) -> Result<Redirect, Redirect> {
     let redirect = Redirect::to(&format!("./competition?id={}&tab_name=standings", form.id));
 
@@ -611,14 +612,16 @@ pub async fn close(
         .ok_or_else(|| redirect.clone())?;
 
     competition
-        .close(&app_state, &profile)
-        .await
-        .or_else(|app_error| {
-            Err(app_error.log_and_redirect(Redirect::to(&format!(
-                "./competition?id={}&message={}",
-                form.id, app_error
-            ))))
-        })?;
+    .close(&app_state, &profile)
+    .await
+    .or_else(|app_error| {
+        Err(app_error.log_and_redirect(Redirect::to(&format!(
+            "./competition?id={}&message={}",
+            form.id, app_error
+        ))))
+    })?;
+
+
 
     Ok(redirect)
 }

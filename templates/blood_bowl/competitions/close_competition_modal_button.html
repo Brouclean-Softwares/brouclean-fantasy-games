@@ -1,0 +1,16 @@
+<input name="id" type="hidden" value="{{ competition_id }}">
+
+<p>Vous êtes sur le point de clôturer la compétition.</p>
+<p>Cela figera les résultats et attribuera les récompenses.</p>
+
+<div class="uk-margin">
+    <div class="uk-form-label">Faut-il aussi envoyer les équipes en inter-saison ?</div>
+
+    <div class="uk-form-controls">
+        <label><input class="uk-radio" type="radio" name="start_offseason" value="true" {% if competition_should_have_offseason %}checked{% endif %}> Oui</label>
+        <br>
+        <label><input class="uk-radio" type="radio" name="start_offseason" value="false" {% if ! competition_should_have_offseason %}checked{% endif %}> Non</label>
+    </div>
+</div>
+
+<p>Confirmez-vous la clôture ?</p>

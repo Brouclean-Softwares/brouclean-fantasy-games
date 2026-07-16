@@ -12,7 +12,7 @@ use std::fmt::Formatter;
 
 pub mod blood_bowl;
 pub mod role_playing_games;
-
+pub mod shared;
 pub mod users;
 
 #[derive(Template, WebTemplate)]

@@ -98,30 +98,6 @@
     </div>
 
     {% if competition_can_be_closed %}
-    <div>
-        <form id="close_form" action="./close" method="post" autocomplete="off">
-            <input name="id" type="hidden" value="{{ competition_id }}">
-
-            <button class="uk-button uk-button-primary"
-                    type="button"
-                    uk-toggle="target: #modal-close">Clôturer</button>
-
-            <div id="modal-close" uk-modal>
-                <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
-                    <h2 class="uk-modal-title">Clôture de la compétition en cours</h2>
-                    <p>Vous êtes sur le point de clôturer la compétition.</p>
-                    <p>Cela figera les résultats et attribuera les récompenses.</p>
-                    <p>Confirmez-vous la clôture ?</p>
-                    <p class="uk-text-right">
-                        <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
-                        <button class="uk-button uk-button-primary"
-                                onclick="document.getElementById('close_form').submit()">
-                            Confirmer
-                        </button>
-                    </p>
-                </div>
-            </div>
-        </form>
-    </div>
+    {{ close_modal_button|escape("none") }}
     {% endif %}
 </div>
