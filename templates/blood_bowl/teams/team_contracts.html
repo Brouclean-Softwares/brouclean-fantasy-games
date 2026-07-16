@@ -1,0 +1,154 @@
+<h3 class="uk-heading-divider">
+    Informations générales
+</h3>
+
+<dl class="uk-description-list">
+    <dt>Valeur d'équipe resignée</dt>
+    <dd>{{ team.value()? / 1000 }}k</dd>
+
+    <dt>Fonds restants pour signer les contrats</dt>
+    <dd>
+        <span>{{ (team.treasury + offseason_raised_funds) / 1000 }}k 🪙</span>
+    </dd>
+</dl>
+
+<h3 class="uk-heading-divider">
+    Staff
+</h3>
+
+<dl class="uk-description-list">
+    {% for staff_information in roster_definition.staff_information_sorted_by_name("fr") %}
+    <dt>
+        <span>{{ staff_information.staff.name("fr") }}</span>
+        <span class="uk-text-meta"> ({{ staff_information.price_for_team(team) / 1000 }}k)</span>
+    </dt>
+    <dd>
+        <form id="buy_{{ staff_information.staff.type_name() }}_form" method="post" autocomplete="off">
+            <input name="staff_to_buy" type="hidden" value="{{ staff_information.staff.type_name() }}">
+
+            <span>{{ team.staff_quantity(staff_information.staff) }}</span>
+        </form>
+    </dd>
+    {% endfor %}
+</dl>
+
+<h3 class="uk-heading-divider">
+    Joueurs
+</h3>
+
+<dl class="uk-description-list uk-margin-medium-bottom">
+    <dt>Nombre de joueurs</dt>
+    <dd>{{ team.number_of_players() }}</dd>
+</dl>
+
+<div class="uk-overflow-auto">
+    <table class="uk-table uk-table-striped uk-table-small uk-table-hover">
+        <thead>
+        <tr>
+            <th uk-tooltip="title: Numéro du joueur">#</th>
+            <th>Nom</th>
+            <th>Poste</th>
+            <th uk-tooltip="title: Mouvement">M</th>
+            <th uk-tooltip="title: Force">F</th>
+            <th uk-tooltip="title: Agilité">AG</th>
+            <th uk-tooltip="title: Capacité de Passe">CP</th>
+            <th uk-tooltip="title: Armure">AR</th>
+            <th>Compétences<span class="uk-visible@m"> & Traits</span></th>
+            <th uk-tooltip="title: Points de Star Player non utilisés">PSP</th>
+            <th uk-tooltip="title: Rate le Prochain Match">RPM</th>
+            <th uk-tooltip="title: Nombre de Blessures Persistantes">BP</th>
+            <th>Coût<span class="uk-visible@m"> du contrat</span></th>
+        </tr>
+        </thead>
+
+        <tbody>
+
+        {% for (number, player) in team.players %}
+
+        {% let team_id = team.id %}
+        {% let player_url = format!("../players/player?player_id={}&team_id={}", player.id, team_id) %}
+
+        <tr>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="{{ player_url }}">
+                    <span class="uk-text-meta">{{ number }}</span>
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="{{ player_url }}">
+                    {{ player.name }}
+                    {% if player.is_captain %}
+                    <span uk-tooltip="title: Capitaine"> 🎖️</span>
+                    {% endif %}
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="{{ player_url }}">
+                    <span class="uk-text-meta">{{ player.position.name("fr") }}</span>
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="{{ player_url }}">
+                    {{ crate::app::templates::blood_bowl::players::movement_allowance_html(player)|escape("none") }}
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="{{ player_url }}">
+                    {{ crate::app::templates::blood_bowl::players::strength_html(player)|escape("none") }}
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="{{ player_url }}">
+                    {{ crate::app::templates::blood_bowl::players::agility_html(player)|escape("none") }}
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="{{ player_url }}">
+                    {{ crate::app::templates::blood_bowl::players::passing_ability_html(player)|escape("none") }}
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="{{ player_url }}">
+                    {{ crate::app::templates::blood_bowl::players::armour_value_html(player)|escape("none") }}
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="{{ player_url }}">
+                    {{ crate::app::templates::blood_bowl::players::skills_names_html(player, "fr")|escape("none") }}
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="{{ player_url }}">
+                    {% if player.star_player_points > 0 %}
+                    {{ player.star_player_points }}
+                    {% endif %}
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="{{ player_url }}">
+                    {% if player.is_dead() %}
+                    <span uk-tooltip="title: Mort">🪦Mort</span>
+                    {% elif player.miss_next_game %}
+                    x
+                    {% endif %}
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="{{ player_url }}">
+                    {% if player.niggling_injuries_number() > 0 %}
+                    {{ player.niggling_injuries_number() }}
+                    {% endif %}
+                </a>
+            </td>
+            <td class="uk-table-link">
+                <a class="uk-link-reset" href="{{ player_url }}">
+                    <span class="uk-text-meta">{{ player.redraft_value()? / 1000 }}k</span>
+                </a>
+            </td>
+        </tr>
+
+        {% endfor %}
+
+        </tbody>
+    </table>
+</div>
