@@ -157,9 +157,9 @@
                    max="{{ staff_information.maximum }}"
                    onchange="update_team()"
                    aria-label="Input">
-            <span>
-                {{ staff_information.staff.name("fr") }} : {{ staff_information.price / 1000 }}k
-            </span>
+
+            <span class="uk-margin-small-left">{{ staff_information.staff.name("fr") }} </span>
+            <span class="uk-text-meta">({{ staff_information.price / 1000 }}k)</span>
         </li>
         {% endfor %}
     </ul>

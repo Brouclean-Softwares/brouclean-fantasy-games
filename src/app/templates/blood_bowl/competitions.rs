@@ -259,7 +259,7 @@ impl CompetitionStandingsTab {
 }
 
 #[derive(Template, WebTemplate)]
-#[template(path = "blood_bowl/competitions/close_competition_modal_button.html")]
+#[template(path = "blood_bowl/competitions/close_competition_modal.html")]
 struct CloseCompetitionModalButton {
     competition_id: i32,
     competition_should_have_offseason: bool,

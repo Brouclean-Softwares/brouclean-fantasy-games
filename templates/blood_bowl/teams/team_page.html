@@ -111,7 +111,7 @@
             </a>
         </li>
         
-        {% if team.in_offseason && editable %}
+        {% if contracts.is_some() && editable %}
         <li {% if tab_name.eq("contracts") %}class="uk-active"{% endif %}>
             <a href="team?id={{ team.id }}&tab_name=contracts" uk-icon="icon: file-edit">
                 <span class="uk-visible@m">Contrats</span>
@@ -144,9 +144,11 @@
 {% endif %}
 
 {% if tab_name.eq("contracts") %}
+{% if let Some(contracts) = contracts %}
 <div>
     {{ contracts|escape("none") }}
 </div>
+{% endif %}
 {% endif %}
 
 {% if tab_name.eq("results") %}

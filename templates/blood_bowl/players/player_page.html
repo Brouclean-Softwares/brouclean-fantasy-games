@@ -132,18 +132,6 @@
     </h3>
 
     {% match player.player_type %}
-    {% when PlayerType::FromRoster %}
-    <dl class="uk-description-list">
-        <dt>Nombre de saisons</dt>
-        <dd>{{ player.seasons_played }}</dd>
-
-        <dt>Nombre de saisons avec de l'expérience</dt>
-        <dd>{{ player.seasons_played_with_experience }}</dd>
-    </dl>
-    {% else %}
-    {% endmatch %}
-
-    {% match player.player_type %}
     {% when PlayerType::FromRoster | PlayerType::Journeyman %}    
     <dl class="uk-description-list">        
         <dt>Nombre de matches</dt>

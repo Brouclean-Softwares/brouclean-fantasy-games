@@ -1,0 +1,128 @@
+<table class="uk-table uk-table-striped uk-table-small uk-table-hover">
+    <thead>
+    <tr>
+        <th uk-tooltip="title: Numéro du joueur">#</th>
+        <th>Nom</th>
+        <th>Poste</th>
+        <th uk-tooltip="title: Mouvement">M</th>
+        <th uk-tooltip="title: Force">F</th>
+        <th uk-tooltip="title: Agilité">AG</th>
+        <th uk-tooltip="title: Capacité de Passe">CP</th>
+        <th uk-tooltip="title: Armure">AR</th>
+        <th>Compétences<span class="uk-visible@m"> & Traits</span></th>
+        <th uk-tooltip="title: Points de Star Player non utilisés">PSP</th>
+        <th uk-tooltip="title: Rate le Prochain Match">RPM</th>
+        <th uk-tooltip="title: Nombre de Blessures Persistantes">BP</th>
+        <th>Coût<span class="uk-visible@m"> du contrat</span></th>
+        <th>Action</th>
+    </tr>
+    </thead>
+
+    <tbody>
+
+    {% for player_redraft in players_redrafts %}
+
+    {% let number = player_redraft.number %}
+    {% let player = player_redraft.player %}
+    {% let team_id = player_redraft.team_id %}
+    {% let player_url = format!("../players/player?player_id={}&team_id={}", player.id, team_id) %}
+
+    <tr>
+        <td class="uk-table-link">
+            <a class="uk-link-reset" href="{{ player_url }}">
+                <span class="uk-text-meta">{{ number }}</span>
+            </a>
+        </td>
+        <td class="uk-table-link">
+            <a class="uk-link-reset" href="{{ player_url }}">
+                {{ player.name }}
+                {% if player.is_captain %}
+                <span uk-tooltip="title: Capitaine"> 🎖️</span>
+                {% endif %}
+            </a>
+        </td>
+        <td class="uk-table-link">
+            <a class="uk-link-reset" href="{{ player_url }}">
+                <span class="uk-text-meta">{{ player.position.name("fr") }}</span>
+            </a>
+        </td>
+        <td class="uk-table-link">
+            <a class="uk-link-reset" href="{{ player_url }}">
+                {{ crate::app::templates::blood_bowl::players::movement_allowance_html(player)|escape("none") }}
+            </a>
+        </td>
+        <td class="uk-table-link">
+            <a class="uk-link-reset" href="{{ player_url }}">
+                {{ crate::app::templates::blood_bowl::players::strength_html(player)|escape("none") }}
+            </a>
+        </td>
+        <td class="uk-table-link">
+            <a class="uk-link-reset" href="{{ player_url }}">
+                {{ crate::app::templates::blood_bowl::players::agility_html(player)|escape("none") }}
+            </a>
+        </td>
+        <td class="uk-table-link">
+            <a class="uk-link-reset" href="{{ player_url }}">
+                {{ crate::app::templates::blood_bowl::players::passing_ability_html(player)|escape("none") }}
+            </a>
+        </td>
+        <td class="uk-table-link">
+            <a class="uk-link-reset" href="{{ player_url }}">
+                {{ crate::app::templates::blood_bowl::players::armour_value_html(player)|escape("none") }}
+            </a>
+        </td>
+        <td class="uk-table-link">
+            <a class="uk-link-reset" href="{{ player_url }}">
+                {{ crate::app::templates::blood_bowl::players::skills_names_html(player, "fr")|escape("none") }}
+            </a>
+        </td>
+        <td class="uk-table-link">
+            <a class="uk-link-reset" href="{{ player_url }}">
+                {% if player.star_player_points > 0 %}
+                {{ player.star_player_points }}
+                {% endif %}
+            </a>
+        </td>
+        <td class="uk-table-link">
+            <a class="uk-link-reset" href="{{ player_url }}">
+                {% if player.is_dead() %}
+                <span uk-tooltip="title: Mort">🪦Mort</span>
+                {% elif player.miss_next_game %}
+                x
+                {% endif %}
+            </a>
+        </td>
+        <td class="uk-table-link">
+            <a class="uk-link-reset" href="{{ player_url }}">
+                {% if player.niggling_injuries_number() > 0 %}
+                {{ player.niggling_injuries_number() }}
+                {% endif %}
+            </a>
+        </td>
+        <td class="uk-table-link">
+            <a class="uk-link-reset" href="{{ player_url }}">
+                <span class="uk-text-meta">{{ player_redraft.redraft_cost()? / 1000 }}k</span>
+            </a>
+        </td>
+        <td>
+            <form method="post" autocomplete="off">
+                <input type="hidden" name="player_id_in_offseason" value="{{ player.id }}">
+                <input type="hidden" name="player_is_redrafted" value="{{ ! player_redraft.redrafted }}">
+
+                {% if player_redraft.redrafted %}
+                <button class="uk-button uk-button-link" type="submit" uk-tooltip="title: Couper">
+                    <span uk-icon="icon: minus-circle"></span>
+                </button>
+                {% else %}
+                <button class="uk-button uk-button-link" type="submit" uk-tooltip="title: Resigner">
+                    <span uk-icon="icon: plus-circle"></span>
+                </button>
+                {% endif %}
+            </form>
+        </td>
+    </tr>
+
+    {% endfor %}
+
+    </tbody>
+</table>

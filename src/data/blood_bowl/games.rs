@@ -764,8 +764,6 @@ impl GameTeamPlayer {
                 injuries: Vec::new(),
                 hatred: Vec::new(),
                 is_captain: false,
-                seasons_played: 0,
-                seasons_played_with_experience: 0,
             },
         )
     }

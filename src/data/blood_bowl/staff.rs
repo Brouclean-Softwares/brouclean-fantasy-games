@@ -7,9 +7,9 @@ use serde::Deserialize;
 use std::collections::HashMap;
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
-struct StaffDetail {
-    staff: Staff,
-    number: i32,
+pub struct StaffDetail {
+    pub staff: Staff,
+    pub number: i32,
 }
 
 pub async fn select_for_team(

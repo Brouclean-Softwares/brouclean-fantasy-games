@@ -1,5 +1,4 @@
 use crate::AppState;
-use crate::data::blood_bowl::competitions::offseasons;
 use crate::data::blood_bowl::games::select_playing_team_player_for_game;
 use crate::data::blood_bowl::{coaches, games, teams};
 use crate::data::users::User;
@@ -33,7 +32,7 @@ impl PlayerDetail {
         let advancements = select_advancements(state, self.id).await?;
         let hatred = select_player_hatred(state, self.id).await?;
 
-        let mut player = Player {
+        let player = Player {
             id: self.id,
             version: self.version,
             position: self.position,
@@ -46,17 +45,7 @@ impl PlayerDetail {
             injuries: PlayerInjury::extract_current_injuries(&player_injuries),
             hatred,
             is_captain: self.is_captain,
-            seasons_played: 0,
-            seasons_played_with_experience: 0,
         };
-
-        player.seasons_played = offseasons::select_seasons_played_by_player(state, &player).await?;
-
-        let seasons_played_without_experience =
-            offseasons::select_seasons_played_without_experience_by_player(state, &player).await?;
-
-        player.seasons_played_with_experience =
-            player.seasons_played - seasons_played_without_experience;
 
         Ok(player)
     }
@@ -628,10 +617,10 @@ pub async fn select_player_injuries(
                         WHERE bb_teams_players.player_id = bb_players_injuries.player_id
                     ) as before_last_game,
                     (
-                        SELECT COALESCE(bb_players_injuries.created_at < MAX(bb_competitions_teams_offseasons.created_at), FALSE)
+                        SELECT COALESCE(bb_players_injuries.created_at < MAX(bb_redrafts_in_offseasons.created_at), FALSE)
                         FROM bb_teams_players
-                        INNER JOIN bb_competitions_teams_offseasons
-                        ON bb_teams_players.team_id = bb_competitions_teams_offseasons.team_id
+                        INNER JOIN bb_redrafts_in_offseasons
+                        ON bb_teams_players.team_id = bb_redrafts_in_offseasons.team_id
                         WHERE bb_teams_players.player_id = bb_players_injuries.player_id
                     ) as before_last_offseason
             FROM bb_players_injuries

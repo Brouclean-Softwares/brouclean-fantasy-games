@@ -129,7 +129,7 @@ pub async fn select_all(state: &AppState) -> Result<Vec<TeamSummary>, AppError> 
                     bb_teams.under_creation,
                     (
                         SELECT COUNT(*) > 0
-                        FROM bb_competitions_teams_offseasons
+                        FROM bb_redrafts_in_offseasons
                         WHERE team_id = bb_teams.id
                         AND closed_at IS NULL
                         LIMIT 1
@@ -182,7 +182,7 @@ pub async fn select_all_filtered(
                     bb_teams.under_creation,
                     (
                         SELECT COUNT(*) > 0
-                        FROM bb_competitions_teams_offseasons
+                        FROM bb_redrafts_in_offseasons
                         WHERE team_id = bb_teams.id
                         AND closed_at IS NULL
                         LIMIT 1
@@ -218,7 +218,7 @@ pub async fn select_owned(state: &AppState, coach: User) -> Result<Vec<TeamSumma
                     bb_teams.under_creation,
                     (
                         SELECT COUNT(*) > 0
-                        FROM bb_competitions_teams_offseasons
+                        FROM bb_redrafts_in_offseasons
                         WHERE team_id = bb_teams.id
                         AND closed_at IS NULL
                         LIMIT 1
@@ -270,7 +270,7 @@ pub async fn select_summary_by_id(state: &AppState, id: i32) -> Result<TeamSumma
                     bb_teams.under_creation,
                     (
                         SELECT COUNT(*) > 0
-                        FROM bb_competitions_teams_offseasons
+                        FROM bb_redrafts_in_offseasons
                         WHERE team_id = bb_teams.id
                         AND closed_at IS NULL
                         LIMIT 1
@@ -328,7 +328,7 @@ async fn select_by_id(
                     bb_teams.under_creation,
                     (
                         SELECT COUNT(*) > 0
-                        FROM bb_competitions_teams_offseasons
+                        FROM bb_redrafts_in_offseasons
                         WHERE team_id = bb_teams.id
                         AND closed_at IS NULL
                         LIMIT 1
@@ -618,7 +618,7 @@ pub async fn upgrade(
 
     let game_playing = games::select_playing_by_team(state, current_team.id).await?;
 
-    if game_playing.is_some() {
+    if game_playing.is_some() || current_team.in_offseason {
         return Ok(false);
     }
 

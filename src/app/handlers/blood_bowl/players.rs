@@ -73,6 +73,7 @@ pub async fn player(
             .map_err(error_handler)?;
 
     let can_buyout = editable
+        && !team.in_offseason
         && team.can_buyout_player(&player)
         && players::is_under_contract_for_team(&app_state, params.player_id, params.team_id)
             .await
@@ -283,6 +284,7 @@ pub async fn added_player(
             .map_err(error_handler)?;
 
     let can_buy = matches!(player.player_type, PlayerType::Journeyman)
+        && !team.in_offseason
         && game.game_finished()
         && is_last_game_for_team
         && team.can_buy_journeyman()

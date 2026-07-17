@@ -3,7 +3,8 @@ use crate::app::templates::blood_bowl::teams::{
     NewTeamPage, TeamFilteredList, TeamPage, TeamsPage,
 };
 use crate::app::templates::{AlertMessage, AlertType};
-use crate::data::blood_bowl::competitions::{Competition, offseasons};
+use crate::data::blood_bowl::competitions::Competition;
+use crate::data::blood_bowl::competitions::offseasons::{PlayerRedraft, TeamRedraft};
 use crate::data::blood_bowl::statistics;
 use crate::data::blood_bowl::statistics::players::PlayersTopStatistics;
 use crate::data::blood_bowl::{games, players, staff, teams};
@@ -96,29 +97,13 @@ pub struct NewTeamForm {
     pub captain_position: Option<Position>,
 }
 
-impl NewTeamForm {
-    pub fn extract_positions_quantities(&self) -> HashMap<Position, u8> {
-        let mut positions_quantities: HashMap<Position, u8> = HashMap::new();
-
-        let position_quantities: HashMap<String, u8> =
-            serde_json::from_str(&*self.players).unwrap();
-
-        for position in self.roster.definition(self.version).unwrap().positions {
-            if let Some(position_quantity) = position_quantities.get(&position.type_name()) {
-                positions_quantities.insert(position, *position_quantity);
-            }
-        }
-
-        positions_quantities
-    }
-}
-
 pub async fn create(
     State(app_state): State<AppState>,
     profile: User,
     Form(form): Form<NewTeamForm>,
 ) -> Result<Redirect, NewTeamPage> {
-    let position_quantities = form.extract_positions_quantities();
+    let position_quantities =
+        extract_positions_quantities(form.players.clone(), form.roster, form.version);
 
     let mut staff_quantities: HashMap<Staff, u8> = HashMap::new();
     staff_quantities.insert(Staff::ReRoll, form.re_roll);
@@ -276,15 +261,16 @@ pub async fn team(
         .await
         .map_err(error_handler)?;
 
-    let offseason_raised_funds = offseasons::select_raised_fund_for_team(&app_state, &team.id)
+    let team_redraft = TeamRedraft::select_from_team(&app_state, team.clone())
         .await
         .map_err(error_handler)?;
 
-    Ok(TeamPage::get(
+    TeamPage::get(
         app_state,
         profile,
         alert_message,
         team,
+        team_redraft,
         params.tab_name,
         games_scheduled,
         game_playing,
@@ -300,8 +286,8 @@ pub async fn team(
         players_top_statistics,
         former_players,
         competitions_with_rank,
-        offseason_raised_funds,
-    ))
+    )
+    .map_err(error_handler)
 }
 
 #[derive(Deserialize)]
@@ -311,6 +297,13 @@ pub struct TeamForm {
     pub position_to_buy: Option<Position>,
     pub player_id_to_buyout: Option<i32>,
     pub player_id_to_name_captain: Option<i32>,
+    pub player_id_in_offseason: Option<i32>,
+    pub player_is_redrafted: Option<bool>,
+    pub re_roll_in_offseason: Option<u8>,
+    pub cheerleader_in_offseason: Option<u8>,
+    pub assistant_coach_in_offseason: Option<u8>,
+    pub apothecary_in_offseason: Option<u8>,
+    pub positions_in_offseason: Option<String>,
 }
 
 pub async fn update(
@@ -394,6 +387,116 @@ pub async fn update(
         return Ok(Redirect::to(&format!("./team?id={}", params.id,)));
     }
 
+    // Player in off-season to sign or cut
+    if let (Some(profile), Some(player_id_in_offseason), Some(player_is_redrafted)) = (
+        profile.clone(),
+        form.player_id_in_offseason,
+        form.player_is_redrafted,
+    ) {
+        let player_to_sign =
+            players::select_by_id_for_team(&app_state, player_id_in_offseason, params.id)
+                .await
+                .or_else(|app_error| {
+                    Err(app_error.log_and_redirect(Redirect::to(&format!(
+                        "./team?id={}&message={}",
+                        params.id, app_error,
+                    ))))
+                })?;
+
+        if let Some((number, player)) = player_to_sign {
+            let mut player_redraft =
+                PlayerRedraft::select_from_team_player(&app_state, params.id, player, number)
+                    .await
+                    .or_else(|app_error| {
+                        Err(app_error.log_and_redirect(Redirect::to(&format!(
+                            "./team?id={}&message={}",
+                            params.id, app_error,
+                        ))))
+                    })?;
+
+            player_redraft.redrafted = player_is_redrafted;
+
+            player_redraft
+                .save(&app_state, &profile)
+                .await
+                .or_else(|app_error| {
+                    Err(app_error.log_and_redirect(Redirect::to(&format!(
+                        "./team?id={}&message={}",
+                        params.id, app_error,
+                    ))))
+                })?;
+        }
+
+        return Ok(Redirect::to(&format!("./team?id={}", params.id,)));
+    }
+
+    // Staff and positions in off-season to sign
+    if let (
+        Some(profile),
+        Some(re_roll),
+        Some(cheerleader),
+        Some(assistant_coach),
+        Some(positions_in_offseason),
+    ) = (
+        profile.clone(),
+        form.re_roll_in_offseason,
+        form.cheerleader_in_offseason,
+        form.assistant_coach_in_offseason,
+        form.positions_in_offseason,
+    ) {
+        let team = teams::select_by_id_with_staff_and_players(&app_state, params.id)
+            .await
+            .or_else(|app_error| {
+                Err(app_error.log_and_redirect(Redirect::to(&format!(
+                    "./team?id={}&message={}",
+                    params.id, app_error,
+                ))))
+            })?;
+
+        let team_redraft = TeamRedraft::select_from_team(&app_state, team)
+            .await
+            .or_else(|app_error| {
+                Err(app_error.log_and_redirect(Redirect::to(&format!(
+                    "./team?id={}&message={}",
+                    params.id, app_error,
+                ))))
+            })?;
+
+        if let Some(mut team_redraft) = team_redraft {
+            let mut staff_quantities: HashMap<Staff, u8> = HashMap::new();
+
+            staff_quantities.insert(Staff::ReRoll, re_roll);
+            staff_quantities.insert(Staff::Cheerleader, cheerleader);
+            staff_quantities.insert(Staff::AssistantCoach, assistant_coach);
+
+            if let Some(apothecary) = form.apothecary_in_offseason {
+                staff_quantities.insert(Staff::Apothecary, apothecary);
+            }
+
+            team_redraft.staff_to_sign = staff_quantities;
+
+            let positions_quantities = extract_positions_quantities(
+                positions_in_offseason,
+                team_redraft.team.roster,
+                team_redraft.team.version,
+            );
+
+            team_redraft.positions_to_sign = positions_quantities;
+
+            team_redraft
+                .save(&app_state, &profile)
+                .await
+                .or_else(|app_error| {
+                    Err(app_error.log_and_redirect(Redirect::to(&format!(
+                        "./team?id={}&message={}",
+                        params.id, app_error,
+                    ))))
+                })?;
+        }
+
+        return Ok(Redirect::to(&format!("./team?id={}", params.id,)));
+    }
+
     Ok(Redirect::to(&format!("./team?id={}", params.id,)))
 }
 
@@ -453,4 +556,22 @@ pub async fn upgrade(
     }
 
     Ok(Redirect::to(&format!("./team?id={}", form.id)))
+}
+
+pub fn extract_positions_quantities(
+    positions: String,
+    roster: Roster,
+    version: Version,
+) -> HashMap<Position, u8> {
+    let mut positions_quantities: HashMap<Position, u8> = HashMap::new();
+
+    let position_quantities: HashMap<String, u8> = serde_json::from_str(&*positions).unwrap();
+
+    for position in roster.definition(version).unwrap().positions {
+        if let Some(position_quantity) = position_quantities.get(&position.type_name()) {
+            positions_quantities.insert(position, *position_quantity);
+        }
+    }
+
+    positions_quantities
 }

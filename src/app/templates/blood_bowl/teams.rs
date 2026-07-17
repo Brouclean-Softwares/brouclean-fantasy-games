@@ -1,15 +1,18 @@
 use crate::AppState;
 use crate::app::templates::blood_bowl::games::GameCard;
 use crate::app::templates::blood_bowl::statistics::PlayersTopStatisticsLists;
+use crate::app::templates::shared::ModalButton;
 use crate::app::templates::{
     AlertMessage, AlertType, BreadCrumb, NavigationBar, UrlLink, blood_bowl,
 };
 use crate::data::blood_bowl::competitions::Competition;
+use crate::data::blood_bowl::competitions::offseasons::{PlayerRedraft, TeamRedraft};
 use crate::data::blood_bowl::games::GameSummary;
 use crate::data::blood_bowl::statistics::players::PlayersTopStatistics;
 use crate::data::blood_bowl::statistics::teams::TeamStatistics;
 use crate::data::blood_bowl::teams::{TeamLogo, TeamSummary, TeamSummaryWithResults};
 use crate::data::users::User;
+use crate::errors::AppError;
 use askama::Template;
 use askama_web::WebTemplate;
 use blood_bowl_rs::players::Player;
@@ -95,7 +98,7 @@ pub struct TeamPage {
     edit_mode: bool,
     field_edited: String,
     sheet: TeamSheetTab,
-    contracts: TeamContractsTab,
+    contracts: Option<TeamContractsTab>,
     results: TeamResultsTab,
     statistics: TeamStatisticsTab,
     former_players: FormerPlayersTab,
@@ -107,6 +110,7 @@ impl TeamPage {
         profile: Option<User>,
         alert_message: Option<AlertMessage>,
         team: Team,
+        team_redraft: Option<TeamRedraft>,
         tab_name: Option<String>,
         games_scheduled: Vec<GameSummary>,
         game_playing: Option<GameSummary>,
@@ -122,8 +126,7 @@ impl TeamPage {
         players_top_statistics: PlayersTopStatistics,
         former_players: Vec<(i32, Player)>,
         competitions_with_rank: Vec<(Competition, Option<usize>)>,
-        offseason_raised_funds: i32,
-    ) -> Self {
+    ) -> Result<Self, AppError> {
         let mut is_playing_game = false;
 
         if let Some(game) = game_playing.clone() {
@@ -144,6 +147,7 @@ impl TeamPage {
 
         let upgradable = if let Some(next_version) = team.version.next() {
             editable
+                && !team.in_offseason
                 && team.roster_definition_for_next_version().is_some()
                 && games_scheduled
                     .iter()
@@ -157,7 +161,7 @@ impl TeamPage {
         let alert_in_offseason = if team.in_offseason {
             Some(AlertMessage {
                 alert_type: AlertType::Warning,
-                message: "🏖️ L'équipe est en cours d'inter-saison. Gérez-la si vous voulez refaire des matchs.".into(),
+                message: "🏖️ L'équipe est en cours d'inter-saison. Veuillez gérer les contrats si vous voulez refaire des matchs.".into(),
             })
         } else {
             None
@@ -177,7 +181,50 @@ impl TeamPage {
             }
         };
 
-        Self {
+        let contracts = if let Some(team_redraft) = team_redraft {
+            let resigned_team = team_redraft.resigned_team()?;
+
+            let alert_message =
+                if let Err(team_not_compliant_error) = resigned_team.check_if_rules_compliant() {
+                    Some(AlertMessage {
+                        alert_type: AlertType::Warning,
+                        message: team_not_compliant_error.name("fr"),
+                    })
+                } else {
+                    None
+                };
+
+            let validation_modal_button = if alert_message.is_none() {
+                Some(ModalButton::from(
+                    "danger",
+                    "Valider tous les contrats",
+                    "contracts_validation_modal",
+                    "Validation des contrats et fin de l'inter-saison",
+                    ContractsValidationModalButton {
+                        team_redraft: team_redraft.clone(),
+                        resigned_team: resigned_team.clone(),
+                    }
+                    .render()
+                    .unwrap(),
+                    "Valider",
+                    "./validate_redraft",
+                ))
+            } else {
+                None
+            };
+
+            Some(TeamContractsTab {
+                alert_message,
+                validation_modal_button,
+                team_redraft,
+                resigned_team,
+                roster_definition: roster_definition.clone(),
+            })
+        } else {
+            None
+        };
+
+        Ok(Self {
             navigation_bar: NavigationBar::get(&app_state, &profile),
             alert_in_offseason,
             alert_message,
@@ -190,16 +237,12 @@ impl TeamPage {
             field_edited: field_edited.unwrap_or_default(),
             sheet: TeamSheetTab {
                 team: team.clone(),
-                roster_definition: roster_definition.clone(),
+                roster_definition,
                 able_to_buy_or_buyout,
                 deletable,
                 positions_buyable,
             },
-            contracts: TeamContractsTab {
-                team: team.clone(),
-                roster_definition,
-                offseason_raised_funds,
-            },
+            contracts,
             results: TeamResultsTab {
                 team: team.clone(),
                 editable,
@@ -219,7 +262,7 @@ impl TeamPage {
                 team,
                 former_players,
             },
-        }
+        })
     }
 }
 
@@ -236,9 +279,38 @@ struct TeamSheetTab {
 #[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/teams/team_contracts.html")]
 struct TeamContractsTab {
-    team: Team,
+    alert_message: Option<AlertMessage>,
+    validation_modal_button: Option<ModalButton>,
+    team_redraft: TeamRedraft,
+    resigned_team: Team,
     roster_definition: RosterDefinition,
-    offseason_raised_funds: i32,
+}
+
+impl TeamContractsTab {
+    pub fn players_redrafted_table(&self) -> TeamPlayersContractsTable {
+        TeamPlayersContractsTable {
+            players_redrafts: self.team_redraft.players_redrafted.clone(),
+        }
+    }
+
+    pub fn players_not_redrafted_table(&self) -> TeamPlayersContractsTable {
+        TeamPlayersContractsTable {
+            players_redrafts: self.team_redraft.players_not_redrafted.clone(),
+        }
+    }
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "blood_bowl/teams/team_contracts_validation_modal.html")]
+struct ContractsValidationModalButton {
+    team_redraft: TeamRedraft,
+    resigned_team: Team,
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "blood_bowl/teams/team_players_contracts_table.html")]
+struct TeamPlayersContractsTable {
+    players_redrafts: Vec<PlayerRedraft>,
 }
 
 #[derive(Template, WebTemplate)]
