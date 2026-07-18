@@ -1,0 +1,58 @@
+<input name="team_id" type="hidden" value="{{ team_redraft.team.id }}">
+
+<p>Vous êtes sur le point de valider tous les contrats et clôturer l'inter-saison.</p>
+
+<p>Si vous validez, voici le résumé de vos changements:</p>
+
+<ul>
+
+    {% for staff_information in roster_definition.staff_information_sorted_by_name("fr") %}
+    <li>
+        <span class="uk-margin-small-left">{{ staff_information.staff.name("fr") }}:</span>
+        <span class="uk-margin-small-left">{{ team_redraft.team.staff_quantity(staff_information.staff) }}</span>
+        <span class="uk-margin-small-left" uk-icon="icon: arrow-right"></span>
+        <span class="uk-margin-small-left">{{ team_redraft.staff_quantity_to_sign(staff_information.staff) }}</span>
+    </li>
+    {% endfor %}
+
+    <li>
+        <span class="uk-margin-small-left">Nombre de joueurs:</span>
+        <span class="uk-margin-small-left">{{ team_redraft.team.number_of_players() }}</span>
+        <span class="uk-margin-small-left" uk-icon="icon: arrow-right"></span>
+        <span class="uk-margin-small-left">{{ resigned_team.number_of_players() }}</span>
+
+        <ul>
+            <li>
+                <span class="uk-margin-small-left">Resignés:</span>
+                <span class="uk-margin-small-left">{{ team_redraft.players_redrafted.len() }}</span>
+            </li>
+
+            <li>
+                <span class="uk-margin-small-left">Libérés:</span>
+                <span class="uk-margin-small-left">{{ team_redraft.players_not_redrafted.len() }}</span>
+            </li>
+
+            <li>
+                <span class="uk-margin-small-left">Nouveaux:</span>
+                <span class="uk-margin-small-left">{{ team_redraft.positions_quantity_to_sign() }}</span>
+            </li>
+        </ul>
+    </li>
+
+    <li>
+        <span class="uk-margin-small-left">Valeur d'équipe (VE):</span>
+        <span class="uk-margin-small-left">{{ team_redraft.team.value()? / 1000 }}k</span>
+        <span class="uk-margin-small-left" uk-icon="icon: arrow-right"></span>
+        <span class="uk-margin-small-left">{{ resigned_team.value()? / 1000 }}k</span>
+    </li>
+
+    <li>
+        <span class="uk-margin-small-left">Trésorerie:</span>
+        <span class="uk-margin-small-left">{{ team_redraft.team.treasury / 1000 }}k 🪙</span>
+        <span class="uk-margin-small-left" uk-icon="icon: arrow-right"></span>
+        <span class="uk-margin-small-left">{{ resigned_team.treasury / 1000 }}k 🪙</span>
+    </li>
+
+</ul>
+
+<p>Validez-vous que vous avez bien revus tous les contrats ?</p>

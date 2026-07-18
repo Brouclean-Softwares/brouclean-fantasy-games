@@ -12,7 +12,7 @@ use blood_bowl_rs::translation::TypeName;
 use blood_bowl_rs::versions::Version;
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
-use sqlx::{Executor, Postgres};
+use sqlx::Postgres;
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
 struct PlayerDetail {
@@ -276,6 +276,53 @@ pub async fn update_number(
     Ok(())
 }
 
+pub async fn insert_new_player_for_team(
+    transaction: &mut sqlx::Transaction<'_, Postgres>,
+    connected_user: &User,
+    team_id: i32,
+    new_team_player: (i32, Player),
+) -> Result<(), AppError> {
+    tracing::debug!(
+        "insert_new_player_for_team by user={:?} for team_id={} with position={:?}",
+        connected_user,
+        team_id,
+        new_team_player.1.position,
+    );
+
+    if connected_user.id.is_some() {
+        let (number, player) = new_team_player;
+
+        let new_player_id: i32 = sqlx::query_scalar(
+            "INSERT INTO bb_players (
+                version,
+                name,
+                position)
+            VALUES ($1, $2, $3)
+            RETURNING id",
+        )
+        .bind(player.version.clone())
+        .bind(player.name.clone())
+        .bind(player.position.clone())
+        .fetch_one(transaction.as_mut())
+        .await?;
+
+        sqlx::query(
+            "INSERT INTO bb_teams_players (
+                number,
+                team_id,
+                player_id)
+            VALUES ($1, $2, $3)",
+        )
+        .bind(number.clone())
+        .bind(team_id.clone())
+        .bind(new_player_id.clone())
+        .execute(transaction.as_mut())
+        .await?;
+    }
+
+    Ok(())
+}
+
 pub async fn buy_position_for_team(
     state: &AppState,
     connected_user: &User,
@@ -293,40 +340,13 @@ pub async fn buy_position_for_team(
         let mut team = teams::select_by_id_with_staff_and_players(state, team_id).await?;
 
         if !team.is_drafting() {
-            let (number, player) = team.buy_position(&position)?;
+            let team_player = team.buy_position(&position)?;
             let team_value = team.value()?;
             let team_current_value = team.current_value()?;
 
             let mut transaction = state.db.begin().await?;
 
-            let new_player_id: i32 = sqlx::query_scalar(
-                "INSERT INTO bb_players (
-                version,
-                name,
-                position)
-            VALUES ($1, $2, $3)
-            RETURNING id",
-            )
-            .bind(player.version.clone())
-            .bind(player.name.clone())
-            .bind(player.position.clone())
-            .fetch_one(&mut *transaction)
-            .await?;
-
-            sqlx::query(
-                "INSERT INTO bb_teams_players (
-                number,
-                team_id,
-                player_id)
-            VALUES ($1, $2, $3)",
-            )
-            .bind(number.clone())
-            .bind(team_id.clone())
-            .bind(new_player_id.clone())
-            .execute(&mut *transaction)
-            .await?;
-
-            sqlx::query(
+            let result = sqlx::query(
                 "UPDATE bb_teams
             SET treasury = $1,
                 value = $2,
@@ -342,6 +362,11 @@ pub async fn buy_position_for_team(
             .bind(connected_user_id.clone())
             .execute(&mut *transaction)
             .await?;
+
+            if result.rows_affected() > 0 {
+                insert_new_player_for_team(&mut transaction, connected_user, team.id, team_player)
+                    .await?;
+            }
 
             transaction.commit().await?;
         }
@@ -444,6 +469,39 @@ pub async fn buy_journeyman_in_game_for_team(
     Ok(())
 }
 
+pub async fn update_player_contract_end_for_team(
+    transaction: &mut sqlx::Transaction<'_, Postgres>,
+    connected_user: &User,
+    team_id: i32,
+    player_id: i32,
+) -> Result<(), AppError> {
+    tracing::debug!(
+        "update_player_contract_end_for_team by user={:?} for team_id={} and player_id={}",
+        connected_user,
+        team_id,
+        player_id,
+    );
+
+    if connected_user.id.is_some() {
+        sqlx::query(
+            "UPDATE bb_teams_players
+                    SET contract_end = CURRENT_TIMESTAMP
+                    FROM bb_teams
+                    WHERE bb_teams_players.player_id = $1
+                    AND bb_teams_players.team_id = $2
+                    AND bb_teams.id = bb_teams_players.team_id
+                    AND bb_teams.coach_id = $3",
+        )
+        .bind(player_id.clone())
+        .bind(team_id.clone())
+        .bind(connected_user.id.clone())
+        .execute(transaction.as_mut())
+        .await?;
+    }
+
+    Ok(())
+}
+
 pub async fn buyout_for_team(
     state: &AppState,
     connected_user: &User,
@@ -462,20 +520,17 @@ pub async fn buyout_for_team(
     if !team.is_drafting() {
         if let Some((_, player)) = team.player_by_id(player_id) {
             if team.can_buyout_player(&player) {
-                sqlx::query(
-                    "UPDATE bb_teams_players
-                    SET contract_end = CURRENT_TIMESTAMP
-                    FROM bb_teams
-                    WHERE bb_teams_players.player_id = $1
-                    AND bb_teams_players.team_id = $2
-                    AND bb_teams.id = bb_teams_players.team_id
-                    AND bb_teams.coach_id = $3",
+                let mut transaction = state.db.begin().await?;
+
+                update_player_contract_end_for_team(
+                    &mut transaction,
+                    connected_user,
+                    team_id,
+                    player_id,
                 )
-                .bind(player_id.clone())
-                .bind(team_id.clone())
-                .bind(connected_user.id.clone())
-                .execute(&state.db)
                 .await?;
+
+                transaction.commit().await?;
 
                 teams::update_values(state, connected_user, team_id).await?;
             }
@@ -634,14 +689,11 @@ pub async fn select_player_injuries(
     Ok(injuries)
 }
 
-pub async fn update_player_who_recovered_from_injury<'e, E>(
-    executor: E,
+pub async fn update_player_who_recovered_from_injury(
+    transaction: &mut sqlx::Transaction<'_, Postgres>,
     player_id: i32,
     injury: &PlayerInjury,
-) -> Result<(), AppError>
-where
-    E: Executor<'e, Database = Postgres>,
-{
+) -> Result<(), AppError> {
     tracing::debug!(
         "update_player_who_recover_from_injury with player_id={} for injury contracted the {}",
         player_id,
@@ -656,7 +708,7 @@ where
     )
     .bind(player_id.clone())
     .bind(injury.created_at.clone())
-    .execute(executor)
+    .execute(transaction.as_mut())
     .await?;
 
     Ok(())
@@ -899,14 +951,11 @@ pub async fn select_player_hatred(
     Ok(keywords)
 }
 
-pub async fn update_player_who_recovered_from_hatred<'e, E>(
-    executor: E,
+pub async fn update_player_who_recovered_from_hatred(
+    transaction: &mut sqlx::Transaction<'_, Postgres>,
     player_id: i32,
     keyword: &Keyword,
-) -> Result<(), AppError>
-where
-    E: Executor<'e, Database = Postgres>,
-{
+) -> Result<(), AppError> {
     tracing::debug!(
         "update_player_who_recover_from_hatred with player_id={} for hatred keyword {:?}",
         player_id,
@@ -921,7 +970,7 @@ where
     )
     .bind(player_id.clone())
     .bind(keyword.clone())
-    .execute(executor)
+    .execute(transaction.as_mut())
     .await?;
 
     Ok(())

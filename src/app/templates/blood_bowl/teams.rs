@@ -199,8 +199,9 @@ impl TeamPage {
                     "danger",
                     "Valider tous les contrats",
                     "contracts_validation_modal",
-                    "Validation des contrats et fin de l'inter-saison",
+                    "Validation de tous les contrats",
                     ContractsValidationModalButton {
+                        roster_definition: roster_definition.clone(),
                         team_redraft: team_redraft.clone(),
                         resigned_team: resigned_team.clone(),
                     }
@@ -303,6 +304,7 @@ impl TeamContractsTab {
 #[derive(Template, WebTemplate)]
 #[template(path = "blood_bowl/teams/team_contracts_validation_modal.html")]
 struct ContractsValidationModalButton {
+    roster_definition: RosterDefinition,
     team_redraft: TeamRedraft,
     resigned_team: Team,
 }

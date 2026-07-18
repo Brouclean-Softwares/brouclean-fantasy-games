@@ -10,6 +10,7 @@ use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::translation::TypeName;
 use blood_bowl_rs::versions::Version;
 use serde::Deserialize;
+use sqlx::Postgres;
 use std::collections::HashMap;
 
 pub struct TeamLogo {
@@ -462,6 +463,37 @@ pub async fn create(state: &AppState, coach: &User, bb_team: &Team) -> Result<i3
     transaction.commit().await?;
 
     Ok(new_team_id)
+}
+
+pub async fn update_treasury(
+    transaction: &mut sqlx::Transaction<'_, Postgres>,
+    connected_user: &User,
+    team_id: i32,
+    new_treasury: i32,
+) -> Result<(), AppError> {
+    tracing::debug!(
+        "update_treasury by user={:?} for team_id={} to new_treasury={}",
+        connected_user,
+        team_id,
+        new_treasury,
+    );
+
+    if let Some(connected_user_id) = connected_user.id {
+        sqlx::query(
+            "UPDATE bb_teams
+                SET treasury = $3,
+                    last_updated = CURRENT_TIMESTAMP
+                WHERE id = $1
+                AND coach_id = $2",
+        )
+        .bind(team_id.clone())
+        .bind(connected_user_id.clone())
+        .bind(new_treasury.clone())
+        .execute(transaction.as_mut())
+        .await?;
+    }
+
+    Ok(())
 }
 
 pub async fn update_values(

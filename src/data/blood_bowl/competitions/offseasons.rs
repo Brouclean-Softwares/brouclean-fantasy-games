@@ -1,7 +1,7 @@
 use crate::AppState;
 use crate::data::blood_bowl::competitions::Competition;
 use crate::data::blood_bowl::staff::StaffDetail;
-use crate::data::blood_bowl::{coaches, players, staff};
+use crate::data::blood_bowl::{coaches, players, staff, teams};
 use crate::data::users::User;
 use crate::errors::AppError;
 use blood_bowl_rs::dices::Dice;
@@ -11,7 +11,7 @@ use blood_bowl_rs::positions::Position;
 use blood_bowl_rs::staffs::Staff;
 use blood_bowl_rs::teams::Team;
 use serde::Deserialize;
-use sqlx::{Executor, Postgres};
+use sqlx::Postgres;
 use std::collections::HashMap;
 
 pub const OFFSEASON_COMPETITION_ROUND_THRESHOLD: usize = 10;
@@ -79,7 +79,7 @@ pub async fn start_competition_offseason(
                     for player_injury in player_injuries {
                         if player_injury.injury.is_niggling_injury() && Dice::D6.roll() >= 4 {
                             players::update_player_who_recovered_from_injury(
-                                &mut *transaction,
+                                &mut transaction,
                                 player.id,
                                 &player_injury,
                             )
@@ -92,7 +92,7 @@ pub async fn start_competition_offseason(
                     for hatred in player_hatred {
                         if Dice::D6.roll() >= 4 {
                             players::update_player_who_recovered_from_hatred(
-                                &mut *transaction,
+                                &mut transaction,
                                 player.id,
                                 &hatred,
                             )
@@ -101,7 +101,7 @@ pub async fn start_competition_offseason(
                     }
 
                     PlayerRedraft::insert_player_to_sign(
-                        &mut *transaction,
+                        &mut transaction,
                         competition.id,
                         team.id,
                         player.id,
@@ -114,7 +114,7 @@ pub async fn start_competition_offseason(
 
                 for (staff, number) in staff {
                     TeamRedraft::insert_staff_to_sign(
-                        &mut *transaction,
+                        &mut transaction,
                         competition.id,
                         team.id,
                         staff,
@@ -340,16 +340,13 @@ impl TeamRedraft {
         Ok(())
     }
 
-    pub async fn insert_staff_to_sign<'e, E>(
-        executor: E,
+    pub async fn insert_staff_to_sign(
+        transaction: &mut sqlx::Transaction<'_, Postgres>,
         competition_id: i32,
         team_id: i32,
         staff: Staff,
         number: i32,
-    ) -> Result<(), AppError>
-    where
-        E: Executor<'e, Database = Postgres>,
-    {
+    ) -> Result<(), AppError> {
         tracing::debug!(
             "insert_staff_to_sign with competition_id={}, team_id={}, staff={:?} and number={}",
             competition_id,
@@ -371,10 +368,14 @@ impl TeamRedraft {
         .bind(team_id.clone())
         .bind(staff.clone())
         .bind(number.clone())
-        .execute(executor)
+        .execute(transaction.as_mut())
         .await?;
 
         Ok(())
+    }
+
+    pub fn positions_quantity_to_sign(&self) -> u8 {
+        self.positions_to_sign.values().sum()
     }
 
     pub fn position_quantity_to_sign(&self, position: &Position) -> u8 {
@@ -414,16 +415,13 @@ impl TeamRedraft {
         Ok(())
     }
 
-    pub async fn insert_position_to_sign<'e, E>(
-        executor: E,
+    pub async fn insert_position_to_sign(
+        transaction: &mut sqlx::Transaction<'_, Postgres>,
         competition_id: i32,
         team_id: i32,
         position: Position,
         number: i32,
-    ) -> Result<(), AppError>
-    where
-        E: Executor<'e, Database = Postgres>,
-    {
+    ) -> Result<(), AppError> {
         tracing::debug!(
             "insert_position_to_sign with competition_id={}, team_id={}, position={:?} and number={}",
             competition_id,
@@ -445,7 +443,7 @@ impl TeamRedraft {
         .bind(team_id.clone())
         .bind(position.clone())
         .bind(number.clone())
-        .execute(executor)
+        .execute(transaction.as_mut())
         .await?;
 
         Ok(())
@@ -472,7 +470,7 @@ impl TeamRedraft {
 
                 for (staff_to_sign, quantity) in &self.staff_to_sign {
                     Self::insert_staff_to_sign(
-                        &mut *transaction,
+                        &mut transaction,
                         offseason_competition_id,
                         self.team.id,
                         staff_to_sign.clone(),
@@ -488,12 +486,12 @@ impl TeamRedraft {
                 )
                 .bind(offseason_competition_id.clone())
                 .bind(self.team.id.clone())
-                .execute(&mut *transaction)
+                .execute(transaction.as_mut())
                 .await?;
 
                 for (position_to_sign, quantity) in &self.positions_to_sign {
                     Self::insert_position_to_sign(
-                        &mut *transaction,
+                        &mut transaction,
                         offseason_competition_id,
                         self.team.id,
                         position_to_sign.clone(),
@@ -503,6 +501,90 @@ impl TeamRedraft {
                 }
 
                 transaction.commit().await?;
+            }
+        }
+
+        Ok(())
+    }
+
+    pub async fn close(self, state: &AppState, connected_user: &User) -> Result<(), AppError> {
+        tracing::debug!("close team_id={}", self.team.id);
+
+        if connected_user.is_coach(&self.team.coach)
+            && self.team.in_offseason
+            && self.resigned_team()?.check_if_rules_compliant().is_ok()
+        {
+            let offseason_competition_id = self.select_offseason_competition_id(state).await?;
+
+            if let Some(offseason_competition_id) = offseason_competition_id {
+                let mut transaction = state.db.begin().await?;
+
+                let new_treasury = self.remaining_funds()?;
+
+                teams::update_treasury(
+                    &mut transaction,
+                    connected_user,
+                    self.team.id,
+                    new_treasury,
+                )
+                .await?;
+
+                for (staff, quantity) in self.staff_to_sign {
+                    staff::update_staff_for_team(
+                        &mut transaction,
+                        connected_user,
+                        self.team.id,
+                        staff,
+                        quantity,
+                    )
+                    .await?;
+                }
+
+                for (position, quantity) in self.positions_to_sign {
+                    for _ in 0..quantity {
+                        let player = Player::new(
+                            self.team.version.clone(),
+                            position.clone(),
+                            self.team.roster.clone(),
+                        );
+
+                        players::insert_new_player_for_team(
+                            &mut transaction,
+                            connected_user,
+                            self.team.id,
+                            (0, player),
+                        )
+                        .await?;
+                    }
+                }
+
+                for player_not_redrafted in self.players_not_redrafted {
+                    players::update_player_contract_end_for_team(
+                        &mut transaction,
+                        connected_user,
+                        self.team.id,
+                        player_not_redrafted.player.id,
+                    )
+                    .await?;
+                }
+
+                let result = sqlx::query(
+                    "UPDATE bb_redrafts_in_offseasons
+                        SET closed_at = CURRENT_TIMESTAMP
+                        WHERE competition_id = $1
+                        AND team_id = $2
+                        AND closed_at IS NULL",
+                )
+                .bind(offseason_competition_id.clone())
+                .bind(self.team.id.clone())
+                .execute(&mut *transaction)
+                .await?;
+
+                if result.rows_affected() > 0 {
+                    transaction.commit().await?;
+                } else {
+                    transaction.rollback().await?;
+                }
             }
         }
 
@@ -699,7 +781,7 @@ impl PlayerRedraft {
 
                 if self.redrafted {
                     Self::insert_player_to_sign(
-                        &mut *transaction,
+                        &mut transaction,
                         offseason_competition_id,
                         self.team_id,
                         self.player.id,
@@ -715,16 +797,13 @@ impl PlayerRedraft {
         Ok(())
     }
 
-    pub async fn insert_player_to_sign<'e, E>(
-        executor: E,
+    pub async fn insert_player_to_sign(
+        transaction: &mut sqlx::Transaction<'_, Postgres>,
         competition_id: i32,
         team_id: i32,
         player_id: i32,
         has_experience: bool,
-    ) -> Result<(), AppError>
-    where
-        E: Executor<'e, Database = Postgres>,
-    {
+    ) -> Result<(), AppError> {
         tracing::debug!(
             "insert_player_to_sign with competition_id={}, team_id={}, player_id={} and has_experience={}",
             competition_id,
@@ -746,7 +825,7 @@ impl PlayerRedraft {
         .bind(team_id.clone())
         .bind(player_id.clone())
         .bind(has_experience.clone())
-        .execute(executor)
+        .execute(transaction.as_mut())
         .await?;
 
         Ok(())

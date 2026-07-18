@@ -4,6 +4,7 @@ use crate::data::users::User;
 use crate::errors::AppError;
 use blood_bowl_rs::staffs::Staff;
 use serde::Deserialize;
+use sqlx::Postgres;
 use std::collections::HashMap;
 
 #[derive(Deserialize, sqlx::FromRow, Clone)]
@@ -37,6 +38,41 @@ pub async fn select_for_team(
     Ok(staff)
 }
 
+pub async fn update_staff_for_team(
+    transaction: &mut sqlx::Transaction<'_, Postgres>,
+    connected_user: &User,
+    team_id: i32,
+    staff: Staff,
+    new_staff_quantity: u8,
+) -> Result<(), AppError> {
+    tracing::debug!(
+        "update_staff_for_team by user={:?} for team_id={} with staff={:?}",
+        connected_user,
+        team_id,
+        staff
+    );
+
+    if let Some(connected_user_id) = connected_user.id {
+        sqlx::query(
+            "UPDATE bb_teams_staff
+            SET number = $1
+            FROM bb_teams
+            WHERE bb_teams.id = bb_teams_staff.team_id
+            AND bb_teams.id = $2
+            AND bb_teams.coach_id = $3
+            AND bb_teams_staff.staff = $4",
+        )
+        .bind(new_staff_quantity.clone() as i32)
+        .bind(team_id.clone())
+        .bind(connected_user_id.clone())
+        .bind(staff.clone())
+        .execute(transaction.as_mut())
+        .await?;
+    }
+
+    Ok(())
+}
+
 pub async fn buy_staff_for_team(
     state: &AppState,
     connected_user: &User,
@@ -61,20 +97,13 @@ pub async fn buy_staff_for_team(
 
             let mut transaction = state.db.begin().await?;
 
-            sqlx::query(
-                "UPDATE bb_teams_staff
-                SET number = $1
-                FROM bb_teams
-                WHERE bb_teams.id = bb_teams_staff.team_id
-                AND bb_teams.id = $2
-                AND bb_teams.coach_id = $3
-                AND bb_teams_staff.staff = $4",
+            update_staff_for_team(
+                &mut transaction,
+                connected_user,
+                team.id,
+                staff,
+                new_staff_quantity,
             )
-            .bind(new_staff_quantity.clone() as i32)
-            .bind(team_id.clone())
-            .bind(connected_user_id.clone())
-            .bind(staff.clone())
-            .execute(&mut *transaction)
             .await?;
 
             sqlx::query(

@@ -31,6 +31,7 @@ pub fn init_router() -> Router<AppState> {
         .route("/team", get(team).post(update))
         .route("/delete", post(delete))
         .route("/upgrade", post(upgrade))
+        .route("/validate_redraft", post(validate_redraft))
 }
 
 pub async fn teams(
@@ -556,6 +557,51 @@ pub async fn upgrade(
     }
 
     Ok(Redirect::to(&format!("./team?id={}", form.id)))
+}
+
+#[derive(Deserialize)]
+pub struct ValidateRedraftForm {
+    pub team_id: i32,
+}
+
+pub async fn validate_redraft(
+    State(app_state): State<AppState>,
+    profile: User,
+    Form(form): Form<ValidateRedraftForm>,
+) -> Result<Redirect, Redirect> {
+    let error_handler = |error: AppError| {
+        error.log_and_redirect(Redirect::to(&format!("./team?id={}", form.team_id,)))
+    };
+
+    let team = teams::select_by_id_with_staff_and_players(&app_state, form.team_id)
+        .await
+        .map_err(error_handler)?;
+
+    let coach = profile
+        .clone()
+        .try_into_coach(&app_state)
+        .await
+        .map_err(error_handler)?;
+
+    if team.coach.eq(&coach) {
+        let team_redraft = TeamRedraft::select_from_team(&app_state, team)
+            .await
+            .map_err(error_handler)?;
+
+        if let Some(team_redraft) = team_redraft {
+            team_redraft
+                .close(&app_state, &profile)
+                .await
+                .or_else(|app_error| {
+                    Err(app_error.log_and_redirect(Redirect::to(&format!(
+                        "./team?id={}&message={}",
+                        form.team_id, app_error
+                    ))))
+                })?;
+        }
+    }
+
+    Ok(Redirect::to(&format!("./team?id={}", form.team_id)))
 }
 
 pub fn extract_positions_quantities(
