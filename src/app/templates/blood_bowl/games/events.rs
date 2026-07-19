@@ -12,6 +12,7 @@ use blood_bowl_rs::injuries::Injury;
 use blood_bowl_rs::players::PlayerType;
 use blood_bowl_rs::positions::Keyword;
 use blood_bowl_rs::prayers::PrayerToNuffle;
+use blood_bowl_rs::skills::Skill;
 use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::translation::TranslatedName;
 use blood_bowl_rs::translation::TypeName;

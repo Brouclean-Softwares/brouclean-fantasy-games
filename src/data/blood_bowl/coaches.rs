@@ -120,43 +120,53 @@ pub async fn select_elo_for_user(
 pub async fn insert_elo_ranking_after_game(state: &AppState, game: &Game) -> Result<(), AppError> {
     tracing::debug!("insert_elo_ranking_after_game");
 
-    let competition_team_number =
-        if let Some(competition) = Competition::select_for_game_id(state, game.id).await? {
-            Some(competition.select_playing_teams(state).await?.len())
-        } else {
-            None
-        };
+    if game.game_finished() {
+        let competition_team_number =
+            if let Some(competition) = Competition::select_for_game_id(state, game.id).await? {
+                Some(competition.select_playing_teams(state).await?.len())
+            } else {
+                None
+            };
 
-    let (first_coach_new_elo, second_coach_new_elo) =
-        elo::new_naf_elo_from_game(game, competition_team_number, competition_team_number);
+        let (first_coach_new_elo, second_coach_new_elo) =
+            elo::new_naf_elo_from_game(game, competition_team_number, competition_team_number);
 
-    let mut transaction = state.db.begin().await?;
+        let mut transaction = state.db.begin().await?;
 
-    if let Some(coach_id) = game.first_team.coach.id {
         sqlx::query(
-            "INSERT INTO bb_coaches_elo (coach_id, game_id, elo)
-            VALUES ($1, $2, $3)",
+            "DELETE FROM bb_coaches_elo
+                WHERE game_id = $1",
         )
-        .bind(coach_id.clone())
         .bind(game.id.clone())
-        .bind(first_coach_new_elo.clone())
         .execute(&mut *transaction)
         .await?;
-    }
 
-    if let Some(coach_id) = game.second_team.coach.id {
-        sqlx::query(
-            "INSERT INTO bb_coaches_elo (coach_id, game_id, elo)
+        if let Some(coach_id) = game.first_team.coach.id {
+            sqlx::query(
+                "INSERT INTO bb_coaches_elo (coach_id, game_id, elo)
             VALUES ($1, $2, $3)",
-        )
-        .bind(coach_id.clone())
-        .bind(game.id.clone())
-        .bind(second_coach_new_elo.clone())
-        .execute(&mut *transaction)
-        .await?;
-    }
+            )
+            .bind(coach_id.clone())
+            .bind(game.id.clone())
+            .bind(first_coach_new_elo.clone())
+            .execute(&mut *transaction)
+            .await?;
+        }
 
-    transaction.commit().await?;
+        if let Some(coach_id) = game.second_team.coach.id {
+            sqlx::query(
+                "INSERT INTO bb_coaches_elo (coach_id, game_id, elo)
+            VALUES ($1, $2, $3)",
+            )
+            .bind(coach_id.clone())
+            .bind(game.id.clone())
+            .bind(second_coach_new_elo.clone())
+            .execute(&mut *transaction)
+            .await?;
+        }
+
+        transaction.commit().await?;
+    }
 
     Ok(())
 }

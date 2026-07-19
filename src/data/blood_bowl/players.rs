@@ -4,10 +4,12 @@ use crate::data::blood_bowl::{coaches, games, teams};
 use crate::data::users::User;
 use crate::errors::AppError;
 use blood_bowl_rs::advancements::{Advancement, AdvancementChoice};
+use blood_bowl_rs::games::Game;
 use blood_bowl_rs::injuries::Injury;
 use blood_bowl_rs::players::{Player, PlayerType};
 use blood_bowl_rs::positions::{Keyword, Position};
 use blood_bowl_rs::rosters::Roster;
+use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::translation::TypeName;
 use blood_bowl_rs::versions::Version;
 use chrono::{DateTime, Utc};
@@ -202,6 +204,109 @@ pub async fn select_former_for_team(
     Ok(players)
 }
 
+pub async fn insert_resurrected_during_game_for_team(
+    transaction: &mut sqlx::Transaction<'_, Postgres>,
+    game: &Game,
+    team: &Team,
+    position: Position,
+    number: i32,
+) -> Result<(i32, Player), AppError> {
+    tracing::debug!(
+        "insert_resurrected_during_game_for_team with game_id={} for team_id={}",
+        game.id,
+        team.id
+    );
+
+    let player = Player::new(team.version.clone(), position.clone(), team.roster.clone());
+
+    let (_, player) = insert_new_player_for_team(transaction, team.id, (number, player)).await?;
+
+    sqlx::query(
+        "INSERT INTO bb_players_resurrections (player_id, game_id)
+            VALUES ($1, $2)",
+    )
+    .bind(player.id.clone())
+    .bind(game.id.clone())
+    .bind(position.clone())
+    .execute(transaction.as_mut())
+    .await?;
+
+    Ok((number, player))
+}
+
+pub async fn select_last_resurrected_during_game_for_team(
+    state: &AppState,
+    game_id: i32,
+    team_id: i32,
+    position: Position,
+) -> Result<Option<(i32, Player)>, AppError> {
+    tracing::debug!(
+        "select_last_resurrected_during_game_for_team with game_id={} for team_id={}",
+        game_id,
+        team_id
+    );
+
+    let player_detail: Option<PlayerDetail> = sqlx::query_as(
+        "SELECT bb_players.id,
+                    bb_players.version,
+                    bb_players.name,
+                    bb_players.position,
+                    bb_teams.roster,
+                    bb_teams_players.number,
+                    bb_players.is_captain
+            FROM bb_players
+            INNER JOIN bb_teams_players
+            ON bb_players.id = bb_teams_players.player_id
+            INNER JOIN bb_teams
+            ON bb_teams.id = bb_teams_players.team_id
+            INNER JOIN bb_players_resurrections
+            ON bb_players_resurrections.player_id = bb_players.id
+            WHERE bb_teams_players.team_id = $1
+            AND bb_players_resurrections.game_id = $2
+            AND bb_players.position = $3
+            ORDER BY bb_players_resurrections.created_at DESC
+            LIMIT 1",
+    )
+    .bind(team_id.clone())
+    .bind(game_id.clone())
+    .bind(position.clone())
+    .fetch_optional(&state.db)
+    .await?;
+
+    if let Some(player_detail) = player_detail {
+        Ok(Some((
+            player_detail.number,
+            player_detail.into_player(state).await?,
+        )))
+    } else {
+        Ok(None)
+    }
+}
+
+pub async fn delete_resurrected_player(state: &AppState, player_id: i32) -> Result<(), AppError> {
+    tracing::debug!("delete_player with player_id={}", player_id,);
+
+    sqlx::query(
+        "DELETE
+            FROM bb_games_teams_players
+            WHERE player_id = $1",
+    )
+    .bind(player_id.clone())
+    .execute(&state.db)
+    .await?;
+
+    sqlx::query(
+        "DELETE
+            FROM bb_players
+            WHERE id = $1",
+    )
+    .bind(player_id.clone())
+    .execute(&state.db)
+    .await?;
+
+    Ok(())
+}
+
 pub async fn update_name(
     state: &AppState,
     connected_user: &User,
@@ -278,49 +383,48 @@ pub async fn update_number(
 
 pub async fn insert_new_player_for_team(
     transaction: &mut sqlx::Transaction<'_, Postgres>,
-    connected_user: &User,
     team_id: i32,
     new_team_player: (i32, Player),
-) -> Result<(), AppError> {
+) -> Result<(i32, Player), AppError> {
     tracing::debug!(
-        "insert_new_player_for_team by user={:?} for team_id={} with position={:?}",
-        connected_user,
+        "insert_new_player_for_team for team_id={} with position={:?}",
         team_id,
         new_team_player.1.position,
     );
 
-    if connected_user.id.is_some() {
-        let (number, player) = new_team_player;
+    let (number, player) = new_team_player;
 
-        let new_player_id: i32 = sqlx::query_scalar(
-            "INSERT INTO bb_players (
-                version,
-                name,
-                position)
-            VALUES ($1, $2, $3)
-            RETURNING id",
-        )
-        .bind(player.version.clone())
-        .bind(player.name.clone())
-        .bind(player.position.clone())
-        .fetch_one(transaction.as_mut())
-        .await?;
+    let new_player_id: i32 = sqlx::query_scalar(
+        "INSERT INTO bb_players (
+            version,
+            name,
+            position)
+        VALUES ($1, $2, $3)
+        RETURNING id",
+    )
+    .bind(player.version.clone())
+    .bind(player.name.clone())
+    .bind(player.position.clone())
+    .fetch_one(transaction.as_mut())
+    .await?;
 
-        sqlx::query(
-            "INSERT INTO bb_teams_players (
-                number,
-                team_id,
-                player_id)
-            VALUES ($1, $2, $3)",
-        )
-        .bind(number.clone())
-        .bind(team_id.clone())
-        .bind(new_player_id.clone())
-        .execute(transaction.as_mut())
-        .await?;
-    }
+    sqlx::query(
+        "INSERT INTO bb_teams_players (
+            number,
+            team_id,
+            player_id)
+        VALUES ($1, $2, $3)",
+    )
+    .bind(number.clone())
+    .bind(team_id.clone())
+    .bind(new_player_id.clone())
+    .execute(transaction.as_mut())
+    .await?;
 
-    Ok(())
+    let mut new_player = player.clone();
+    new_player.id = new_player_id;
+
+    Ok((number, new_player))
 }
 
 pub async fn buy_position_for_team(
@@ -364,8 +468,7 @@ pub async fn buy_position_for_team(
             .await?;
 
             if result.rows_affected() > 0 {
-                insert_new_player_for_team(&mut transaction, connected_user, team.id, team_player)
-                    .await?;
+                insert_new_player_for_team(&mut transaction, team.id, team_player).await?;
             }
 
             transaction.commit().await?;
@@ -381,6 +484,7 @@ pub async fn buy_journeyman_in_game_for_team(
     team_id: i32,
     player_id_in_game: i32,
     game_id: i32,
+    position: Option<Position>,
 ) -> Result<(), AppError> {
     tracing::debug!(
         "buy_journeyman_in_game_for_team by user={:?} for team_id={}, game_id={} and player_id={}",
@@ -397,7 +501,7 @@ pub async fn buy_journeyman_in_game_for_team(
             select_playing_team_player_for_game(state, &game, team_id, player_id_in_game).await?;
 
         if let Some(journey_man) = journey_man {
-            if let Some((number, player)) = team.buy_journeyman(journey_man)? {
+            if let Some((number, player)) = team.buy_journeyman(journey_man, position)? {
                 let team_value = team.value()?;
                 let team_current_value = team.current_value()?;
 

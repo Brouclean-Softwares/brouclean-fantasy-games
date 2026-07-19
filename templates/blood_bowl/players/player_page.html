@@ -250,27 +250,50 @@
 {% match player.player_type %}
 {% when PlayerType::Journeyman %}
 <div>
-    <form id="buy_journeyman_form" method="post" autocomplete="off">
-        <input name="journeyman_to_recruit_id_in_game" type="hidden" value="{{ player.id }}">
+    <button class="uk-button uk-button-primary" uk-toggle="target: #modal-buy-journeyman" type="button">
+        Recruter
+    </button>
 
-        <button class="uk-button uk-button-primary"
-                type="button"
-                uk-toggle="target: #modal-buy-journeyman">Recruter</button>
+    <div id="modal-buy-journeyman" uk-modal bg-close="false">
+        <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+            <form method="post" autocomplete="off" class="uk-form-stacked">
+                <input name="journeyman_to_recruit_id_in_game" type="hidden" value="{{ player.id }}">
 
-        <div id="modal-buy-journeyman" uk-modal>
-            <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
-                <h2 class="uk-modal-title">Signature de #{{ number }} - {{ player.position.name("fr") }}</h2>
+                <h2 class="uk-modal-title">
+                    Signature de #{{ number }} - {{ player.position.name("fr") }}
+                </h2>
+
                 <p>Vous êtes sur le point de recruter le journalier. Confirmez-vous la signature de son contrat ?</p>
+
+                {% let positions = team.possible_journeyman_positions() %}
+
+                {% if positions.len() > 1 %}
+                <div class="uk-margin">
+                    <label class="uk-form-label" for="journeyman_to_recruit_position">Quelle position va tenir le journalier ?</label>
+                    <div class="uk-form-controls">
+                        <select class="uk-select" id="journeyman_to_recruit_position" name="journeyman_to_recruit_position" aria-label="">
+                            {% for position in positions %}
+                            <option value="{{ position.type_name() }}">
+                                {{ position.name("fr") }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                {% endif %}
+
                 <p class="uk-text-right">
-                    <button class="uk-button uk-button-default uk-modal-close" type="button">Annuler</button>
-                    <button class="uk-button uk-button-primary"
-                            onclick="document.getElementById('buy_journeyman_form').submit()">
+                    <button class="uk-button uk-button-default uk-modal-close" type="button">
+                        Annuler
+                    </button>
+
+                    <button class="uk-button uk-button-primary" type="submit">
                         Confirmer
                     </button>
                 </p>
-            </div>
+            </form>
         </div>
-    </form>
+    </div>
 </div>
 {% else %}
 {% endmatch %}

@@ -1181,7 +1181,7 @@ pub async fn cancel_start(state: &AppState, profile: &User, game: &Game) -> Resu
 pub async fn update_after_event(
     state: &AppState,
     profile: &User,
-    game: &Game,
+    game: &mut Game,
     event: &GameEvent,
 ) -> Result<(), AppError> {
     tracing::debug!(
@@ -1190,18 +1190,22 @@ pub async fn update_after_event(
         game.id
     );
 
-    if matches!(event, GameEvent::GameEnd | GameEvent::GameClosure) {
-        if let Some(competition_stage) =
-            CompetitionStage::select_for_game_id(state, game.id).await?
-        {
-            if matches!(competition_stage.stage_type, CompetitionStageType::Cup)
-                && game.winning_team().is_none()
+    match event {
+        GameEvent::GameEnd | GameEvent::GameClosure => {
+            if let Some(competition_stage) =
+                CompetitionStage::select_for_game_id(state, game.id).await?
             {
-                return Err(BloodBowlAppError(String::from(
-                    "Le match doit avoir un gagnant",
-                )));
+                if matches!(competition_stage.stage_type, CompetitionStageType::Cup)
+                    && game.winning_team().is_none()
+                {
+                    return Err(BloodBowlAppError(String::from(
+                        "Le match doit avoir un gagnant",
+                    )));
+                }
             }
         }
+
+        _ => {}
     }
 
     let _ = can_be_saved(state, profile, &game).await?;
@@ -1242,6 +1246,7 @@ pub async fn update_after_event(
         GameEvent::FanFactor { .. } => false,
         GameEvent::Weather(_) => false,
         GameEvent::Journeyman { .. } => false,
+        GameEvent::Resurrection { .. } => false,
         GameEvent::BuyInducement { .. } => true,
         GameEvent::PrayerToNuffle { .. } => false,
         GameEvent::TossWinner { .. } => false,
@@ -1251,6 +1256,7 @@ pub async fn update_after_event(
         GameEvent::Injury { .. } => false,
         GameEvent::Hatred { .. } => false,
         GameEvent::SentOff { .. } => false,
+        GameEvent::PlayerSkill { .. } => false,
         GameEvent::HalfTime { .. } => false,
         GameEvent::ExtraTime { .. } => false,
         GameEvent::Penalties { .. } => false,
@@ -1291,6 +1297,7 @@ pub async fn update_after_event(
         GameEvent::FanFactor { .. } => false,
         GameEvent::Weather(_) => false,
         GameEvent::Journeyman { .. } => true,
+        GameEvent::Resurrection { .. } => true,
         GameEvent::BuyInducement { .. } => true,
         GameEvent::PrayerToNuffle { .. } => false,
         GameEvent::TossWinner { .. } => false,
@@ -1300,6 +1307,7 @@ pub async fn update_after_event(
         GameEvent::Injury { .. } => true,
         GameEvent::Hatred { .. } => true,
         GameEvent::SentOff { .. } => false,
+        GameEvent::PlayerSkill { .. } => false,
         GameEvent::HalfTime { .. } => false,
         GameEvent::ExtraTime { .. } => false,
         GameEvent::Penalties { .. } => false,
@@ -1354,6 +1362,7 @@ pub async fn update_after_event(
                 }
             }
         }
+
         sqlx::query(
             "DELETE
                 FROM bb_players_hatred
@@ -1460,50 +1469,141 @@ pub async fn update_after_event(
         }
     }
 
+    transaction.commit().await?;
+
+    teams::update_values(state, profile, game.first_team.id).await?;
+    teams::update_values(state, profile, game.second_team.id).await?;
+
     if matches!(event, GameEvent::GameClosure) {
-        sqlx::query(
-            "UPDATE bb_games
+        coaches::insert_elo_ranking_after_game(state, &game).await?;
+    }
+
+    Ok(())
+}
+
+pub async fn update_after_event_inserted(
+    state: &AppState,
+    profile: &User,
+    game: &mut Game,
+    event: &GameEvent,
+) -> Result<(), AppError> {
+    tracing::debug!(
+        "update_after_event_inserted by coach_id={:?} for game_id {}",
+        profile.id,
+        game.id
+    );
+
+    let _ = can_be_saved(state, profile, &game).await?;
+
+    let mut transaction = state.db.begin().await?;
+
+    match event {
+        GameEvent::Resurrection { team_id, position } => {
+            if game.first_team.id.eq(team_id) {
+                game.first_team.players.pop();
+
+                let player = players::insert_resurrected_during_game_for_team(
+                    &mut transaction,
+                    game,
+                    &game.first_team,
+                    position.clone(),
+                    0,
+                )
+                .await?;
+
+                game.first_team.players.push(player);
+            } else if game.second_team.id.eq(team_id) {
+                game.second_team.players.pop();
+
+                let player = players::insert_resurrected_during_game_for_team(
+                    &mut transaction,
+                    game,
+                    &game.second_team,
+                    position.clone(),
+                    0,
+                )
+                .await?;
+
+                game.second_team.players.push(player);
+            }
+        }
+
+        GameEvent::GameClosure => {
+            sqlx::query(
+                "UPDATE bb_games
             SET closed_at = CURRENT_TIMESTAMP,
                 playing_players = NULL
             WHERE id = $1
             AND (created_by = $2 OR first_coach_id = $2 OR second_coach_id = $2)",
-        )
-        .bind(game.id.clone())
-        .bind(profile.id.unwrap_or(-1).clone())
-        .execute(&mut *transaction)
-        .await?;
+            )
+            .bind(game.id.clone())
+            .bind(profile.id.unwrap_or(-1).clone())
+            .execute(&mut *transaction)
+            .await?;
 
-        sqlx::query(
-            "UPDATE bb_competitions
+            sqlx::query(
+                "UPDATE bb_competitions
             SET last_updated = CURRENT_TIMESTAMP
             FROM bb_competitions_stages_schedule
             WHERE bb_competitions_stages_schedule.game_id = $1
             AND bb_competitions_stages_schedule.competition_id = bb_competitions.id",
-        )
-        .bind(game.id.clone())
-        .execute(&mut *transaction)
-        .await?;
+            )
+            .bind(game.id.clone())
+            .execute(&mut *transaction)
+            .await?;
 
-        sqlx::query(
-            "UPDATE bb_teams_players
+            sqlx::query(
+                "UPDATE bb_teams_players
             SET contract_end = CURRENT_TIMESTAMP
             FROM bb_players_injuries
             WHERE bb_teams_players.player_id = bb_players_injuries.player_id
             AND bb_teams_players.contract_end IS NULL
             AND bb_players_injuries.game_id = $1
             AND bb_players_injuries.injury = $2",
-        )
-        .bind(game.id.clone())
-        .bind(Injury::Dead.clone())
-        .execute(&mut *transaction)
-        .await?;
+            )
+            .bind(game.id.clone())
+            .bind(Injury::Dead.clone())
+            .execute(&mut *transaction)
+            .await?;
+        }
+
+        _ => {}
     }
 
     transaction.commit().await?;
 
-    coaches::insert_elo_ranking_after_game(state, &game).await?;
-    teams::update_values(state, profile, game.first_team.id).await?;
-    teams::update_values(state, profile, game.second_team.id).await?;
+    Ok(())
+}
+
+pub async fn update_after_event_cancelled(
+    state: &AppState,
+    profile: &User,
+    game: &Game,
+    event: &GameEvent,
+) -> Result<(), AppError> {
+    tracing::debug!(
+        "update_after_event_cancelled by coach_id={:?} for game_id {}",
+        profile.id,
+        game.id
+    );
+
+    match event {
+        GameEvent::Resurrection { team_id, position } => {
+            let resurrected_player = players::select_last_resurrected_during_game_for_team(
+                state,
+                game.id,
+                team_id.clone(),
+                position.clone(),
+            )
+            .await?;
+
+            if let Some((_, resurrected_player)) = resurrected_player {
+                players::delete_resurrected_player(state, resurrected_player.id.clone()).await?;
+            }
+        }
+
+        _ => {}
+    }
 
     Ok(())
 }
@@ -1603,7 +1703,7 @@ pub async fn delete(state: &AppState, profile: &User, game_id: i32) -> Result<()
         let cancelled_event = game.cancel_last_event()?;
 
         if let Some(event) = cancelled_event {
-            update_after_event(state, profile, &game, &event).await?;
+            update_after_event(state, profile, &mut game, &event).await?;
         }
     }
 

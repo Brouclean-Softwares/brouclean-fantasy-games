@@ -4,23 +4,68 @@
         {{ team.name }}
     </a>
     <div class="uk-accordion-content">
+
+        {% if team.can_have_resurrected_player() %}
+        <button class="uk-button uk-button-primary uk-margin-bottom" uk-toggle="target: #modal-buy-journeyman" type="button">
+            Relever un mort
+        </button>
+
+        <div id="modal-buy-journeyman" uk-modal bg-close="false">
+            <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                <form method="post" autocomplete="off" class="uk-form-stacked">
+                    <input name="game_id" type="hidden" value="{{ game.id }}">
+                    <input name="team_id" type="hidden" value="{{ team.id }}">
+                    <input name="resurrection" type="hidden" value="true">
+
+                    <h2 class="uk-modal-title">
+                        Résurrection d'un mort adverse
+                    </h2>
+
+                    <p>Vous êtes sur le point de relever un mort. Confirmez-vous ?</p>
+
+                    {% let positions = team.possible_journeyman_positions() %}
+
+                    {% if positions.len() > 1 %}
+                    <div class="uk-margin">
+                        <label class="uk-form-label" for="position">Quelle position va tenir le mort relevé ?</label>
+                        <div class="uk-form-controls">
+                            <select class="uk-select" id="position" name="position" aria-label="">
+                                {% for position in positions %}
+                                <option value="{{ position.type_name() }}">
+                                    {{ position.name("fr") }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <p class="uk-text-right">
+                        <button class="uk-button uk-button-default uk-modal-close" type="button">
+                            Annuler
+                        </button>
+
+                        <button class="uk-button uk-button-primary" type="submit">
+                            Confirmer
+                        </button>
+                    </p>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
         <div class="uk-overflow-auto">
             <table class="uk-table uk-table-striped uk-table-small">
                 <thead>
                 <tr>
                     <th>#</th>
                     <th>Poste</th>
+                    <th>Points de Star Player (PSP)</th>
                     <th>Blessure</th>
                     {% if Keyword::list(game.version).len() > 0 %}
                     <th>Haine</th>
                     {% endif %}
-                    <th>Expulsion</th>
-                    <th uk-tooltip="title: Passe précise receptionnée">PAS</th>
-                    <th uk-tooltip="title: Lancer superbe d'un coéquipier qui a attérit sur ses pieds">LAN</th>
-                    <th uk-tooltip="title: Interception">INT</th>
-                    <th uk-tooltip="title: Elimination lors d'un blocage">ELI</th>
-                    <th uk-tooltip="title: Touchdown">TD</th>
-                    <th uk-tooltip="title: Points de Star Player">PSP</th>
+                    <th>Autre</th>
                 </tr>
                 </thead>
 
@@ -35,6 +80,41 @@
                             <input name="team_id" type="hidden" value="{{ team.id }}">
                             <input name="player_id" type="hidden" value="{{ player.id }}">
                             <div class="uk-flex-inline">
+                                <select class="uk-select" style="width:200px;" name="success" aria-label="">
+                                    <option value="{{ Success::PassingCompletion.type_name() }}">
+                                        Passe précise receptionnée
+                                    </option>
+
+                                    <option value="{{ Success::ThrowingCompletion.type_name() }}">
+                                        Lancer superbe d'un coéquipier qui a attérit sur ses pieds
+                                    </option>
+
+                                    <option value="{{ Success::Interception.type_name() }}">
+                                        Interception
+                                    </option>
+
+                                    <option value="{{ Success::Casualty.type_name() }}">
+                                        Elimination lors d'un blocage
+                                    </option>
+
+                                    <option value="{{ Success::Touchdown.type_name() }}">
+                                        Touchdown
+                                    </option>
+
+                                    <option value="{{ Success::StarPlayerPoint.type_name() }}">
+                                        Point de Star Player additionnel
+                                    </option>
+                                </select>
+                                <button class="uk-button uk-button-primary uk-button-small uk-margin-small-left">+</button>
+                            </div>
+                        </form>
+                    </td>
+                    <td>
+                        <form method="post" autocomplete="off">
+                            <input name="game_id" type="hidden" value="{{ game.id }}">
+                            <input name="team_id" type="hidden" value="{{ team.id }}">
+                            <input name="player_id" type="hidden" value="{{ player.id }}">
+                            <div class="uk-flex-inline">
                                 <select class="uk-select" style="width:100px;" name="injury" aria-label="">
                                     {% for injury in Injury::list(team.version) %}
                                     <option value="{{ injury.type_name() }}">
@@ -42,7 +122,7 @@
                                     </option>
                                     {% endfor %}
                                 </select>
-                                <button class="uk-button uk-button-default uk-button-small">+</button>
+                                <button class="uk-button uk-button-primary uk-button-small uk-margin-small-left">+</button>
                             </div>
                         </form>
                     </td>
@@ -60,7 +140,7 @@
                                     </option>
                                     {% endfor %}
                                 </select>
-                                <button class="uk-button uk-button-default uk-button-small">+</button>
+                                <button class="uk-button uk-button-primary uk-button-small uk-margin-small-left">+</button>
                             </div>
                         </form>
                     </td>
@@ -70,62 +150,20 @@
                             <input name="game_id" type="hidden" value="{{ game.id }}">
                             <input name="team_id" type="hidden" value="{{ team.id }}">
                             <input name="player_id" type="hidden" value="{{ player.id }}">
-                            <input name="sent_off" type="hidden" value="true">
-                            <button class="uk-button uk-button-default uk-button-small">Expulsé</button>
-                        </form>
-                    </td>
-                    <td>
-                        <form method="post" autocomplete="off">
-                            <input name="game_id" type="hidden" value="{{ game.id }}">
-                            <input name="team_id" type="hidden" value="{{ team.id }}">
-                            <input name="player_id" type="hidden" value="{{ player.id }}">
-                            <input name="success" type="hidden" value="{{ Success::PassingCompletion.type_name() }}">
-                            <button class="uk-button uk-button-default uk-button-small">+PAS</button>
-                        </form>
-                    </td>
-                    <td>
-                        <form method="post" autocomplete="off">
-                            <input name="game_id" type="hidden" value="{{ game.id }}">
-                            <input name="team_id" type="hidden" value="{{ team.id }}">
-                            <input name="player_id" type="hidden" value="{{ player.id }}">
-                            <input name="success" type="hidden" value="{{ Success::ThrowingCompletion.type_name() }}">
-                            <button class="uk-button uk-button-default uk-button-small">+LAN</button>
-                        </form>
-                    </td>
-                    <td>
-                        <form method="post" autocomplete="off">
-                            <input name="game_id" type="hidden" value="{{ game.id }}">
-                            <input name="team_id" type="hidden" value="{{ team.id }}">
-                            <input name="player_id" type="hidden" value="{{ player.id }}">
-                            <input name="success" type="hidden" value="{{ Success::Interception.type_name() }}">
-                            <button class="uk-button uk-button-default uk-button-small">+INT</button>
-                        </form>
-                    </td>
-                    <td>
-                        <form method="post" autocomplete="off">
-                            <input name="game_id" type="hidden" value="{{ game.id }}">
-                            <input name="team_id" type="hidden" value="{{ team.id }}">
-                            <input name="player_id" type="hidden" value="{{ player.id }}">
-                            <input name="success" type="hidden" value="{{ Success::Casualty.type_name() }}">
-                            <button class="uk-button uk-button-default uk-button-small">+ELI</button>
-                        </form>
-                    </td>
-                    <td>
-                        <form method="post" autocomplete="off">
-                            <input name="game_id" type="hidden" value="{{ game.id }}">
-                            <input name="team_id" type="hidden" value="{{ team.id }}">
-                            <input name="player_id" type="hidden" value="{{ player.id }}">
-                            <input name="success" type="hidden" value="{{ Success::Touchdown.type_name() }}">
-                            <button class="uk-button uk-button-default uk-button-small">+TD</button>
-                        </form>
-                    </td>
-                    <td>
-                        <form method="post" autocomplete="off">
-                            <input name="game_id" type="hidden" value="{{ game.id }}">
-                            <input name="team_id" type="hidden" value="{{ team.id }}">
-                            <input name="player_id" type="hidden" value="{{ player.id }}">
-                            <input name="success" type="hidden" value="{{ Success::StarPlayerPoint.type_name() }}">
-                            <button class="uk-button uk-button-default uk-button-small">+PSP</button>
+                            <div class="uk-flex-inline">
+                                <select class="uk-select" style="width:100px;" name="other_player_event" aria-label="">
+                                    <option value="sent_off">
+                                        Expulsé
+                                    </option>
+
+                                    {% if player.skills().contains(&Skill::Regeneration) %}
+                                    <option value="regeneration">
+                                        Régéneration
+                                    </option>
+                                    {% endif %}
+                                </select>
+                                <button class="uk-button uk-button-primary uk-button-small uk-margin-small-left">+</button>
+                            </div>
                         </form>
                     </td>
                 </tr>

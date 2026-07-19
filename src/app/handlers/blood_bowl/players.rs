@@ -10,6 +10,7 @@ use axum::response::Redirect;
 use axum::routing::get;
 use axum::{Form, Router};
 use blood_bowl_rs::players::PlayerType;
+use blood_bowl_rs::positions::Position;
 use serde::Deserialize;
 
 pub fn init_router() -> Router<AppState> {
@@ -334,6 +335,7 @@ pub async fn added_player(
 pub struct AddedPlayerForm {
     pub player_number: Option<i32>,
     pub journeyman_to_recruit_id_in_game: Option<i32>,
+    pub journeyman_to_recruit_position: Option<Position>,
 }
 
 pub async fn update_added_player(
@@ -381,6 +383,7 @@ pub async fn update_added_player(
             params.team_id,
             journeyman_to_recruit_id_in_game,
             params.game_id,
+            form.journeyman_to_recruit_position,
         )
         .await
         .or_else(error_handler)?;

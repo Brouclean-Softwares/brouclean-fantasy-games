@@ -13,6 +13,7 @@ use blood_bowl_rs::players::Player;
 use blood_bowl_rs::players::PlayerType;
 use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::translation::TranslatedName;
+use blood_bowl_rs::translation::TypeName;
 use blood_bowl_rs::versions::Version;
 use std::vec;
 

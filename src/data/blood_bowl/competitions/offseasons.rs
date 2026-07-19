@@ -550,7 +550,6 @@ impl TeamRedraft {
 
                         players::insert_new_player_for_team(
                             &mut transaction,
-                            connected_user,
                             self.team.id,
                             (0, player),
                         )

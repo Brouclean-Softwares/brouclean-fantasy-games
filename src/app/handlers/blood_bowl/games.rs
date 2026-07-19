@@ -13,8 +13,9 @@ use blood_bowl_rs::actions::Success;
 use blood_bowl_rs::events::GameEvent;
 use blood_bowl_rs::games::Game;
 use blood_bowl_rs::injuries::Injury;
-use blood_bowl_rs::positions::Keyword;
+use blood_bowl_rs::positions::{Keyword, Position};
 use blood_bowl_rs::prayers::PrayerToNuffle;
+use blood_bowl_rs::skills::Skill;
 use blood_bowl_rs::teams::Team;
 use blood_bowl_rs::translation::TranslatedName;
 use blood_bowl_rs::weather::Weather;
@@ -93,9 +94,11 @@ pub struct GameForm {
     pub kicking_team: Option<i32>,
     pub team_id: Option<i32>,
     pub player_id: Option<i32>,
+    pub resurrection: Option<bool>,
+    pub position: Option<Position>,
     pub injury: Option<Injury>,
     pub hatred: Option<Keyword>,
-    pub sent_off: Option<bool>,
+    pub other_player_event: Option<String>,
     pub success: Option<Success>,
     pub half_time: Option<String>,
     pub extra_time: Option<String>,
@@ -245,6 +248,20 @@ pub async fn update(
                 err.name("fr"),
             )
         })?;
+
+        if let Some(event) = &event {
+            games::update_after_event_cancelled(&app_state, &profile, &game_to_update, event)
+                .await
+                .map_err(|err| {
+                    redirect_when_update_ko(
+                        &app_state,
+                        &profile,
+                        Some(&game_before_update),
+                        &competition,
+                        err.to_string(),
+                    )
+                })?;
+        }
     }
 
     // Fans
@@ -505,6 +522,46 @@ pub async fn update(
         }
     }
 
+    // Resurrection
+    if let (Some(team_id), Some(true)) = (form.team_id, form.resurrection) {
+        game_to_update
+            .push_resurrection(team_id, 0, form.position)
+            .map_err(|err| {
+                redirect_when_update_ko(
+                    &app_state,
+                    &profile,
+                    Some(&game_before_update),
+                    &competition,
+                    err.name("fr"),
+                )
+            })?;
+
+        if let Some(last_event) = game_to_update.events.last() {
+            let last_event = last_event.clone();
+
+            if matches!(last_event, GameEvent::Resurrection { .. }) {
+                games::update_after_event_inserted(
+                    &app_state,
+                    &profile,
+                    &mut game_to_update,
+                    &last_event,
+                )
+                .await
+                .map_err(|err| {
+                    redirect_when_update_ko(
+                        &app_state,
+                        &profile,
+                        Some(&game_before_update),
+                        &competition,
+                        err.to_string(),
+                    )
+                })?;
+
+                event = Some(last_event.clone());
+            }
+        }
+    }
+
     // Injuries
     if let (Some(team_id), Some(player_id), Some(injury)) =
         (form.team_id, form.player_id, form.injury)
@@ -547,24 +604,45 @@ pub async fn update(
         }
     }
 
-    // Sent-Off
-    if let (Some(team_id), Some(player_id), Some(_sent_off)) =
-        (form.team_id, form.player_id, form.sent_off)
+    // Other player event
+    if let (Some(team_id), Some(player_id), Some(other_player_event)) =
+        (form.team_id, form.player_id, form.other_player_event)
     {
-        game_to_update
-            .push_sent_off(team_id, player_id)
-            .map_err(|err| {
-                redirect_when_update_ko(
-                    &app_state,
-                    &profile,
-                    Some(&game_before_update),
-                    &competition,
-                    err.name("fr"),
-                )
-            })?;
+        // Sent-off
+        if other_player_event.eq("sent_off") {
+            game_to_update
+                .push_sent_off(team_id, player_id)
+                .map_err(|err| {
+                    redirect_when_update_ko(
+                        &app_state,
+                        &profile,
+                        Some(&game_before_update),
+                        &competition,
+                        err.name("fr"),
+                    )
+                })?;
 
-        if let Some(last_event) = game_to_update.events.last() {
-            event = Some(last_event.clone());
+            if let Some(last_event) = game_to_update.events.last() {
+                event = Some(last_event.clone());
+            }
+        }
+        // Regeneration
+        else if other_player_event.eq("regeneration") {
+            game_to_update
+                .push_player_skill(team_id, player_id, Skill::Regeneration)
+                .map_err(|err| {
+                    redirect_when_update_ko(
+                        &app_state,
+                        &profile,
+                        Some(&game_before_update),
+                        &competition,
+                        err.name("fr"),
+                    )
+                })?;
+
+            if let Some(last_event) = game_to_update.events.last() {
+                event = Some(last_event.clone());
+            }
         }
     }
 
@@ -917,13 +995,34 @@ pub async fn update(
         })?;
 
         if let Some(last_event) = game_to_update.events.last() {
-            event = Some(last_event.clone());
+            let last_event = last_event.clone();
+
+            if matches!(last_event, GameEvent::GameClosure) {
+                games::update_after_event_inserted(
+                    &app_state,
+                    &profile,
+                    &mut game_to_update,
+                    &last_event,
+                )
+                .await
+                .map_err(|err| {
+                    redirect_when_update_ko(
+                        &app_state,
+                        &profile,
+                        Some(&game_before_update),
+                        &competition,
+                        err.to_string(),
+                    )
+                })?;
+
+                event = Some(last_event.clone());
+            }
         }
     }
 
     // Update after event if some
     if let Some(event) = event {
-        games::update_after_event(&app_state, &profile, &game_to_update, &event)
+        games::update_after_event(&app_state, &profile, &mut game_to_update, &event)
             .await
             .map_err(|err| {
                 redirect_when_update_ko(
