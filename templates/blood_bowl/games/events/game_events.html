@@ -219,7 +219,7 @@
 
 
 
-        {% when GameEvent::PlayerSkill { team_id: team_id, player_id: player_id, skill: skill } %}
+        {% when GameEvent::PlayerSkillSuccess { team_id: team_id, player_id: player_id, skill: skill } %}
         {% if game.first_team.id.eq(team_id.into()) %}
         <p class="uk-text-left">
             <a class="uk-link-reset" href="{{ player_in_game_url(team_id, player_id) }}">
