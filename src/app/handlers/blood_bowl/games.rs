@@ -626,6 +626,24 @@ pub async fn update(
                 event = Some(last_event.clone());
             }
         }
+        // Sent-off
+        else if other_player_event.eq("pushed_into_crowd") {
+            game_to_update
+                .push_pushed_into_crowd(team_id, player_id)
+                .map_err(|err| {
+                    redirect_when_update_ko(
+                        &app_state,
+                        &profile,
+                        Some(&game_before_update),
+                        &competition,
+                        err.name("fr"),
+                    )
+                })?;
+
+            if let Some(last_event) = game_to_update.events.last() {
+                event = Some(last_event.clone());
+            }
+        }
         // Regeneration
         else if other_player_event.eq("regeneration") {
             game_to_update

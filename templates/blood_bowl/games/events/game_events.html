@@ -219,6 +219,35 @@
 
 
 
+        {% when GameEvent::PushedIntoCrowd { team_id: team_id, player_id: player_id } %}
+        {% if game.first_team.id.eq(team_id.into()) %}
+        <p class="uk-text-left">
+            <a class="uk-link-reset" href="{{ player_in_game_url(team_id, player_id) }}">
+                <img src="{{ TeamLogo::from(game.first_team).url }}" width="30" height="30" alt="">
+
+                {% if let Some((number, player)) = game.first_team.player_by_id(player_id.clone()) %}
+                <span>#{{ number }} - {{ player.position.name("fr") }}</span>
+                <span class="uk-visible@m"> - {{ player.name }}</span>
+                <span> : Poussé dans le public</span>
+                {% endif %}
+            </a>
+        </p>
+        {% else %}
+        <p class="uk-text-right">
+            <a class="uk-link-reset" href="{{ player_in_game_url(team_id, player_id) }}">
+                <img src="{{ TeamLogo::from(game.second_team).url }}" width="30" height="30" alt="">
+
+                {% if let Some((number, player)) = game.second_team.player_by_id(player_id.clone()) %}
+                <span>#{{ number }} - {{ player.position.name("fr") }}</span>
+                <span class="uk-visible@m"> - {{ player.name }}</span>
+                <span> : Poussé dans le public</span>
+                {% endif %}
+            </a>
+        </p>
+        {% endif %}
+
+
+
         {% when GameEvent::PlayerSkillSuccess { team_id: team_id, player_id: player_id, skill: skill } %}
         {% if game.first_team.id.eq(team_id.into()) %}
         <p class="uk-text-left">
